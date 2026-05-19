@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+
+  main:
+    build:
+      context: .
+      dockerfile: apps/main/Dockerfile
+    ports:
+      - '3000:3000'
+    env_file: apps/main/.env
+    depends_on:
+      - mongodb
+
+  sync:
+    build:
+      context: .
+      dockerfile: apps/sync/Dockerfile
+    env_file: apps/sync/.env
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:
