@@ -1,0 +1,22 @@
+{
+  "name": "@ctm/connectors",
+  "version": "0.0.1",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "dev": "tsc -p tsconfig.build.json --watch"
+  },
+  "dependencies": {
+    "@ctm/errors": "workspace:*",
+    "@ctm/http": "workspace:*",
+    "@ctm/logger": "workspace:*"
+  },
+  "devDependencies": {
+    "@ctm/tsconfig": "workspace:*",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.0"
+  }
+}
