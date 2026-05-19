@@ -57,6 +57,7 @@ packages/
 ## Data Models
 
 ### User
+
 ```
 id            ObjectId
 email         string (unique)
@@ -65,6 +66,7 @@ createdAt     Date
 ```
 
 ### ConnectorConfig
+
 ```
 id              ObjectId
 userId          ObjectId (ref: User)
@@ -79,6 +81,7 @@ createdAt       Date
 ```
 
 ### Task
+
 ```
 id             ObjectId
 userId         ObjectId (ref: User)
@@ -99,12 +102,14 @@ updatedAt      Date
 Unique index: `{ userId, source, sourceId }` — prevents duplicate upserts.
 
 ### FuzzyDeadline (embedded)
+
 ```
 type         "this_week" | "this_month" | "someday"
 remindEvery  "daily" | "weekly" | null
 ```
 
 ### SyncLog
+
 ```
 id                 ObjectId
 connectorConfigId  ObjectId (ref: ConnectorConfig)
@@ -120,37 +125,41 @@ error              string | null
 
 ```ts
 interface RemoteTask {
-  sourceId: string
-  title: string
-  description: string | null
-  status: "open" | "done"
-  priority: number | null
-  dueDate: Date | null
-  tags: string[]
+  sourceId: string;
+  title: string;
+  description: string | null;
+  status: "open" | "done";
+  priority: number | null;
+  dueDate: Date | null;
+  tags: string[];
 }
 
 interface OAuthTokens {
-  accessToken: string
-  refreshToken: string
-  expiresAt: Date
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: Date;
 }
 
 interface TaskConnector {
-  readonly source: string
+  readonly source: string;
 
   // OAuth
-  getAuthUrl(userId: string): string
-  exchangeCode(code: string): Promise<OAuthTokens>
-  refreshToken(tokens: OAuthTokens): Promise<OAuthTokens>
+  getAuthUrl(userId: string): string;
+  exchangeCode(code: string): Promise<OAuthTokens>;
+  refreshToken(tokens: OAuthTokens): Promise<OAuthTokens>;
 
   // Sync (read)
-  fetchTasks(tokens: OAuthTokens): Promise<RemoteTask[]>
+  fetchTasks(tokens: OAuthTokens): Promise<RemoteTask[]>;
 
   // Write-through mutations
-  createTask(tokens: OAuthTokens, task: CreateTaskDto): Promise<RemoteTask>
-  updateTask(tokens: OAuthTokens, sourceId: string, patch: UpdateTaskDto): Promise<RemoteTask>
-  completeTask(tokens: OAuthTokens, sourceId: string): Promise<void>
-  deleteTask(tokens: OAuthTokens, sourceId: string): Promise<void>
+  createTask(tokens: OAuthTokens, task: CreateTaskDto): Promise<RemoteTask>;
+  updateTask(
+    tokens: OAuthTokens,
+    sourceId: string,
+    patch: UpdateTaskDto,
+  ): Promise<RemoteTask>;
+  completeTask(tokens: OAuthTokens, sourceId: string): Promise<void>;
+  deleteTask(tokens: OAuthTokens, sourceId: string): Promise<void>;
 }
 ```
 
@@ -163,16 +172,19 @@ A `ConnectorRegistry` (NestJS injectable) maps `source` strings to connector ins
 ## apps/main — NestJS Modules
 
 ### AuthModule
+
 - `POST /auth/register` — create user
 - `POST /auth/login` — returns JWT
 - Strategy: `@nestjs/passport` + `passport-local` (login) + `passport-jwt` (guard on all protected routes)
 - JWT payload: `{ sub: userId, email }`
 
 ### UsersModule
+
 - `GET /users/me` — current user profile
 - `PATCH /users/me` — update profile
 
 ### ConnectorsModule
+
 - `GET /connectors` — list available connector types
 - `GET /connectors/configs` — list user's connected apps
 - `POST /connectors/configs` — add a connector (triggers OAuth initiation)
@@ -181,6 +193,7 @@ A `ConnectorRegistry` (NestJS injectable) maps `source` strings to connector ins
 - `DELETE /connectors/configs/:id` — remove + delete associated tasks
 
 ### TasksModule
+
 - `GET /tasks` — list tasks (filter by status, source, fuzzyDeadline type, tags; paginated)
 - `GET /tasks/:id` — get single task
 - `POST /tasks` — create task (writes to source via connector, then mirrors locally)
@@ -193,6 +206,7 @@ A `ConnectorRegistry` (NestJS injectable) maps `source` strings to connector ins
 Write-through rule: if the remote mutation fails, the local record is not updated. Source is system of record.
 
 ### RemindersModule
+
 - NestJS `@Cron` job runs daily
 - Queries tasks with `fuzzyDeadline.remindEvery = "daily"` or `"weekly"` (weekly only on Mondays)
 - Emits a reminder notification (initially: console log + future email/push hook)
@@ -204,6 +218,7 @@ Write-through rule: if the remote mutation fails, the local record is not update
 No HTTP server. Pure background worker.
 
 ### SyncScheduler
+
 - NestJS `@Cron` job, configurable interval (default: every 15 minutes)
 - Fetches all enabled `ConnectorConfig` records
 - For each config:
@@ -215,6 +230,7 @@ No HTTP server. Pure background worker.
 - Runs configs concurrently with a concurrency limit (default: 5)
 
 ### TokenRefreshService (lives in `packages/connectors`)
+
 - Shared utility imported by both `apps/sync` and `apps/main`
 - Handles refresh, re-encryption, and saving updated tokens back to `ConnectorConfig`
 
@@ -224,11 +240,11 @@ No HTTP server. Pure background worker.
 
 Stored on `Task.fuzzyDeadline`. Never written to the source.
 
-| Type | Meaning | Default remind cadence |
-|---|---|---|
-| `this_week` | Due before end of current week | Daily |
-| `this_month` | Due before end of current month | Weekly |
-| `someday` | No urgency | null (no reminders) |
+| Type         | Meaning                         | Default remind cadence |
+| ------------ | ------------------------------- | ---------------------- |
+| `this_week`  | Due before end of current week  | Daily                  |
+| `this_month` | Due before end of current month | Weekly                 |
+| `someday`    | No urgency                      | null (no reminders)    |
 
 `RemindersModule` surfaces tasks based on cadence. In V1, "surfacing" means they appear at the top of `GET /tasks` when queried with `?surfaced=true`, and a log entry is written. Email/push notification integration is a future extension point.
 
@@ -257,6 +273,7 @@ Implemented as a separate `apps/cli` NestJS CLI app (using `@nestjs/cli` command
 Exposes a subset of the task API as MCP tools for Claude and other agents.
 
 **Tools:**
+
 - `list_tasks` — query tasks (filters: status, source, fuzzy type)
 - `complete_task` — mark a task done
 - `set_fuzzy_deadline` — set a fuzzy deadline on a task
@@ -269,12 +286,12 @@ Implemented using the official MCP SDK (`@modelcontextprotocol/sdk`). Auth via a
 
 ## Auth Summary
 
-| Layer | Mechanism |
-|---|---|
-| Web GUI / REST API | JWT via `@nestjs/passport` + `passport-jwt` |
-| CLI | Long-lived API token issued via `POST /auth/tokens`, stored in `~/.config/ctm/token` |
-| MCP server | Long-lived API token issued via `POST /auth/tokens`, stored in `~/.config/ctm/mcp-token` |
-| Connector OAuth | Per-user OAuth2 PKCE; tokens encrypted (AES-256) in `ConnectorConfig` |
+| Layer              | Mechanism                                                                                |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| Web GUI / REST API | JWT via `@nestjs/passport` + `passport-jwt`                                              |
+| CLI                | Long-lived API token issued via `POST /auth/tokens`, stored in `~/.config/ctm/token`     |
+| MCP server         | Long-lived API token issued via `POST /auth/tokens`, stored in `~/.config/ctm/mcp-token` |
+| Connector OAuth    | Per-user OAuth2 PKCE; tokens encrypted (AES-256) in `ConnectorConfig`                    |
 
 ---
 
@@ -315,6 +332,7 @@ Each app has its own `Dockerfile`. Turbo `dev` task starts all apps in watch mod
 ## V1 Scope Boundary
 
 In scope:
+
 - Full monorepo scaffold
 - `apps/main`: auth, users, connectors, tasks, reminders
 - `apps/sync`: polling sync worker
@@ -324,6 +342,7 @@ In scope:
 - `apps/web`: basic task list dashboard
 
 Out of scope for V1:
+
 - Email/push notifications (reminder hook exists, delivery TBD)
 - Task creation without a connected source
 - Real-time UI updates

@@ -12,17 +12,24 @@ Turborepo monorepo managed with **pnpm workspaces**.
 apps/
   main/             # NestJS REST API + auth server (primary backend)
   web/              # Vite + React SPA (served by apps/main in production)
-  docs/             # Docusaurus developer docs + Swagger/OpenAPI reference
+  docs/             # Docusaurus site — compiled user-facing docs + OpenAPI reference
+                    # (do NOT store internal markdown here)
 packages/
-  connectors/ # TaskConnector interface + Todoist + Google Tasks adapters
-  logger/     # Shared Pino logger
-  errors/     # Shared error types
-  http/       # Shared fetch wrapper
-  tsconfig/   # Shared TypeScript configs
-  config/     # Shared ESLint + Prettier config
+  connectors/       # TaskConnector interface + Todoist + Google Tasks adapters
+  logger/           # Shared Pino logger
+  errors/           # Shared error types
+  http/             # Shared fetch wrapper
+  tsconfig/         # Shared TypeScript configs
+  config/           # Shared oxlint config
 ```
 
-`apps/template-service` and `apps/web-app` have been deleted (legacy artifacts).
+**Internal planning files** (specs, implementation plans) live in `.claude/`:
+
+```
+.claude/
+  specs/    # Design specs
+  plans/    # Implementation plans
+```
 
 ## Common Commands
 
@@ -31,7 +38,7 @@ pnpm install                        # Install all workspace dependencies
 pnpm dev                            # Start all apps in dev mode (via Turbo)
 pnpm build                          # Build all apps
 pnpm lint                           # Run oxlint across workspace
-pnpm format                         # Run oxc formatter across workspace
+pnpm format                         # Run oxfmt across workspace
 pnpm test                           # Run all tests
 
 # Scoped to a single package
@@ -46,22 +53,20 @@ docker compose up        # Start all services + MongoDB
 docker compose up main   # Start only the main app + its deps
 ```
 
-The `docker-compose.yml` at the repo root defines dev services: `main`, and `mongodb`. Each app has a corresponding `Dockerfile`.
+The `docker-compose.yml` at the repo root defines dev services: `main`, `sync`, and `mongodb`. Each app has a corresponding `Dockerfile`.
 
 ## Tech Stack
 
-| Area                      | Choice                                                                |
-| ------------------------- | --------------------------------------------------------------------- |
-| Runtime                   | Node.js 24 LTS                                                        |
-| Package manager           | pnpm                                                                  |
-| Monorepo                  | Turborepo                                                             |
-| Backend framework         | NestJS with **Fastify adapter** (`@nestjs/platform-fastify`)          |
-| Database                  | MongoDB via Mongoose (`@nestjs/mongoose`)                             |
-| Frontend                  | Vite + React                                                          |
-| Docs                      | Docusaurus + `docusaurus-plugin-openapi-docs`                         |
-| Lint / Format             | ESLint + typescript-eslint, Prettier (via `@ctm/config`)              |
-
-> **Fastify adapter note:** If passport.js or a third-party middleware requires Express, swap by replacing `FastifyAdapter` with `ExpressAdapter` in `main.ts` — everything else stays the same.
+| Area              | Choice                                                       |
+| ----------------- | ------------------------------------------------------------ |
+| Runtime           | Node.js 24 LTS                                               |
+| Package manager   | pnpm                                                         |
+| Monorepo          | Turborepo                                                    |
+| Backend framework | NestJS with **Fastify adapter** (`@nestjs/platform-fastify`) |
+| Database          | MongoDB via Mongoose (`@nestjs/mongoose`)                    |
+| Frontend          | Vite + React                                                 |
+| Docs              | Docusaurus + `docusaurus-plugin-openapi-docs`                |
+| Lint / Format     | oxlint + oxfmt                                               |
 
 ## Architecture
 
@@ -69,54 +74,48 @@ The `docker-compose.yml` at the repo root defines dev services: `main`, and `mon
 
 NestJS application. Responsibilities:
 
-- User auth (JWT, registration/login)
-- Integration keys (API keys issued to third-party location providers)
+- User auth (JWT via `@nestjs/passport` + `passport-local` + `passport-jwt`)
+- Task aggregation API
+- Connector OAuth flow + token storage
+- API token issuance (for CLI and MCP)
 - Serving the Vite-built `apps/web` SPA in production
 
 Modules follow NestJS conventions: `*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.schema.ts` (Mongoose schemas).
+
+### apps/sync
+
+NestJS background worker. No HTTP server. Polls connected sources every 15 minutes, upserts tasks into MongoDB, refreshes OAuth tokens.
 
 ### apps/web
 
 Vite + React SPA. No SSR. Built output is served by `apps/main` in production.
 
-**Stack:** Vite 5 · React 18 · React Router v6 · Tailwind CSS v4 · TypeScript (strict, `moduleResolution: bundler`)
-
-**HTTP client** — `src/lib/api.ts` is a typed `fetch` wrapper. All API calls go through it:
-
-- Token stored in `localStorage` under key `fet_token`; `getToken`/`setToken`/`clearToken` helpers live alongside
-- `401` responses auto-redirect to `/login` and clear the token
-- All endpoint methods are fully typed against the shared `src/types/index.ts` interfaces
-
-**Auth state** — `src/context/AuthContext.tsx` provides `useAuth()` hook (`user`, `isLoading`, `login`, `logout`). On mount it calls `GET /api/me` to rehydrate from localStorage.
-
-**Routing** — `ProtectedRoute` wraps all dashboard routes; unauthenticated users redirect to `/login`. Route tree is declared in `src/App.tsx`.
-
-**Dev proxy** — `vite.config.ts` proxies `/api`, `/register`, `/login` to `http://localhost:3000` so no CORS config is needed during local development.
+**Stack:** Vite · React · React Router · Tailwind CSS v4 · TypeScript (strict, `moduleResolution: bundler`)
 
 ### apps/docs
 
-Docusaurus site. Source docs live in `docs/` markdown files. OpenAPI spec is generated from `apps/main` and rendered via `docusaurus-plugin-openapi-docs`.
+Docusaurus site. **This directory is for compiled/generated user-facing documentation only** — the OpenAPI reference is generated from `apps/main` and rendered via `docusaurus-plugin-openapi-docs`. Do not store internal markdown files here.
 
 ## Coding Conventions
 
 ### TypeScript
 
 - **Never use `any`.** Avoid `unknown` where possible. When the type is not statically known, perform runtime validation (e.g. Zod, class-validator, or a type guard) rather than casting.
-- **Explicit return types** — every function and method must have an explicit return type annotation. Enforced by ESLint.
+- **Explicit return types** — every function and method must have an explicit return type annotation.
 - **Object arguments** — when a function has two or more parameters, use a single object argument instead of positional params.
 - **Docstrings** — add a JSDoc comment to every public method on a class or interface, and every exported module-level function. Keep them concise: only document parameters, return value, or thrown errors when it genuinely adds information beyond the name.
-- **Trailing commas** — always include trailing commas on the last item of multi-line objects, arrays, and parameter lists (`trailingComma: "all"`). Enforced by Prettier.
+- **Trailing commas** — always include trailing commas on the last item of multi-line objects, arrays, and parameter lists.
 - **Logging** — always place a blank line before and after a log statement, and a blank line after a closing scope brace (where the formatter allows).
 
 ### Testing
 
-- **Co-locate test files** — place `*.spec.ts` files next to the source file they test (e.g. `src/auth/auth.spec.ts`). The vitest config picks up `src/**/*.spec.ts`; `tsconfig.build.json` excludes them from the production build.
+- **Co-locate test files** — place `*.spec.ts` files next to the source file they test. The vitest config picks up `src/**/*.spec.ts`; `tsconfig.build.json` excludes them from the production build.
 - **Integration tests use the real DB** — prefer hitting a real MongoDB instance over mocking. Test databases are configured in `vitest.setup.ts` per app.
 - **No cleanup after tests** — tests leave data in the DB. Use unique identifiers (e.g. `Date.now()`) to avoid collisions across runs.
 
 ### Auth
 
-Current auth is NestJS-native JWT (`@nestjs/jwt`) with a custom `JwtAuthGuard` — no Passport. Clerk is planned as a future replacement; do not introduce Passport in the meantime.
+App auth uses `@nestjs/passport` + `passport-local` (login) + `passport-jwt` (protected routes). Long-lived API tokens (for CLI and MCP) are issued via `POST /auth/tokens` and stored hashed in MongoDB.
 
 ### Git — Conventional Commits
 
@@ -126,17 +125,17 @@ All commit messages must follow [Conventional Commits](https://www.conventionalc
 <type>(<scope>): <description>
 
 types: feat | fix | chore | test | docs | refactor | style | perf | build | ci
-scope: optional, e.g. main | web | auth
+scope: optional, e.g. main | web | auth | connectors
 ```
-
-Examples: `feat(auth): add JWT refresh token`, `chore: migrate to pnpm`, `fix(my_feature): correct distance calculation`
 
 ## Environment Variables
 
-Key variables (see `.env.example` in each app for full list):
+Key variables (see `.env.example` for full list):
 
-| Variable       | Used by                          |
-| -------------- | -------------------------------- |
-| `MONGODB_URI`  | main,                            |
-| `JWT_SECRET`   | main                             |
-| `INTERNAL_KEY` | main (outbound) + (inbound auth) |
+| Variable                        | Used by    |
+| ------------------------------- | ---------- |
+| `MONGODB_URI`                   | main, sync |
+| `JWT_SECRET`                    | main       |
+| `ENCRYPTION_KEY`                | main, sync |
+| `TODOIST_CLIENT_ID` / `_SECRET` | main       |
+| `GOOGLE_CLIENT_ID` / `_SECRET`  | main       |

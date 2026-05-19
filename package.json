@@ -9,6 +9,8 @@
     "format": "turbo format"
   },
   "devDependencies": {
+    "oxfmt": "^0.51.0",
+    "oxlint": "^1.66.0",
     "turbo": "^2.5.0",
     "typescript": "^5.8.3"
   },
