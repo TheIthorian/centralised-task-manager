@@ -1,5 +1,5 @@
 {
-  "name": "@ctm/http",
+  "name": "@ctm/http-client",
   "version": "0.0.1",
   "private": true,
   "main": "dist/index.js",
@@ -12,10 +12,12 @@
     "dev": "tsc -p tsconfig.build.json --watch"
   },
   "dependencies": {
-    "@ctm/errors": "workspace:*"
+    "@ctm/errors": "workspace:*",
+    "axios": "^1.16.1"
   },
   "devDependencies": {
     "@ctm/tsconfig": "workspace:*",
+    "axios-mock-adapter": "^2.1.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.0"
   }

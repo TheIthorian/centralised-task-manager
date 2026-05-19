@@ -8,7 +8,7 @@
   "references": [
     { "path": "./packages/logger" },
     { "path": "./packages/errors" },
-    { "path": "./packages/http" },
+    { "path": "./packages/http-client" },
     { "path": "./packages/connectors" }
   ]
 }

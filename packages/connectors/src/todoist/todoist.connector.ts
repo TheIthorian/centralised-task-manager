@@ -1,4 +1,4 @@
-import { HttpClient } from "@ctm/http";
+import { HttpClient } from "@ctm/http-client";
 import type {
   CreateTaskDto,
   OAuthTokens,
