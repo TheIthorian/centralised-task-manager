@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { HttpClient } from '@ctm/http';
 import type { CreateTaskDto, OAuthTokens, RemoteTask, TaskConnector, UpdateTaskDto } from '../types.js';
 
@@ -38,10 +37,8 @@ export class GoogleTasksConnector implements TaskConnector {
 
     constructor(private readonly config: GoogleTasksConnectorConfig) {}
 
+    /** PKCE deferred to a future version — requires app-level verifier state management */
     getAuthUrl(userId: string): string {
-        const codeVerifier = crypto.randomBytes(32).toString('base64url');
-        const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
-
         const params = new URLSearchParams({
             client_id: this.config.clientId,
             redirect_uri: this.config.redirectUri,
@@ -49,8 +46,6 @@ export class GoogleTasksConnector implements TaskConnector {
             scope: 'https://www.googleapis.com/auth/tasks',
             access_type: 'offline',
             state: userId,
-            code_challenge: codeChallenge,
-            code_challenge_method: 'S256',
         });
 
         return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;

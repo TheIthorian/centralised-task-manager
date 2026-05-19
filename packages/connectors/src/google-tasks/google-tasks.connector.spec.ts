@@ -29,7 +29,7 @@ describe('GoogleTasksConnector', () => {
             expect(url).toContain('state=user-456');
             expect(url).toContain('scope=');
             expect(url).toContain('tasks');
-            expect(url).toContain('code_challenge');
+            expect(url).not.toContain('code_challenge');
         });
     });
 

@@ -43,7 +43,10 @@ export class TodoistConnector implements TaskConnector {
         return `https://todoist.com/oauth/authorize?${params.toString()}`;
     }
 
-    /** Exchange an authorization code for OAuth tokens. */
+    /**
+     * Todoist access tokens are long-lived (no expiry) and do not support refresh.
+     * refreshToken is stored as '' and refreshToken() is intentionally a no-op.
+     */
     async exchangeCode(code: string): Promise<OAuthTokens> {
         const response = await this.authHttp.post<TodoistTokenResponse>('/oauth/access_token', {
             client_id: this.config.clientId,
