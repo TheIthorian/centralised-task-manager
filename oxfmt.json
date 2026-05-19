@@ -1,4 +1,8 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "tabWidth": 4,
+  "singleQuote": true,
+  "printWidth": 100,
+  "trailingComma": "all",
   "ignorePatterns": ["dist/**", "node_modules/**", "*.d.ts"]
 }
