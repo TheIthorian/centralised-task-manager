@@ -1,5 +1,4 @@
 {
-  "extends": "@docusaurus/module-type-aliases",
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022", "DOM"],
@@ -9,7 +8,8 @@
     "strict": false,
     "noEmit": true,
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "types": ["@docusaurus/module-type-aliases"]
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }
