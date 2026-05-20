@@ -1,0 +1,9 @@
+{
+  "extends": "@ctm/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "vitest.config.ts", "vitest.setup.ts"]
+}
