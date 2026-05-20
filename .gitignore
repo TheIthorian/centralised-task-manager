@@ -1,9 +1,9 @@
 node_modules/
 dist/
 .turbo/
+!.env.test
 .env
 .env.*
 !.env.example
-!.env.test
 .DS_Store
 *.log
