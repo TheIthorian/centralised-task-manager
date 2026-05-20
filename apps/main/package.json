@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "dev": "tsc -p tsconfig.build.json --watch",
+    "dev": "tsx watch src/main.ts",
     "test": "vitest run",
     "lint": "oxlint src",
     "format": "oxfmt --config ../../oxfmt.json src",
