@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nb-yellow: #FFDE59;
+  --color-nb-black: #111111;
+  --color-nb-red: #FF3B30;
+  --color-nb-green: #34C759;
+  --color-nb-grey: #888888;
+
+  --shadow-nb: 3px 3px 0px var(--color-nb-black);
+  --shadow-nb-lg: 5px 5px 0px var(--color-nb-black);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+  background-color: #FFDE59;
+  margin: 0;
+}
