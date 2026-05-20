@@ -7,6 +7,15 @@ import { AppModule } from './app.module.js';
 async function bootstrap(): Promise<void> {
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
+
+    const corsOrigin = process.env['CORS_ORIGIN'] ?? '*';
+    app.enableCors({
+        origin: corsOrigin === '*' ? true : corsOrigin.split(',').map((o) => o.trim()),
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        credentials: corsOrigin !== '*',
+    });
+
     const port = process.env['PORT'] ?? 3000;
     await app.listen(port, '0.0.0.0');
 }
