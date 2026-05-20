@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Request, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, Patch, Body, Request, UseGuards, NotFoundException } from '@nestjs/common';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { UsersService } from './users.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
@@ -32,5 +32,12 @@ export class UsersController {
         const user = await this.users.update({ id: req.user.sub, dto });
 
         return { id: String(user._id), email: user.email };
+    }
+
+    /** Delete the current user's account permanently. */
+    @Delete('me')
+    @HttpCode(204)
+    async deleteMe(@Request() req: AuthRequest): Promise<void> {
+        await this.users.delete(req.user.sub);
     }
 }

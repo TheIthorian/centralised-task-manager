@@ -26,7 +26,7 @@ describe('OAuth endpoints', () => {
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { email, password } });
+        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'OAuth Tester', email, password } });
         const loginRes = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password } });
         jwt = JSON.parse(loginRes.body).accessToken;
     });

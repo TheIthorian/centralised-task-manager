@@ -46,7 +46,7 @@ describe('Well-known endpoints', () => {
     it('existing JWT auth still works with RS256 tokens', async () => {
         // Register + login to get a JWT
         const email = `wk+${Date.now()}@example.com`;
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { email, password: 'password123' } });
+        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Well-known Tester', email, password: 'password123' } });
         const loginRes = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
         const { accessToken } = JSON.parse(loginRes.body);
 

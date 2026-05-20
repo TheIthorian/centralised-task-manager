@@ -13,4 +13,6 @@ export const envSchema = Joi.object({
     REDIRECT_BASE_URL: Joi.string().default('http://localhost:3000'),
     RSA_PRIVATE_KEY: Joi.string().required(),
     RSA_PUBLIC_KEY: Joi.string().required(),
+    JWT_ACCESS_EXPIRES: Joi.string().default('15m'),
+    REFRESH_TOKEN_EXPIRES_DAYS: Joi.number().integer().min(1).default(30),
 });

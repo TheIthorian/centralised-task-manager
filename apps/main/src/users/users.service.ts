@@ -10,11 +10,11 @@ export class UsersService {
     constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
 
     /** Create a new user. Throws ConflictException if email already exists. */
-    async create({ email, password }: { email: string; password: string }): Promise<UserDocument> {
+    async create({ email, password, name = '' }: { email: string; password: string; name?: string }): Promise<UserDocument> {
         const passwordHash = await bcrypt.hash(password, 12);
 
         try {
-            return await this.userModel.create({ email, passwordHash });
+            return await this.userModel.create({ email, passwordHash, name });
         } catch (err: unknown) {
             if (isMongooseDuplicateError(err)) throw new ConflictException('Email already registered');
 
@@ -45,6 +45,11 @@ export class UsersService {
         if (!user) throw new NotFoundException('User not found');
 
         return user;
+    }
+
+    /** Permanently delete a user by id. */
+    async delete(id: string): Promise<void> {
+        await this.userModel.findByIdAndDelete(id);
     }
 }
 

@@ -18,7 +18,7 @@ describe('API token routes', () => {
         await app.getHttpAdapter().getInstance().ready();
 
         // register + login to get JWT
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { email, password: 'password123' } });
+        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'API Token Tester', email, password: 'password123' } });
         const loginRes = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
 
         jwt = JSON.parse(loginRes.body).accessToken;

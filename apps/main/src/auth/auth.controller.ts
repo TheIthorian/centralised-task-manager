@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from './auth.service.js';
+import { AuthService, type TokenPair } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
+import { RefreshDto } from './dto/refresh.dto.js';
 import { CreateTokenDto } from './dto/create-token.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
@@ -17,6 +18,8 @@ interface JwtRequest {
     user: JwtPayload;
 }
 
+type TokenResponse = TokenPair & { user: { id: string; email: string } };
+
 @Controller('auth')
 export class AuthController {
     constructor(
@@ -24,18 +27,25 @@ export class AuthController {
         private readonly apiTokens: ApiTokenService,
     ) {}
 
-    /** Register a new account. Returns a JWT. */
+    /** Register a new account. Returns token pair + user. */
     @Post('register')
-    async register(@Body() dto: RegisterDto): Promise<{ accessToken: string }> {
-        return this.auth.register({ email: dto.email, password: dto.password });
+    async register(@Body() dto: RegisterDto): Promise<TokenResponse> {
+        return this.auth.register({ email: dto.email, password: dto.password, name: dto.name });
     }
 
-    /** Login with email + password. Returns a JWT. */
+    /** Login with email + password. Returns token pair + user. */
     @Post('login')
     @HttpCode(200)
     @UseGuards(AuthGuard('local'))
-    login(@Request() req: AuthRequest): { accessToken: string } {
-        return this.auth.signToken(req.user);
+    async login(@Request() req: AuthRequest): Promise<TokenResponse> {
+        return this.auth.issueTokens(req.user);
+    }
+
+    /** Exchange a refresh token for a new token pair. */
+    @Post('refresh')
+    @HttpCode(200)
+    async refresh(@Body() dto: RefreshDto): Promise<TokenResponse> {
+        return this.auth.refreshTokens(dto.refreshToken);
     }
 
     /** Issue a new long-lived API token (for CLI/MCP). Raw token shown once. */

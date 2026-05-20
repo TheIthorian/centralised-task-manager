@@ -16,7 +16,7 @@ describe('GET /users/me + PATCH /users/me', () => {
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { email, password: 'password123' } });
+        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Users Tester', email, password: 'password123' } });
         const res = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
         jwt = JSON.parse(res.body).accessToken;
     });

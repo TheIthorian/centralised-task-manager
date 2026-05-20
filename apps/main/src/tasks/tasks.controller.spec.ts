@@ -79,7 +79,7 @@ describe('TasksModule', () => {
         await app.getHttpAdapter().getInstance().ready();
 
         // Register + login
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { email, password: 'password123' } });
+        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Tasks Tester', email, password: 'password123' } });
         const loginRes = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
 
         jwt = JSON.parse(loginRes.body).accessToken;
