@@ -14,7 +14,7 @@ export class ApiToken {
     @Prop({ required: true })
     label!: string;
 
-    @Prop({ default: null })
+    @Prop({ type: Date, default: null })
     lastUsedAt!: Date | null;
 }
 
