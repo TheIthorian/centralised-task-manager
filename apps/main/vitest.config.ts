@@ -8,5 +8,6 @@ export default defineConfig({
         environment: 'node',
         include: ['src/**/*.spec.ts'],
         setupFiles: ['./vitest.setup.ts'],
+        envFile: '.env.test',
     },
 });
