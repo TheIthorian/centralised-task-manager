@@ -18,7 +18,7 @@ import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
         PassportModule,
         JwtModule.registerAsync({
             inject: [ConfigService],
-            useFactory: (config: ConfigService): { secret: string; signOptions: { expiresIn: string } } => ({
+            useFactory: (config: ConfigService) => ({
                 secret: config.getOrThrow<string>('JWT_SECRET'),
                 signOptions: { expiresIn: '7d' },
             }),
