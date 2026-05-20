@@ -1,9 +1,17 @@
 import mongoose from 'mongoose';
 
 beforeAll(async () => {
-    await mongoose.connect(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test');
+    try {
+        await mongoose.connect(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test', {
+            serverSelectionTimeoutMS: 3000,
+        });
+    } catch {
+        // MongoDB not available — integration tests will be skipped or fail individually
+    }
 });
 
 afterAll(async () => {
-    await mongoose.disconnect();
+    if (mongoose.connection.readyState !== 0) {
+        await mongoose.disconnect();
+    }
 });

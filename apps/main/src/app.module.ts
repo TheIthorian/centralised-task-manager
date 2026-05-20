@@ -1,4 +1,14 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { envSchema } from './config/env.schema.js';
+import { DatabaseModule } from './database/database.module.js';
 
-@Module({ imports: [] })
+@Module({
+    imports: [
+        ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
+        ScheduleModule.forRoot(),
+        DatabaseModule,
+    ],
+})
 export class AppModule {}
