@@ -11,3 +11,4 @@ allowBuilds:
   core-js-pure: true
   esbuild: true
   postman-code-generators: false
+  sharp: true
