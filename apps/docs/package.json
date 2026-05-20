@@ -1,0 +1,32 @@
+{
+  "name": "@ctm/docs",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "docusaurus start",
+    "build": "docusaurus gen-api-docs all && docusaurus build",
+    "clean": "docusaurus clear",
+    "generate": "docusaurus gen-api-docs all",
+    "lint": "echo 'no lint'",
+    "format": "echo 'no format'"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.1",
+    "@docusaurus/preset-classic": "3.10.1",
+    "docusaurus-plugin-openapi-docs": "5.0.2",
+    "docusaurus-theme-openapi-docs": "5.0.2",
+    "prism-react-renderer": "^2.4.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.1",
+    "@docusaurus/types": "3.10.1",
+    "@types/react": "^18.3.23",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

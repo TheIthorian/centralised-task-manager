@@ -1,9 +1,16 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
+    "generate-openapi": {
+      "outputs": ["openapi.json"]
+    },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "build/**", ".docusaurus/**"]
+    },
+    "@ctm/docs#build": {
+      "dependsOn": ["@ctm/main#generate-openapi", "^build"],
+      "outputs": ["build/**", ".docusaurus/**"]
     },
     "test": {
       "dependsOn": ["^build"]
