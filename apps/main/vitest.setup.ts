@@ -1,4 +1,9 @@
+import { resolve } from 'path';
 import mongoose from 'mongoose';
+
+// Load .env.test into process.env so NestJS ConfigModule picks up RSA keys and
+// other test-only variables during module compilation.
+process.loadEnvFile(resolve(import.meta.dirname, '.env.test'));
 
 beforeAll(async () => {
     try {

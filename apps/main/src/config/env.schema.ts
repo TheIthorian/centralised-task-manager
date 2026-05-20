@@ -2,7 +2,7 @@ import Joi from 'joi';
 
 export const envSchema = Joi.object({
     MONGODB_URI: Joi.string().required(),
-    JWT_SECRET: Joi.string().min(32).required(),
+    JWT_SECRET: Joi.string().min(32).optional(),
     ENCRYPTION_KEY: Joi.string().hex().length(64).required(),
     PORT: Joi.number().default(3000),
     NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
@@ -11,4 +11,6 @@ export const envSchema = Joi.object({
     GOOGLE_CLIENT_ID: Joi.string().allow('').default(''),
     GOOGLE_CLIENT_SECRET: Joi.string().allow('').default(''),
     REDIRECT_BASE_URL: Joi.string().default('http://localhost:3000'),
+    RSA_PRIVATE_KEY: Joi.string().required(),
+    RSA_PUBLIC_KEY: Joi.string().required(),
 });

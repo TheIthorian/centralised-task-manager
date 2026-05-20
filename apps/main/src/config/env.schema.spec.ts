@@ -7,6 +7,8 @@ describe('envSchema', () => {
             MONGODB_URI: 'mongodb://localhost:27017/ctm',
             JWT_SECRET: 'a'.repeat(32),
             ENCRYPTION_KEY: 'a'.repeat(64),
+            RSA_PRIVATE_KEY: 'dGVzdA==',
+            RSA_PUBLIC_KEY: 'dGVzdA==',
         });
         expect(error).toBeUndefined();
     });

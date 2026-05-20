@@ -19,8 +19,9 @@ import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
         JwtModule.registerAsync({
             inject: [ConfigService],
             useFactory: (config: ConfigService) => ({
-                secret: config.getOrThrow<string>('JWT_SECRET'),
-                signOptions: { expiresIn: '7d' },
+                privateKey: Buffer.from(config.getOrThrow<string>('RSA_PRIVATE_KEY'), 'base64').toString('utf8'),
+                publicKey: Buffer.from(config.getOrThrow<string>('RSA_PUBLIC_KEY'), 'base64').toString('utf8'),
+                signOptions: { algorithm: 'RS256' as const, expiresIn: '7d' },
             }),
         }),
         MongooseModule.forFeature([{ name: ApiToken.name, schema: ApiTokenSchema }]),
