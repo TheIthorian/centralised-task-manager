@@ -29,6 +29,11 @@ export class ApiTokenService {
         if (result.deletedCount === 0) throw new NotFoundException('Token not found');
     }
 
+    /** Delete all API tokens for a user. Called on account deletion. */
+    async deleteAllByUserId(userId: string): Promise<void> {
+        await this.model.deleteMany({ userId: new Types.ObjectId(userId) });
+    }
+
     /** Validate a raw token. Returns the userId string if valid, null otherwise. Updates lastUsedAt. */
     async validate(rawToken: string): Promise<string | null> {
         const tokenHash = createHash('sha256').update(rawToken).digest('hex');

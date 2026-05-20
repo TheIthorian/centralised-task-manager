@@ -1,5 +1,7 @@
 import { Controller, Delete, Get, HttpCode, Patch, Body, Request, UseGuards, NotFoundException } from '@nestjs/common';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { AuthService } from '../auth/auth.service.js';
+import { ApiTokenService } from '../auth/api-token.service.js';
 import { UsersService } from './users.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
@@ -11,7 +13,11 @@ interface AuthRequest {
 @Controller('users')
 @UseGuards(CombinedAuthGuard)
 export class UsersController {
-    constructor(private readonly users: UsersService) {}
+    constructor(
+        private readonly users: UsersService,
+        private readonly auth: AuthService,
+        private readonly apiTokens: ApiTokenService,
+    ) {}
 
     /** Get the current user's profile. */
     @Get('me')
@@ -34,10 +40,17 @@ export class UsersController {
         return { id: String(user._id), email: user.email };
     }
 
-    /** Delete the current user's account permanently. */
+    /** Delete the current user's account and all associated data permanently. */
     @Delete('me')
     @HttpCode(204)
     async deleteMe(@Request() req: AuthRequest): Promise<void> {
-        await this.users.delete(req.user.sub);
+        const userId = req.user.sub;
+
+        await Promise.all([
+            this.auth.revokeAllRefreshTokens(userId),
+            this.apiTokens.deleteAllByUserId(userId),
+        ]);
+
+        await this.users.delete(userId);
     }
 }

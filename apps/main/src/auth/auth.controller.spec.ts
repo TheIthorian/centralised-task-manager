@@ -142,3 +142,53 @@ describe('POST /auth/refresh', () => {
         expect(secondRes.statusCode).toBe(401);
     });
 });
+
+describe('DELETE /users/me', () => {
+    let app: NestFastifyApplication;
+
+    beforeAll(async () => {
+        const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+        app = module.createNestApplication(new FastifyAdapter());
+        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        await app.init();
+        await app.getHttpAdapter().getInstance().ready();
+    });
+
+    afterAll(async () => {
+        await app.close();
+    });
+
+    it('returns 204 and invalidates the refresh token', async () => {
+        const email = `del-${Date.now()}@test.com`;
+        const password = 'password123';
+
+        // Register
+        const regRes = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Del User', email, password },
+        });
+
+        expect(regRes.statusCode).toBe(201);
+        const { refreshToken, accessToken } = JSON.parse(regRes.body) as { refreshToken: string; accessToken: string };
+
+        // Delete account using the access token
+        const deleteRes = await app.inject({
+            method: 'DELETE',
+            url: '/users/me',
+            headers: { authorization: `Bearer ${accessToken}` },
+        });
+
+        expect(deleteRes.statusCode).toBe(204);
+
+        // Refresh token must now be invalid (401)
+        const refreshRes = await app.inject({
+            method: 'POST',
+            url: '/auth/refresh',
+            payload: { refreshToken },
+        });
+
+        expect(refreshRes.statusCode).toBe(401);
+    });
+});

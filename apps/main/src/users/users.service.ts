@@ -1,13 +1,19 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, type UserDocument } from './schemas/user.schema.js';
+import { ConnectorConfig, type ConnectorConfigDocument } from '../connectors/schemas/connector-config.schema.js';
+import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 
 @Injectable()
 export class UsersService {
-    constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
+    constructor(
+        @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+        @InjectModel(ConnectorConfig.name) private readonly connectorConfigModel: Model<ConnectorConfigDocument>,
+        @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
+    ) {}
 
     /** Create a new user. Throws ConflictException if email already exists. */
     async create({ email, password, name = '' }: { email: string; password: string; name?: string }): Promise<UserDocument> {
@@ -47,9 +53,15 @@ export class UsersService {
         return user;
     }
 
-    /** Permanently delete a user by id. */
+    /** Permanently delete a user and all their associated data. */
     async delete(id: string): Promise<void> {
-        await this.userModel.findByIdAndDelete(id);
+        const userId = new Types.ObjectId(id);
+
+        await Promise.all([
+            this.userModel.findByIdAndDelete(id),
+            this.connectorConfigModel.deleteMany({ userId }),
+            this.taskModel.deleteMany({ userId }),
+        ]);
     }
 }
 
