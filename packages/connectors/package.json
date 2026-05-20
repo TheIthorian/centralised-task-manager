@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@ctm/errors": "workspace:*",
-    "@ctm/http-client": "workspace:*"
+    "axios": "^1.9.0"
   },
   "devDependencies": {
     "@ctm/tsconfig": "workspace:*",

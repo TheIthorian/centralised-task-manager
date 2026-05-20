@@ -1,11 +1,10 @@
+import axios, { type AxiosInstance } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { HttpClient } from '@ctm/http-client';
-
+import { ExternalServiceError } from '@ctm/errors';
 import type { OAuthTokens } from '../types.js';
 import { TodoistConnector } from './todoist.connector.js';
 
-vi.mock('@ctm/http-client', () => ({ HttpClient: vi.fn() }));
+vi.mock('axios');
 
 const config = {
     clientId: 'test_client_id',
@@ -32,26 +31,12 @@ describe('TodoistConnector', () => {
         mockPost = vi.fn();
         mockDelete = vi.fn();
 
-        // TodoistConnector creates two HttpClient instances: http (tasks API) then authHttp (auth API).
-        vi.mocked(HttpClient)
-            .mockImplementationOnce(
-                () =>
-                    ({
-                        get: mockGet,
-                        post: mockPost,
-                        patch: vi.fn(),
-                        delete: mockDelete,
-                    }) as unknown as HttpClient,
-            )
-            .mockImplementationOnce(
-                () =>
-                    ({
-                        get: vi.fn(),
-                        post: mockPost,
-                        patch: vi.fn(),
-                        delete: vi.fn(),
-                    }) as unknown as HttpClient,
-            );
+        // TodoistConnector creates two axios instances: http (tasks API) then authHttp (auth API).
+        vi.mocked(axios.create)
+            .mockReturnValueOnce({ get: mockGet, post: mockPost, delete: mockDelete } as unknown as AxiosInstance)
+            .mockReturnValueOnce({ post: mockPost } as unknown as AxiosInstance);
+
+        vi.mocked(axios.isAxiosError).mockReturnValue(false);
 
         connector = new TodoistConnector(config);
     });
@@ -69,17 +54,19 @@ describe('TodoistConnector', () => {
 
     describe('fetchTasks', () => {
         it('maps Todoist tasks to RemoteTask shape', async () => {
-            mockGet.mockResolvedValue([
-                {
-                    id: 'task-1',
-                    content: 'Buy milk',
-                    description: 'From the supermarket',
-                    is_completed: false,
-                    priority: 2,
-                    due: { date: '2026-06-01' },
-                    labels: ['shopping', 'errands'],
-                },
-            ]);
+            mockGet.mockResolvedValue({
+                data: [
+                    {
+                        id: 'task-1',
+                        content: 'Buy milk',
+                        description: 'From the supermarket',
+                        is_completed: false,
+                        priority: 2,
+                        due: { date: '2026-06-01' },
+                        labels: ['shopping', 'errands'],
+                    },
+                ],
+            });
 
             const tasks = await connector.fetchTasks(tokens);
 
@@ -96,17 +83,19 @@ describe('TodoistConnector', () => {
         });
 
         it('maps completed tasks to status "done"', async () => {
-            mockGet.mockResolvedValue([
-                {
-                    id: 't2',
-                    content: 'Done task',
-                    description: '',
-                    is_completed: true,
-                    priority: 1,
-                    due: null,
-                    labels: [],
-                },
-            ]);
+            mockGet.mockResolvedValue({
+                data: [
+                    {
+                        id: 't2',
+                        content: 'Done task',
+                        description: '',
+                        is_completed: true,
+                        priority: 1,
+                        due: null,
+                        labels: [],
+                    },
+                ],
+            });
 
             const tasks = await connector.fetchTasks(tokens);
 
@@ -114,17 +103,19 @@ describe('TodoistConnector', () => {
         });
 
         it('sets dueDate to null when no due date', async () => {
-            mockGet.mockResolvedValue([
-                {
-                    id: 't3',
-                    content: 'No due',
-                    description: '',
-                    is_completed: false,
-                    priority: 1,
-                    due: null,
-                    labels: [],
-                },
-            ]);
+            mockGet.mockResolvedValue({
+                data: [
+                    {
+                        id: 't3',
+                        content: 'No due',
+                        description: '',
+                        is_completed: false,
+                        priority: 1,
+                        due: null,
+                        labels: [],
+                    },
+                ],
+            });
 
             const tasks = await connector.fetchTasks(tokens);
 
@@ -134,28 +125,48 @@ describe('TodoistConnector', () => {
 
     describe('completeTask', () => {
         it('POSTs to the close endpoint with the task id', async () => {
-            mockPost.mockResolvedValue(undefined);
+            mockPost.mockResolvedValue({ data: undefined });
 
             await connector.completeTask(tokens, 'task-1');
 
             expect(mockPost).toHaveBeenCalledWith(
                 '/tasks/task-1/close',
                 {},
-                expect.objectContaining({ Authorization: expect.stringContaining('Bearer') }),
+                expect.objectContaining({
+                    headers: expect.objectContaining({ Authorization: 'Bearer test_access_token' }),
+                }),
             );
         });
     });
 
     describe('deleteTask', () => {
         it('sends DELETE to the task endpoint', async () => {
-            mockDelete.mockResolvedValue(undefined);
+            mockDelete.mockResolvedValue({ data: undefined });
 
             await connector.deleteTask(tokens, 'task-1');
 
             expect(mockDelete).toHaveBeenCalledWith(
                 '/tasks/task-1',
-                expect.objectContaining({ Authorization: expect.stringContaining('Bearer') }),
+                expect.objectContaining({
+                    headers: expect.objectContaining({ Authorization: 'Bearer test_access_token' }),
+                }),
             );
+        });
+    });
+
+    describe('error handling', () => {
+        it('wraps AxiosError as ExternalServiceError', async () => {
+            vi.mocked(axios.isAxiosError).mockReturnValue(true);
+            mockGet.mockRejectedValue({ isAxiosError: true, response: { status: 429, data: 'rate limited' } });
+
+            await expect(connector.fetchTasks(tokens)).rejects.toThrow(ExternalServiceError);
+        });
+
+        it('rethrows non-axios errors unchanged', async () => {
+            vi.mocked(axios.isAxiosError).mockReturnValue(false);
+            mockGet.mockRejectedValue(new TypeError('network fail'));
+
+            await expect(connector.fetchTasks(tokens)).rejects.toThrow(TypeError);
         });
     });
 });
