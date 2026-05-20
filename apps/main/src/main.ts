@@ -11,9 +11,9 @@ async function bootstrap(): Promise<void> {
     const corsOrigin = process.env['CORS_ORIGIN'] ?? '*';
     app.enableCors({
         origin: corsOrigin === '*' ? true : corsOrigin.split(',').map((o) => o.trim()),
-        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: corsOrigin !== '*',
+        // allowedHeaders intentionally omitted — @fastify/cors mirrors
+        // Access-Control-Request-Headers from the preflight automatically
     });
 
     const port = process.env['PORT'] ?? 3000;

@@ -1,9 +1,23 @@
 import { getClient } from './client.js';
 import type { TaskDto, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto, TaskFilter } from './types.js';
 
+/** Map a frontend TaskFilter to backend query params. */
+function filterToParams(filter: TaskFilter): Record<string, string> {
+    switch (filter) {
+        case 'done':
+            return { status: 'done' };
+        case 'today':
+        case 'upcoming':
+            return { status: 'open' };
+        case 'all':
+        default:
+            return {};
+    }
+}
+
 /** List tasks, optionally filtered by status. */
 export async function listTasks(filter: TaskFilter = 'all'): Promise<TaskDto[]> {
-    const { data } = await getClient().get<TaskDto[]>('/tasks', { params: { filter } });
+    const { data } = await getClient().get<TaskDto[]>('/tasks', { params: filterToParams(filter) });
 
     return data;
 }

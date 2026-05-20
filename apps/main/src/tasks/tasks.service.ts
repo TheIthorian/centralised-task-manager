@@ -9,6 +9,9 @@ import type { UpdateTaskDto } from './dto/update-task.dto.js';
 import type { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
 import type { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 
+/** Source name reserved for tasks stored only in CTM (no external connector). */
+const LOCAL_SOURCE = 'local';
+
 @Injectable()
 export class TasksService {
     constructor(
@@ -51,8 +54,24 @@ export class TasksService {
         return task;
     }
 
-    /** Create a task via write-through: call connector, then persist locally. */
+    /** Create a task via write-through: call connector, then persist locally.
+     *  When source is 'local', skip the connector and store the task directly in CTM. */
     async create({ userId, dto }: { userId: string; dto: CreateTaskDto }): Promise<TaskDocument> {
+        if (dto.source === LOCAL_SOURCE) {
+            return this.taskModel.create({
+                userId: new Types.ObjectId(userId),
+                source: LOCAL_SOURCE,
+                sourceId: new Types.ObjectId().toHexString(),
+                title: dto.title,
+                description: dto.description,
+                status: 'open',
+                priority: dto.priority ?? 3,
+                tags: [],
+                sourceDueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+                syncedAt: new Date(),
+            });
+        }
+
         const tokens = await this.connectors.getDecryptedTokens({ userId, source: dto.source });
         const connector = this.registry.get(dto.source);
         const remote = await connector.createTask(tokens, {
@@ -76,9 +95,25 @@ export class TasksService {
         });
     }
 
-    /** Update a task via write-through: call connector, then update locally. */
+    /** Update a task via write-through: call connector, then update locally.
+     *  When source is 'local', skip the connector and update directly in CTM. */
     async update({ taskId, userId, dto }: { taskId: string; userId: string; dto: UpdateTaskDto }): Promise<TaskDocument> {
         const task = await this.findOne({ taskId, userId });
+
+        if (task.source === LOCAL_SOURCE) {
+            return this.taskModel.findByIdAndUpdate(
+                taskId,
+                {
+                    ...(dto.title !== undefined && { title: dto.title }),
+                    ...(dto.description !== undefined && { description: dto.description }),
+                    ...(dto.priority !== undefined && { priority: dto.priority }),
+                    ...(dto.dueDate !== undefined && { sourceDueDate: new Date(dto.dueDate) }),
+                    ...(dto.tags !== undefined && { tags: dto.tags }),
+                },
+                { new: true },
+            ) as Promise<TaskDocument>;
+        }
+
         const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
         const connector = this.registry.get(task.source);
         const remote = await connector.updateTask(tokens, task.sourceId, {
@@ -102,22 +137,31 @@ export class TasksService {
         ) as Promise<TaskDocument>;
     }
 
-    /** Mark a task complete via write-through. */
+    /** Mark a task complete via write-through.
+     *  When source is 'local', skip the connector and update directly in CTM. */
     async complete({ taskId, userId }: { taskId: string; userId: string }): Promise<TaskDocument> {
         const task = await this.findOne({ taskId, userId });
-        const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
-        const connector = this.registry.get(task.source);
-        await connector.completeTask(tokens, task.sourceId);
+
+        if (task.source !== LOCAL_SOURCE) {
+            const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
+            const connector = this.registry.get(task.source);
+            await connector.completeTask(tokens, task.sourceId);
+        }
 
         return this.taskModel.findByIdAndUpdate(taskId, { status: 'done', syncedAt: new Date() }, { new: true }) as Promise<TaskDocument>;
     }
 
-    /** Delete a task via write-through. */
+    /** Delete a task via write-through.
+     *  When source is 'local', skip the connector and delete directly from CTM. */
     async remove({ taskId, userId }: { taskId: string; userId: string }): Promise<void> {
         const task = await this.findOne({ taskId, userId });
-        const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
-        const connector = this.registry.get(task.source);
-        await connector.deleteTask(tokens, task.sourceId);
+
+        if (task.source !== LOCAL_SOURCE) {
+            const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
+            const connector = this.registry.get(task.source);
+            await connector.deleteTask(tokens, task.sourceId);
+        }
+
         await this.taskModel.deleteOne({ _id: taskId });
     }
 
