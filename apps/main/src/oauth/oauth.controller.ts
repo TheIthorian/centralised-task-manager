@@ -10,6 +10,7 @@ import {
     UseGuards,
     Request,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { OAuthService } from './oauth.service.js';
@@ -32,6 +33,7 @@ interface TokenBody {
     code_verifier?: string;
 }
 
+@ApiTags('OAuth 2.0')
 @Controller('oauth')
 export class OAuthController {
     constructor(private readonly oauth: OAuthService) {}
@@ -40,6 +42,7 @@ export class OAuthController {
      * Authorization endpoint — shows login form or issues auth code.
      * GET: renders login HTML. POST: validates credentials, redirects with code.
      */
+    @ApiExcludeEndpoint()
     @Get('authorize')
     authorizeGet(@Query() query: AuthorizeQuery, @Res() res: FastifyReply): void {
         if (query.response_type !== 'code') {
@@ -91,6 +94,7 @@ export class OAuthController {
     /**
      * Authorization endpoint (form POST) — validates credentials and redirects with code.
      */
+    @ApiExcludeEndpoint()
     @Post('authorize')
     @HttpCode(302)
     async authorizePost(
@@ -120,6 +124,7 @@ export class OAuthController {
      * Token endpoint — exchanges authorization code for access_token + id_token.
      * Supports grant_type: authorization_code.
      */
+    @ApiOperation({ summary: 'Exchange authorization code for tokens', description: 'Supports `grant_type=authorization_code` with PKCE (`code_verifier`).' })
     @Post('token')
     @HttpCode(200)
     async token(@Body() body: TokenBody): Promise<object> {
@@ -142,6 +147,7 @@ export class OAuthController {
      * UserInfo endpoint — returns OIDC claims for the authenticated user.
      * Accepts the access_token issued by this server (JWT RS256).
      */
+    @ApiOperation({ summary: 'Get OIDC claims for the authenticated user' })
     @Get('userinfo')
     @UseGuards(CombinedAuthGuard)
     async userinfo(@Request() req: { user: JwtPayload }): Promise<object> {
