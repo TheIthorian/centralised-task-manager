@@ -81,7 +81,7 @@ export function TasksPage(): React.JSX.Element {
                 <TaskFilters active={filter} onChange={(f) => setSearchParams({ filter: f })} />
 
                 <AddTaskInline
-                    onAdd={(dto) => addMutation.mutateAsync(dto)}
+                    onAdd={async (dto) => { await addMutation.mutateAsync(dto); }}
                     isPending={addMutation.isPending}
                 />
 
@@ -108,8 +108,8 @@ export function TasksPage(): React.JSX.Element {
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}
-                onSave={(id, dto) => saveMutation.mutateAsync({ id, dto })}
-                onDelete={(id) => deleteMutation.mutateAsync(id)}
+                onSave={async (id, dto) => { await saveMutation.mutateAsync({ id, dto }); }}
+                onDelete={async (id) => { await deleteMutation.mutateAsync(id); }}
                 isSaving={saveMutation.isPending}
                 isDeleting={deleteMutation.isPending}
             />
