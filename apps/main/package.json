@@ -15,6 +15,7 @@
     "@ctm/connectors": "workspace:*",
     "@ctm/errors": "workspace:*",
     "@ctm/logger": "workspace:*",
+    "@fastify/cors": "^11.2.0",
     "@fastify/formbody": "^8.0.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
