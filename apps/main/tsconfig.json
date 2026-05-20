@@ -6,7 +6,6 @@
   },
   "include": ["src"],
   "ts-node": {
-    "swc": true,
-    "esm": true
+    "swc": true
   }
 }
