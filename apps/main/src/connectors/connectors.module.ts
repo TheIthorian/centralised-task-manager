@@ -45,6 +45,6 @@ import { UsersModule } from '../users/users.module.js';
             },
         },
     ],
-    exports: [ConnectorsService, EncryptionService],
+    exports: [ConnectorsService, EncryptionService, ConnectorRegistry],
 })
 export class ConnectorsModule {}
