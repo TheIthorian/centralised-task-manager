@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ConnectorsModule } from './connectors/connectors.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
+import { RemindersModule } from './reminders/reminders.module.js';
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { TasksModule } from './tasks/tasks.module.js';
         AuthModule,
         ConnectorsModule,
         TasksModule,
+        RemindersModule,
     ],
 })
 export class AppModule {}
