@@ -9,6 +9,7 @@
     { "path": "./packages/logger" },
     { "path": "./packages/errors" },
     { "path": "./packages/http-client" },
-    { "path": "./packages/connectors" }
+    { "path": "./packages/connectors" },
+    { "path": "apps/main" }
   ]
 }
