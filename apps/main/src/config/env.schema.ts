@@ -6,4 +6,9 @@ export const envSchema = Joi.object({
     ENCRYPTION_KEY: Joi.string().hex().length(64).required(),
     PORT: Joi.number().default(3000),
     NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+    TODOIST_CLIENT_ID: Joi.string().allow('').default(''),
+    TODOIST_CLIENT_SECRET: Joi.string().allow('').default(''),
+    GOOGLE_CLIENT_ID: Joi.string().allow('').default(''),
+    GOOGLE_CLIENT_SECRET: Joi.string().allow('').default(''),
+    REDIRECT_BASE_URL: Joi.string().default('http://localhost:3000'),
 });

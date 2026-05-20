@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { ConnectorsModule } from './connectors/connectors.module.js';
 
 @Module({
     imports: [
@@ -11,6 +12,7 @@ import { AuthModule } from './auth/auth.module.js';
         ScheduleModule.forRoot(),
         DatabaseModule,
         AuthModule,
+        ConnectorsModule,
     ],
 })
 export class AppModule {}

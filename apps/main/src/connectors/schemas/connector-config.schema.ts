@@ -23,10 +23,10 @@ export class ConnectorConfig {
     @Prop({ type: Object, default: {} })
     settings!: Record<string, unknown>;
 
-    @Prop({ default: null })
+    @Prop({ type: Date, default: null })
     lastSyncedAt!: Date | null;
 
-    @Prop({ default: null })
+    @Prop({ type: String, default: null })
     lastError!: string | null;
 
     @Prop({ default: true })
