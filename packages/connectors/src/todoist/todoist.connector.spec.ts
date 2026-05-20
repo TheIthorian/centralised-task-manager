@@ -22,6 +22,7 @@ describe('TodoistConnector', () => {
     let connector: TodoistConnector;
     let mockGet: ReturnType<typeof vi.fn>;
     let mockPost: ReturnType<typeof vi.fn>;
+    let mockAuthPost: ReturnType<typeof vi.fn>;
     let mockDelete: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
@@ -29,12 +30,13 @@ describe('TodoistConnector', () => {
 
         mockGet = vi.fn();
         mockPost = vi.fn();
+        mockAuthPost = vi.fn();
         mockDelete = vi.fn();
 
         // TodoistConnector creates two axios instances: http (tasks API) then authHttp (auth API).
         vi.mocked(axios.create)
             .mockReturnValueOnce({ get: mockGet, post: mockPost, delete: mockDelete } as unknown as AxiosInstance)
-            .mockReturnValueOnce({ post: mockPost } as unknown as AxiosInstance);
+            .mockReturnValueOnce({ post: mockAuthPost } as unknown as AxiosInstance);
 
         vi.mocked(axios.isAxiosError).mockReturnValue(false);
 
@@ -120,6 +122,33 @@ describe('TodoistConnector', () => {
             const tasks = await connector.fetchTasks(tokens);
 
             expect(tasks[0].dueDate).toBeNull();
+        });
+    });
+
+    describe('createTask', () => {
+        it('POSTs task fields to /tasks', async () => {
+            mockPost.mockResolvedValue({ data: { id: 'new-1', content: 'Buy coffee', description: '', is_completed: false, priority: 2, due: null, labels: [] } });
+            const task = await connector.createTask(tokens, { title: 'Buy coffee', priority: 2 });
+            expect(task.sourceId).toBe('new-1');
+            expect(task.title).toBe('Buy coffee');
+            expect(mockPost).toHaveBeenCalledWith(
+                '/tasks',
+                expect.objectContaining({ content: 'Buy coffee', priority: 2 }),
+                expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer test_access_token' }) }),
+            );
+        });
+    });
+
+    describe('updateTask', () => {
+        it('POSTs updated fields to /tasks/:id', async () => {
+            mockPost.mockResolvedValue({ data: { id: 'task-1', content: 'Updated', description: '', is_completed: false, priority: 1, due: null, labels: [] } });
+            const task = await connector.updateTask(tokens, 'task-1', { title: 'Updated' });
+            expect(task.title).toBe('Updated');
+            expect(mockPost).toHaveBeenCalledWith(
+                '/tasks/task-1',
+                expect.objectContaining({ content: 'Updated' }),
+                expect.anything(),
+            );
         });
     });
 

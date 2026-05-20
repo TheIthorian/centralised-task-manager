@@ -159,7 +159,7 @@ export class GoogleTasksConnector implements TaskConnector {
     /** Mark a task as completed. */
     async completeTask(tokens: OAuthTokens, sourceId: string): Promise<void> {
         const [listId, taskId] = this.splitSourceId(sourceId);
-        await this.call<GoogleTask>(() =>
+        await this.call<unknown>(() =>
             this.http.patch(
                 `/lists/${listId}/tasks/${taskId}`,
                 { status: 'completed' },
@@ -185,7 +185,7 @@ export class GoogleTasksConnector implements TaskConnector {
             }),
         );
 
-        if (!items.length) throw new Error('No Google Task lists found');
+        if (!items.length) throw new ExternalServiceError(this.source, 'No Google Task lists found');
 
         return items[0].id;
     }

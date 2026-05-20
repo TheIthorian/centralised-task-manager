@@ -105,6 +105,7 @@ export class TodoistConnector implements TaskConnector {
 
     /** Update an existing task in Todoist. */
     async updateTask(tokens: OAuthTokens, sourceId: string, patch: UpdateTaskDto): Promise<RemoteTask> {
+        // Todoist REST v2 uses POST (not PATCH) for task updates
         const updated = await this.call<TodoistTask>(() =>
             this.http.post(
                 `/tasks/${sourceId}`,
@@ -162,7 +163,7 @@ export class TodoistConnector implements TaskConnector {
         return {
             sourceId: task.id,
             title: task.content,
-            description: task.description || null,
+            description: task.description !== '' ? task.description : null,
             status: task.is_completed ? 'done' : 'open',
             priority: task.priority,
             dueDate: task.due ? new Date(task.due.date) : null,

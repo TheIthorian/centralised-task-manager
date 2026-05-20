@@ -119,6 +119,34 @@ describe('GoogleTasksConnector', () => {
         });
     });
 
+    describe('createTask', () => {
+        it('GETs lists then POSTs task to first list', async () => {
+            mockGet.mockResolvedValue({ data: { items: [{ id: 'list-1', title: 'My Tasks' }] } });
+            mockPost.mockResolvedValue({ data: { id: 'task-new', title: 'New task', status: 'needsAction' } });
+            const task = await connector.createTask(tokens, { title: 'New task' });
+            expect(task.sourceId).toBe('list-1:task-new');
+            expect(task.title).toBe('New task');
+            expect(mockPost).toHaveBeenCalledWith(
+                '/lists/list-1/tasks',
+                expect.objectContaining({ title: 'New task' }),
+                expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer google_access_token' }) }),
+            );
+        });
+    });
+
+    describe('updateTask', () => {
+        it('PATCHes task fields', async () => {
+            mockPatch.mockResolvedValue({ data: { id: 'task-1', title: 'Updated', status: 'needsAction' } });
+            const task = await connector.updateTask(tokens, 'list-1:task-1', { title: 'Updated' });
+            expect(task.title).toBe('Updated');
+            expect(mockPatch).toHaveBeenCalledWith(
+                '/lists/list-1/tasks/task-1',
+                expect.objectContaining({ title: 'Updated' }),
+                expect.anything(),
+            );
+        });
+    });
+
     describe('completeTask', () => {
         it('PATCHes status to completed using list:task sourceId', async () => {
             mockPatch.mockResolvedValue({ data: { id: 'gtask-1', title: 'Done', status: 'completed' } });
