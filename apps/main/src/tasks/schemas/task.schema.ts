@@ -22,19 +22,19 @@ export class Task {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     userId!: Types.ObjectId;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     source!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     sourceId!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     title!: string;
 
     @Prop({ type: String, default: null })
     description!: string | null;
 
-    @Prop({ required: true, enum: ['open', 'done', 'archived'], default: 'open' })
+    @Prop({ type: String, required: true, enum: ['open', 'done', 'archived'], default: 'open' })
     status!: 'open' | 'done' | 'archived';
 
     @Prop({ type: Number, enum: [1, 2, 3, 4], default: null })
@@ -49,7 +49,7 @@ export class Task {
     @Prop({ type: FuzzyDeadlineSchema, default: null })
     fuzzyDeadline!: FuzzyDeadline | null;
 
-    @Prop({ required: true })
+    @Prop({ type: Date, required: true })
     syncedAt!: Date;
 }
 

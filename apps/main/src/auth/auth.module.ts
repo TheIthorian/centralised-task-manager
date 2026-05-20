@@ -22,7 +22,7 @@ import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
             useFactory: (config: ConfigService) => ({
                 privateKey: Buffer.from(config.getOrThrow<string>('RSA_PRIVATE_KEY'), 'base64').toString('utf8'),
                 publicKey: Buffer.from(config.getOrThrow<string>('RSA_PUBLIC_KEY'), 'base64').toString('utf8'),
-                signOptions: { algorithm: 'RS256' as const, expiresIn: config.get<string>('JWT_ACCESS_EXPIRES', '15m') },
+                signOptions: { algorithm: 'RS256' as const, expiresIn: config.get('JWT_ACCESS_EXPIRES', '15m') as `${number}${'s' | 'm' | 'h' | 'd'}` },
             }),
         }),
         MongooseModule.forFeature([

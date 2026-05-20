@@ -5,13 +5,13 @@ export type RefreshTokenDocument = HydratedDocument<RefreshToken>;
 
 @Schema({ timestamps: true })
 export class RefreshToken {
-    @Prop({ required: true, index: true })
+    @Prop({ type: String, required: true, index: true })
     tokenHash!: string;
 
-    @Prop({ required: true, index: true })
+    @Prop({ type: String, required: true, index: true })
     userId!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: Date, required: true })
     expiresAt!: Date;
 }
 

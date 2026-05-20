@@ -8,10 +8,10 @@ export class ApiToken {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     userId!: Types.ObjectId;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     tokenHash!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     label!: string;
 
     @Prop({ type: Date, default: null })

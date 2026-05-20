@@ -5,25 +5,25 @@ export type AuthCodeDocument = HydratedDocument<AuthCode>;
 
 @Schema({ timestamps: true })
 export class AuthCode {
-    @Prop({ required: true, unique: true })
+    @Prop({ type: String, required: true, unique: true })
     code!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     userId!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     redirectUri!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     codeChallenge!: string;
 
-    @Prop({ required: true, default: 'S256' })
+    @Prop({ type: String, required: true, default: 'S256' })
     codeChallengeMethod!: string;
 
     @Prop({ type: [String], default: ['openid'] })
     scopes!: string[];
 
-    @Prop({ required: true })
+    @Prop({ type: Date, required: true })
     expiresAt!: Date;
 }
 

@@ -8,16 +8,16 @@ export class ConnectorConfig {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     userId!: Types.ObjectId;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     source!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: String, required: true })
     accessToken!: string;
 
-    @Prop({ default: '' })
+    @Prop({ type: String, default: '' })
     refreshToken!: string;
 
-    @Prop({ required: true })
+    @Prop({ type: Date, required: true })
     tokenExpiresAt!: Date;
 
     @Prop({ type: Object, default: {} })
@@ -29,7 +29,7 @@ export class ConnectorConfig {
     @Prop({ type: String, default: null })
     lastError!: string | null;
 
-    @Prop({ default: true })
+    @Prop({ type: Boolean, default: true })
     enabled!: boolean;
 }
 
