@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nb-yellow: #FFDE59;
+  --color-nb-black: #111111;
+  --color-nb-red: #FF3B30;
+  --color-nb-green: #34C759;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
