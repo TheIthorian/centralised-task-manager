@@ -1,8 +1,9 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, type UserDocument } from './schemas/user.schema.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +30,21 @@ export class UsersService {
     /** Find a user by id. Returns null if not found. */
     async findById(id: string): Promise<UserDocument | null> {
         return this.userModel.findById(id);
+    }
+
+    /** Update email and/or password for a user. Throws NotFoundException if user not found. */
+    async update({ id, dto }: { id: string; dto: UpdateUserDto }): Promise<UserDocument> {
+        const patch: Partial<{ email: string; passwordHash: string }> = {};
+
+        if (dto.email) patch.email = dto.email;
+
+        if (dto.password) patch.passwordHash = await bcrypt.hash(dto.password, 12);
+
+        const user = await this.userModel.findByIdAndUpdate(id, patch, { new: true });
+
+        if (!user) throw new NotFoundException('User not found');
+
+        return user;
     }
 }
 

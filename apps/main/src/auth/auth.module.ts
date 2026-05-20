@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -14,7 +14,7 @@ import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
 
 @Module({
     imports: [
-        UsersModule,
+        forwardRef(() => UsersModule),
         PassportModule,
         JwtModule.registerAsync({
             inject: [ConfigService],
