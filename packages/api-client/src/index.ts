@@ -1,4 +1,4 @@
-export { initClient, getClient } from './client.js';
+export { initClient, getClient, tokenStore } from './client.js';
 export { login, register, refresh } from './auth.js';
 export { listTasks, createTask, updateTask, deleteTask, setFuzzyDeadline } from './tasks.js';
 export { listConnectors, getConnectorAuthUrl, disconnectConnector } from './connectors.js';

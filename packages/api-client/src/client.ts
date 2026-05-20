@@ -1,4 +1,26 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
+import Cookies from 'js-cookie';
+
+const ACCESS_TOKEN_KEY = 'ctm_access_token';
+const REFRESH_TOKEN_KEY = 'ctm_refresh_token';
+const USER_KEY = 'ctm_user';
+
+/** Read/write helpers so the rest of the package doesn't touch cookies directly. */
+export const tokenStore = {
+    getAccess: (): string | null => Cookies.get(ACCESS_TOKEN_KEY) ?? null,
+    getRefresh: (): string | null => Cookies.get(REFRESH_TOKEN_KEY) ?? null,
+    /** Persist a new access + refresh token pair to cookies. */
+    set: (accessToken: string, refreshToken: string): void => {
+        Cookies.set(ACCESS_TOKEN_KEY, accessToken, { sameSite: 'strict' });
+        Cookies.set(REFRESH_TOKEN_KEY, refreshToken, { sameSite: 'strict' });
+    },
+    /** Remove all auth cookies (used on logout / auth failure). */
+    clear: (): void => {
+        Cookies.remove(ACCESS_TOKEN_KEY);
+        Cookies.remove(REFRESH_TOKEN_KEY);
+        Cookies.remove(USER_KEY);
+    },
+};
 
 interface ExtendedConfig extends InternalAxiosRequestConfig {
     _retry?: boolean;
@@ -32,7 +54,7 @@ function createClient(baseURL: string, onAuthFailure: () => void): AxiosInstance
     const instance = axios.create({ baseURL });
 
     instance.interceptors.request.use((config) => {
-        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('ctm_access_token') : null;
+        const token = tokenStore.getAccess();
 
         if (token) config.headers.Authorization = `Bearer ${token}`;
 
@@ -48,8 +70,7 @@ function createClient(baseURL: string, onAuthFailure: () => void): AxiosInstance
 
             if (error.response?.status === 401 && config && !config._retry) {
                 config._retry = true;
-                const refreshToken =
-                    typeof localStorage !== 'undefined' ? localStorage.getItem('ctm_refresh_token') : null;
+                const refreshToken = tokenStore.getRefresh();
 
                 if (refreshToken) {
                     try {
@@ -58,15 +79,12 @@ function createClient(baseURL: string, onAuthFailure: () => void): AxiosInstance
                             refreshToken: string;
                         }>(`${baseURL}/auth/refresh`, { refreshToken });
 
-                        localStorage.setItem('ctm_access_token', data.accessToken);
-                        localStorage.setItem('ctm_refresh_token', data.refreshToken);
+                        tokenStore.set(data.accessToken, data.refreshToken);
                         config.headers.Authorization = `Bearer ${data.accessToken}`;
 
                         return instance(config);
                     } catch {
-                        localStorage.removeItem('ctm_access_token');
-                        localStorage.removeItem('ctm_refresh_token');
-                        localStorage.removeItem('ctm_user');
+                        tokenStore.clear();
                         onAuthFailure();
                     }
                 }
