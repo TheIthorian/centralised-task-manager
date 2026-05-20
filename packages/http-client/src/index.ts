@@ -55,12 +55,7 @@ export class HttpClient {
                 const url = `${String(this.client.defaults.baseURL)}${config.url}`;
                 const status = error.response?.status ?? 0;
                 const body = error.response?.data;
-                const text =
-                    typeof body === 'string'
-                        ? body
-                        : body !== undefined
-                          ? JSON.stringify(body)
-                          : '';
+                const text = typeof body === 'string' ? body : body !== undefined ? JSON.stringify(body) : '';
 
                 throw new ExternalServiceError(url, `HTTP ${status}: ${text}`);
             }

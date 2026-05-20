@@ -42,20 +42,23 @@ export class ConnectorsController {
 
     /** Get the OAuth URL for a connector source. */
     @ApiBearerAuth('jwt')
-    @ApiOperation({ summary: 'Get OAuth URL to connect a source', description: 'Returns a redirect URL the user must visit to authorise CTM with the external service.' })
+    @ApiOperation({
+        summary: 'Get OAuth URL to connect a source',
+        description: 'Returns a redirect URL the user must visit to authorise CTM with the external service.',
+    })
     @Post('configs')
     @UseGuards(CombinedAuthGuard)
-    async getOAuthUrl(
-        @Request() req: AuthRequest,
-        @Body('source') source: string,
-    ): Promise<{ url: string }> {
+    async getOAuthUrl(@Request() req: AuthRequest, @Body('source') source: string): Promise<{ url: string }> {
         const url = await this.connectors.getOAuthUrl({ userId: req.user.sub, source });
 
         return { url };
     }
 
     /** OAuth callback — called by the provider after user grants access. */
-    @ApiOperation({ summary: 'OAuth callback (called by provider)', description: 'This endpoint is called by the external provider after the user grants access.' })
+    @ApiOperation({
+        summary: 'OAuth callback (called by provider)',
+        description: 'This endpoint is called by the external provider after the user grants access.',
+    })
     @Get('oauth/callback/:source')
     async oauthCallback(
         @Param('source') source: string,

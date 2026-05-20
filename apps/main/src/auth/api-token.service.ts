@@ -9,7 +9,13 @@ export class ApiTokenService {
     constructor(@InjectModel(ApiToken.name) private readonly model: Model<ApiTokenDocument>) {}
 
     /** Issue a new API token. Returns the raw token (shown once) and the saved record. */
-    async create({ userId, label }: { userId: string; label: string }): Promise<{ rawToken: string; record: ApiTokenDocument }> {
+    async create({
+        userId,
+        label,
+    }: {
+        userId: string;
+        label: string;
+    }): Promise<{ rawToken: string; record: ApiTokenDocument }> {
         const raw = `ctm_${randomBytes(32).toString('hex')}`;
         const tokenHash = createHash('sha256').update(raw).digest('hex');
         const record = await this.model.create({ userId: new Types.ObjectId(userId), tokenHash, label });
@@ -37,11 +43,7 @@ export class ApiTokenService {
     /** Validate a raw token. Returns the userId string if valid, null otherwise. Updates lastUsedAt. */
     async validate(rawToken: string): Promise<string | null> {
         const tokenHash = createHash('sha256').update(rawToken).digest('hex');
-        const record = await this.model.findOneAndUpdate(
-            { tokenHash },
-            { lastUsedAt: new Date() },
-            { new: true },
-        );
+        const record = await this.model.findOneAndUpdate({ tokenHash }, { lastUsedAt: new Date() }, { new: true });
 
         return record ? String(record.userId) : null;
     }

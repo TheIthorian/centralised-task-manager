@@ -13,7 +13,11 @@ describe('AuthService', () => {
     let usersService: { create: ReturnType<typeof vi.fn>; findByEmail: ReturnType<typeof vi.fn> };
     let jwtService: { sign: ReturnType<typeof vi.fn> };
     let configService: { get: ReturnType<typeof vi.fn> };
-    let refreshTokenModel: { create: ReturnType<typeof vi.fn>; findOneAndDelete: ReturnType<typeof vi.fn>; deleteMany: ReturnType<typeof vi.fn> };
+    let refreshTokenModel: {
+        create: ReturnType<typeof vi.fn>;
+        findOneAndDelete: ReturnType<typeof vi.fn>;
+        deleteMany: ReturnType<typeof vi.fn>;
+    };
 
     beforeEach(async () => {
         usersService = { create: vi.fn(), findByEmail: vi.fn() };

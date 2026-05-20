@@ -31,11 +31,7 @@ export function Modal({ open, onClose, title, children }: ModalProps): React.JSX
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
             {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-nb-black/60"
-                onClick={onClose}
-                aria-hidden="true"
-            />
+            <div className="absolute inset-0 bg-nb-black/60" onClick={onClose} aria-hidden="true" />
             {/* Panel */}
             <div
                 className={clsx(

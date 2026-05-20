@@ -10,9 +10,9 @@ Connectors link CTM to external task services. Each connector stores encrypted O
 
 ## Supported sources
 
-| Source | ID |
-|--------|----|
-| Todoist | `todoist` |
+| Source       | ID             |
+| ------------ | -------------- |
+| Todoist      | `todoist`      |
 | Google Tasks | `google_tasks` |
 
 ## Connecting a source

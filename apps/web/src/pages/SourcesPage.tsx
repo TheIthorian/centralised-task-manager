@@ -7,7 +7,11 @@ import { SourceCard } from '../components/sources/SourceCard.js';
 export function SourcesPage(): React.JSX.Element {
     const qc = useQueryClient();
 
-    const { data: connectors = [], isLoading, isError } = useQuery({
+    const {
+        data: connectors = [],
+        isLoading,
+        isError,
+    } = useQuery({
         queryKey: ['connectors'],
         queryFn: listConnectors,
     });
@@ -39,9 +43,7 @@ export function SourcesPage(): React.JSX.Element {
                 </p>
             </div>
 
-            {isLoading && (
-                <p className="font-bold text-nb-black/60 uppercase text-sm tracking-wide">Loading…</p>
-            )}
+            {isLoading && <p className="font-bold text-nb-black/60 uppercase text-sm tracking-wide">Loading…</p>}
 
             {isError && (
                 <div className="border-2 border-nb-red bg-nb-red/10 p-3">

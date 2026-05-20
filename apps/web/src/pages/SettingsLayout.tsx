@@ -20,7 +20,9 @@ export function SettingsLayout(): React.JSX.Element {
                         to={path}
                         className={clsx(
                             'px-4 py-1.5 font-black uppercase text-sm border-2 border-nb-black',
-                            pathname === path ? 'bg-nb-black text-white' : 'bg-white text-nb-black hover:bg-nb-yellow/40',
+                            pathname === path
+                                ? 'bg-nb-black text-white'
+                                : 'bg-white text-nb-black hover:bg-nb-yellow/40',
                         )}
                     >
                         {label}

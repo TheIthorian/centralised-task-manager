@@ -60,11 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
         setUser(null);
     };
 
-    return (
-        <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>{children}</AuthContext.Provider>;
 }
 
 /** Returns auth context. Must be used inside AuthProvider. */

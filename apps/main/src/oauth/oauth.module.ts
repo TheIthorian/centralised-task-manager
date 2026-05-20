@@ -9,11 +9,7 @@ import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature([{ name: AuthCode.name, schema: AuthCodeSchema }]),
-        AuthModule,
-        UsersModule,
-    ],
+    imports: [MongooseModule.forFeature([{ name: AuthCode.name, schema: AuthCodeSchema }]), AuthModule, UsersModule],
     controllers: [OAuthController, WellKnownController],
     providers: [OAuthKeyService, OAuthService],
     exports: [OAuthKeyService, OAuthService],

@@ -28,9 +28,7 @@ describe('HttpClient', () => {
             name: string;
         }>('/items/1');
 
-        expect(mockRequest).toHaveBeenCalledWith(
-            expect.objectContaining({ method: 'GET', url: '/items/1' }),
-        );
+        expect(mockRequest).toHaveBeenCalledWith(expect.objectContaining({ method: 'GET', url: '/items/1' }));
         expect(result).toEqual({ id: '1', name: 'test' });
     });
 
@@ -52,9 +50,7 @@ describe('HttpClient', () => {
 
         await new HttpClient({ baseUrl: BASE_URL }).patch('/items/1', { name: 'updated' });
 
-        expect(mockRequest).toHaveBeenCalledWith(
-            expect.objectContaining({ method: 'PATCH', url: '/items/1' }),
-        );
+        expect(mockRequest).toHaveBeenCalledWith(expect.objectContaining({ method: 'PATCH', url: '/items/1' }));
     });
 
     it('sends DELETE', async () => {
@@ -62,9 +58,7 @@ describe('HttpClient', () => {
 
         const result = await new HttpClient({ baseUrl: BASE_URL }).delete('/items/1');
 
-        expect(mockRequest).toHaveBeenCalledWith(
-            expect.objectContaining({ method: 'DELETE', url: '/items/1' }),
-        );
+        expect(mockRequest).toHaveBeenCalledWith(expect.objectContaining({ method: 'DELETE', url: '/items/1' }));
         expect(result).toBeUndefined();
     });
 
@@ -73,9 +67,7 @@ describe('HttpClient', () => {
         mockRequest.mockRejectedValue(axiosError);
         vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
-        await expect(new HttpClient({ baseUrl: BASE_URL }).get('/items')).rejects.toThrow(
-            ExternalServiceError,
-        );
+        await expect(new HttpClient({ baseUrl: BASE_URL }).get('/items')).rejects.toThrow(ExternalServiceError);
         await expect(new HttpClient({ baseUrl: BASE_URL }).get('/items')).rejects.toThrow('429');
     });
 
@@ -92,8 +84,6 @@ describe('HttpClient', () => {
 
         await new HttpClient({ baseUrl: BASE_URL }).get('/me', { 'X-Request-Id': 'abc' });
 
-        expect(mockRequest).toHaveBeenCalledWith(
-            expect.objectContaining({ headers: { 'X-Request-Id': 'abc' } }),
-        );
+        expect(mockRequest).toHaveBeenCalledWith(expect.objectContaining({ headers: { 'X-Request-Id': 'abc' } }));
     });
 });

@@ -22,7 +22,11 @@ describe('POST /auth/register + /auth/login', () => {
     });
 
     it('registers a new user and returns accessToken + refreshToken', async () => {
-        const res = await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Test User', email, password: 'password123' } });
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Test User', email, password: 'password123' },
+        });
 
         expect(res.statusCode).toBe(201);
         const body = JSON.parse(res.body);
@@ -33,13 +37,21 @@ describe('POST /auth/register + /auth/login', () => {
     });
 
     it('rejects duplicate email with 409', async () => {
-        const res = await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Test User', email, password: 'password123' } });
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Test User', email, password: 'password123' },
+        });
 
         expect(res.statusCode).toBe(409);
     });
 
     it('returns token pair on login', async () => {
-        const res = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/login',
+            payload: { email, password: 'password123' },
+        });
 
         expect(res.statusCode).toBe(200);
         const body = JSON.parse(res.body);

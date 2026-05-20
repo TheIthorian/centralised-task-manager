@@ -44,9 +44,7 @@ export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.E
             <div className="flex items-center gap-1.5 flex-shrink-0">
                 <Badge variant="source">{task.source.toUpperCase()}</Badge>
                 {task.priority && (
-                    <Badge variant={priorityVariant[task.priority as 1 | 2 | 3 | 4]}>
-                        P{task.priority}
-                    </Badge>
+                    <Badge variant={priorityVariant[task.priority as 1 | 2 | 3 | 4]}>P{task.priority}</Badge>
                 )}
             </div>
         </div>

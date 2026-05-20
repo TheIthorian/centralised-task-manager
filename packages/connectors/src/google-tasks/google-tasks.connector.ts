@@ -111,9 +111,7 @@ export class GoogleTasksConnector implements TaskConnector {
                     }),
                 );
 
-                return items
-                    .filter((t) => !t.deleted && !t.hidden)
-                    .map((t) => this.toRemoteTask(list.id, t));
+                return items.filter((t) => !t.deleted && !t.hidden).map((t) => this.toRemoteTask(list.id, t));
             }),
         );
 

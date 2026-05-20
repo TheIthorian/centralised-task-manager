@@ -79,14 +79,26 @@ describe('TasksModule', () => {
         await app.getHttpAdapter().getInstance().ready();
 
         // Register + login
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Tasks Tester', email, password: 'password123' } });
-        const loginRes = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
+        await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Tasks Tester', email, password: 'password123' },
+        });
+        const loginRes = await app.inject({
+            method: 'POST',
+            url: '/auth/login',
+            payload: { email, password: 'password123' },
+        });
 
         jwt = JSON.parse(loginRes.body).accessToken;
 
         // Insert a stub ConnectorConfig so getDecryptedTokens succeeds
         const ConnectorConfigModel = moduleRef.get(getModelToken('ConnectorConfig'));
-        const meRes = await app.inject({ method: 'GET', url: '/users/me', headers: { authorization: `Bearer ${jwt}` } });
+        const meRes = await app.inject({
+            method: 'GET',
+            url: '/users/me',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
         const userId = JSON.parse(meRes.body).id;
         const encryptionService = moduleRef.get(EncryptionService);
 

@@ -13,7 +13,9 @@ describe('Well-known endpoints', () => {
         await app.getHttpAdapter().getInstance().ready();
     });
 
-    afterAll(async () => { await app.close(); });
+    afterAll(async () => {
+        await app.close();
+    });
 
     it('GET /.well-known/openid-configuration returns OIDC metadata', async () => {
         const res = await app.inject({ method: 'GET', url: '/.well-known/openid-configuration' });
@@ -46,12 +48,24 @@ describe('Well-known endpoints', () => {
     it('existing JWT auth still works with RS256 tokens', async () => {
         // Register + login to get a JWT
         const email = `wk+${Date.now()}@example.com`;
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Well-known Tester', email, password: 'password123' } });
-        const loginRes = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
+        await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Well-known Tester', email, password: 'password123' },
+        });
+        const loginRes = await app.inject({
+            method: 'POST',
+            url: '/auth/login',
+            payload: { email, password: 'password123' },
+        });
         const { accessToken } = JSON.parse(loginRes.body);
 
         // Use JWT on a protected route
-        const meRes = await app.inject({ method: 'GET', url: '/users/me', headers: { authorization: `Bearer ${accessToken}` } });
+        const meRes = await app.inject({
+            method: 'GET',
+            url: '/users/me',
+            headers: { authorization: `Bearer ${accessToken}` },
+        });
         expect(meRes.statusCode).toBe(200);
     });
 });

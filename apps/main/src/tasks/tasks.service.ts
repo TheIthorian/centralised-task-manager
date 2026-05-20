@@ -97,7 +97,15 @@ export class TasksService {
 
     /** Update a task via write-through: call connector, then update locally.
      *  When source is 'local', skip the connector and update directly in CTM. */
-    async update({ taskId, userId, dto }: { taskId: string; userId: string; dto: UpdateTaskDto }): Promise<TaskDocument> {
+    async update({
+        taskId,
+        userId,
+        dto,
+    }: {
+        taskId: string;
+        userId: string;
+        dto: UpdateTaskDto;
+    }): Promise<TaskDocument> {
         const task = await this.findOne({ taskId, userId });
 
         if (task.source === LOCAL_SOURCE) {
@@ -148,7 +156,11 @@ export class TasksService {
             await connector.completeTask(tokens, task.sourceId);
         }
 
-        return this.taskModel.findByIdAndUpdate(taskId, { status: 'done', syncedAt: new Date() }, { new: true }) as Promise<TaskDocument>;
+        return this.taskModel.findByIdAndUpdate(
+            taskId,
+            { status: 'done', syncedAt: new Date() },
+            { new: true },
+        ) as Promise<TaskDocument>;
     }
 
     /** Delete a task via write-through.
@@ -166,7 +178,15 @@ export class TasksService {
     }
 
     /** Set the fuzzy deadline on a task (local-only, never written to source). */
-    async setFuzzyDeadline({ taskId, userId, dto }: { taskId: string; userId: string; dto: SetFuzzyDeadlineDto }): Promise<TaskDocument> {
+    async setFuzzyDeadline({
+        taskId,
+        userId,
+        dto,
+    }: {
+        taskId: string;
+        userId: string;
+        dto: SetFuzzyDeadlineDto;
+    }): Promise<TaskDocument> {
         await this.findOne({ taskId, userId });
 
         return this.taskModel.findByIdAndUpdate(
@@ -180,6 +200,10 @@ export class TasksService {
     async removeFuzzyDeadline({ taskId, userId }: { taskId: string; userId: string }): Promise<TaskDocument> {
         await this.findOne({ taskId, userId });
 
-        return this.taskModel.findByIdAndUpdate(taskId, { fuzzyDeadline: null }, { new: true }) as Promise<TaskDocument>;
+        return this.taskModel.findByIdAndUpdate(
+            taskId,
+            { fuzzyDeadline: null },
+            { new: true },
+        ) as Promise<TaskDocument>;
     }
 }

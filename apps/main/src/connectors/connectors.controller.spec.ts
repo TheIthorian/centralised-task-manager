@@ -17,8 +17,16 @@ describe('ConnectorsModule', () => {
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Connectors Tester', email, password: 'password123' } });
-        const res = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
+        await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Connectors Tester', email, password: 'password123' },
+        });
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/login',
+            payload: { email, password: 'password123' },
+        });
 
         jwt = JSON.parse(res.body).accessToken;
     });
@@ -28,7 +36,11 @@ describe('ConnectorsModule', () => {
     });
 
     it('GET /connectors returns available source names', async () => {
-        const res = await app.inject({ method: 'GET', url: '/connectors', headers: { authorization: `Bearer ${jwt}` } });
+        const res = await app.inject({
+            method: 'GET',
+            url: '/connectors',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
 
         expect(res.statusCode).toBe(200);
         const body = JSON.parse(res.body);
@@ -39,7 +51,11 @@ describe('ConnectorsModule', () => {
     });
 
     it('GET /connectors/configs returns empty array for new user', async () => {
-        const res = await app.inject({ method: 'GET', url: '/connectors/configs', headers: { authorization: `Bearer ${jwt}` } });
+        const res = await app.inject({
+            method: 'GET',
+            url: '/connectors/configs',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
 
         expect(res.statusCode).toBe(200);
         expect(JSON.parse(res.body)).toEqual([]);

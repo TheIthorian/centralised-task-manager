@@ -13,10 +13,7 @@ describe('RemindersService', () => {
         mockFind = vi.fn().mockReturnValue({ select: mockSelect });
 
         const module = await Test.createTestingModule({
-            providers: [
-                RemindersService,
-                { provide: getModelToken(Task.name), useValue: { find: mockFind } },
-            ],
+            providers: [RemindersService, { provide: getModelToken(Task.name), useValue: { find: mockFind } }],
         }).compile();
 
         service = module.get(RemindersService);

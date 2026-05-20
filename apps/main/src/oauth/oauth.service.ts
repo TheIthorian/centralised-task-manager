@@ -73,7 +73,8 @@ export class OAuthService {
         // Verify PKCE: SHA-256(code_verifier) base64url == code_challenge
         const hash = createHash('sha256').update(codeVerifier).digest('base64url');
 
-        if (hash !== authCode.codeChallenge) throw new BadRequestException('code_verifier does not match code_challenge');
+        if (hash !== authCode.codeChallenge)
+            throw new BadRequestException('code_verifier does not match code_challenge');
 
         const user = await this.users.findById(authCode.userId);
 
@@ -112,7 +113,13 @@ export class OAuthService {
     }
 
     /** Validate a password and return user info (for the login form submission). */
-    async validatePassword({ email, password }: { email: string; password: string }): Promise<{ id: string; email: string }> {
+    async validatePassword({
+        email,
+        password,
+    }: {
+        email: string;
+        password: string;
+    }): Promise<{ id: string; email: string }> {
         const user = await this.users.findByEmail(email);
 
         if (!user) throw new UnauthorizedException('Invalid credentials');

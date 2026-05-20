@@ -3,7 +3,9 @@ import { EncryptionService } from './encryption.service.js';
 
 describe('EncryptionService', () => {
     const makeService = (): EncryptionService =>
-        new EncryptionService({ getOrThrow: () => 'a'.repeat(64) } as unknown as import('@nestjs/config').ConfigService);
+        new EncryptionService({
+            getOrThrow: () => 'a'.repeat(64),
+        } as unknown as import('@nestjs/config').ConfigService);
 
     it('round-trips plaintext', () => {
         const svc = makeService();

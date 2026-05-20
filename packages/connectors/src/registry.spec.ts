@@ -42,9 +42,7 @@ describe('ConnectorRegistry', () => {
 
     it('throws when getting an unregistered source', () => {
         const registry = new ConnectorRegistry();
-        expect(() => registry.get('unknown')).toThrow(
-            'No connector registered for source: unknown',
-        );
+        expect(() => registry.get('unknown')).toThrow('No connector registered for source: unknown');
     });
 
     it('lists all registered sources', () => {

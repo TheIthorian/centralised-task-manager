@@ -16,7 +16,11 @@ export function TasksPage(): React.JSX.Element {
 
     const qc = useQueryClient();
 
-    const { data: tasks = [], isLoading, isError } = useQuery({
+    const {
+        data: tasks = [],
+        isLoading,
+        isError,
+    } = useQuery({
         queryKey: ['tasks', filter],
         queryFn: () => listTasks(filter),
     });
@@ -29,8 +33,7 @@ export function TasksPage(): React.JSX.Element {
     });
 
     const toggleMutation = useMutation({
-        mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
-            updateTask(id, { completed }),
+        mutationFn: ({ id, completed }: { id: string; completed: boolean }) => updateTask(id, { completed }),
         onMutate: async ({ id, completed }) => {
             await qc.cancelQueries({ queryKey: ['tasks', filter] });
             const prev = qc.getQueryData<TaskDto[]>(['tasks', filter]);
@@ -58,9 +61,7 @@ export function TasksPage(): React.JSX.Element {
     const deleteMutation = useMutation({
         mutationFn: (id: string) => deleteTask(id),
         onSuccess: (_data, id) => {
-            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
-                prev.filter((t) => t.id !== id),
-            );
+            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) => prev.filter((t) => t.id !== id));
         },
     });
 
@@ -81,13 +82,13 @@ export function TasksPage(): React.JSX.Element {
                 <TaskFilters active={filter} onChange={(f) => setSearchParams({ filter: f })} />
 
                 <AddTaskInline
-                    onAdd={async (dto) => { await addMutation.mutateAsync(dto); }}
+                    onAdd={async (dto) => {
+                        await addMutation.mutateAsync(dto);
+                    }}
                     isPending={addMutation.isPending}
                 />
 
-                {isLoading && (
-                    <p className="font-bold text-nb-black/60 uppercase text-sm tracking-wide">Loading…</p>
-                )}
+                {isLoading && <p className="font-bold text-nb-black/60 uppercase text-sm tracking-wide">Loading…</p>}
 
                 {isError && (
                     <div className="border-2 border-nb-red bg-nb-red/10 p-3">
@@ -108,8 +109,12 @@ export function TasksPage(): React.JSX.Element {
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}
-                onSave={async (id, dto) => { await saveMutation.mutateAsync({ id, dto }); }}
-                onDelete={async (id) => { await deleteMutation.mutateAsync(id); }}
+                onSave={async (id, dto) => {
+                    await saveMutation.mutateAsync({ id, dto });
+                }}
+                onDelete={async (id) => {
+                    await deleteMutation.mutateAsync(id);
+                }}
                 isSaving={saveMutation.isPending}
                 isDeleting={deleteMutation.isPending}
             />

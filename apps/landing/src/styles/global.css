@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-nb-yellow: #FFDE59;
+  --color-nb-yellow: #ffde59;
   --color-nb-black: #111111;
-  --color-nb-red: #FF3B30;
-  --color-nb-green: #34C759;
+  --color-nb-red: #ff3b30;
+  --color-nb-green: #34c759;
 }
 
 * {

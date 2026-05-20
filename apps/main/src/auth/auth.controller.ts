@@ -58,7 +58,10 @@ export class AuthController {
 
     /** Issue a new long-lived API token (for CLI/MCP). Raw token shown once. */
     @ApiBearerAuth('jwt')
-    @ApiOperation({ summary: 'Issue a long-lived API token', description: 'The raw token value is returned once and never stored in plaintext.' })
+    @ApiOperation({
+        summary: 'Issue a long-lived API token',
+        description: 'The raw token value is returned once and never stored in plaintext.',
+    })
     @Post('tokens')
     @UseGuards(JwtAuthGuard)
     async createToken(
@@ -75,9 +78,7 @@ export class AuthController {
     @ApiOperation({ summary: 'List API tokens for the authenticated user' })
     @Get('tokens')
     @UseGuards(CombinedAuthGuard)
-    async listTokens(
-        @Request() req: JwtRequest,
-    ): Promise<{ id: string; label: string; lastUsedAt: Date | null }[]> {
+    async listTokens(@Request() req: JwtRequest): Promise<{ id: string; label: string; lastUsedAt: Date | null }[]> {
         const tokens = await this.apiTokens.list(req.user.sub);
 
         return tokens.map((t) => ({ id: String(t._id), label: t.label, lastUsedAt: t.lastUsedAt }));

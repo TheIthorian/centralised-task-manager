@@ -69,13 +69,7 @@ export function ProfilePage(): React.JSX.Element {
                 onSubmit={handleSave}
                 className="bg-white border-2 border-nb-black shadow-[3px_3px_0px_#111] p-5 flex flex-col gap-4 mb-8"
             >
-                <Input
-                    label="Email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
+                <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
                 <div>
                     <p className="font-black uppercase text-xs tracking-wide text-nb-black mb-2">
@@ -104,9 +98,7 @@ export function ProfilePage(): React.JSX.Element {
                     <p className="text-nb-red font-bold text-sm">Failed to save changes. Please try again.</p>
                 )}
 
-                {saveSuccess && (
-                    <p className="text-nb-green font-bold text-sm">Changes saved!</p>
-                )}
+                {saveSuccess && <p className="text-nb-green font-bold text-sm">Changes saved!</p>}
 
                 <div>
                     <Button type="submit" disabled={busy}>
@@ -143,11 +135,7 @@ export function ProfilePage(): React.JSX.Element {
                         )}
 
                         <div className="flex gap-2">
-                            <Button
-                                variant="danger"
-                                onClick={handleConfirmDelete}
-                                disabled={!canConfirmDelete || busy}
-                            >
+                            <Button variant="danger" onClick={handleConfirmDelete} disabled={!canConfirmDelete || busy}>
                                 {deleteMutation.isPending ? 'Deleting…' : 'Confirm Delete'}
                             </Button>
                             <button

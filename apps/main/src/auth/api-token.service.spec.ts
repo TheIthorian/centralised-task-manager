@@ -22,17 +22,18 @@ describe('ApiTokenService', () => {
             findOneAndUpdate: vi.fn(),
         };
         const module = await Test.createTestingModule({
-            providers: [
-                ApiTokenService,
-                { provide: getModelToken(ApiToken.name), useValue: mockModel },
-            ],
+            providers: [ApiTokenService, { provide: getModelToken(ApiToken.name), useValue: mockModel }],
         }).compile();
 
         service = module.get(ApiTokenService);
     });
 
     it('create returns a ctm_ prefixed raw token', async () => {
-        mockModel.create.mockResolvedValue({ _id: '507f1f77bcf86cd799439011', label: 'my token', userId: '507f1f77bcf86cd799439011' });
+        mockModel.create.mockResolvedValue({
+            _id: '507f1f77bcf86cd799439011',
+            label: 'my token',
+            userId: '507f1f77bcf86cd799439011',
+        });
         const { rawToken, record } = await service.create({ userId: '507f1f77bcf86cd799439011', label: 'my token' });
 
         expect(rawToken).toMatch(/^ctm_[0-9a-f]{64}$/);

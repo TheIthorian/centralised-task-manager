@@ -31,7 +31,9 @@ describe('OAuth endpoints', () => {
         jwt = JSON.parse(loginRes.body).accessToken;
     });
 
-    afterAll(async () => { await app.close(); });
+    afterAll(async () => {
+        await app.close();
+    });
 
     it('GET /oauth/authorize returns HTML login form', async () => {
         const verifier = makeCodeVerifier();
@@ -107,7 +109,12 @@ describe('OAuth endpoints', () => {
         const tokenRes = await app.inject({
             method: 'POST',
             url: '/oauth/token',
-            payload: { grant_type: 'authorization_code', code, redirect_uri: redirectUri, code_verifier: 'wrong-verifier' },
+            payload: {
+                grant_type: 'authorization_code',
+                code,
+                redirect_uri: redirectUri,
+                code_verifier: 'wrong-verifier',
+            },
         });
         expect(tokenRes.statusCode).toBe(400);
     });

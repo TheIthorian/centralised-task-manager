@@ -16,12 +16,22 @@ describe('GET /users/me + PATCH /users/me', () => {
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'Users Tester', email, password: 'password123' } });
-        const res = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password: 'password123' } });
+        await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Users Tester', email, password: 'password123' },
+        });
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/login',
+            payload: { email, password: 'password123' },
+        });
         jwt = JSON.parse(res.body).accessToken;
     });
 
-    afterAll(async () => { await app.close(); });
+    afterAll(async () => {
+        await app.close();
+    });
 
     it('GET /users/me returns the current user', async () => {
         const res = await app.inject({ method: 'GET', url: '/users/me', headers: { authorization: `Bearer ${jwt}` } });

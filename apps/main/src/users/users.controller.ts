@@ -31,10 +31,7 @@ export class UsersController {
 
     /** Update the current user's email or password. */
     @Patch('me')
-    async update(
-        @Request() req: AuthRequest,
-        @Body() dto: UpdateUserDto,
-    ): Promise<{ id: string; email: string }> {
+    async update(@Request() req: AuthRequest, @Body() dto: UpdateUserDto): Promise<{ id: string; email: string }> {
         const user = await this.users.update({ id: req.user.sub, dto });
 
         return { id: String(user._id), email: user.email };
@@ -46,10 +43,7 @@ export class UsersController {
     async deleteMe(@Request() req: AuthRequest): Promise<void> {
         const userId = req.user.sub;
 
-        await Promise.all([
-            this.auth.revokeAllRefreshTokens(userId),
-            this.apiTokens.deleteAllByUserId(userId),
-        ]);
+        await Promise.all([this.auth.revokeAllRefreshTokens(userId), this.apiTokens.deleteAllByUserId(userId)]);
 
         await this.users.delete(userId);
     }

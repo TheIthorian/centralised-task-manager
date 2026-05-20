@@ -127,21 +127,43 @@ describe('TodoistConnector', () => {
 
     describe('createTask', () => {
         it('POSTs task fields to /tasks', async () => {
-            mockPost.mockResolvedValue({ data: { id: 'new-1', content: 'Buy coffee', description: '', is_completed: false, priority: 2, due: null, labels: [] } });
+            mockPost.mockResolvedValue({
+                data: {
+                    id: 'new-1',
+                    content: 'Buy coffee',
+                    description: '',
+                    is_completed: false,
+                    priority: 2,
+                    due: null,
+                    labels: [],
+                },
+            });
             const task = await connector.createTask(tokens, { title: 'Buy coffee', priority: 2 });
             expect(task.sourceId).toBe('new-1');
             expect(task.title).toBe('Buy coffee');
             expect(mockPost).toHaveBeenCalledWith(
                 '/tasks',
                 expect.objectContaining({ content: 'Buy coffee', priority: 2 }),
-                expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer test_access_token' }) }),
+                expect.objectContaining({
+                    headers: expect.objectContaining({ Authorization: 'Bearer test_access_token' }),
+                }),
             );
         });
     });
 
     describe('updateTask', () => {
         it('POSTs updated fields to /tasks/:id', async () => {
-            mockPost.mockResolvedValue({ data: { id: 'task-1', content: 'Updated', description: '', is_completed: false, priority: 1, due: null, labels: [] } });
+            mockPost.mockResolvedValue({
+                data: {
+                    id: 'task-1',
+                    content: 'Updated',
+                    description: '',
+                    is_completed: false,
+                    priority: 1,
+                    due: null,
+                    labels: [],
+                },
+            });
             const task = await connector.updateTask(tokens, 'task-1', { title: 'Updated' });
             expect(task.title).toBe('Updated');
             expect(mockPost).toHaveBeenCalledWith(

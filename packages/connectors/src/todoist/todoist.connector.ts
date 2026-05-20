@@ -125,9 +125,11 @@ export class TodoistConnector implements TaskConnector {
     /** Mark a task as complete by posting to the close endpoint. */
     async completeTask(tokens: OAuthTokens, sourceId: string): Promise<void> {
         await this.call<void>(() =>
-            this.http.post(`/tasks/${sourceId}/close`, {}, {
-                headers: { Authorization: `Bearer ${tokens.accessToken}` },
-            }),
+            this.http.post(
+                `/tasks/${sourceId}/close`,
+                {},
+                { headers: { Authorization: `Bearer ${tokens.accessToken}` } },
+            ),
         );
     }
 

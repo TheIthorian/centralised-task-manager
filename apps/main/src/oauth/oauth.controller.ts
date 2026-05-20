@@ -124,7 +124,10 @@ export class OAuthController {
      * Token endpoint — exchanges authorization code for access_token + id_token.
      * Supports grant_type: authorization_code.
      */
-    @ApiOperation({ summary: 'Exchange authorization code for tokens', description: 'Supports `grant_type=authorization_code` with PKCE (`code_verifier`).' })
+    @ApiOperation({
+        summary: 'Exchange authorization code for tokens',
+        description: 'Supports `grant_type=authorization_code` with PKCE (`code_verifier`).',
+    })
     @Post('token')
     @HttpCode(200)
     async token(@Body() body: TokenBody): Promise<object> {

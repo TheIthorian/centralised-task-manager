@@ -21,8 +21,12 @@ vi.mock('js-cookie', () => {
     return {
         default: {
             get: (key: string) => store[key],
-            set: (key: string, value: string) => { store[key] = value; },
-            remove: (key: string) => { delete store[key]; },
+            set: (key: string, value: string) => {
+                store[key] = value;
+            },
+            remove: (key: string) => {
+                delete store[key];
+            },
         },
     };
 });
@@ -49,7 +53,11 @@ describe('AuthContext', () => {
     });
 
     it('starts with no user when no cookie is set', () => {
-        render(<AuthProvider><TestConsumer /></AuthProvider>);
+        render(
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>,
+        );
         expect(screen.getByTestId('user').textContent).toBe('none');
     });
 
@@ -62,7 +70,11 @@ describe('AuthContext', () => {
             user: { id: '1', email: 'a@b.com' },
         });
 
-        render(<AuthProvider><TestConsumer /></AuthProvider>);
+        render(
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>,
+        );
         await user.click(screen.getByText('Login'));
 
         expect(screen.getByTestId('user').textContent).toBe('a@b.com');
@@ -78,7 +90,11 @@ describe('AuthContext', () => {
             user: { id: '1', email: 'a@b.com' },
         });
 
-        render(<AuthProvider><TestConsumer /></AuthProvider>);
+        render(
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>,
+        );
         await user.click(screen.getByText('Login'));
         await user.click(screen.getByText('Logout'));
 

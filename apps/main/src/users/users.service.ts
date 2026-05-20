@@ -16,7 +16,15 @@ export class UsersService {
     ) {}
 
     /** Create a new user. Throws ConflictException if email already exists. */
-    async create({ email, password, name = '' }: { email: string; password: string; name?: string }): Promise<UserDocument> {
+    async create({
+        email,
+        password,
+        name = '',
+    }: {
+        email: string;
+        password: string;
+        name?: string;
+    }): Promise<UserDocument> {
         const passwordHash = await bcrypt.hash(password, 12);
 
         try {

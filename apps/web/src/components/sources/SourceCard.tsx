@@ -21,24 +21,15 @@ export function SourceCard({ connector, onConnect, onDisconnect, isPending }: So
                         Last synced: {new Date(lastSynced).toLocaleDateString()}
                     </p>
                 )}
-                {!connected && (
-                    <p className="text-xs font-bold text-nb-black/50 mt-0.5">Not connected</p>
-                )}
+                {!connected && <p className="text-xs font-bold text-nb-black/50 mt-0.5">Not connected</p>}
             </div>
 
             {connected ? (
-                <Button
-                    variant="danger"
-                    onClick={() => onDisconnect(source)}
-                    disabled={isPending}
-                >
+                <Button variant="danger" onClick={() => onDisconnect(source)} disabled={isPending}>
                     Disconnect
                 </Button>
             ) : (
-                <Button
-                    onClick={() => onConnect(source)}
-                    disabled={isPending}
-                >
+                <Button onClick={() => onConnect(source)} disabled={isPending}>
                     Connect
                 </Button>
             )}

@@ -34,7 +34,15 @@ describe('tasks', () => {
     });
 
     it('createTask posts to /tasks', async () => {
-        const task = { id: '1', title: 'Test', completed: false, source: 'local', sourceId: 'x', createdAt: '', updatedAt: '' };
+        const task = {
+            id: '1',
+            title: 'Test',
+            completed: false,
+            source: 'local',
+            sourceId: 'x',
+            createdAt: '',
+            updatedAt: '',
+        };
 
         mockInstance.post.mockResolvedValueOnce({ data: task });
 
@@ -45,7 +53,15 @@ describe('tasks', () => {
     });
 
     it('updateTask patches /tasks/:id', async () => {
-        const task = { id: '1', title: 'Updated', completed: true, source: 'local', sourceId: 'x', createdAt: '', updatedAt: '' };
+        const task = {
+            id: '1',
+            title: 'Updated',
+            completed: true,
+            source: 'local',
+            sourceId: 'x',
+            createdAt: '',
+            updatedAt: '',
+        };
 
         mockInstance.patch.mockResolvedValueOnce({ data: task });
 

@@ -59,7 +59,10 @@ export class TasksController {
     }
 
     /** Create a task (write-through to source). */
-    @ApiOperation({ summary: 'Create a task', description: 'Creates the task in CTM and writes it through to the specified connector source.' })
+    @ApiOperation({
+        summary: 'Create a task',
+        description: 'Creates the task in CTM and writes it through to the specified connector source.',
+    })
     @Post()
     async create(@Request() req: AuthRequest, @Body() dto: CreateTaskDto): Promise<unknown> {
         const t = await this.tasks.create({ userId: req.user.sub, dto });
@@ -86,9 +89,16 @@ export class TasksController {
     }
 
     /** Set the fuzzy deadline on a task (local-only). */
-    @ApiOperation({ summary: 'Set a fuzzy deadline', description: 'Stores a fuzzy deadline locally. Never written back to the source.' })
+    @ApiOperation({
+        summary: 'Set a fuzzy deadline',
+        description: 'Stores a fuzzy deadline locally. Never written back to the source.',
+    })
     @Patch(':id/fuzzy-deadline')
-    async setFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: SetFuzzyDeadlineDto): Promise<unknown> {
+    async setFuzzyDeadline(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Body() dto: SetFuzzyDeadlineDto,
+    ): Promise<unknown> {
         const t = await this.tasks.setFuzzyDeadline({ taskId: id, userId: req.user.sub, dto });
 
         return { id: String(t._id), fuzzyDeadline: t.fuzzyDeadline };

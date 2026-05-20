@@ -35,7 +35,12 @@ describe('GoogleTasksConnector', () => {
 
         // GoogleTasksConnector creates two axios instances: http (tasks API) then authHttp (auth API).
         vi.mocked(axios.create)
-            .mockReturnValueOnce({ get: mockGet, post: mockPost, patch: mockPatch, delete: mockDelete } as unknown as AxiosInstance)
+            .mockReturnValueOnce({
+                get: mockGet,
+                post: mockPost,
+                patch: mockPatch,
+                delete: mockDelete,
+            } as unknown as AxiosInstance)
             .mockReturnValueOnce({ post: mockPost } as unknown as AxiosInstance);
 
         vi.mocked(axios.isAxiosError).mockReturnValue(false);
@@ -90,9 +95,7 @@ describe('GoogleTasksConnector', () => {
                 .mockResolvedValueOnce({ data: { items: [{ id: 'list-1', title: 'My Tasks' }] } })
                 .mockResolvedValueOnce({
                     data: {
-                        items: [
-                            { id: 'gtask-2', title: 'Done', notes: '', status: 'completed' },
-                        ],
+                        items: [{ id: 'gtask-2', title: 'Done', notes: '', status: 'completed' }],
                     },
                 });
 
@@ -129,7 +132,9 @@ describe('GoogleTasksConnector', () => {
             expect(mockPost).toHaveBeenCalledWith(
                 '/lists/list-1/tasks',
                 expect.objectContaining({ title: 'New task' }),
-                expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer google_access_token' }) }),
+                expect.objectContaining({
+                    headers: expect.objectContaining({ Authorization: 'Bearer google_access_token' }),
+                }),
             );
         });
     });
