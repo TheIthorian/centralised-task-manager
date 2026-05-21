@@ -1,4 +1,5 @@
 import { Controller, Delete, Get, HttpCode, Patch, Body, Request, UseGuards, NotFoundException } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { AuthService } from '../auth/auth.service.js';
 import { ApiTokenService } from '../auth/api-token.service.js';
@@ -20,6 +21,7 @@ export class UsersController {
     ) {}
 
     /** Get the current user's profile. */
+    @ApiOperation({ summary: 'Get current user' })
     @Get('me')
     async me(@Request() req: AuthRequest): Promise<{ id: string; email: string }> {
         const user = await this.users.findById(req.user.sub);
@@ -30,6 +32,7 @@ export class UsersController {
     }
 
     /** Update the current user's email or password. */
+    @ApiOperation({ summary: 'Update current user' })
     @Patch('me')
     async update(@Request() req: AuthRequest, @Body() dto: UpdateUserDto): Promise<{ id: string; email: string }> {
         const user = await this.users.update({ id: req.user.sub, dto });
@@ -38,6 +41,7 @@ export class UsersController {
     }
 
     /** Delete the current user's account and all associated data permanently. */
+    @ApiOperation({ summary: 'Delete current user' })
     @Delete('me')
     @HttpCode(204)
     async deleteMe(@Request() req: AuthRequest): Promise<void> {

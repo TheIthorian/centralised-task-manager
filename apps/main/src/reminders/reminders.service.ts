@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
+import { Task, type TaskDocument, type RemindEvery } from '../tasks/schemas/task.schema.js';
 
 @Injectable()
 export class RemindersService {
@@ -15,7 +15,7 @@ export class RemindersService {
     async runDailyReminders(): Promise<void> {
         const today = new Date();
         const isMonday = today.getDay() === 1;
-        const remindEveryValues = isMonday ? ['daily', 'weekly'] : ['daily'];
+        const remindEveryValues: RemindEvery[] = isMonday ? ['daily', 'weekly'] : ['daily'];
 
         const tasks = await this.taskModel
             .find({ status: 'open', 'fuzzyDeadline.remindEvery': { $in: remindEveryValues } })
@@ -34,7 +34,7 @@ export class RemindersService {
     async getSurfacedTaskIds(userId: string): Promise<string[]> {
         const today = new Date();
         const isMonday = today.getDay() === 1;
-        const remindEveryValues = isMonday ? ['daily', 'weekly'] : ['daily'];
+        const remindEveryValues: RemindEvery[] = isMonday ? ['daily', 'weekly'] : ['daily'];
 
         const tasks = await this.taskModel
             .find({

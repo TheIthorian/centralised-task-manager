@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { OAuthKeyService } from './oauth-key.service.js';
 
@@ -19,6 +20,7 @@ export class WellKnownController {
     }
 
     /** OpenID Connect Discovery 1.0 metadata. */
+    @ApiOperation({ summary: 'OpenID Connect configuration' })
     @Get('openid-configuration')
     openidConfiguration(): object {
         const issuer = this.issuer;
@@ -42,6 +44,7 @@ export class WellKnownController {
     }
 
     /** RFC 8414 OAuth 2.0 Authorization Server Metadata. */
+    @ApiOperation({ summary: 'Authorization server metadata' })
     @Get('oauth-authorization-server')
     authorizationServer(): object {
         const issuer = this.issuer;
@@ -60,6 +63,7 @@ export class WellKnownController {
     }
 
     /** JSON Web Key Set — public keys for JWT verification. */
+    @ApiOperation({ summary: 'JSON Web Key Set' })
     @Get('jwks.json')
     jwks(): object {
         return this.keys.getJwks();
