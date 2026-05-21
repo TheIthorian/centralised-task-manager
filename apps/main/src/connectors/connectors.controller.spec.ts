@@ -154,8 +154,16 @@ describe('Connectors — auth guards and user isolation', () => {
 
     it("GET /connectors/configs only returns the current user's configs", async () => {
         // Both users start with empty configs
-        const resA = await app.inject({ method: 'GET', url: '/connectors/configs', headers: { authorization: `Bearer ${jwtA}` } });
-        const resB = await app.inject({ method: 'GET', url: '/connectors/configs', headers: { authorization: `Bearer ${jwtB}` } });
+        const resA = await app.inject({
+            method: 'GET',
+            url: '/connectors/configs',
+            headers: { authorization: `Bearer ${jwtA}` },
+        });
+        const resB = await app.inject({
+            method: 'GET',
+            url: '/connectors/configs',
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
 
         expect(JSON.parse(resA.body)).toEqual([]);
         expect(JSON.parse(resB.body)).toEqual([]);

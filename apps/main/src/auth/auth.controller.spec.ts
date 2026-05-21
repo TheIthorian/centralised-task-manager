@@ -339,7 +339,11 @@ describe('POST /auth/register — persistence', () => {
     it('duplicate email returns 409 — user was actually stored', async () => {
         const email = `dup+${Date.now()}@example.com`;
 
-        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'First', email, password: 'password123' } });
+        await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'First', email, password: 'password123' },
+        });
 
         const res = await app.inject({
             method: 'POST',

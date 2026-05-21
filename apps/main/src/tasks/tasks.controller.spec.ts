@@ -269,7 +269,11 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
     });
 
     it('PATCH /tasks/:id without auth returns 401', async () => {
-        const res = await app.inject({ method: 'PATCH', url: '/tasks/000000000000000000000000', payload: { title: 'x' } });
+        const res = await app.inject({
+            method: 'PATCH',
+            url: '/tasks/000000000000000000000000',
+            payload: { title: 'x' },
+        });
 
         expect(res.statusCode).toBe(401);
     });
@@ -494,7 +498,11 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         expect(JSON.parse(res.body).fuzzyDeadline).toMatchObject({ type: 'this_month', remindEvery: 'weekly' });
 
         // Verify in DB
-        const getRes = await app.inject({ method: 'GET', url: `/tasks/${id}`, headers: { authorization: `Bearer ${jwt}` } });
+        const getRes = await app.inject({
+            method: 'GET',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
 
         expect(JSON.parse(getRes.body).fuzzyDeadline).toMatchObject({ type: 'this_month', remindEvery: 'weekly' });
     });
