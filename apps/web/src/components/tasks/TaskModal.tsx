@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
+import { getErrorMessage } from '../../api/error-message.js';
 import { Modal, Button, Input } from '../ui/index.js';
 import type { TaskDto, UpdateTaskDto } from '@ctm/api-client';
 
@@ -27,6 +28,7 @@ export function TaskModal({
     const [priority, setPriority] = useState<1 | 2 | 3 | 4>(2);
     const [dueDate, setDueDate] = useState('');
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (task) {
@@ -35,6 +37,7 @@ export function TaskModal({
             setPriority((task.priority ?? 2) as 1 | 2 | 3 | 4);
             setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : '');
             setConfirmDelete(false);
+            setErrorMessage('');
         }
     }, [task]);
 
@@ -42,13 +45,19 @@ export function TaskModal({
 
     const handleSave = async (e: FormEvent): Promise<void> => {
         e.preventDefault();
-        await onSave(task.id, {
-            title,
-            description: description || undefined,
-            priority,
-            dueDate: dueDate || undefined,
-        });
-        onClose();
+        setErrorMessage('');
+
+        try {
+            await onSave(task.id, {
+                title,
+                description: description || undefined,
+                priority,
+                dueDate: dueDate || undefined,
+            });
+            onClose();
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error, 'Failed to save task.'));
+        }
     };
 
     const handleDelete = async (): Promise<void> => {
@@ -58,8 +67,14 @@ export function TaskModal({
             return;
         }
 
-        await onDelete(task.id);
-        onClose();
+        setErrorMessage('');
+
+        try {
+            await onDelete(task.id);
+            onClose();
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error, 'Failed to delete task.'));
+        }
     };
 
     const busy = isSaving || isDeleting;
@@ -69,6 +84,7 @@ export function TaskModal({
             <form onSubmit={handleSave} className="flex flex-col gap-4">
                 <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
                 <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                {errorMessage && <p className="text-nb-red font-bold text-sm">{errorMessage}</p>}
                 <div>
                     <label className="font-black uppercase text-xs tracking-wide text-nb-black block mb-1">
                         Priority

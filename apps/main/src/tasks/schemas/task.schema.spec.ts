@@ -11,4 +11,11 @@ describe('TaskSchema', () => {
         expect(compound).toBeDefined();
         expect(compound?.[1]).toMatchObject({ unique: true });
     });
+
+    it('enforces max lengths on core text fields', () => {
+        expect(TaskSchema.path('source').options.maxlength).toBe(50);
+        expect(TaskSchema.path('sourceId').options.maxlength).toBe(255);
+        expect(TaskSchema.path('title').options.maxlength).toBe(200);
+        expect(TaskSchema.path('description').options.maxlength).toBe(2000);
+    });
 });

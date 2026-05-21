@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../auth/AuthContext.js';
+import { getErrorMessage } from '../api/error-message.js';
 import { Button, Input } from '../components/ui/index.js';
 
 /** Full-page registration form. Auto-logs in on success. */
@@ -29,8 +30,8 @@ export function RegisterPage(): React.JSX.Element {
         try {
             await register(name, email, password);
             await navigate('/tasks');
-        } catch {
-            setError('Registration failed. Email may already be taken.');
+        } catch (error) {
+            setError(getErrorMessage(error, 'Registration failed. Email may already be taken.'));
         } finally {
             setLoading(false);
         }

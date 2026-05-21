@@ -263,6 +263,20 @@ describe('POST /auth/register — input validation', () => {
         expect(res.statusCode).toBe(400);
     });
 
+    it('rejects name longer than max length with 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: {
+                name: 'x'.repeat(101),
+                email: 'toolong@example.com',
+                password: 'password123',
+            },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
     it('rejects an empty body with 400', async () => {
         const res = await app.inject({ method: 'POST', url: '/auth/register', payload: {} });
 

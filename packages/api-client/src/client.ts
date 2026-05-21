@@ -97,6 +97,11 @@ export class CtmApiClient {
         return this.request<TaskDto>({ method: 'PATCH', path: `/tasks/${id}`, body: dto });
     }
 
+    /** Mark a task complete. */
+    async completeTask({ id }: DeleteTaskParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'POST', path: `/tasks/${id}/complete` });
+    }
+
     /** Delete a task permanently. */
     async deleteTask({ id }: DeleteTaskParams): Promise<void> {
         await this.request<void>({ method: 'DELETE', path: `/tasks/${id}` });
@@ -221,13 +226,20 @@ export class CtmApiClient {
             return responseBody;
         }
 
-        if (
-            responseBody !== null &&
-            typeof responseBody === 'object' &&
-            'message' in responseBody &&
-            typeof responseBody.message === 'string'
-        ) {
-            return responseBody.message;
+        if (responseBody !== null && typeof responseBody === 'object' && 'message' in responseBody) {
+            const { message } = responseBody;
+
+            if (typeof message === 'string' && message.length > 0) {
+                return message;
+            }
+
+            if (Array.isArray(message)) {
+                const parts = message.filter((part): part is string => typeof part === 'string' && part.length > 0);
+
+                if (parts.length > 0) {
+                    return parts.join(', ');
+                }
+            }
         }
 
         return error.message;

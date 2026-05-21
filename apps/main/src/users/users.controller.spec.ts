@@ -120,6 +120,18 @@ describe('Users — auth guards, validation, persistence', () => {
         expect(res.statusCode).toBe(400);
     });
 
+    it('PATCH /users/me with email longer than max length returns 400', async () => {
+        const local = 'a'.repeat(310);
+        const res = await app.inject({
+            method: 'PATCH',
+            url: '/users/me',
+            payload: { email: `${local}@example.com` },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
     it('PATCH /users/me with password shorter than 8 chars returns 400', async () => {
         const res = await app.inject({
             method: 'PATCH',

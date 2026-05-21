@@ -73,6 +73,11 @@ export class WebApiClient {
         return this.execute({ request: () => this.apiClient.updateTask({ id, dto }) });
     }
 
+    /** Mark a task complete for the current user. */
+    async completeTask({ id }: WebDeleteTaskParams): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.completeTask({ id }) });
+    }
+
     /** Delete a task for the current user. */
     async deleteTask({ id }: WebDeleteTaskParams): Promise<void> {
         await this.execute({ request: () => this.apiClient.deleteTask({ id }) });
@@ -237,7 +242,15 @@ export class WebApiClient {
         if (error.responseBody && typeof error.responseBody === 'object' && 'message' in error.responseBody) {
             const message = error.responseBody.message;
 
-            if (typeof message === 'string') return message;
+            if (typeof message === 'string' && message.length > 0) return message;
+
+            if (Array.isArray(message)) {
+                const parts = message.filter((part): part is string => typeof part === 'string' && part.length > 0);
+
+                if (parts.length > 0) {
+                    return parts.join(', ');
+                }
+            }
         }
 
         return error.message;

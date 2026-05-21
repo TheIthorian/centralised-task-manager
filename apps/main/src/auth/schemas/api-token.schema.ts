@@ -11,7 +11,7 @@ export class ApiToken {
     @Prop({ type: String, required: true })
     tokenHash!: string;
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, maxlength: 100 })
     label!: string;
 
     @Prop({ type: Date, default: null })

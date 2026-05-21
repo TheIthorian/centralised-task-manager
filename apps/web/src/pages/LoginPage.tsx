@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../auth/AuthContext.js';
+import { getErrorMessage } from '../api/error-message.js';
 import { Button, Input } from '../components/ui/index.js';
 
 /** Full-page login form on yellow background. */
@@ -20,8 +21,8 @@ export function LoginPage(): React.JSX.Element {
         try {
             await login(email, password);
             await navigate('/tasks');
-        } catch {
-            setError('Invalid email or password.');
+        } catch (error) {
+            setError(getErrorMessage(error, 'Invalid email or password.'));
         } finally {
             setLoading(false);
         }

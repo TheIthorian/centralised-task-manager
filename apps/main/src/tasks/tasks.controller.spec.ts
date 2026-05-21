@@ -561,6 +561,17 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         expect(res.statusCode).toBe(400);
     });
 
+    it('POST /tasks with title longer than max length returns 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title: 'x'.repeat(201), source: 'local' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
     it('PATCH /tasks/:id with priority out of range returns 400', async () => {
         const id = await createLocal(`Prio validate ${Date.now()}`);
         const res = await app.inject({

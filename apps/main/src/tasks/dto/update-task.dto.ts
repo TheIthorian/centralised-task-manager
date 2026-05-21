@@ -1,15 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsISO8601, IsInt, Min, Max, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsISO8601, IsInt, Min, Max, IsArray, MaxLength } from 'class-validator';
 
 export class UpdateTaskDto {
-    @ApiPropertyOptional({ example: 'Updated title' })
+    @ApiPropertyOptional({ example: 'Updated title', maxLength: 200 })
     @IsOptional()
     @IsString()
+    @MaxLength(200)
     title?: string;
 
-    @ApiPropertyOptional({ example: 'Updated description' })
+    @ApiPropertyOptional({ example: 'Updated description', maxLength: 2000 })
     @IsOptional()
     @IsString()
+    @MaxLength(2000)
     description?: string;
 
     @ApiPropertyOptional({ example: '2026-07-01T00:00:00.000Z' })
@@ -24,9 +26,10 @@ export class UpdateTaskDto {
     @Max(4)
     priority?: number;
 
-    @ApiPropertyOptional({ type: [String], example: ['work', 'urgent'] })
+    @ApiPropertyOptional({ type: [String], example: ['work', 'urgent'], maxLength: 50 })
     @IsOptional()
     @IsArray()
     @IsString({ each: true })
+    @MaxLength(50, { each: true })
     tags?: string[];
 }

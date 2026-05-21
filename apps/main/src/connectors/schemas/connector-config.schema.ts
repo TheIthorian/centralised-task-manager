@@ -8,7 +8,7 @@ export class ConnectorConfig {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     userId!: Types.ObjectId;
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, maxlength: 50 })
     source!: string;
 
     @Prop({ type: String, required: true })
@@ -26,7 +26,7 @@ export class ConnectorConfig {
     @Prop({ type: Date, default: null })
     lastSyncedAt!: Date | null;
 
-    @Prop({ type: String, default: null })
+    @Prop({ type: String, default: null, maxlength: 2000 })
     lastError!: string | null;
 
     @Prop({ type: Boolean, default: true })

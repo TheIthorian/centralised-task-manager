@@ -22,16 +22,16 @@ export class Task {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     userId!: Types.ObjectId;
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, maxlength: 50 })
     source!: string;
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, maxlength: 255 })
     sourceId!: string;
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, maxlength: 200 })
     title!: string;
 
-    @Prop({ type: String, default: null })
+    @Prop({ type: String, default: null, maxlength: 2000 })
     description!: string | null;
 
     @Prop({ type: String, required: true, enum: ['open', 'done', 'archived'], default: 'open' })
@@ -40,7 +40,14 @@ export class Task {
     @Prop({ type: Number, enum: [1, 2, 3, 4], default: null })
     priority!: 1 | 2 | 3 | 4 | null;
 
-    @Prop({ type: [String], default: [] })
+    @Prop({
+        type: [String],
+        default: [],
+        validate: {
+            validator: (tags: string[]): boolean => tags.every((tag) => tag.length <= 50),
+            message: 'Each tag must be at most 50 characters long',
+        },
+    })
     tags!: string[];
 
     @Prop({ type: Date, default: null })

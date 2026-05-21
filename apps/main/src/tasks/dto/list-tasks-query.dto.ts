@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsIn, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsIn, IsBoolean, MaxLength } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class ListTasksQueryDto {
@@ -8,9 +8,10 @@ export class ListTasksQueryDto {
     @IsIn(['open', 'done', 'archived'])
     status?: 'open' | 'done' | 'archived';
 
-    @ApiPropertyOptional({ example: 'todoist' })
+    @ApiPropertyOptional({ example: 'todoist', maxLength: 50 })
     @IsOptional()
     @IsString()
+    @MaxLength(50)
     source?: string;
 
     @ApiPropertyOptional({ enum: ['this_week', 'this_month', 'someday'] })

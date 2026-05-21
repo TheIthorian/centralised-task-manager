@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto } from '@ctm/api-client';
+import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { TaskFilters } from '../components/tasks/TaskFilters.js';
 import { TaskList } from '../components/tasks/TaskList.js';
@@ -21,6 +22,7 @@ export function TasksPage(): React.JSX.Element {
         data: tasks = [],
         isLoading,
         isError,
+        error,
     } = useQuery({
         queryKey: ['tasks', filter],
         queryFn: () => api.listTasks({ filter }),
@@ -34,13 +36,17 @@ export function TasksPage(): React.JSX.Element {
     });
 
     const toggleMutation = useMutation({
-        mutationFn: ({ id, completed }: { id: string; completed: boolean }) => api.updateTask({ id, dto: { completed } }),
+        mutationFn: ({ id }: { id: string; completed: boolean }) => api.completeTask({ id }),
         onMutate: async ({ id, completed }) => {
+            if (!completed) {
+                return { prev: qc.getQueryData<TaskDto[]>(['tasks', filter]) };
+            }
+
             await qc.cancelQueries({ queryKey: ['tasks', filter] });
             const prev = qc.getQueryData<TaskDto[]>(['tasks', filter]);
 
             qc.setQueryData<TaskDto[]>(['tasks', filter], (old = []) =>
-                old.map((t) => (t.id === id ? { ...t, completed } : t)),
+                old.map((t) => (t.id === id ? { ...t, completed: true } : t)),
             );
 
             return { prev };
@@ -93,14 +99,20 @@ export function TasksPage(): React.JSX.Element {
 
                 {isError && (
                     <div className="border-2 border-nb-red bg-nb-red/10 p-3">
-                        <p className="text-nb-red font-bold text-sm">Failed to load tasks. Is the API running?</p>
+                        <p className="text-nb-red font-bold text-sm">
+                            {getErrorMessage(error, 'Failed to load tasks. Is the API running?')}
+                        </p>
                     </div>
                 )}
 
                 {!isLoading && !isError && (
                     <TaskList
                         tasks={tasks}
-                        onToggle={(id, completed) => toggleMutation.mutate({ id, completed })}
+                        onToggle={(id, completed) => {
+                            if (completed) {
+                                toggleMutation.mutate({ id, completed });
+                            }
+                        }}
                         onEdit={setEditTask}
                     />
                 )}

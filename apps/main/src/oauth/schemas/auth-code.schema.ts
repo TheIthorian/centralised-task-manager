@@ -11,16 +11,23 @@ export class AuthCode {
     @Prop({ type: String, required: true })
     userId!: string;
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, maxlength: 2048 })
     redirectUri!: string;
 
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, maxlength: 255 })
     codeChallenge!: string;
 
     @Prop({ type: String, required: true, default: 'S256' })
     codeChallengeMethod!: string;
 
-    @Prop({ type: [String], default: ['openid'] })
+    @Prop({
+        type: [String],
+        default: ['openid'],
+        validate: {
+            validator: (scopes: string[]): boolean => scopes.every((scope) => scope.length <= 100),
+            message: 'Each scope must be at most 100 characters long',
+        },
+    })
     scopes!: string[];
 
     @Prop({ type: Date, required: true })

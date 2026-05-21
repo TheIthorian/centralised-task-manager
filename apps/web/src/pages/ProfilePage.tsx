@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import type { UpdateUserDto } from '@ctm/api-client';
+import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { Button, Input } from '../components/ui/index.js';
 
@@ -95,7 +96,9 @@ export function ProfilePage(): React.JSX.Element {
                 </div>
 
                 {saveMutation.isError && (
-                    <p className="text-nb-red font-bold text-sm">Failed to save changes. Please try again.</p>
+                    <p className="text-nb-red font-bold text-sm">
+                        {getErrorMessage(saveMutation.error, 'Failed to save changes. Please try again.')}
+                    </p>
                 )}
 
                 {saveSuccess && <p className="text-nb-green font-bold text-sm">Changes saved!</p>}
@@ -131,7 +134,9 @@ export function ProfilePage(): React.JSX.Element {
                         />
 
                         {deleteMutation.isError && (
-                            <p className="text-nb-red font-bold text-sm">Failed to delete account. Please try again.</p>
+                            <p className="text-nb-red font-bold text-sm">
+                                {getErrorMessage(deleteMutation.error, 'Failed to delete account. Please try again.')}
+                            </p>
                         )}
 
                         <div className="flex gap-2">

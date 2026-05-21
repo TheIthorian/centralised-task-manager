@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ConnectorStatusDto } from '@ctm/api-client';
+import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 
@@ -12,6 +13,7 @@ export function SourcesPage(): React.JSX.Element {
         data: connectors = [],
         isLoading,
         isError,
+        error,
     } = useQuery({
         queryKey: ['connectors'],
         queryFn: () => api.listConnectors(),
@@ -48,7 +50,9 @@ export function SourcesPage(): React.JSX.Element {
 
             {isError && (
                 <div className="border-2 border-nb-red bg-nb-red/10 p-3">
-                    <p className="text-nb-red font-bold text-sm">Failed to load sources. Is the API running?</p>
+                    <p className="text-nb-red font-bold text-sm">
+                        {getErrorMessage(error, 'Failed to load sources. Is the API running?')}
+                    </p>
                 </div>
             )}
 
