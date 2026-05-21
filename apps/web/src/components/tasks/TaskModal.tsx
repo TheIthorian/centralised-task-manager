@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { getErrorMessage } from '../../api/error-message.js';
+import { useToast } from '../../toast/ToastContext.js';
 import { Modal, Button, Input } from '../ui/index.js';
 import type { FuzzyDeadlineInfo, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
 
@@ -37,6 +38,7 @@ export function TaskModal({
     isSettingFuzzy = false,
     isRemovingFuzzy = false,
 }: TaskModalProps): React.JSX.Element | null {
+    const { showToast } = useToast();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<1 | 2 | 3 | 4>(2);
@@ -73,6 +75,7 @@ export function TaskModal({
                 priority,
                 dueDate: dueDate || undefined,
             });
+            showToast({ title: 'Success', description: 'Task saved successfully.' });
             onClose();
         } catch (error) {
             setErrorMessage(getErrorMessage(error, 'Failed to save task.'));
