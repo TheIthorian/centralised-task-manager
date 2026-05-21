@@ -24,5 +24,15 @@ services:
     depends_on:
       - mongodb
 
+  mcp:
+    build:
+      context: .
+      dockerfile: apps/mcp/Dockerfile
+    ports:
+      - '3002:3002'
+    env_file: apps/mcp/.env
+    depends_on:
+      - main
+
 volumes:
   mongodb_data:
