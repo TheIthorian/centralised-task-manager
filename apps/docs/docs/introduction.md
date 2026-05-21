@@ -12,12 +12,12 @@ You manage tasks through one interface; CTM writes changes back to the original 
 
 ## Key concepts
 
-| Concept | Description |
-|---------|-------------|
-| **Connector** | An authenticated link to an external task source (e.g. Todoist). |
-| **Task** | A task mirrored from a connector source, enriched with CTM-local fields. |
+| Concept            | Description                                                                |
+| ------------------ | -------------------------------------------------------------------------- |
+| **Connector**      | An authenticated link to an external task source (e.g. Todoist).           |
+| **Task**           | A task mirrored from a connector source, enriched with CTM-local fields.   |
 | **Fuzzy deadline** | A local-only deadline label ("this week", "someday") that is never synced. |
-| **API token** | A long-lived bearer token for CLI and MCP use. |
+| **API token**      | A long-lived bearer token for CLI and MCP use.                             |
 
 ## Base URL
 

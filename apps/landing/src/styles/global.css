@@ -1,16 +1,16 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --color-nb-yellow: #ffde59;
-  --color-nb-black: #111111;
-  --color-nb-red: #ff3b30;
-  --color-nb-green: #34c759;
+    --color-nb-yellow: #ffde59;
+    --color-nb-black: #111111;
+    --color-nb-red: #ff3b30;
+    --color-nb-green: #34c759;
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }

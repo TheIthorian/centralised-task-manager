@@ -81,6 +81,7 @@ CLAUDE.md  -> update lint/format tooling note
 ## Task 1: Root scaffold
 
 **Files:**
+
 - Create: `package.json`
 - Create: `pnpm-workspace.yaml`
 - Create: `turbo.json`
@@ -93,24 +94,24 @@ CLAUDE.md  -> update lint/format tooling note
 
 ```json
 {
-  "name": "ctm",
-  "private": true,
-  "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "test": "turbo test",
-    "lint": "turbo lint",
-    "format": "turbo format"
-  },
-  "devDependencies": {
-    "turbo": "^2.5.0",
-    "typescript": "^5.8.3"
-  },
-  "engines": {
-    "node": ">=24.0.0",
-    "pnpm": ">=9.0.0"
-  },
-  "packageManager": "pnpm@9.15.0"
+    "name": "ctm",
+    "private": true,
+    "scripts": {
+        "build": "turbo build",
+        "dev": "turbo dev",
+        "test": "turbo test",
+        "lint": "turbo lint",
+        "format": "turbo format"
+    },
+    "devDependencies": {
+        "turbo": "^2.5.0",
+        "typescript": "^5.8.3"
+    },
+    "engines": {
+        "node": ">=24.0.0",
+        "pnpm": ">=9.0.0"
+    },
+    "packageManager": "pnpm@9.15.0"
 }
 ```
 
@@ -118,31 +119,31 @@ CLAUDE.md  -> update lint/format tooling note
 
 ```yaml
 packages:
-  - 'apps/*'
-  - 'packages/*'
+    - 'apps/*'
+    - 'packages/*'
 ```
 
 - [ ] **Step 3: Create `turbo.json`**
 
 ```json
 {
-  "$schema": "https://turbo.build/schema.json",
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "test": {
-      "dependsOn": ["^build"]
-    },
-    "lint": {},
-    "format": {},
-    "dev": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "persistent": true
+    "$schema": "https://turbo.build/schema.json",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist/**"]
+        },
+        "test": {
+            "dependsOn": ["^build"]
+        },
+        "lint": {},
+        "format": {},
+        "dev": {
+            "dependsOn": ["^build"],
+            "cache": false,
+            "persistent": true
+        }
     }
-  }
 }
 ```
 
@@ -170,33 +171,33 @@ dist/
 ```yaml
 version: '3.8'
 services:
-  mongodb:
-    image: mongo:7
-    ports:
-      - '27017:27017'
-    volumes:
-      - mongodb_data:/data/db
+    mongodb:
+        image: mongo:7
+        ports:
+            - '27017:27017'
+        volumes:
+            - mongodb_data:/data/db
 
-  main:
-    build:
-      context: .
-      dockerfile: apps/main/Dockerfile
-    ports:
-      - '3000:3000'
-    env_file: apps/main/.env
-    depends_on:
-      - mongodb
+    main:
+        build:
+            context: .
+            dockerfile: apps/main/Dockerfile
+        ports:
+            - '3000:3000'
+        env_file: apps/main/.env
+        depends_on:
+            - mongodb
 
-  sync:
-    build:
-      context: .
-      dockerfile: apps/sync/Dockerfile
-    env_file: apps/sync/.env
-    depends_on:
-      - mongodb
+    sync:
+        build:
+            context: .
+            dockerfile: apps/sync/Dockerfile
+        env_file: apps/sync/.env
+        depends_on:
+            - mongodb
 
 volumes:
-  mongodb_data:
+    mongodb_data:
 ```
 
 - [ ] **Step 7: Create `.env.example`**
@@ -242,6 +243,7 @@ git commit -m "chore: root monorepo scaffold"
 ## Task 2: packages/tsconfig
 
 **Files:**
+
 - Create: `packages/tsconfig/package.json`
 - Create: `packages/tsconfig/base.json`
 - Create: `packages/tsconfig/nestjs.json`
@@ -251,14 +253,14 @@ git commit -m "chore: root monorepo scaffold"
 
 ```json
 {
-  "name": "@ctm/tsconfig",
-  "version": "0.0.1",
-  "private": true,
-  "exports": {
-    "./base.json": "./base.json",
-    "./nestjs.json": "./nestjs.json",
-    "./react.json": "./react.json"
-  }
+    "name": "@ctm/tsconfig",
+    "version": "0.0.1",
+    "private": true,
+    "exports": {
+        "./base.json": "./base.json",
+        "./nestjs.json": "./nestjs.json",
+        "./react.json": "./react.json"
+    }
 }
 ```
 
@@ -266,23 +268,23 @@ git commit -m "chore: root monorepo scaffold"
 
 ```json
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "lib": ["ES2022"],
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true
-  }
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "lib": ["ES2022"],
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true
+    }
 }
 ```
 
@@ -290,12 +292,12 @@ git commit -m "chore: root monorepo scaffold"
 
 ```json
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "./base.json",
-  "compilerOptions": {
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  }
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "./base.json",
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
+    }
 }
 ```
 
@@ -303,17 +305,17 @@ git commit -m "chore: root monorepo scaffold"
 
 ```json
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "./base.json",
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "allowImportingTsExtensions": true,
-    "noEmit": true
-  }
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "./base.json",
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "allowImportingTsExtensions": true,
+        "noEmit": true
+    }
 }
 ```
 
@@ -329,6 +331,7 @@ git commit -m "chore: add packages/tsconfig shared TS configs"
 ## Task 3: packages/config
 
 **Files:**
+
 - Create: `packages/config/package.json`
 - Create: `packages/config/eslint.node.js`
 - Create: `packages/config/eslint.react.js`
@@ -339,22 +342,22 @@ git commit -m "chore: add packages/tsconfig shared TS configs"
 
 ```json
 {
-  "name": "@ctm/config",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "exports": {
-    "./eslint.node": "./eslint.node.js",
-    "./eslint.react": "./eslint.react.js",
-    "./prettier": "./prettier.mjs"
-  },
-  "dependencies": {
-    "@eslint/js": "^9.27.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.1.0",
-    "typescript-eslint": "^8.32.1"
-  }
+    "name": "@ctm/config",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./eslint.node": "./eslint.node.js",
+        "./eslint.react": "./eslint.react.js",
+        "./prettier": "./prettier.mjs"
+    },
+    "dependencies": {
+        "@eslint/js": "^9.27.0",
+        "eslint-plugin-react-hooks": "^5.2.0",
+        "eslint-plugin-react-refresh": "^0.4.20",
+        "globals": "^16.1.0",
+        "typescript-eslint": "^8.32.1"
+    }
 }
 ```
 
@@ -477,6 +480,7 @@ git commit -m "chore: migrate configs/ into packages/config"
 ## Task 4: packages/logger
 
 **Files:**
+
 - Create: `packages/logger/package.json`
 - Create: `packages/logger/tsconfig.json`
 - Create: `packages/logger/tsconfig.build.json`
@@ -488,26 +492,26 @@ git commit -m "chore: migrate configs/ into packages/config"
 
 ```json
 {
-  "name": "@ctm/logger",
-  "version": "0.0.1",
-  "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run",
-    "lint": "eslint src",
-    "dev": "tsc -p tsconfig.build.json --watch"
-  },
-  "dependencies": {
-    "pino": "^9.7.0"
-  },
-  "devDependencies": {
-    "@ctm/tsconfig": "workspace:*",
-    "@types/pino": "*",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.0"
-  }
+    "name": "@ctm/logger",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "lint": "eslint src",
+        "dev": "tsc -p tsconfig.build.json --watch"
+    },
+    "dependencies": {
+        "pino": "^9.7.0"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "@types/pino": "*",
+        "typescript": "^5.8.3",
+        "vitest": "^3.2.0"
+    }
 }
 ```
 
@@ -515,12 +519,12 @@ git commit -m "chore: migrate configs/ into packages/config"
 
 ```json
 {
-  "extends": "@ctm/tsconfig/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+    "extends": "@ctm/tsconfig/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "include": ["src"]
 }
 ```
 
@@ -528,8 +532,8 @@ git commit -m "chore: migrate configs/ into packages/config"
 
 ```json
 {
-  "extends": "./tsconfig.json",
-  "exclude": ["src/**/*.spec.ts"]
+    "extends": "./tsconfig.json",
+    "exclude": ["src/**/*.spec.ts"]
 }
 ```
 
@@ -615,6 +619,7 @@ git commit -m "feat: add packages/logger pino wrapper"
 ## Task 5: packages/errors
 
 **Files:**
+
 - Create: `packages/errors/package.json`
 - Create: `packages/errors/tsconfig.json`
 - Create: `packages/errors/tsconfig.build.json`
@@ -626,21 +631,21 @@ git commit -m "feat: add packages/logger pino wrapper"
 
 ```json
 {
-  "name": "@ctm/errors",
-  "version": "0.0.1",
-  "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run",
-    "dev": "tsc -p tsconfig.build.json --watch"
-  },
-  "devDependencies": {
-    "@ctm/tsconfig": "workspace:*",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.0"
-  }
+    "name": "@ctm/errors",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "dev": "tsc -p tsconfig.build.json --watch"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "typescript": "^5.8.3",
+        "vitest": "^3.2.0"
+    }
 }
 ```
 
@@ -648,12 +653,12 @@ git commit -m "feat: add packages/logger pino wrapper"
 
 ```json
 {
-  "extends": "@ctm/tsconfig/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+    "extends": "@ctm/tsconfig/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "include": ["src"]
 }
 ```
 
@@ -661,8 +666,8 @@ git commit -m "feat: add packages/logger pino wrapper"
 
 ```json
 {
-  "extends": "./tsconfig.json",
-  "exclude": ["src/**/*.spec.ts"]
+    "extends": "./tsconfig.json",
+    "exclude": ["src/**/*.spec.ts"]
 }
 ```
 
@@ -684,13 +689,7 @@ Create `packages/errors/src/errors.spec.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import {
-    AppError,
-    NotFoundError,
-    UnauthorizedError,
-    ConflictError,
-    ExternalServiceError,
-} from './index.js';
+import { AppError, NotFoundError, UnauthorizedError, ConflictError, ExternalServiceError } from './index.js';
 
 describe('AppError', () => {
     it('sets name, message, code, statusCode', () => {
@@ -817,6 +816,7 @@ git commit -m "feat: add packages/errors shared error hierarchy"
 ## Task 6: packages/http
 
 **Files:**
+
 - Create: `packages/http/package.json`
 - Create: `packages/http/tsconfig.json`
 - Create: `packages/http/tsconfig.build.json`
@@ -828,24 +828,24 @@ git commit -m "feat: add packages/errors shared error hierarchy"
 
 ```json
 {
-  "name": "@ctm/http",
-  "version": "0.0.1",
-  "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run",
-    "dev": "tsc -p tsconfig.build.json --watch"
-  },
-  "dependencies": {
-    "@ctm/errors": "workspace:*"
-  },
-  "devDependencies": {
-    "@ctm/tsconfig": "workspace:*",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.0"
-  }
+    "name": "@ctm/http",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "dev": "tsc -p tsconfig.build.json --watch"
+    },
+    "dependencies": {
+        "@ctm/errors": "workspace:*"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "typescript": "^5.8.3",
+        "vitest": "^3.2.0"
+    }
 }
 ```
 
@@ -853,12 +853,12 @@ git commit -m "feat: add packages/errors shared error hierarchy"
 
 ```json
 {
-  "extends": "@ctm/tsconfig/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+    "extends": "@ctm/tsconfig/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "include": ["src"]
 }
 ```
 
@@ -866,8 +866,8 @@ git commit -m "feat: add packages/errors shared error hierarchy"
 
 ```json
 {
-  "extends": "./tsconfig.json",
-  "exclude": ["src/**/*.spec.ts"]
+    "extends": "./tsconfig.json",
+    "exclude": ["src/**/*.spec.ts"]
 }
 ```
 
@@ -900,11 +900,14 @@ describe('HttpClient', () => {
     });
 
     it('sends GET to the correct URL and returns parsed JSON', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-            ok: true,
-            status: 200,
-            json: () => Promise.resolve({ id: '1', name: 'test' }),
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({ id: '1', name: 'test' }),
+            }),
+        );
 
         const result = await client.get<{ id: string; name: string }>('/items/1');
 
@@ -916,11 +919,14 @@ describe('HttpClient', () => {
     });
 
     it('sends POST with JSON body', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-            ok: true,
-            status: 201,
-            json: () => Promise.resolve({ id: '2' }),
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: true,
+                status: 201,
+                json: () => Promise.resolve({ id: '2' }),
+            }),
+        );
 
         await client.post('/items', { name: 'new item' });
 
@@ -934,21 +940,27 @@ describe('HttpClient', () => {
     });
 
     it('returns undefined for 204 No Content', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-            ok: true,
-            status: 204,
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: true,
+                status: 204,
+            }),
+        );
 
         const result = await client.delete('/items/1');
         expect(result).toBeUndefined();
     });
 
     it('throws ExternalServiceError on non-ok response', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-            ok: false,
-            status: 429,
-            text: () => Promise.resolve('Too Many Requests'),
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: false,
+                status: 429,
+                text: () => Promise.resolve('Too Many Requests'),
+            }),
+        );
 
         await expect(client.get('/items')).rejects.toThrow(ExternalServiceError);
         await expect(client.get('/items')).rejects.toThrow('429');
@@ -959,11 +971,14 @@ describe('HttpClient', () => {
             baseUrl: 'https://api.example.com',
             headers: { Authorization: 'Bearer tok' },
         });
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-            ok: true,
-            status: 200,
-            json: () => Promise.resolve({}),
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({}),
+            }),
+        );
 
         await authedClient.get('/me', { 'X-Request-Id': 'abc' });
 
@@ -1042,7 +1057,6 @@ export class HttpClient {
         }
 
         if (response.status === 204) {
-
             return undefined as T;
         }
 
@@ -1077,6 +1091,7 @@ git commit -m "feat: add packages/http typed fetch wrapper"
 ## Task 7: packages/connectors — types and registry
 
 **Files:**
+
 - Create: `packages/connectors/package.json`
 - Create: `packages/connectors/tsconfig.json`
 - Create: `packages/connectors/tsconfig.build.json`
@@ -1090,26 +1105,26 @@ git commit -m "feat: add packages/http typed fetch wrapper"
 
 ```json
 {
-  "name": "@ctm/connectors",
-  "version": "0.0.1",
-  "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run",
-    "dev": "tsc -p tsconfig.build.json --watch"
-  },
-  "dependencies": {
-    "@ctm/errors": "workspace:*",
-    "@ctm/http": "workspace:*",
-    "@ctm/logger": "workspace:*"
-  },
-  "devDependencies": {
-    "@ctm/tsconfig": "workspace:*",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.0"
-  }
+    "name": "@ctm/connectors",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "dev": "tsc -p tsconfig.build.json --watch"
+    },
+    "dependencies": {
+        "@ctm/errors": "workspace:*",
+        "@ctm/http": "workspace:*",
+        "@ctm/logger": "workspace:*"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "typescript": "^5.8.3",
+        "vitest": "^3.2.0"
+    }
 }
 ```
 
@@ -1117,12 +1132,12 @@ git commit -m "feat: add packages/http typed fetch wrapper"
 
 ```json
 {
-  "extends": "@ctm/tsconfig/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+    "extends": "@ctm/tsconfig/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "include": ["src"]
 }
 ```
 
@@ -1130,8 +1145,8 @@ git commit -m "feat: add packages/http typed fetch wrapper"
 
 ```json
 {
-  "extends": "./tsconfig.json",
-  "exclude": ["src/**/*.spec.ts"]
+    "extends": "./tsconfig.json",
+    "exclude": ["src/**/*.spec.ts"]
 }
 ```
 
@@ -1209,8 +1224,24 @@ function makeStubConnector(source: string): TaskConnector {
         exchangeCode: async () => ({ accessToken: '', refreshToken: '', expiresAt: new Date() }),
         refreshToken: async (t) => t,
         fetchTasks: async () => [],
-        createTask: async () => ({ sourceId: '', title: '', description: null, status: 'open', priority: null, dueDate: null, tags: [] }),
-        updateTask: async () => ({ sourceId: '', title: '', description: null, status: 'open', priority: null, dueDate: null, tags: [] }),
+        createTask: async () => ({
+            sourceId: '',
+            title: '',
+            description: null,
+            status: 'open',
+            priority: null,
+            dueDate: null,
+            tags: [],
+        }),
+        updateTask: async () => ({
+            sourceId: '',
+            title: '',
+            description: null,
+            status: 'open',
+            priority: null,
+            dueDate: null,
+            tags: [],
+        }),
         completeTask: async () => undefined,
         deleteTask: async () => undefined,
     };
@@ -1310,11 +1341,13 @@ git commit -m "feat: add packages/connectors types and registry"
 ## Task 8: TodoistConnector
 
 **Files:**
+
 - Create: `packages/connectors/src/todoist/todoist.connector.ts`
 - Create: `packages/connectors/src/todoist/todoist.connector.spec.ts`
 - Modify: `packages/connectors/src/index.ts`
 
 Todoist API reference used in this task:
+
 - Auth URL: `https://todoist.com/oauth/authorize`
 - Token URL: `https://todoist.com/oauth/access_token`
 - Tasks list: `GET https://api.todoist.com/rest/v2/tasks`
@@ -1326,6 +1359,7 @@ Todoist API reference used in this task:
 Todoist priorities: `1` (normal) → `4` (urgent). We normalise to our own 1–4 scale (same values).
 
 Todoist task shape:
+
 ```
 { id, content, description, is_completed, priority, due: { date } | null, labels }
 ```
@@ -1371,21 +1405,25 @@ describe('TodoistConnector', () => {
 
     describe('fetchTasks', () => {
         it('maps Todoist tasks to RemoteTask shape', async () => {
-            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-                ok: true,
-                status: 200,
-                json: () => Promise.resolve([
-                    {
-                        id: 'task-1',
-                        content: 'Buy milk',
-                        description: 'From the supermarket',
-                        is_completed: false,
-                        priority: 2,
-                        due: { date: '2026-06-01' },
-                        labels: ['shopping', 'errands'],
-                    },
-                ]),
-            }));
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    status: 200,
+                    json: () =>
+                        Promise.resolve([
+                            {
+                                id: 'task-1',
+                                content: 'Buy milk',
+                                description: 'From the supermarket',
+                                is_completed: false,
+                                priority: 2,
+                                due: { date: '2026-06-01' },
+                                labels: ['shopping', 'errands'],
+                            },
+                        ]),
+                }),
+            );
 
             const tasks = await connector.fetchTasks(tokens);
 
@@ -1402,26 +1440,50 @@ describe('TodoistConnector', () => {
         });
 
         it('maps completed tasks to status "done"', async () => {
-            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-                ok: true,
-                status: 200,
-                json: () => Promise.resolve([
-                    { id: 't2', content: 'Done task', description: '', is_completed: true, priority: 1, due: null, labels: [] },
-                ]),
-            }));
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    status: 200,
+                    json: () =>
+                        Promise.resolve([
+                            {
+                                id: 't2',
+                                content: 'Done task',
+                                description: '',
+                                is_completed: true,
+                                priority: 1,
+                                due: null,
+                                labels: [],
+                            },
+                        ]),
+                }),
+            );
 
             const tasks = await connector.fetchTasks(tokens);
             expect(tasks[0].status).toBe('done');
         });
 
         it('sets dueDate to null when no due date', async () => {
-            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-                ok: true,
-                status: 200,
-                json: () => Promise.resolve([
-                    { id: 't3', content: 'No due', description: '', is_completed: false, priority: 1, due: null, labels: [] },
-                ]),
-            }));
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    status: 200,
+                    json: () =>
+                        Promise.resolve([
+                            {
+                                id: 't3',
+                                content: 'No due',
+                                description: '',
+                                is_completed: false,
+                                priority: 1,
+                                due: null,
+                                labels: [],
+                            },
+                        ]),
+                }),
+            );
 
             const tasks = await connector.fetchTasks(tokens);
             expect(tasks[0].dueDate).toBeNull();
@@ -1565,9 +1627,13 @@ export class TodoistConnector implements TaskConnector {
     }
 
     async completeTask(tokens: OAuthTokens, sourceId: string): Promise<void> {
-        await this.http.post<void>(`/tasks/${sourceId}/close`, {}, {
-            Authorization: `Bearer ${tokens.accessToken}`,
-        });
+        await this.http.post<void>(
+            `/tasks/${sourceId}/close`,
+            {},
+            {
+                Authorization: `Bearer ${tokens.accessToken}`,
+            },
+        );
     }
 
     async deleteTask(tokens: OAuthTokens, sourceId: string): Promise<void> {
@@ -1621,11 +1687,13 @@ git commit -m "feat(connectors): add TodoistConnector"
 ## Task 9: GoogleTasksConnector
 
 **Files:**
+
 - Create: `packages/connectors/src/google-tasks/google-tasks.connector.ts`
 - Create: `packages/connectors/src/google-tasks/google-tasks.connector.spec.ts`
 - Modify: `packages/connectors/src/index.ts`
 
 Google Tasks API reference:
+
 - Auth URL: `https://accounts.google.com/o/oauth2/v2/auth`
 - Token URL: `https://oauth2.googleapis.com/token`
 - Task lists: `GET https://tasks.googleapis.com/tasks/v1/users/@me/lists`
@@ -1635,6 +1703,7 @@ Google Tasks API reference:
 - Delete: `DELETE https://tasks.googleapis.com/tasks/v1/lists/{listId}/tasks/{taskId}`
 
 Google Tasks shape:
+
 ```
 { id, title, notes, status: 'needsAction'|'completed', due, deleted, hidden }
 ```
@@ -1683,25 +1752,31 @@ describe('GoogleTasksConnector', () => {
 
     describe('fetchTasks', () => {
         it('fetches task lists then tasks, maps to RemoteTask', async () => {
-            vi.stubGlobal('fetch', vi.fn()
-                .mockResolvedValueOnce({
-                    ok: true,
-                    status: 200,
-                    json: () => Promise.resolve({ items: [{ id: 'list-1', title: 'My Tasks' }] }),
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    status: 200,
-                    json: () => Promise.resolve({
-                        items: [{
-                            id: 'gtask-1',
-                            title: 'Read a book',
-                            notes: 'Fiction',
-                            status: 'needsAction',
-                            due: '2026-06-15T00:00:00.000Z',
-                        }],
+            vi.stubGlobal(
+                'fetch',
+                vi
+                    .fn()
+                    .mockResolvedValueOnce({
+                        ok: true,
+                        status: 200,
+                        json: () => Promise.resolve({ items: [{ id: 'list-1', title: 'My Tasks' }] }),
+                    })
+                    .mockResolvedValueOnce({
+                        ok: true,
+                        status: 200,
+                        json: () =>
+                            Promise.resolve({
+                                items: [
+                                    {
+                                        id: 'gtask-1',
+                                        title: 'Read a book',
+                                        notes: 'Fiction',
+                                        status: 'needsAction',
+                                        due: '2026-06-15T00:00:00.000Z',
+                                    },
+                                ],
+                            }),
                     }),
-                }),
             );
 
             const tasks = await connector.fetchTasks(tokens);
@@ -1717,19 +1792,23 @@ describe('GoogleTasksConnector', () => {
         });
 
         it('maps completed tasks to status "done"', async () => {
-            vi.stubGlobal('fetch', vi.fn()
-                .mockResolvedValueOnce({
-                    ok: true,
-                    status: 200,
-                    json: () => Promise.resolve({ items: [{ id: 'list-1', title: 'My Tasks' }] }),
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    status: 200,
-                    json: () => Promise.resolve({
-                        items: [{ id: 'gtask-2', title: 'Done', notes: '', status: 'completed', due: null }],
+            vi.stubGlobal(
+                'fetch',
+                vi
+                    .fn()
+                    .mockResolvedValueOnce({
+                        ok: true,
+                        status: 200,
+                        json: () => Promise.resolve({ items: [{ id: 'list-1', title: 'My Tasks' }] }),
+                    })
+                    .mockResolvedValueOnce({
+                        ok: true,
+                        status: 200,
+                        json: () =>
+                            Promise.resolve({
+                                items: [{ id: 'gtask-2', title: 'Done', notes: '', status: 'completed', due: null }],
+                            }),
                     }),
-                }),
             );
 
             const tasks = await connector.fetchTasks(tokens);
@@ -1739,7 +1818,10 @@ describe('GoogleTasksConnector', () => {
 
     describe('completeTask', () => {
         it('PATCHes status to completed using list:task sourceId', async () => {
-            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) }));
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) }),
+            );
             await connector.completeTask(tokens, 'list-1:gtask-1');
             expect(fetch).toHaveBeenCalledWith(
                 expect.stringContaining('/lists/list-1/tasks/gtask-1'),
@@ -1852,21 +1934,16 @@ export class GoogleTasksConnector implements TaskConnector {
 
     async fetchTasks(tokens: OAuthTokens): Promise<RemoteTask[]> {
         const authHeader = { Authorization: `Bearer ${tokens.accessToken}` };
-        const { items: lists } = await this.http.get<{ items: GoogleTaskList[] }>(
-            '/users/@me/lists',
-            authHeader,
-        );
+        const { items: lists } = await this.http.get<{ items: GoogleTaskList[] }>('/users/@me/lists', authHeader);
 
         const taskArrays = await Promise.all(
-            lists.map(async list => {
+            lists.map(async (list) => {
                 const { items = [] } = await this.http.get<{ items?: GoogleTask[] }>(
                     `/lists/${list.id}/tasks?showCompleted=true&showHidden=false`,
                     authHeader,
                 );
 
-                return items
-                    .filter(t => !t.deleted && !t.hidden)
-                    .map(t => this.toRemoteTask(list.id, t));
+                return items.filter((t) => !t.deleted && !t.hidden).map((t) => this.toRemoteTask(list.id, t));
             }),
         );
 
@@ -1920,10 +1997,9 @@ export class GoogleTasksConnector implements TaskConnector {
     }
 
     private async getFirstListId(tokens: OAuthTokens): Promise<string> {
-        const { items } = await this.http.get<{ items: GoogleTaskList[] }>(
-            '/users/@me/lists',
-            { Authorization: `Bearer ${tokens.accessToken}` },
-        );
+        const { items } = await this.http.get<{ items: GoogleTaskList[] }>('/users/@me/lists', {
+            Authorization: `Bearer ${tokens.accessToken}`,
+        });
 
         if (!items.length) throw new Error('No Google Task lists found');
         return items[0].id;

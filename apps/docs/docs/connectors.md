@@ -40,13 +40,13 @@ Authorization: Bearer <token>
 
 ```json
 [
-  {
-    "id": "...",
-    "source": "todoist",
-    "enabled": true,
-    "lastSyncedAt": "2026-05-20T10:00:00.000Z",
-    "lastError": null
-  }
+    {
+        "id": "...",
+        "source": "todoist",
+        "enabled": true,
+        "lastSyncedAt": "2026-05-20T10:00:00.000Z",
+        "lastError": null
+    }
 ]
 ```
 

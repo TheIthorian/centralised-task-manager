@@ -9,7 +9,7 @@
     "clean": "docusaurus clear",
     "generate": "docusaurus gen-api-docs all",
     "lint": "echo 'no lint'",
-    "format": "echo 'no format'"
+    "format": "oxfmt --config ../../.oxfmtrc.json '**/*.md'"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.1",

@@ -125,41 +125,37 @@ error              string | null
 
 ```ts
 interface RemoteTask {
-  sourceId: string;
-  title: string;
-  description: string | null;
-  status: "open" | "done";
-  priority: number | null;
-  dueDate: Date | null;
-  tags: string[];
+    sourceId: string;
+    title: string;
+    description: string | null;
+    status: 'open' | 'done';
+    priority: number | null;
+    dueDate: Date | null;
+    tags: string[];
 }
 
 interface OAuthTokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: Date;
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: Date;
 }
 
 interface TaskConnector {
-  readonly source: string;
+    readonly source: string;
 
-  // OAuth
-  getAuthUrl(userId: string): string;
-  exchangeCode(code: string): Promise<OAuthTokens>;
-  refreshToken(tokens: OAuthTokens): Promise<OAuthTokens>;
+    // OAuth
+    getAuthUrl(userId: string): string;
+    exchangeCode(code: string): Promise<OAuthTokens>;
+    refreshToken(tokens: OAuthTokens): Promise<OAuthTokens>;
 
-  // Sync (read)
-  fetchTasks(tokens: OAuthTokens): Promise<RemoteTask[]>;
+    // Sync (read)
+    fetchTasks(tokens: OAuthTokens): Promise<RemoteTask[]>;
 
-  // Write-through mutations
-  createTask(tokens: OAuthTokens, task: CreateTaskDto): Promise<RemoteTask>;
-  updateTask(
-    tokens: OAuthTokens,
-    sourceId: string,
-    patch: UpdateTaskDto,
-  ): Promise<RemoteTask>;
-  completeTask(tokens: OAuthTokens, sourceId: string): Promise<void>;
-  deleteTask(tokens: OAuthTokens, sourceId: string): Promise<void>;
+    // Write-through mutations
+    createTask(tokens: OAuthTokens, task: CreateTaskDto): Promise<RemoteTask>;
+    updateTask(tokens: OAuthTokens, sourceId: string, patch: UpdateTaskDto): Promise<RemoteTask>;
+    completeTask(tokens: OAuthTokens, sourceId: string): Promise<void>;
+    deleteTask(tokens: OAuthTokens, sourceId: string): Promise<void>;
 }
 ```
 
@@ -222,11 +218,11 @@ No HTTP server. Pure background worker.
 - NestJS `@Cron` job, configurable interval (default: every 15 minutes)
 - Fetches all enabled `ConnectorConfig` records
 - For each config:
-  1. Refresh token if `tokenExpiresAt` is within 5 minutes
-  2. Call `connector.fetchTasks(tokens)`
-  3. Upsert each `RemoteTask` into the `Task` collection (match on `userId + source + sourceId`)
-  4. Do not overwrite `fuzzyDeadline` or local-only fields during upsert
-  5. Write a `SyncLog` entry (success or error)
+    1. Refresh token if `tokenExpiresAt` is within 5 minutes
+    2. Call `connector.fetchTasks(tokens)`
+    3. Upsert each `RemoteTask` into the `Task` collection (match on `userId + source + sourceId`)
+    4. Do not overwrite `fuzzyDeadline` or local-only fields during upsert
+    5. Write a `SyncLog` entry (success or error)
 - Runs configs concurrently with a concurrency limit (default: 5)
 
 ### TokenRefreshService (lives in `packages/connectors`)

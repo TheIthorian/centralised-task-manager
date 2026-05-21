@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "oxlint src",
-    "format": "oxfmt --config ../../.oxfmtrc.json src"
+    "format": "oxfmt --config ../../.oxfmtrc.json src '**/*.md'"
   },
   "dependencies": {
     "@ctm/api-client": "workspace:*",

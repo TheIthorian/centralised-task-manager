@@ -13,77 +13,81 @@
 ## File Map
 
 ### New: `packages/api-client/`
-| File | Purpose |
-|---|---|
-| `package.json` | Package config, axios dep |
-| `tsconfig.json` | Extends `@ctm/tsconfig/base.json` |
-| `tsconfig.build.json` | Excludes spec files |
-| `vitest.config.ts` | Unit test config |
-| `src/types.ts` | Shared DTO types (UserDto, TaskDto, etc.) |
-| `src/client.ts` | Axios instance factory with auth interceptors |
-| `src/auth.ts` | login, register, refresh functions |
-| `src/tasks.ts` | listTasks, createTask, updateTask, deleteTask, setFuzzyDeadline |
-| `src/connectors.ts` | listConnectors, getConnectorAuthUrl, disconnectConnector |
-| `src/users.ts` | getMe, updateMe, deleteMe |
-| `src/index.ts` | Re-exports everything |
-| `src/auth.spec.ts` | Unit tests for auth functions |
-| `src/tasks.spec.ts` | Unit tests for task functions |
+
+| File                  | Purpose                                                         |
+| --------------------- | --------------------------------------------------------------- |
+| `package.json`        | Package config, axios dep                                       |
+| `tsconfig.json`       | Extends `@ctm/tsconfig/base.json`                               |
+| `tsconfig.build.json` | Excludes spec files                                             |
+| `vitest.config.ts`    | Unit test config                                                |
+| `src/types.ts`        | Shared DTO types (UserDto, TaskDto, etc.)                       |
+| `src/client.ts`       | Axios instance factory with auth interceptors                   |
+| `src/auth.ts`         | login, register, refresh functions                              |
+| `src/tasks.ts`        | listTasks, createTask, updateTask, deleteTask, setFuzzyDeadline |
+| `src/connectors.ts`   | listConnectors, getConnectorAuthUrl, disconnectConnector        |
+| `src/users.ts`        | getMe, updateMe, deleteMe                                       |
+| `src/index.ts`        | Re-exports everything                                           |
+| `src/auth.spec.ts`    | Unit tests for auth functions                                   |
+| `src/tasks.spec.ts`   | Unit tests for task functions                                   |
 
 ### New: `apps/web/`
-| File | Purpose |
-|---|---|
-| `package.json` | App config, all deps |
-| `index.html` | Vite entry point |
-| `vite.config.ts` | Vite + React + Tailwind plugins |
-| `tsconfig.json` | Extends `@ctm/tsconfig/react.json` |
-| `vitest.config.ts` | jsdom test environment |
-| `src/test-setup.ts` | jest-dom matchers |
-| `src/main.tsx` | React root, router init, api-client init |
-| `src/index.css` | Tailwind v4 import + `@theme` custom colours |
-| `src/App.tsx` | Route tree |
-| `src/auth/AuthContext.tsx` | Provides user, login, logout, isLoading |
-| `src/auth/ProtectedRoute.tsx` | Redirects to /login if unauthenticated |
-| `src/pages/LoginPage.tsx` | Email + password login form |
-| `src/pages/RegisterPage.tsx` | Name + email + password registration |
-| `src/pages/TasksPage.tsx` | Task list with filters and add/edit |
-| `src/pages/SettingsLayout.tsx` | Settings shell with sub-nav (desktop) |
-| `src/pages/SourcesPage.tsx` | Connector connect/disconnect cards |
-| `src/pages/ProfilePage.tsx` | Email/password update + delete account |
-| `src/pages/NotFoundPage.tsx` | 404 page |
-| `src/components/layout/Sidebar.tsx` | Desktop black left nav |
-| `src/components/layout/BottomTabs.tsx` | Mobile bottom tab bar (3 tabs) |
-| `src/components/layout/AppShell.tsx` | Responsive wrapper combining both |
-| `src/components/ui/Button.tsx` | Neobrutalist button (primary/secondary/danger) |
-| `src/components/ui/Input.tsx` | Neobrutalist text input |
-| `src/components/ui/Badge.tsx` | Priority and source badges |
-| `src/components/ui/Checkbox.tsx` | Square checkbox |
-| `src/components/ui/Modal.tsx` | Portal-based modal with backdrop |
-| `src/components/ui/index.ts` | Barrel export |
-| `src/components/tasks/TaskCard.tsx` | Single task row |
-| `src/components/tasks/TaskFilters.tsx` | ALL/TODAY/UPCOMING/DONE pill filters |
-| `src/components/tasks/AddTaskInline.tsx` | Expandable inline add-task form |
-| `src/components/tasks/TaskModal.tsx` | Create/edit task modal |
-| `src/components/tasks/TaskList.tsx` | Renders list of TaskCards |
-| `src/components/sources/SourceCard.tsx` | Single connector card |
-| `.env` | `VITE_API_URL=http://localhost:3000` |
-| `.env.example` | Same, committed to repo |
+
+| File                                     | Purpose                                        |
+| ---------------------------------------- | ---------------------------------------------- |
+| `package.json`                           | App config, all deps                           |
+| `index.html`                             | Vite entry point                               |
+| `vite.config.ts`                         | Vite + React + Tailwind plugins                |
+| `tsconfig.json`                          | Extends `@ctm/tsconfig/react.json`             |
+| `vitest.config.ts`                       | jsdom test environment                         |
+| `src/test-setup.ts`                      | jest-dom matchers                              |
+| `src/main.tsx`                           | React root, router init, api-client init       |
+| `src/index.css`                          | Tailwind v4 import + `@theme` custom colours   |
+| `src/App.tsx`                            | Route tree                                     |
+| `src/auth/AuthContext.tsx`               | Provides user, login, logout, isLoading        |
+| `src/auth/ProtectedRoute.tsx`            | Redirects to /login if unauthenticated         |
+| `src/pages/LoginPage.tsx`                | Email + password login form                    |
+| `src/pages/RegisterPage.tsx`             | Name + email + password registration           |
+| `src/pages/TasksPage.tsx`                | Task list with filters and add/edit            |
+| `src/pages/SettingsLayout.tsx`           | Settings shell with sub-nav (desktop)          |
+| `src/pages/SourcesPage.tsx`              | Connector connect/disconnect cards             |
+| `src/pages/ProfilePage.tsx`              | Email/password update + delete account         |
+| `src/pages/NotFoundPage.tsx`             | 404 page                                       |
+| `src/components/layout/Sidebar.tsx`      | Desktop black left nav                         |
+| `src/components/layout/BottomTabs.tsx`   | Mobile bottom tab bar (3 tabs)                 |
+| `src/components/layout/AppShell.tsx`     | Responsive wrapper combining both              |
+| `src/components/ui/Button.tsx`           | Neobrutalist button (primary/secondary/danger) |
+| `src/components/ui/Input.tsx`            | Neobrutalist text input                        |
+| `src/components/ui/Badge.tsx`            | Priority and source badges                     |
+| `src/components/ui/Checkbox.tsx`         | Square checkbox                                |
+| `src/components/ui/Modal.tsx`            | Portal-based modal with backdrop               |
+| `src/components/ui/index.ts`             | Barrel export                                  |
+| `src/components/tasks/TaskCard.tsx`      | Single task row                                |
+| `src/components/tasks/TaskFilters.tsx`   | ALL/TODAY/UPCOMING/DONE pill filters           |
+| `src/components/tasks/AddTaskInline.tsx` | Expandable inline add-task form                |
+| `src/components/tasks/TaskModal.tsx`     | Create/edit task modal                         |
+| `src/components/tasks/TaskList.tsx`      | Renders list of TaskCards                      |
+| `src/components/sources/SourceCard.tsx`  | Single connector card                          |
+| `.env`                                   | `VITE_API_URL=http://localhost:3000`           |
+| `.env.example`                           | Same, committed to repo                        |
 
 ### Modified: `apps/main/`
-| File | Change |
-|---|---|
-| `src/auth/schemas/refresh-token.schema.ts` | New — RefreshToken Mongoose schema |
-| `src/auth/dto/refresh.dto.ts` | New — `{ refreshToken: string }` DTO |
-| `src/auth/auth.service.ts` | Add `issueTokens()`, `refreshTokens()`, `revokeRefreshToken()` |
-| `src/auth/auth.controller.ts` | Add `POST /auth/refresh`, update login/register responses |
-| `src/auth/auth.module.ts` | Register RefreshToken schema |
-| `src/users/users.service.ts` | Add `delete(id)` method |
-| `src/users/users.controller.ts` | Add `DELETE /users/me` endpoint |
+
+| File                                       | Change                                                         |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| `src/auth/schemas/refresh-token.schema.ts` | New — RefreshToken Mongoose schema                             |
+| `src/auth/dto/refresh.dto.ts`              | New — `{ refreshToken: string }` DTO                           |
+| `src/auth/auth.service.ts`                 | Add `issueTokens()`, `refreshTokens()`, `revokeRefreshToken()` |
+| `src/auth/auth.controller.ts`              | Add `POST /auth/refresh`, update login/register responses      |
+| `src/auth/auth.module.ts`                  | Register RefreshToken schema                                   |
+| `src/users/users.service.ts`               | Add `delete(id)` method                                        |
+| `src/users/users.controller.ts`            | Add `DELETE /users/me` endpoint                                |
 
 ---
 
 ### Task 0: Backend — refresh tokens + delete account
 
 **Files:**
+
 - Create: `apps/main/src/auth/schemas/refresh-token.schema.ts`
 - Create: `apps/main/src/auth/dto/refresh.dto.ts`
 - Modify: `apps/main/src/auth/auth.service.ts`
@@ -105,6 +109,7 @@ REFRESH_TOKEN_EXPIRES_DAYS: Joi.number().integer().min(1).default(30),
 ```
 
 In `apps/main/src/auth/auth.module.ts`, update `signOptions`:
+
 ```typescript
 signOptions: {
     algorithm: 'RS256' as const,
@@ -156,6 +161,7 @@ export class RefreshDto {
 - [ ] **Step 4: Update AuthModule to register RefreshToken schema**
 
 In `apps/main/src/auth/auth.module.ts`, add to the MongooseModule.forFeature array:
+
 ```typescript
 { name: RefreshToken.name, schema: RefreshTokenSchema }
 ```
@@ -193,7 +199,13 @@ export class AuthService {
     ) {}
 
     /** Register a new user and return a token pair. */
-    async register({ email, password }: { email: string; password: string }): Promise<TokenPair & { user: { id: string; email: string } }> {
+    async register({
+        email,
+        password,
+    }: {
+        email: string;
+        password: string;
+    }): Promise<TokenPair & { user: { id: string; email: string } }> {
         const user = await this.users.create({ email, password });
 
         return this.issueTokens(user);
@@ -311,9 +323,7 @@ export class AuthController {
     /** List all API tokens for the current user (no raw values). */
     @Get('tokens')
     @UseGuards(CombinedAuthGuard)
-    async listTokens(
-        @Request() req: JwtRequest,
-    ): Promise<{ id: string; label: string; lastUsedAt: Date | null }[]> {
+    async listTokens(@Request() req: JwtRequest): Promise<{ id: string; label: string; lastUsedAt: Date | null }[]> {
         const tokens = await this.apiTokens.list(req.user.sub);
 
         return tokens.map((t) => ({ id: String(t._id), label: t.label, lastUsedAt: t.lastUsedAt }));
@@ -368,6 +378,7 @@ Expected: all existing tests pass plus new refresh tests pass.
 - [ ] **Step 11: Also add `JWT_ACCESS_EXPIRES=15m` and `REFRESH_TOKEN_EXPIRES_DAYS=30` to `apps/main/.env` and `apps/main/.env.test`**
 
 In `.env`, add:
+
 ```
 JWT_ACCESS_EXPIRES=15m
 REFRESH_TOKEN_EXPIRES_DAYS=30
@@ -380,6 +391,7 @@ In `.env.test`, add the same two lines.
 The web app sends a `name` on registration. The backend needs to accept and store it.
 
 In `apps/main/src/auth/dto/register.dto.ts`, add a `name` field:
+
 ```typescript
 import { IsEmail, IsString, MinLength, IsNotEmpty } from 'class-validator';
 
@@ -398,13 +410,16 @@ export class RegisterDto {
 ```
 
 In `apps/main/src/users/schemas/user.schema.ts`, add an optional `name` prop:
+
 ```typescript
 @Prop({ default: '' })
 name!: string;
 ```
+
 (Add it between the `email` and `passwordHash` props.)
 
 In `apps/main/src/users/users.service.ts`, update `create()` to accept and pass `name`:
+
 ```typescript
 async create({ email, password, name = '' }: { email: string; password: string; name?: string }): Promise<UserDocument> {
     const passwordHash = await bcrypt.hash(password, 12);
@@ -418,6 +433,7 @@ async create({ email, password, name = '' }: { email: string; password: string; 
 ```
 
 In `apps/main/src/auth/auth.service.ts`, update `register()` to pass `name`:
+
 ```typescript
 async register({ email, password, name }: { email: string; password: string; name?: string }): Promise<TokenPair & { user: { id: string; email: string } }> {
     const user = await this.users.create({ email, password, name });
@@ -426,6 +442,7 @@ async register({ email, password, name }: { email: string; password: string; nam
 ```
 
 Update `auth.controller.ts` `register()` to pass `dto.name`:
+
 ```typescript
 async register(@Body() dto: RegisterDto): Promise<TokenResponse> {
     return this.auth.register({ email: dto.email, password: dto.password, name: dto.name });
@@ -433,6 +450,7 @@ async register(@Body() dto: RegisterDto): Promise<TokenResponse> {
 ```
 
 Also update `UserDto` in `packages/api-client/src/types.ts` to include optional name:
+
 ```typescript
 export interface UserDto {
     id: string;
@@ -453,6 +471,7 @@ git commit -m "feat(main): add refresh token support, delete-account endpoint, a
 ### Task 1: `@ctm/api-client` package
 
 **Files:**
+
 - Create: `packages/api-client/package.json`
 - Create: `packages/api-client/tsconfig.json`
 - Create: `packages/api-client/tsconfig.build.json`
@@ -475,33 +494,33 @@ Create `packages/api-client/package.json`:
 
 ```json
 {
-  "name": "@ctm/api-client",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+    "name": "@ctm/api-client",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc -p tsconfig.build.json --watch",
+        "test": "vitest run",
+        "lint": "oxlint src",
+        "format": "oxfmt --config ../../oxfmt.json src"
+    },
+    "dependencies": {
+        "axios": "^1.16.1"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "typescript": "^6.0.3",
+        "vitest": "^3.2.0"
     }
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "dev": "tsc -p tsconfig.build.json --watch",
-    "test": "vitest run",
-    "lint": "oxlint src",
-    "format": "oxfmt --config ../../oxfmt.json src"
-  },
-  "dependencies": {
-    "axios": "^1.16.1"
-  },
-  "devDependencies": {
-    "@ctm/tsconfig": "workspace:*",
-    "typescript": "^6.0.3",
-    "vitest": "^3.2.0"
-  }
 }
 ```
 
@@ -511,12 +530,12 @@ Create `packages/api-client/tsconfig.json`:
 
 ```json
 {
-  "extends": "@ctm/tsconfig/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+    "extends": "@ctm/tsconfig/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "include": ["src"]
 }
 ```
 
@@ -524,8 +543,8 @@ Create `packages/api-client/tsconfig.build.json`:
 
 ```json
 {
-  "extends": "./tsconfig.json",
-  "exclude": ["src/**/*.spec.ts"]
+    "extends": "./tsconfig.json",
+    "exclude": ["src/**/*.spec.ts"]
 }
 ```
 
@@ -962,7 +981,15 @@ describe('tasks', () => {
     });
 
     it('createTask posts to /tasks', async () => {
-        const task = { id: '1', title: 'Test', completed: false, source: 'local', sourceId: 'x', createdAt: '', updatedAt: '' };
+        const task = {
+            id: '1',
+            title: 'Test',
+            completed: false,
+            source: 'local',
+            sourceId: 'x',
+            createdAt: '',
+            updatedAt: '',
+        };
 
         mockInstance.post.mockResolvedValueOnce({ data: task });
 
@@ -973,7 +1000,15 @@ describe('tasks', () => {
     });
 
     it('updateTask patches /tasks/:id', async () => {
-        const task = { id: '1', title: 'Updated', completed: true, source: 'local', sourceId: 'x', createdAt: '', updatedAt: '' };
+        const task = {
+            id: '1',
+            title: 'Updated',
+            completed: true,
+            source: 'local',
+            sourceId: 'x',
+            createdAt: '',
+            updatedAt: '',
+        };
 
         mockInstance.patch.mockResolvedValueOnce({ data: task });
 
@@ -1022,6 +1057,7 @@ git commit -m "feat(api-client): add typed axios wrapper with auth interceptors"
 ### Task 2: `apps/web` scaffold
 
 **Files:**
+
 - Create: `apps/web/package.json`
 - Create: `apps/web/index.html`
 - Create: `apps/web/vite.config.ts`
@@ -1042,39 +1078,39 @@ Create `apps/web/package.json`:
 
 ```json
 {
-  "name": "@ctm/web",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "lint": "oxlint src",
-    "format": "oxfmt --config ../../oxfmt.json src"
-  },
-  "dependencies": {
-    "@ctm/api-client": "workspace:*",
-    "clsx": "^2.1.1",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
-    "react-router": "^7.15.1"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.3.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^14.6.1",
-    "@types/react": "^19.2.15",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.2",
-    "jsdom": "^25.0.1",
-    "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.13",
-    "vitest": "^3.2.0"
-  }
+    "name": "@ctm/web",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
+        "test": "vitest run",
+        "lint": "oxlint src",
+        "format": "oxfmt --config ../../oxfmt.json src"
+    },
+    "dependencies": {
+        "@ctm/api-client": "workspace:*",
+        "clsx": "^2.1.1",
+        "react": "^19.2.6",
+        "react-dom": "^19.2.6",
+        "react-router": "^7.15.1"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.3.0",
+        "@testing-library/jest-dom": "^6.6.3",
+        "@testing-library/react": "^16.3.0",
+        "@testing-library/user-event": "^14.6.1",
+        "@types/react": "^19.2.15",
+        "@types/react-dom": "^19.2.3",
+        "@vitejs/plugin-react": "^6.0.2",
+        "jsdom": "^25.0.1",
+        "tailwindcss": "^4.3.0",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.13",
+        "vitest": "^3.2.0"
+    }
 }
 ```
 
@@ -1085,15 +1121,15 @@ Create `apps/web/index.html`:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CTM — Centralised Task Manager</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CTM — Centralised Task Manager</title>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
 </html>
 ```
 
@@ -1120,8 +1156,8 @@ Create `apps/web/tsconfig.json`:
 
 ```json
 {
-  "extends": "@ctm/tsconfig/react.json",
-  "include": ["src"]
+    "extends": "@ctm/tsconfig/react.json",
+    "include": ["src"]
 }
 ```
 
@@ -1157,27 +1193,27 @@ import '@testing-library/jest-dom';
 Create `apps/web/src/index.css`:
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --color-nb-yellow: #FFDE59;
-  --color-nb-black: #111111;
-  --color-nb-red: #FF3B30;
-  --color-nb-green: #34C759;
-  --color-nb-grey: #888888;
+    --color-nb-yellow: #ffde59;
+    --color-nb-black: #111111;
+    --color-nb-red: #ff3b30;
+    --color-nb-green: #34c759;
+    --color-nb-grey: #888888;
 
-  --shadow-nb: 3px 3px 0px var(--color-nb-black);
-  --shadow-nb-lg: 5px 5px 0px var(--color-nb-black);
+    --shadow-nb: 3px 3px 0px var(--color-nb-black);
+    --shadow-nb-lg: 5px 5px 0px var(--color-nb-black);
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 body {
-  font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
-  background-color: #FFDE59;
-  margin: 0;
+    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+    background-color: #ffde59;
+    margin: 0;
 }
 ```
 
@@ -1225,11 +1261,13 @@ createRoot(root).render(
 - [ ] **Step 10: Create `.env` and `.env.example`**
 
 Create `apps/web/.env`:
+
 ```
 VITE_API_URL=http://localhost:3000
 ```
 
 Create `apps/web/.env.example`:
+
 ```
 VITE_API_URL=http://localhost:3000
 ```
@@ -1255,6 +1293,7 @@ git commit -m "feat(web): scaffold Vite + React 19 + Tailwind v4 app"
 ### Task 3: Neobrutalist UI primitives
 
 **Files:**
+
 - Create: `apps/web/src/components/ui/Button.tsx`
 - Create: `apps/web/src/components/ui/Input.tsx`
 - Create: `apps/web/src/components/ui/Badge.tsx`
@@ -1572,6 +1611,7 @@ git commit -m "feat(web): add neobrutalist UI primitives (Button, Input, Badge, 
 ### Task 4: Auth context + login/register pages
 
 **Files:**
+
 - Create: `apps/web/src/auth/AuthContext.tsx`
 - Create: `apps/web/src/auth/ProtectedRoute.tsx`
 - Create: `apps/web/src/pages/LoginPage.tsx`
@@ -1945,6 +1985,7 @@ git commit -m "feat(web): add AuthContext, ProtectedRoute, login and register pa
 ### Task 5: App shell + routing
 
 **Files:**
+
 - Create: `apps/web/src/components/layout/Sidebar.tsx`
 - Create: `apps/web/src/components/layout/BottomTabs.tsx`
 - Create: `apps/web/src/components/layout/AppShell.tsx`
@@ -2187,6 +2228,7 @@ createRoot(root).render(
 The `App.tsx` references `TasksPage`, `SettingsLayout`, `SourcesPage`, `ProfilePage`. Create stubs so the app compiles:
 
 Create `apps/web/src/pages/TasksPage.tsx`:
+
 ```typescript
 export function TasksPage(): React.JSX.Element {
     return <div className="p-6"><h1 className="text-2xl font-black uppercase">Tasks</h1><p className="font-bold mt-2">Coming in next task.</p></div>;
@@ -2194,6 +2236,7 @@ export function TasksPage(): React.JSX.Element {
 ```
 
 Create `apps/web/src/pages/SettingsLayout.tsx`:
+
 ```typescript
 import { Outlet, Link, useLocation } from 'react-router';
 import clsx from 'clsx';
@@ -2230,6 +2273,7 @@ export function SettingsLayout(): React.JSX.Element {
 ```
 
 Create `apps/web/src/pages/SourcesPage.tsx`:
+
 ```typescript
 export function SourcesPage(): React.JSX.Element {
     return <div><p className="font-bold">Sources — coming soon.</p></div>;
@@ -2237,6 +2281,7 @@ export function SourcesPage(): React.JSX.Element {
 ```
 
 Create `apps/web/src/pages/ProfilePage.tsx`:
+
 ```typescript
 export function ProfilePage(): React.JSX.Element {
     return <div><p className="font-bold">Profile — coming soon.</p></div>;
@@ -2273,6 +2318,7 @@ git commit -m "feat(web): add app shell layout, routing, sidebar, and bottom tab
 ### Task 6: Tasks page
 
 **Files:**
+
 - Create: `apps/web/src/components/tasks/TaskCard.tsx`
 - Create: `apps/web/src/components/tasks/TaskFilters.tsx`
 - Create: `apps/web/src/components/tasks/AddTaskInline.tsx`
@@ -2871,6 +2917,7 @@ git commit -m "feat(web): implement tasks page with add, edit, delete, and filte
 ### Task 7: Sources page
 
 **Files:**
+
 - Create: `apps/web/src/components/sources/SourceCard.tsx`
 - Replace: `apps/web/src/pages/SourcesPage.tsx`
 
@@ -3040,6 +3087,7 @@ git commit -m "feat(web): implement sources page with connect/disconnect flow"
 ### Task 8: Profile page
 
 **Files:**
+
 - Replace: `apps/web/src/pages/ProfilePage.tsx`
 
 **Context:** The profile page has two forms: update email and change password. They are separate forms so submitting one doesn't require filling the other. Below both forms is a danger zone with account deletion. Deletion requires the user to type their email to confirm before calling `DELETE /users/me`.
@@ -3250,11 +3298,13 @@ git commit -m "feat(web): implement profile page with email, password, and delet
 - [ ] **Step 1: Start the stack**
 
 Terminal 1 — API:
+
 ```bash
 pnpm --filter @ctm/main dev
 ```
 
 Terminal 2 — Web:
+
 ```bash
 pnpm --filter @ctm/api-client build && pnpm --filter @ctm/web dev
 ```

@@ -12,27 +12,28 @@
 
 ## File Map
 
-| File | Purpose |
-|---|---|
-| `apps/landing/package.json` | Package manifest, scripts |
-| `apps/landing/astro.config.mjs` | Astro config: react integration, tailwind vite plugin, static output |
-| `apps/landing/tsconfig.json` | TypeScript config extending shared react preset |
-| `apps/landing/src/styles/global.css` | Tailwind v4 import + `@theme` token definitions |
-| `apps/landing/src/layouts/BaseLayout.astro` | HTML shell, head/meta/OG tags, imports global.css |
-| `apps/landing/src/pages/index.astro` | Single page — imports all React sections |
-| `apps/landing/src/components/Nav.tsx` | Sticky black nav bar |
-| `apps/landing/src/components/Hero.tsx` | Yellow hero section, headline, CTAs |
-| `apps/landing/src/components/Features.tsx` | 4-card features grid |
-| `apps/landing/src/components/HowItWorks.tsx` | 3-step numbered flow |
-| `apps/landing/src/components/Integrations.tsx` | Source integration cards |
-| `apps/landing/src/components/FooterCta.tsx` | Black footer with CTA |
-| `apps/landing/public/favicon.svg` | SVG favicon |
+| File                                           | Purpose                                                              |
+| ---------------------------------------------- | -------------------------------------------------------------------- |
+| `apps/landing/package.json`                    | Package manifest, scripts                                            |
+| `apps/landing/astro.config.mjs`                | Astro config: react integration, tailwind vite plugin, static output |
+| `apps/landing/tsconfig.json`                   | TypeScript config extending shared react preset                      |
+| `apps/landing/src/styles/global.css`           | Tailwind v4 import + `@theme` token definitions                      |
+| `apps/landing/src/layouts/BaseLayout.astro`    | HTML shell, head/meta/OG tags, imports global.css                    |
+| `apps/landing/src/pages/index.astro`           | Single page — imports all React sections                             |
+| `apps/landing/src/components/Nav.tsx`          | Sticky black nav bar                                                 |
+| `apps/landing/src/components/Hero.tsx`         | Yellow hero section, headline, CTAs                                  |
+| `apps/landing/src/components/Features.tsx`     | 4-card features grid                                                 |
+| `apps/landing/src/components/HowItWorks.tsx`   | 3-step numbered flow                                                 |
+| `apps/landing/src/components/Integrations.tsx` | Source integration cards                                             |
+| `apps/landing/src/components/FooterCta.tsx`    | Black footer with CTA                                                |
+| `apps/landing/public/favicon.svg`              | SVG favicon                                                          |
 
 ---
 
 ## Task 1: Scaffold `apps/landing`
 
 **Files:**
+
 - Create: `apps/landing/package.json`
 - Create: `apps/landing/astro.config.mjs`
 - Create: `apps/landing/tsconfig.json`
@@ -43,29 +44,29 @@
 
 ```json
 {
-  "name": "@ctm/landing",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "lint": "oxlint src",
-    "format": "oxfmt src"
-  },
-  "dependencies": {
-    "astro": "^5.0.0",
-    "@astrojs/react": "^4.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0",
-    "tailwindcss": "^4.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
-  }
+    "name": "@ctm/landing",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "astro dev",
+        "build": "astro build",
+        "preview": "astro preview",
+        "lint": "oxlint src",
+        "format": "oxfmt src"
+    },
+    "dependencies": {
+        "astro": "^5.0.0",
+        "@astrojs/react": "^4.0.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.0.0",
+        "tailwindcss": "^4.0.0",
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0"
+    }
 }
 ```
 
@@ -77,11 +78,11 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  integrations: [react()],
-  vite: {
-    plugins: [tailwindcss()],
-  },
-  output: 'static',
+    integrations: [react()],
+    vite: {
+        plugins: [tailwindcss()],
+    },
+    output: 'static',
 });
 ```
 
@@ -89,29 +90,29 @@ export default defineConfig({
 
 ```json
 {
-  "extends": "../../packages/tsconfig/react.json",
-  "include": ["src", ".astro/types.d.ts"]
+    "extends": "../../packages/tsconfig/react.json",
+    "include": ["src", ".astro/types.d.ts"]
 }
 ```
 
 - [ ] **Step 4: Create `apps/landing/src/styles/global.css`**
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --color-nb-yellow: #FFDE59;
-  --color-nb-black: #111111;
-  --color-nb-red: #FF3B30;
-  --color-nb-green: #34C759;
+    --color-nb-yellow: #ffde59;
+    --color-nb-black: #111111;
+    --color-nb-red: #ff3b30;
+    --color-nb-green: #34c759;
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
 ```
 
@@ -128,6 +129,7 @@ html {
 - [ ] **Step 6: Install dependencies**
 
 Run from the repo root:
+
 ```bash
 pnpm install
 ```
@@ -146,6 +148,7 @@ git commit -m "feat(landing): scaffold Astro static site"
 ## Task 2: BaseLayout
 
 **Files:**
+
 - Create: `apps/landing/src/layouts/BaseLayout.astro`
 
 - [ ] **Step 1: Create `apps/landing/src/layouts/BaseLayout.astro`**
@@ -203,6 +206,7 @@ git commit -m "feat(landing): add BaseLayout with meta and global styles"
 ## Task 3: Nav component
 
 **Files:**
+
 - Create: `apps/landing/src/components/Nav.tsx`
 
 - [ ] **Step 1: Create `apps/landing/src/components/Nav.tsx`**
@@ -211,19 +215,19 @@ git commit -m "feat(landing): add BaseLayout with meta and global styles"
 import type React from 'react';
 
 export default function Nav(): React.ReactElement {
-  return (
-    <nav className="sticky top-0 z-50 bg-nb-black border-b-4 border-nb-black">
-      <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
-        <span className="text-nb-yellow font-black text-2xl uppercase tracking-widest">CTM</span>
-        <a
-          href="#"
-          className="border-2 border-white text-white font-black uppercase tracking-wide px-4 py-2 text-sm hover:bg-white hover:text-nb-black transition-colors"
-        >
-          GET STARTED →
-        </a>
-      </div>
-    </nav>
-  );
+    return (
+        <nav className="sticky top-0 z-50 bg-nb-black border-b-4 border-nb-black">
+            <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
+                <span className="text-nb-yellow font-black text-2xl uppercase tracking-widest">CTM</span>
+                <a
+                    href="#"
+                    className="border-2 border-white text-white font-black uppercase tracking-wide px-4 py-2 text-sm hover:bg-white hover:text-nb-black transition-colors"
+                >
+                    GET STARTED →
+                </a>
+            </div>
+        </nav>
+    );
 }
 ```
 
@@ -258,6 +262,7 @@ git commit -m "feat(landing): add Nav component"
 ## Task 4: Hero section
 
 **Files:**
+
 - Create: `apps/landing/src/components/Hero.tsx`
 
 - [ ] **Step 1: Create `apps/landing/src/components/Hero.tsx`**
@@ -266,35 +271,35 @@ git commit -m "feat(landing): add Nav component"
 import type React from 'react';
 
 export default function Hero(): React.ReactElement {
-  return (
-    <section className="bg-nb-yellow border-b-4 border-nb-black py-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="font-black text-nb-black uppercase text-6xl md:text-8xl leading-none tracking-tight mb-6">
-          ALL YOUR TASKS.
-          <br />
-          ONE PLACE.
-        </h1>
-        <p className="font-bold text-nb-black text-xl md:text-2xl mb-10 max-w-xl">
-          Connect Todoist, Google Tasks, and more. Manage everything from a
-          single dashboard, CLI, or AI agent.
-        </p>
-        <div className="flex gap-4 flex-wrap">
-          <a
-            href="#"
-            className="bg-nb-black text-white font-black uppercase tracking-wide border-2 border-nb-black px-6 py-3 shadow-[4px_4px_0px_#111111] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
-          >
-            GET STARTED →
-          </a>
-          <a
-            href="#"
-            className="bg-white text-nb-black font-black uppercase tracking-wide border-2 border-nb-black px-6 py-3 shadow-[4px_4px_0px_#111111] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
-          >
-            VIEW DOCS →
-          </a>
-        </div>
-      </div>
-    </section>
-  );
+    return (
+        <section className="bg-nb-yellow border-b-4 border-nb-black py-24 px-6">
+            <div className="max-w-4xl mx-auto">
+                <h1 className="font-black text-nb-black uppercase text-6xl md:text-8xl leading-none tracking-tight mb-6">
+                    ALL YOUR TASKS.
+                    <br />
+                    ONE PLACE.
+                </h1>
+                <p className="font-bold text-nb-black text-xl md:text-2xl mb-10 max-w-xl">
+                    Connect Todoist, Google Tasks, and more. Manage everything from a single dashboard, CLI, or AI
+                    agent.
+                </p>
+                <div className="flex gap-4 flex-wrap">
+                    <a
+                        href="#"
+                        className="bg-nb-black text-white font-black uppercase tracking-wide border-2 border-nb-black px-6 py-3 shadow-[4px_4px_0px_#111111] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                    >
+                        GET STARTED →
+                    </a>
+                    <a
+                        href="#"
+                        className="bg-white text-nb-black font-black uppercase tracking-wide border-2 border-nb-black px-6 py-3 shadow-[4px_4px_0px_#111111] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                    >
+                        VIEW DOCS →
+                    </a>
+                </div>
+            </div>
+        </section>
+    );
 }
 ```
 
@@ -331,6 +336,7 @@ git commit -m "feat(landing): add Hero section"
 ## Task 5: Features section
 
 **Files:**
+
 - Create: `apps/landing/src/components/Features.tsx`
 
 - [ ] **Step 1: Create `apps/landing/src/components/Features.tsx`**
@@ -339,64 +345,54 @@ git commit -m "feat(landing): add Hero section"
 import type React from 'react';
 
 interface Feature {
-  icon: string;
-  title: string;
-  description: string;
+    icon: string;
+    title: string;
+    description: string;
 }
 
 const features: Feature[] = [
-  {
-    icon: '⚡',
-    title: 'Aggregate',
-    description:
-      'Pull tasks from Todoist, Google Tasks, and more into a single, unified view.',
-  },
-  {
-    icon: '🎯',
-    title: 'Fuzzy Deadlines',
-    description:
-      "Mark tasks as 'this week', 'this month', or 'someday' — without touching the source.",
-  },
-  {
-    icon: '🤖',
-    title: 'CLI + AI Agent',
-    description:
-      'Manage your tasks from the terminal or through Claude and other AI agents via MCP.',
-  },
-  {
-    icon: '🔔',
-    title: 'Smart Reminders',
-    description:
-      'Daily and weekly nudges for tasks that actually need your attention.',
-  },
+    {
+        icon: '⚡',
+        title: 'Aggregate',
+        description: 'Pull tasks from Todoist, Google Tasks, and more into a single, unified view.',
+    },
+    {
+        icon: '🎯',
+        title: 'Fuzzy Deadlines',
+        description: "Mark tasks as 'this week', 'this month', or 'someday' — without touching the source.",
+    },
+    {
+        icon: '🤖',
+        title: 'CLI + AI Agent',
+        description: 'Manage your tasks from the terminal or through Claude and other AI agents via MCP.',
+    },
+    {
+        icon: '🔔',
+        title: 'Smart Reminders',
+        description: 'Daily and weekly nudges for tasks that actually need your attention.',
+    },
 ];
 
 export default function Features(): React.ReactElement {
-  return (
-    <section className="bg-white border-b-4 border-nb-black py-24 px-6">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="font-black text-nb-black uppercase text-4xl md:text-5xl mb-12">
-          WHAT IT DOES
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="bg-white border-2 border-nb-black shadow-[4px_4px_0px_#111111] p-6"
-            >
-              <div className="text-4xl mb-4">{feature.icon}</div>
-              <h3 className="font-black text-nb-black uppercase text-lg mb-2">
-                {feature.title}
-              </h3>
-              <p className="font-bold text-nb-black text-sm leading-relaxed">
-                {feature.description}
-              </p>
+    return (
+        <section className="bg-white border-b-4 border-nb-black py-24 px-6">
+            <div className="max-w-6xl mx-auto">
+                <h2 className="font-black text-nb-black uppercase text-4xl md:text-5xl mb-12">WHAT IT DOES</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {features.map((feature) => (
+                        <div
+                            key={feature.title}
+                            className="bg-white border-2 border-nb-black shadow-[4px_4px_0px_#111111] p-6"
+                        >
+                            <div className="text-4xl mb-4">{feature.icon}</div>
+                            <h3 className="font-black text-nb-black uppercase text-lg mb-2">{feature.title}</h3>
+                            <p className="font-bold text-nb-black text-sm leading-relaxed">{feature.description}</p>
+                        </div>
+                    ))}
+                </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 }
 ```
 
@@ -435,6 +431,7 @@ git commit -m "feat(landing): add Features section"
 ## Task 6: How It Works section
 
 **Files:**
+
 - Create: `apps/landing/src/components/HowItWorks.tsx`
 
 - [ ] **Step 1: Create `apps/landing/src/components/HowItWorks.tsx`**
@@ -443,57 +440,50 @@ git commit -m "feat(landing): add Features section"
 import type React from 'react';
 
 interface Step {
-  number: string;
-  title: string;
-  description: string;
+    number: string;
+    title: string;
+    description: string;
 }
 
 const steps: Step[] = [
-  {
-    number: '01',
-    title: 'Connect your task apps',
-    description: 'Link Todoist, Google Tasks, or any supported source via OAuth in seconds.',
-  },
-  {
-    number: '02',
-    title: 'Tasks sync automatically',
-    description: 'CTM polls your sources every 15 minutes and keeps everything up to date.',
-  },
-  {
-    number: '03',
-    title: 'Manage from anywhere',
-    description:
-      'Use the web dashboard, the CLI, or your AI agent — all backed by the same API.',
-  },
+    {
+        number: '01',
+        title: 'Connect your task apps',
+        description: 'Link Todoist, Google Tasks, or any supported source via OAuth in seconds.',
+    },
+    {
+        number: '02',
+        title: 'Tasks sync automatically',
+        description: 'CTM polls your sources every 15 minutes and keeps everything up to date.',
+    },
+    {
+        number: '03',
+        title: 'Manage from anywhere',
+        description: 'Use the web dashboard, the CLI, or your AI agent — all backed by the same API.',
+    },
 ];
 
 export default function HowItWorks(): React.ReactElement {
-  return (
-    <section className="bg-nb-yellow border-b-4 border-nb-black py-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="font-black text-nb-black uppercase text-4xl md:text-5xl mb-12">
-          HOW IT WORKS
-        </h2>
-        <div className="flex flex-col gap-6">
-          {steps.map((step) => (
-            <div key={step.number} className="flex gap-6 items-start">
-              <div className="min-w-16 h-16 bg-nb-black text-nb-yellow font-black text-xl flex items-center justify-center border-2 border-nb-black shrink-0">
-                {step.number}
-              </div>
-              <div className="pt-2">
-                <h3 className="font-black text-nb-black uppercase text-xl mb-1">
-                  {step.title}
-                </h3>
-                <p className="font-bold text-nb-black leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
+    return (
+        <section className="bg-nb-yellow border-b-4 border-nb-black py-24 px-6">
+            <div className="max-w-4xl mx-auto">
+                <h2 className="font-black text-nb-black uppercase text-4xl md:text-5xl mb-12">HOW IT WORKS</h2>
+                <div className="flex flex-col gap-6">
+                    {steps.map((step) => (
+                        <div key={step.number} className="flex gap-6 items-start">
+                            <div className="min-w-16 h-16 bg-nb-black text-nb-yellow font-black text-xl flex items-center justify-center border-2 border-nb-black shrink-0">
+                                {step.number}
+                            </div>
+                            <div className="pt-2">
+                                <h3 className="font-black text-nb-black uppercase text-xl mb-1">{step.title}</h3>
+                                <p className="font-bold text-nb-black leading-relaxed">{step.description}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 }
 ```
 
@@ -534,6 +524,7 @@ git commit -m "feat(landing): add HowItWorks section"
 ## Task 7: Integrations section
 
 **Files:**
+
 - Create: `apps/landing/src/components/Integrations.tsx`
 
 - [ ] **Step 1: Create `apps/landing/src/components/Integrations.tsx`**
@@ -542,55 +533,51 @@ git commit -m "feat(landing): add HowItWorks section"
 import type React from 'react';
 
 interface Integration {
-  name: string;
-  color: string;
-  initial: string;
+    name: string;
+    color: string;
+    initial: string;
 }
 
 const integrations: Integration[] = [
-  { name: 'Todoist', color: '#DB4035', initial: 'T' },
-  { name: 'Google Tasks', color: '#4285F4', initial: 'G' },
+    { name: 'Todoist', color: '#DB4035', initial: 'T' },
+    { name: 'Google Tasks', color: '#4285F4', initial: 'G' },
 ];
 
 export default function Integrations(): React.ReactElement {
-  return (
-    <section className="bg-white border-b-4 border-nb-black py-24 px-6">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="font-black text-nb-black uppercase text-4xl md:text-5xl mb-4">
-          WORKS WITH
-        </h2>
-        <p className="font-bold text-nb-black text-lg mb-12">
-          Connect your existing task apps. More integrations coming soon.
-        </p>
-        <div className="flex flex-wrap gap-6">
-          {integrations.map((integration) => (
-            <div
-              key={integration.name}
-              className="flex items-center gap-4 bg-white border-2 border-nb-black shadow-[4px_4px_0px_#111111] px-6 py-4"
-            >
-              <div
-                className="w-10 h-10 flex items-center justify-center font-black text-white text-lg border-2 border-nb-black shrink-0"
-                style={{ backgroundColor: integration.color }}
-              >
-                {integration.initial}
-              </div>
-              <span className="font-black text-nb-black uppercase text-lg">
-                {integration.name}
-              </span>
+    return (
+        <section className="bg-white border-b-4 border-nb-black py-24 px-6">
+            <div className="max-w-6xl mx-auto">
+                <h2 className="font-black text-nb-black uppercase text-4xl md:text-5xl mb-4">WORKS WITH</h2>
+                <p className="font-bold text-nb-black text-lg mb-12">
+                    Connect your existing task apps. More integrations coming soon.
+                </p>
+                <div className="flex flex-wrap gap-6">
+                    {integrations.map((integration) => (
+                        <div
+                            key={integration.name}
+                            className="flex items-center gap-4 bg-white border-2 border-nb-black shadow-[4px_4px_0px_#111111] px-6 py-4"
+                        >
+                            <div
+                                className="w-10 h-10 flex items-center justify-center font-black text-white text-lg border-2 border-nb-black shrink-0"
+                                style={{ backgroundColor: integration.color }}
+                            >
+                                {integration.initial}
+                            </div>
+                            <span className="font-black text-nb-black uppercase text-lg">{integration.name}</span>
+                        </div>
+                    ))}
+                    <div className="flex items-center gap-4 border-2 border-dashed border-nb-black px-6 py-4">
+                        <div className="w-10 h-10 flex items-center justify-center font-black text-nb-black text-xl border-2 border-dashed border-nb-black shrink-0">
+                            +
+                        </div>
+                        <span className="font-bold text-nb-black uppercase text-sm tracking-wide">
+                            MORE COMING SOON
+                        </span>
+                    </div>
+                </div>
             </div>
-          ))}
-          <div className="flex items-center gap-4 border-2 border-dashed border-nb-black px-6 py-4">
-            <div className="w-10 h-10 flex items-center justify-center font-black text-nb-black text-xl border-2 border-dashed border-nb-black shrink-0">
-              +
-            </div>
-            <span className="font-bold text-nb-black uppercase text-sm tracking-wide">
-              MORE COMING SOON
-            </span>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 }
 ```
 
@@ -633,6 +620,7 @@ git commit -m "feat(landing): add Integrations section"
 ## Task 8: Footer CTA
 
 **Files:**
+
 - Create: `apps/landing/src/components/FooterCta.tsx`
 
 - [ ] **Step 1: Create `apps/landing/src/components/FooterCta.tsx`**
@@ -641,29 +629,25 @@ git commit -m "feat(landing): add Integrations section"
 import type React from 'react';
 
 export default function FooterCta(): React.ReactElement {
-  const year = new Date().getFullYear();
+    const year = new Date().getFullYear();
 
-  return (
-    <footer className="bg-nb-black py-24 px-6">
-      <div className="max-w-4xl mx-auto text-center">
-        <h2 className="font-black text-nb-yellow uppercase text-4xl md:text-6xl leading-tight mb-6">
-          READY TO TAKE CONTROL?
-        </h2>
-        <p className="font-bold text-white text-lg mb-10">
-          One place for all your tasks. Connect in seconds.
-        </p>
-        <a
-          href="#"
-          className="inline-block bg-nb-yellow text-nb-black font-black uppercase tracking-wide border-2 border-nb-yellow px-8 py-4 text-lg shadow-[4px_4px_0px_#FFDE59] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
-        >
-          GET STARTED →
-        </a>
-        <p className="text-white/40 font-bold mt-16 text-sm uppercase tracking-widest">
-          © {year} CTM
-        </p>
-      </div>
-    </footer>
-  );
+    return (
+        <footer className="bg-nb-black py-24 px-6">
+            <div className="max-w-4xl mx-auto text-center">
+                <h2 className="font-black text-nb-yellow uppercase text-4xl md:text-6xl leading-tight mb-6">
+                    READY TO TAKE CONTROL?
+                </h2>
+                <p className="font-bold text-white text-lg mb-10">One place for all your tasks. Connect in seconds.</p>
+                <a
+                    href="#"
+                    className="inline-block bg-nb-yellow text-nb-black font-black uppercase tracking-wide border-2 border-nb-yellow px-8 py-4 text-lg shadow-[4px_4px_0px_#FFDE59] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                >
+                    GET STARTED →
+                </a>
+                <p className="text-white/40 font-bold mt-16 text-sm uppercase tracking-widest">© {year} CTM</p>
+            </div>
+        </footer>
+    );
 }
 ```
 
@@ -695,6 +679,7 @@ import FooterCta from '../components/FooterCta';
 - [ ] **Step 3: Check dev server — full page review**
 
 Visit `http://localhost:4321`. Scroll through the entire page and verify:
+
 - Nav: sticky, black, CTM in yellow, GET STARTED button
 - Hero: yellow background, large headline, two buttons with hard shadows
 - Features: white background, 4 cards in a grid
@@ -722,6 +707,7 @@ pnpm --filter @ctm/landing build
 ```
 
 Expected output (approximately):
+
 ```
 ▶ Building...
 ✓ Completed in X.XXs

@@ -23,9 +23,9 @@ Response:
 
 ```json
 {
-  "accessToken": "eyJ...",
-  "refreshToken": "eyJ...",
-  "user": { "id": "...", "email": "jane@example.com" }
+    "accessToken": "eyJ...",
+    "refreshToken": "eyJ...",
+    "user": { "id": "...", "email": "jane@example.com" }
 }
 ```
 

@@ -8,21 +8,22 @@ A neobrutalist React SPA that provides full task management: viewing and editing
 
 ### Tech Stack
 
-| Concern | Choice |
-|---|---|
-| Bundler | Vite 6 |
-| Framework | React 19 |
-| Routing | React Router v6 |
-| Styling | Tailwind CSS v4 |
-| HTTP client | axios (via `@ctm/api-client`) |
-| Language | TypeScript (strict, `moduleResolution: bundler`) |
-| Lint/format | oxlint + oxfmt (shared workspace config) |
+| Concern     | Choice                                           |
+| ----------- | ------------------------------------------------ |
+| Bundler     | Vite 6                                           |
+| Framework   | React 19                                         |
+| Routing     | React Router v6                                  |
+| Styling     | Tailwind CSS v4                                  |
+| HTTP client | axios (via `@ctm/api-client`)                    |
+| Language    | TypeScript (strict, `moduleResolution: bundler`) |
+| Lint/format | oxlint + oxfmt (shared workspace config)         |
 
 ### New Package: `@ctm/api-client`
 
 Location: `packages/api-client/`
 
 Responsibilities:
+
 - Axios instance configured with `baseURL` from env var `VITE_API_URL` (default `http://localhost:3000`)
 - Auth interceptor: attaches `Authorization: Bearer <access_token>` from `localStorage`
 - Refresh interceptor: on 401, calls `POST /auth/refresh` with the stored `refresh_token`; on success stores the new pair and retries the original request; on failure clears storage and redirects to `/login`
@@ -79,16 +80,17 @@ apps/web/
 
 ### Palette
 
-| Token | Value | Use |
-|---|---|---|
+| Token  | Value     | Use                                                    |
+| ------ | --------- | ------------------------------------------------------ |
 | Yellow | `#FFDE59` | Primary accent, active states, page background on auth |
-| Black | `#111111` | Borders, shadows, text |
-| White | `#FFFFFF` | Card backgrounds |
-| Red | `#FF3B30` | Danger, P1 priority, destructive actions |
-| Green | `#34C759` | P3 priority, connected status |
-| Grey | `#888888` | Disabled, muted text |
+| Black  | `#111111` | Borders, shadows, text                                 |
+| White  | `#FFFFFF` | Card backgrounds                                       |
+| Red    | `#FF3B30` | Danger, P1 priority, destructive actions               |
+| Green  | `#34C759` | P3 priority, connected status                          |
+| Grey   | `#888888` | Disabled, muted text                                   |
 
 Tailwind v4 CSS variables defined in `tailwind.config.ts`:
+
 ```
 --color-nb-yellow: #FFDE59
 --color-nb-black: #111111
@@ -181,22 +183,26 @@ On success: auto-login (store tokens) and navigate to `/tasks`.
 **Filter row:** Pill buttons — ALL · TODAY · UPCOMING · DONE. Active pill: `bg-nb-yellow border-2 border-nb-black font-black`. Each filter maps to a query param sent to `GET /tasks`.
 
 **Add task form (inline, toggled by the button):**
+
 - Appears above the task list when open, dismissed on submit or Escape
 - Fields: Title (required), Priority (select: P1/P2/P3), Due Date (date picker)
 - "ADD" button + "CANCEL" link
 
 **Task Card:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ □  Finish Q3 report              TODOIST  [P1]  │
 │    Due: today                                   │
 └─────────────────────────────────────────────────┘
 ```
+
 - Checkbox click: calls `PATCH /tasks/:id` with `{ completed: true/false }`; optimistic update, rollback on error
 - Title click: opens TaskModal in edit mode
 - Completed tasks: checkbox filled black, title `line-through text-gray-400`
 
 **TaskModal (create / edit):**
+
 - Mobile: slides up from bottom (`translate-y` transition)
 - Desktop: centred overlay with backdrop
 - Fields: Title, Description (textarea), Priority, Due Date, Fuzzy Deadline (date)
@@ -210,13 +216,16 @@ On success: auto-login (store tokens) and navigate to `/tasks`.
 Grid of connector cards (one per supported source: Todoist, Google Tasks).
 
 **Connector Card:**
+
 ```
 ┌───────────────────────────────┐
 │  🔴 TODOIST          [CONNECT]│
 │  Not connected                │
 └───────────────────────────────┘
 ```
+
 Connected state:
+
 ```
 ┌─────────────────────────────────────┐
 │  🔴 TODOIST            [DISCONNECT] │
@@ -233,19 +242,24 @@ Connected state:
 Two sections:
 
 **Account details:**
+
 - Email field (editable), "SAVE" button → `PATCH /users/me`
 
 **Change password:**
+
 - Current password, New password, Confirm new password
 - "CHANGE PASSWORD" button → `PATCH /users/me` with password fields
 
 **Danger zone** (red-bordered section at the bottom):
+
 - "DELETE ACCOUNT" button → shows inline confirmation: type email to confirm → `DELETE /users/me` → clears storage, redirect to `/login`
 
 ## Auth Flow
 
 ### Token Storage
+
 `localStorage` keys:
+
 - `ctm_access_token` — short-lived JWT (target: 15 minutes, currently 7 days — see backend dependency)
 - `ctm_refresh_token` — long-lived token
 - `ctm_user` — JSON string `{ id, email, name }`
@@ -255,6 +269,7 @@ Two sections:
 **Request interceptor:** Reads `ctm_access_token` from localStorage, sets `Authorization` header.
 
 **Response interceptor:**
+
 1. On 401: check if a refresh is already in progress (flag to prevent loops)
 2. Call `POST /auth/refresh` with `{ refresh_token }`
 3. On success: store new tokens, retry original request
@@ -263,6 +278,7 @@ Two sections:
 ### `AuthContext`
 
 Wraps the app. Provides:
+
 - `user: { id, email, name } | null`
 - `isLoading: boolean` (true during initial token check)
 - `login(email, password): Promise<void>`
@@ -309,6 +325,7 @@ The following additions are needed in `apps/main` before the web app can be full
 ## Responsive Breakpoint
 
 Single breakpoint at `md` (768px):
+
 - `< 768px`: bottom tabs, no sidebar
 - `≥ 768px`: sidebar, no bottom tabs
 
@@ -317,11 +334,13 @@ Implemented via Tailwind `md:` prefix throughout. No JS-based breakpoint detecti
 ## Environment Variables
 
 `apps/web/.env`:
+
 ```
 VITE_API_URL=http://localhost:3000
 ```
 
 `apps/web/.env.example`:
+
 ```
 VITE_API_URL=http://localhost:3000
 ```

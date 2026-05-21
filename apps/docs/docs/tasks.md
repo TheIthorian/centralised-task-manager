@@ -17,14 +17,14 @@ Authorization: Bearer <token>
 
 ### Filters
 
-| Parameter | Values | Description |
-|-----------|--------|-------------|
-| `status` | `open`, `done`, `archived` | Filter by status |
-| `source` | `todoist`, `google_tasks` | Filter by source |
-| `fuzzy` | `this_week`, `this_month`, `someday` | Filter by fuzzy deadline label |
-| `surfaced` | `true` / `false` | Filter by surfaced flag |
-| `page` | integer (default `1`) | Page number |
-| `limit` | integer (default `50`) | Items per page |
+| Parameter  | Values                               | Description                    |
+| ---------- | ------------------------------------ | ------------------------------ |
+| `status`   | `open`, `done`, `archived`           | Filter by status               |
+| `source`   | `todoist`, `google_tasks`            | Filter by source               |
+| `fuzzy`    | `this_week`, `this_month`, `someday` | Filter by fuzzy deadline label |
+| `surfaced` | `true` / `false`                     | Filter by surfaced flag        |
+| `page`     | integer (default `1`)                | Page number                    |
+| `limit`    | integer (default `50`)               | Items per page                 |
 
 Example:
 
