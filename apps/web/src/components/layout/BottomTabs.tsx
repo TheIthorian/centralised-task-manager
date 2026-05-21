@@ -3,7 +3,8 @@ import clsx from 'clsx';
 
 const tabs = [
     { label: 'Tasks', path: '/tasks', icon: '☑' },
-    { label: 'Sources', path: '/settings/sources', icon: '🔌' },
+    { label: 'Calendar', path: '/calendar', icon: '📅' },
+    { label: 'Timeline', path: '/timeline', icon: '↔' },
     { label: 'Profile', path: '/settings/profile', icon: '👤' },
 ];
 

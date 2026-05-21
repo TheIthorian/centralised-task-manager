@@ -5,6 +5,8 @@ import clsx from 'clsx';
 
 const navItems = [
     { label: 'Tasks', path: '/tasks', icon: '☑' },
+    { label: 'Calendar', path: '/calendar', icon: '📅' },
+    { label: 'Timeline', path: '/timeline', icon: '↔' },
     { label: 'Settings', path: '/settings', icon: '⚙' },
 ];
 
