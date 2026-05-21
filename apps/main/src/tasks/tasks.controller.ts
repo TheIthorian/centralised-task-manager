@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Put, Param, Body, Query, Request, UseGuards, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Put, Param, Body, Query, Request, UseGuards, HttpCode, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { TasksService } from './tasks.service.js';
@@ -7,7 +7,7 @@ import { UpdateTaskDto } from './dto/update-task.dto.js';
 import { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
 import { SetTaskStatusDto } from './dto/set-task-status.dto.js';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
-import type { TaskDocument } from './schemas/task.schema.js';
+import type { TaskDocument, FuzzyDeadlineType, RemindEvery } from './schemas/task.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 
 interface AuthRequest {
@@ -24,7 +24,7 @@ type TaskResponse = {
     priority: number | null;
     tags: string[];
     dueDate: string | null;
-    fuzzyDeadline: { type: string; remindEvery: string | null } | null;
+    fuzzyDeadline: { type: FuzzyDeadlineType; remindEvery: RemindEvery | null } | null;
     createdAt: string;
     updatedAt: string;
 };
@@ -36,6 +36,7 @@ type TaskResponse = {
 export class TasksController {
     constructor(private readonly tasks: TasksService) {}
 
+    /** Map a TaskDocument to the API wire format. */
     private toResponse(t: TaskDocument): TaskResponse {
         return {
             id: String(t._id),
@@ -50,8 +51,8 @@ export class TasksController {
             fuzzyDeadline: t.fuzzyDeadline
                 ? { type: t.fuzzyDeadline.type, remindEvery: t.fuzzyDeadline.remindEvery }
                 : null,
-            createdAt: t.createdAt ? t.createdAt.toISOString() : new Date().toISOString(),
-            updatedAt: t.updatedAt ? t.updatedAt.toISOString() : new Date().toISOString(),
+            createdAt: t.createdAt ? t.createdAt.toISOString() : t.syncedAt.toISOString(),
+            updatedAt: t.updatedAt ? t.updatedAt.toISOString() : t.syncedAt.toISOString(),
         };
     }
 
@@ -91,9 +92,8 @@ export class TasksController {
     /** Set task status (complete or uncomplete). */
     @ApiOperation({ summary: 'Set task status to open or done' })
     @Put(':id/status')
-    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: SetTaskStatusDto): Promise<TaskResponse> {
-        const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, dto });
-        return this.toResponse(t);
+    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() _dto: SetTaskStatusDto): Promise<TaskResponse> {
+        throw new HttpException('Not implemented — arrives in next commit', HttpStatus.NOT_IMPLEMENTED);
     }
 
     /** Set the fuzzy deadline on a task (local-only). */
@@ -117,7 +117,7 @@ export class TasksController {
     }
 
     /** Mark a task as complete (legacy — kept until Task 2 migration). */
-    @ApiOperation({ summary: 'Mark a task as complete' })
+    @ApiOperation({ summary: 'Complete a task (deprecated — use PUT /status)', deprecated: true })
     @Post(':id/complete')
     async complete(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskResponse> {
         const t = await this.tasks.complete({ taskId: id, userId: req.user.sub });
