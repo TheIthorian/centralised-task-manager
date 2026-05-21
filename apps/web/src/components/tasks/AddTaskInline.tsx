@@ -11,15 +11,27 @@ interface AddTaskInlineProps {
 export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps): React.JSX.Element {
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<1 | 2 | 3>(2);
+    const [dueDate, setDueDate] = useState('');
 
     const handleSubmit = async (e: FormEvent): Promise<void> => {
         e.preventDefault();
 
         if (!title.trim()) return;
 
-        await onAdd({ title: title.trim(), priority, source: 'local' });
+        await onAdd({
+            title: title.trim(),
+            priority,
+            source: 'local',
+            description: description.trim() || undefined,
+            dueDate: dueDate || undefined,
+        });
+
         setTitle('');
+        setDescription('');
+        setPriority(2);
+        setDueDate('');
         setOpen(false);
     };
 
@@ -44,6 +56,12 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                 autoFocus
                 required
             />
+            <Input
+                label="Description (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="More detail…"
+            />
             <div className="flex items-center gap-2">
                 <label className="font-black uppercase text-xs tracking-wide text-nb-black">Priority:</label>
                 {([1, 2, 3] as const).map((p) => (
@@ -59,6 +77,12 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                     </button>
                 ))}
             </div>
+            <Input
+                label="Due date (optional)"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+            />
             <div className="flex gap-2">
                 <Button type="submit" disabled={isPending}>
                     {isPending ? 'Adding…' : 'Add'}
