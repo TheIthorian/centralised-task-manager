@@ -32,6 +32,6 @@ export class McpController {
         const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
         await server.connect(transport);
-        await transport.handleRequest(req.raw, reply.raw);
+        await transport.handleRequest(req.raw, reply.raw, undefined);
     }
 }
