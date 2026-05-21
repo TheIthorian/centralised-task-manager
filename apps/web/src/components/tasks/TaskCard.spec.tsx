@@ -26,6 +26,11 @@ describe('TaskCard', () => {
         expect(screen.getByText('TODOIST')).toBeInTheDocument();
     });
 
+    it('falls back when source is missing', () => {
+        render(<TaskCard task={{ ...baseTask, source: undefined as never }} onToggle={vi.fn()} onEdit={vi.fn()} />);
+        expect(screen.getByText('UNKNOWN')).toBeInTheDocument();
+    });
+
     it('shows P1 priority badge', () => {
         render(<TaskCard task={baseTask} onToggle={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText('P1')).toBeInTheDocument();

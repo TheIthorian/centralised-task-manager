@@ -53,7 +53,7 @@ export function TasksPage(): React.JSX.Element {
         mutationFn: ({ id, dto }: { id: string; dto: UpdateTaskDto }) => updateTask(id, dto),
         onSuccess: (updated) => {
             qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
-                prev.map((t) => (t.id === updated.id ? updated : t)),
+                prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
             );
         },
     });

@@ -17,6 +17,8 @@ const priorityVariant = {
 
 /** A single task row card in neobrutalist style. */
 export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.Element {
+    const sourceLabel = task.source ? task.source.toUpperCase() : 'UNKNOWN';
+
     return (
         <div className="bg-white border-2 border-nb-black shadow-[3px_3px_0px_#111] flex items-center gap-3 px-3 py-2.5">
             <Checkbox
@@ -42,7 +44,7 @@ export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.E
             </button>
 
             <div className="flex items-center gap-1.5 flex-shrink-0">
-                <Badge variant="source">{task.source.toUpperCase()}</Badge>
+                <Badge variant="source">{sourceLabel}</Badge>
                 {task.priority && (
                     <Badge variant={priorityVariant[task.priority as 1 | 2 | 3 | 4]}>P{task.priority}</Badge>
                 )}
