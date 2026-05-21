@@ -17,7 +17,9 @@ import type {
     LoginParams,
     RefreshParams,
     RegisterParams,
+    RemoveFuzzyDeadlineParams,
     SetFuzzyDeadlineParams,
+    SetTaskStatusParams,
     UpdateMeParams,
     UpdateTaskParams,
 } from './client.types.js';
@@ -97,19 +99,24 @@ export class CtmApiClient {
         return this.request<TaskDto>({ method: 'PATCH', path: `/tasks/${id}`, body: dto });
     }
 
-    /** Mark a task complete. */
-    async completeTask({ id }: DeleteTaskParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'POST', path: `/tasks/${id}/complete` });
-    }
-
     /** Delete a task permanently. */
     async deleteTask({ id }: DeleteTaskParams): Promise<void> {
         await this.request<void>({ method: 'DELETE', path: `/tasks/${id}` });
     }
 
+    /** Set task status to 'open' or 'done'. */
+    async setTaskStatus({ id, dto }: SetTaskStatusParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'PUT', path: `/tasks/${id}/status`, body: dto });
+    }
+
     /** Set the fuzzy deadline for an existing task. */
     async setFuzzyDeadline({ id, dto }: SetFuzzyDeadlineParams): Promise<TaskDto> {
         return this.request<TaskDto>({ method: 'PATCH', path: `/tasks/${id}/fuzzy-deadline`, body: dto });
+    }
+
+    /** Remove the fuzzy deadline from a task. */
+    async removeFuzzyDeadline({ id }: RemoveFuzzyDeadlineParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/fuzzy-deadline` });
     }
 
     /** List all connector statuses for the current user. */
@@ -163,7 +170,7 @@ export class CtmApiClient {
         body,
         params,
     }: {
-        method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+        method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
         path: string;
         body?: unknown;
         params?: Record<string, string>;

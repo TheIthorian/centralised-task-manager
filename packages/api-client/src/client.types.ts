@@ -1,4 +1,4 @@
-import type { CreateTaskDto, SetFuzzyDeadlineDto, TaskFilter, UpdateTaskDto, UpdateUserDto } from './types.js';
+import type { CreateTaskDto, SetFuzzyDeadlineDto, SetTaskStatusDto, TaskFilter, UpdateTaskDto, UpdateUserDto } from './types.js';
 
 export type ApiClientOptions = {
     baseUrl: string;
@@ -53,6 +53,15 @@ export type DisconnectConnectorParams = {
 
 export type UpdateMeParams = {
     dto: UpdateUserDto;
+};
+
+export type SetTaskStatusParams = {
+    id: string;
+    dto: SetTaskStatusDto;
+};
+
+export type RemoveFuzzyDeadlineParams = {
+    id: string;
 };
 
 export type ApiClientErrorOptions = {
