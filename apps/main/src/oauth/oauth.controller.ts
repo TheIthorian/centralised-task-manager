@@ -31,6 +31,7 @@ interface TokenBody {
     code?: string;
     redirect_uri?: string;
     code_verifier?: string;
+    refresh_token?: string;
 }
 
 @ApiTags('OAuth 2.0')
@@ -131,8 +132,14 @@ export class OAuthController {
     @Post('token')
     @HttpCode(200)
     async token(@Body() body: TokenBody): Promise<object> {
+        if (body.grant_type === 'refresh_token') {
+            if (!body.refresh_token) throw new BadRequestException('refresh_token is required');
+
+            return this.oauth.refreshAccessToken({ refreshToken: body.refresh_token });
+        }
+
         if (body.grant_type !== 'authorization_code') {
-            throw new BadRequestException('Only grant_type=authorization_code is supported');
+            throw new BadRequestException('Only grant_type=authorization_code or refresh_token is supported');
         }
 
         if (!body.code || !body.redirect_uri || !body.code_verifier) {

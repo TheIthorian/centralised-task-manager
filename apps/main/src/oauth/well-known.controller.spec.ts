@@ -33,7 +33,27 @@ describe('Well-known endpoints', () => {
         expect(res.statusCode).toBe(200);
         const body = JSON.parse(res.body);
         expect(body).toHaveProperty('token_endpoint');
+        expect(body.registration_endpoint).toMatch(/\/\.well-known\/oauth-client$/);
         expect(body.code_challenge_methods_supported).toContain('S256');
+    });
+
+    it('POST /.well-known/oauth-client registers an OAuth client (RFC 7591)', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/.well-known/oauth-client',
+            payload: {
+                client_name: 'MCP Inspector',
+                redirect_uris: ['http://127.0.0.1:6274/oauth/callback'],
+                grant_types: ['authorization_code'],
+                response_types: ['code'],
+            },
+        });
+
+        expect(res.statusCode).toBe(201);
+        const body = JSON.parse(res.body);
+        expect(body.client_id).toMatch(/^client_/);
+        expect(body.client_secret).toBeTruthy();
+        expect(body.grant_types).toContain('authorization_code');
     });
 
     it('GET /.well-known/jwks.json returns a key set with RS256 key', async () => {

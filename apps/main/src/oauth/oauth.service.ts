@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { randomBytes, createHash } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { AuthCode, type AuthCodeDocument } from './schemas/auth-code.schema.js';
+import { RefreshToken, type RefreshTokenDocument } from '../auth/schemas/refresh-token.schema.js';
 import { UsersService } from '../users/users.service.js';
 import { ConfigService } from '@nestjs/config';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
@@ -15,12 +16,14 @@ export interface TokenResponse {
     token_type: 'Bearer';
     expires_in: number;
     scope: string;
+    refresh_token: string;
 }
 
 @Injectable()
 export class OAuthService {
     constructor(
         @InjectModel(AuthCode.name) private readonly authCodeModel: Model<AuthCodeDocument>,
+        @InjectModel(RefreshToken.name) private readonly refreshTokenModel: Model<RefreshTokenDocument>,
         private readonly users: UsersService,
         private readonly jwt: JwtService,
         private readonly config: ConfigService,
@@ -83,8 +86,8 @@ export class OAuthService {
         return this.issueTokens({ userId: String(user._id), email: user.email, scopes: authCode.scopes });
     }
 
-    /** Issue access_token + id_token for a user. */
-    issueTokens({ userId, email, scopes }: { userId: string; email: string; scopes: string[] }): TokenResponse {
+    /** Issue access_token + id_token + refresh_token for a user. */
+    async issueTokens({ userId, email, scopes }: { userId: string; email: string; scopes: string[] }): Promise<TokenResponse> {
         const issuer = this.config.get<string>('REDIRECT_BASE_URL') ?? 'http://localhost:3000';
         const expiresIn = 3600;
 
@@ -97,11 +100,15 @@ export class OAuthService {
 
         const signOptions = { expiresIn };
 
-        // access_token: same payload, shorter scope
         const accessToken = this.jwt.sign(payload, signOptions);
-
-        // id_token: includes OIDC-specific claims
         const idToken = this.jwt.sign(payload, signOptions);
+
+        const rawRefresh = `rt_${randomBytes(32).toString('hex')}`;
+        const tokenHash = createHash('sha256').update(rawRefresh).digest('hex');
+        const expiresInDays = this.config.get<number>('REFRESH_TOKEN_EXPIRES_DAYS', 30);
+        const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+
+        await this.refreshTokenModel.create({ tokenHash, userId, expiresAt });
 
         return {
             access_token: accessToken,
@@ -109,7 +116,24 @@ export class OAuthService {
             token_type: 'Bearer',
             expires_in: expiresIn,
             scope: scopes.join(' '),
+            refresh_token: rawRefresh,
         };
+    }
+
+    /** Exchange a refresh token for a new token set (rotates the refresh token). */
+    async refreshAccessToken({ refreshToken }: { refreshToken: string }): Promise<TokenResponse> {
+        const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
+        const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash });
+
+        if (!record || record.expiresAt < new Date()) {
+            throw new UnauthorizedException('Invalid or expired refresh token');
+        }
+
+        const user = await this.users.findById(record.userId);
+
+        if (!user) throw new UnauthorizedException('User not found');
+
+        return this.issueTokens({ userId: record.userId, email: user.email, scopes: ['openid', 'email', 'profile'] });
     }
 
     /** Validate a password and return user info (for the login form submission). */

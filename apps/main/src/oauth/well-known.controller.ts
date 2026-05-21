@@ -13,6 +13,11 @@ export class WellKnownController {
         return this.config.get<string>('REDIRECT_BASE_URL') ?? 'http://localhost:3000';
     }
 
+    /** RFC 7591 dynamic client registration (implemented in AuthModule). */
+    private get registrationEndpoint(): string {
+        return `${this.issuer}/.well-known/oauth-client`;
+    }
+
     /** OpenID Connect Discovery 1.0 metadata. */
     @Get('openid-configuration')
     openidConfiguration(): object {
@@ -23,7 +28,7 @@ export class WellKnownController {
             token_endpoint: `${issuer}/oauth/token`,
             userinfo_endpoint: `${issuer}/oauth/userinfo`,
             jwks_uri: `${issuer}/.well-known/jwks.json`,
-            registration_endpoint: undefined,
+            registration_endpoint: this.registrationEndpoint,
             scopes_supported: ['openid', 'email', 'profile'],
             response_types_supported: ['code'],
             response_modes_supported: ['query'],
@@ -44,6 +49,7 @@ export class WellKnownController {
             issuer,
             authorization_endpoint: `${issuer}/oauth/authorize`,
             token_endpoint: `${issuer}/oauth/token`,
+            registration_endpoint: this.registrationEndpoint,
             jwks_uri: `${issuer}/.well-known/jwks.json`,
             scopes_supported: ['openid', 'email', 'profile'],
             response_types_supported: ['code'],

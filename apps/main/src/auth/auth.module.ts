@@ -5,12 +5,15 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
+import { WellKnownController } from './well-known.controller.js';
 import { AuthService } from './auth.service.js';
 import { LocalStrategy } from './strategies/local.strategy.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 import { ApiToken, ApiTokenSchema } from './schemas/api-token.schema.js';
 import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema.js';
+import { OAuthClient, OAuthClientSchema } from './schemas/oauth-client.schema.js';
 import { ApiTokenService } from './api-token.service.js';
+import { OAuthClientService } from './oauth-client.service.js';
 import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
 
 @Module({
@@ -31,10 +34,11 @@ import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
         MongooseModule.forFeature([
             { name: ApiToken.name, schema: ApiTokenSchema },
             { name: RefreshToken.name, schema: RefreshTokenSchema },
+            { name: OAuthClient.name, schema: OAuthClientSchema },
         ]),
     ],
-    controllers: [AuthController],
-    providers: [AuthService, LocalStrategy, JwtStrategy, ApiTokenService, CombinedAuthGuard],
-    exports: [AuthService, JwtModule, ApiTokenService, CombinedAuthGuard],
+    controllers: [AuthController, WellKnownController],
+    providers: [AuthService, LocalStrategy, JwtStrategy, ApiTokenService, OAuthClientService, CombinedAuthGuard],
+    exports: [AuthService, JwtModule, ApiTokenService, OAuthClientService, CombinedAuthGuard],
 })
 export class AuthModule {}

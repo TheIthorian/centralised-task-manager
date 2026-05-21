@@ -26,6 +26,16 @@ export class McpController {
     }
 
     private async handle(req: AuthenticatedRequest, reply: FastifyReply, body: unknown): Promise<void> {
+        // reply.raw bypasses Fastify's onSend hooks, so cors plugin headers never reach the wire.
+        // Set them explicitly before the transport writes to reply.raw.
+        const origin = req.headers.origin as string | undefined;
+
+        if (origin) {
+            reply.header('Access-Control-Allow-Origin', origin);
+            reply.header('Access-Control-Allow-Credentials', 'true');
+            reply.header('Vary', 'Origin');
+        }
+
         const token = req.headers['authorization']?.slice(7) ?? '';
         const server = this.mcpService.createServer(token);
         const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });

@@ -64,12 +64,11 @@ describe('OAuth endpoints', () => {
         expect(location).toContain('state=xyz');
     });
 
-    it('POST /oauth/token exchanges code for tokens', async () => {
+    it('POST /oauth/token exchanges code for tokens including refresh_token', async () => {
         const verifier = makeCodeVerifier();
         const challenge = makeCodeChallenge(verifier);
         const redirectUri = 'http://localhost:4000/cb';
 
-        // Get code
         const authorizeRes = await app.inject({
             method: 'POST',
             url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
@@ -79,7 +78,6 @@ describe('OAuth endpoints', () => {
         const location = authorizeRes.headers['location'] as string;
         const code = new URL(location).searchParams.get('code')!;
 
-        // Exchange for tokens
         const tokenRes = await app.inject({
             method: 'POST',
             url: '/oauth/token',
@@ -89,7 +87,49 @@ describe('OAuth endpoints', () => {
         const body = JSON.parse(tokenRes.body);
         expect(body).toHaveProperty('access_token');
         expect(body).toHaveProperty('id_token');
+        expect(body).toHaveProperty('refresh_token');
         expect(body.token_type).toBe('Bearer');
+    });
+
+    it('POST /oauth/token refresh_token grant rotates the token', async () => {
+        const verifier = makeCodeVerifier();
+        const challenge = makeCodeChallenge(verifier);
+        const redirectUri = 'http://localhost:4000/cb';
+
+        const authorizeRes = await app.inject({
+            method: 'POST',
+            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            payload: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+        });
+        const code = new URL(authorizeRes.headers['location'] as string).searchParams.get('code')!;
+
+        const first = JSON.parse(
+            (await app.inject({
+                method: 'POST',
+                url: '/oauth/token',
+                payload: { grant_type: 'authorization_code', code, redirect_uri: redirectUri, code_verifier: verifier },
+            })).body,
+        );
+
+        const refreshRes = await app.inject({
+            method: 'POST',
+            url: '/oauth/token',
+            payload: { grant_type: 'refresh_token', refresh_token: first.refresh_token },
+        });
+        expect(refreshRes.statusCode).toBe(200);
+        const second = JSON.parse(refreshRes.body);
+        expect(second).toHaveProperty('access_token');
+        expect(second).toHaveProperty('refresh_token');
+        expect(second.refresh_token).not.toBe(first.refresh_token);
+
+        // Old token must be consumed
+        const replayRes = await app.inject({
+            method: 'POST',
+            url: '/oauth/token',
+            payload: { grant_type: 'refresh_token', refresh_token: first.refresh_token },
+        });
+        expect(replayRes.statusCode).toBe(401);
     });
 
     it('POST /oauth/token rejects wrong code_verifier', async () => {
