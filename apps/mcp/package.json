@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@ctm/api-client": "workspace:*",
+    "@ctm/request-logger": "workspace:*",
+    "@fastify/cors": "^11.2.0",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "@nestjs/common": "^11.1.21",
     "@nestjs/config": "^4.0.4",

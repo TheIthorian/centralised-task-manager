@@ -18,15 +18,16 @@ Managed with **pnpm workspaces** + **Turborepo**.
 
 ## Packages
 
-| Package                                                  | Description                                                   |
-| -------------------------------------------------------- | ------------------------------------------------------------- |
-| [`packages/connectors`](packages/connectors/README.md)   | `TaskConnector` interface + Todoist and Google Tasks adapters |
-| [`packages/api-client`](packages/api-client/README.md)   | Typed HTTP client for `apps/main`                             |
-| [`packages/logger`](packages/logger/README.md)           | Shared Pino logger                                            |
-| [`packages/errors`](packages/errors/README.md)           | Shared error types                                            |
-| [`packages/http-client`](packages/http-client/README.md) | Shared fetch wrapper                                          |
-| [`packages/config`](packages/config/README.md)           | Shared oxlint config                                          |
-| [`packages/tsconfig`](packages/tsconfig/README.md)       | Shared TypeScript configs                                     |
+| Package                                                        | Description                                                   |
+| -------------------------------------------------------------- | ------------------------------------------------------------- |
+| [`packages/connectors`](packages/connectors/README.md)         | `TaskConnector` interface + Todoist and Google Tasks adapters |
+| [`packages/api-client`](packages/api-client/README.md)         | Typed HTTP client for `apps/main`                             |
+| [`packages/logger`](packages/logger/README.md)                 | Shared Pino logger                                            |
+| [`packages/request-logger`](packages/request-logger/README.md) | HTTP request/response logging (Pino + Nest middleware)        |
+| [`packages/errors`](packages/errors/README.md)                 | Shared error types                                            |
+| [`packages/http-client`](packages/http-client/README.md)       | Shared fetch wrapper                                          |
+| [`packages/config`](packages/config/README.md)                 | Shared oxlint config                                          |
+| [`packages/tsconfig`](packages/tsconfig/README.md)             | Shared TypeScript configs                                     |
 
 ---
 
