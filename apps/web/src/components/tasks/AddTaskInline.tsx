@@ -46,7 +46,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
     return (
         <form
             onSubmit={handleSubmit}
-            className="bg-white border-2 border-nb-black shadow-[3px_3px_0px_#111] p-4 flex flex-col gap-3"
+            className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex flex-col gap-3"
         >
             <Input
                 label="Task title"
@@ -63,14 +63,14 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                 placeholder="More detail…"
             />
             <div className="flex items-center gap-2">
-                <label className="font-black uppercase text-xs tracking-wide text-nb-black">Priority:</label>
+                <label className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white">Priority:</label>
                 {([1, 2, 3] as const).map((p) => (
                     <button
                         key={p}
                         type="button"
                         onClick={() => setPriority(p)}
-                        className={`border-2 border-nb-black px-2 py-0.5 font-black text-xs ${
-                            priority === p ? 'bg-nb-black text-white' : 'bg-white text-nb-black'
+                        className={`border-2 border-nb-black dark:border-white/30 px-2 py-0.5 font-black text-xs cursor-pointer ${
+                            priority === p ? 'bg-nb-black dark:bg-white text-white dark:text-nb-black' : 'bg-white dark:bg-neutral-800 text-nb-black dark:text-white'
                         }`}
                     >
                         P{p}
@@ -90,7 +90,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                 <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="font-black uppercase text-xs text-nb-black underline"
+                    className="font-black uppercase text-xs text-nb-black dark:text-white underline cursor-pointer"
                 >
                     Cancel
                 </button>

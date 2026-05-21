@@ -13,15 +13,15 @@ export function SourceCard({ connector, onConnect, onDisconnect, isPending }: So
     const { source, connected, lastSynced } = connector;
 
     return (
-        <div className="bg-white border-2 border-nb-black shadow-[3px_3px_0px_#111] p-4 flex items-center justify-between gap-4">
+        <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex items-center justify-between gap-4">
             <div>
-                <p className="font-black uppercase text-nb-black text-sm tracking-wide">{source}</p>
+                <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide">{source}</p>
                 {connected && lastSynced && (
-                    <p className="text-xs font-bold text-nb-black/50 mt-0.5">
+                    <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 mt-0.5">
                         Last synced: {new Date(lastSynced).toLocaleDateString()}
                     </p>
                 )}
-                {!connected && <p className="text-xs font-bold text-nb-black/50 mt-0.5">Not connected</p>}
+                {!connected && <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 mt-0.5">Not connected</p>}
             </div>
 
             {connected ? (

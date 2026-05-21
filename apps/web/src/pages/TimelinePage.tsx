@@ -108,18 +108,18 @@ export function TimelinePage(): React.JSX.Element {
 
     return (
         <div className="p-4 md:p-6 flex flex-col" style={{ height: 'calc(100vh - 4rem)' }}>
-            <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black mb-4">Timeline</h1>
+            <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-4">Timeline</h1>
 
             {isLoading && (
-                <p className="font-bold text-nb-black/60 uppercase text-sm tracking-wide">Loading…</p>
+                <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">Loading…</p>
             )}
 
             {!isLoading && (
-                <div className="flex border-2 border-nb-black overflow-hidden flex-1 min-h-0">
+                <div className="flex border-2 border-nb-black dark:border-white/20 overflow-hidden flex-1 min-h-0">
                     {/* Left column — task titles */}
                     <div
                         style={{ width: LEFT_COL_PX, minWidth: LEFT_COL_PX }}
-                        className="border-r-2 border-nb-black flex flex-col flex-shrink-0 overflow-y-auto"
+                        className="border-r-2 border-nb-black dark:border-white/20 flex flex-col flex-shrink-0 overflow-y-auto"
                     >
                         <div className="h-8 border-b-2 border-nb-black bg-nb-black flex-shrink-0" />
                         {tasks.map((task) => (
@@ -129,7 +129,7 @@ export function TimelinePage(): React.JSX.Element {
                             >
                                 <span
                                     className={`font-bold text-xs truncate ${
-                                        task.completed ? 'line-through text-nb-black/40' : 'text-nb-black'
+                                        task.completed ? 'line-through text-nb-black/40 dark:text-white/30' : 'text-nb-black dark:text-white'
                                     }`}
                                 >
                                     {task.title}
@@ -188,7 +188,7 @@ export function TimelinePage(): React.JSX.Element {
                                         )}
                                         <button
                                             onClick={() => setEditTask(task)}
-                                            className={`absolute top-1.5 h-6 border-2 border-nb-black ${barClass} ${
+                                            className={`absolute top-1.5 h-6 border-2 border-nb-black cursor-pointer ${barClass} ${
                                                 task.completed ? 'opacity-40' : ''
                                             } flex items-center px-1 overflow-hidden`}
                                             style={{ left: leftPx, width: Math.max(widthPx, 8) }}

@@ -61,20 +61,20 @@ export function ProfilePage(): React.JSX.Element {
     return (
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
-                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black">Profile</h1>
-                <p className="text-nb-black/60 font-bold text-sm mt-1">Update your account details.</p>
+                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">Profile</h1>
+                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">Update your account details.</p>
             </div>
 
             {/* Update form */}
             <form
                 onSubmit={handleSave}
-                className="bg-white border-2 border-nb-black shadow-[3px_3px_0px_#111] p-5 flex flex-col gap-4 mb-8"
+                className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-5 flex flex-col gap-4 mb-8"
             >
                 <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
                 <div>
-                    <p className="font-black uppercase text-xs tracking-wide text-nb-black mb-2">
-                        Change Password (optional)
+                    <p className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white mb-2">
+                        Change Password
                     </p>
                     <div className="flex flex-col gap-3">
                         <Input
@@ -82,7 +82,7 @@ export function ProfilePage(): React.JSX.Element {
                             type="password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            placeholder="Leave blank to keep unchanged"
+                            placeholder="Current password"
                         />
                         <Input
                             label="New Password"
@@ -122,7 +122,7 @@ export function ProfilePage(): React.JSX.Element {
 
                 {showDeleteConfirm && (
                     <div className="flex flex-col gap-3">
-                        <p className="font-bold text-sm text-nb-black">
+                        <p className="font-bold text-sm text-nb-black dark:text-white">
                             This will permanently delete your account and all your data. Type your email to confirm.
                         </p>
                         <Input
@@ -149,7 +149,7 @@ export function ProfilePage(): React.JSX.Element {
                                     setShowDeleteConfirm(false);
                                     setDeleteConfirmEmail('');
                                 }}
-                                className="font-black uppercase text-xs text-nb-black underline"
+                                className="font-black uppercase text-xs text-nb-black dark:text-white underline"
                             >
                                 Cancel
                             </button>

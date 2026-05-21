@@ -92,9 +92,9 @@ export function TasksPage(): React.JSX.Element {
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black">My Tasks</h1>
+                    <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">My Tasks</h1>
                     {!isLoading && (
-                        <p className="text-nb-black/60 font-bold text-sm">
+                        <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm">
                             {tasks.length} task{tasks.length !== 1 ? 's' : ''}
                         </p>
                     )}
@@ -111,7 +111,7 @@ export function TasksPage(): React.JSX.Element {
                     isPending={addMutation.isPending}
                 />
 
-                {isLoading && <p className="font-bold text-nb-black/60 uppercase text-sm tracking-wide">Loading…</p>}
+                {isLoading && <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">Loading…</p>}
 
                 {isError && (
                     <div className="border-2 border-nb-red bg-nb-red/10 p-3">

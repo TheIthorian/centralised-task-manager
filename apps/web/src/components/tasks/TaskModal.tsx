@@ -126,7 +126,7 @@ export function TaskModal({
                 <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
                 <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
                 <div>
-                    <label className="font-black uppercase text-xs tracking-wide text-nb-black block mb-1">
+                    <label className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white block mb-1">
                         Priority
                     </label>
                     <div className="flex gap-2">
@@ -135,8 +135,8 @@ export function TaskModal({
                                 key={p}
                                 type="button"
                                 onClick={() => setPriority(p)}
-                                className={`border-2 border-nb-black px-3 py-1 font-black text-xs ${
-                                    priority === p ? 'bg-nb-black text-white' : 'bg-white text-nb-black'
+                                className={`border-2 border-nb-black dark:border-white/30 px-3 py-1 font-black text-xs ${
+                                    priority === p ? 'bg-nb-black dark:bg-white text-white dark:text-nb-black' : 'bg-white dark:bg-neutral-800 text-nb-black dark:text-white'
                                 }`}
                             >
                                 P{p}
@@ -153,7 +153,7 @@ export function TaskModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="font-black uppercase text-xs text-nb-black underline"
+                        className="font-black uppercase text-xs text-nb-black dark:text-white underline"
                     >
                         Cancel
                     </button>
@@ -161,10 +161,10 @@ export function TaskModal({
             </form>
 
             {/* Fuzzy Deadline */}
-            <div className="mt-6 pt-4 border-t-2 border-nb-black">
-                <p className="font-black uppercase text-xs tracking-wide text-nb-black mb-2">Fuzzy Deadline</p>
+            <div className="mt-6 pt-4 border-t-2 border-nb-black dark:border-white/20">
+                <p className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white mb-2">Fuzzy Deadline</p>
                 {task.fuzzyDeadline && (
-                    <p className="text-nb-black/60 font-bold text-xs mb-2">
+                    <p className="text-nb-black/60 dark:text-white/50 font-bold text-xs mb-2">
                         Current: {FUZZY_TYPE_LABELS[task.fuzzyDeadline.type]}
                         {task.fuzzyDeadline.remindEvery ? ` · remind ${task.fuzzyDeadline.remindEvery}` : ''}
                     </p>
@@ -174,7 +174,7 @@ export function TaskModal({
                         <select
                             value={fuzzyType}
                             onChange={(e) => setFuzzyType(e.target.value as FuzzyDeadlineInfo['type'])}
-                            className="border-2 border-nb-black font-bold text-xs px-2 py-1 bg-white"
+                            className="border-2 border-nb-black dark:border-white/20 font-bold text-xs px-2 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white"
                             disabled={busy}
                         >
                             <option value="this_week">This Week</option>
@@ -184,7 +184,7 @@ export function TaskModal({
                         <select
                             value={fuzzyRemindEvery}
                             onChange={(e) => setFuzzyRemindEvery(e.target.value as 'daily' | 'weekly' | '')}
-                            className="border-2 border-nb-black font-bold text-xs px-2 py-1 bg-white"
+                            className="border-2 border-nb-black dark:border-white/20 font-bold text-xs px-2 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white"
                             disabled={busy}
                         >
                             <option value="">No reminder</option>
@@ -209,7 +209,7 @@ export function TaskModal({
             </div>
 
             {/* Delete */}
-            <div className="mt-6 pt-4 border-t-2 border-nb-black">
+            <div className="mt-6 pt-4 border-t-2 border-nb-black dark:border-white/20">
                 <Button variant="danger" onClick={handleDelete} disabled={busy} className="w-full">
                     {isDeleting ? 'Deleting…' : confirmDelete ? 'Confirm Delete?' : 'Delete Task'}
                 </Button>

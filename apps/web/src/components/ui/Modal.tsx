@@ -36,8 +36,8 @@ export function Modal({ open, onClose, title, children }: ModalProps): React.JSX
             <div
                 className={clsx(
                     'relative z-10 w-full md:max-w-md',
-                    'bg-white border-t-4 md:border-4 border-nb-black',
-                    'md:shadow-[5px_5px_0px_#111]',
+                    'bg-white dark:bg-neutral-900 border-t-4 md:border-4 border-nb-black dark:border-white/20',
+                    'md:shadow-[5px_5px_0px_#111] dark:md:shadow-none',
                     'p-6',
                 )}
                 role="dialog"
@@ -45,10 +45,10 @@ export function Modal({ open, onClose, title, children }: ModalProps): React.JSX
             >
                 {title && (
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-black uppercase tracking-tight text-nb-black">{title}</h2>
+                        <h2 className="text-xl font-black uppercase tracking-tight text-nb-black dark:text-white">{title}</h2>
                         <button
                             onClick={onClose}
-                            className="font-black text-nb-black hover:text-nb-red text-lg leading-none"
+                            className="font-black text-nb-black dark:text-white hover:text-nb-red text-lg leading-none"
                             aria-label="Close"
                         >
                             ✕

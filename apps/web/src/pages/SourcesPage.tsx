@@ -40,13 +40,13 @@ export function SourcesPage(): React.JSX.Element {
     return (
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
-                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black">Connected Sources</h1>
-                <p className="text-nb-black/60 font-bold text-sm mt-1">
+                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">Connected Sources</h1>
+                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
                     Connect external task managers to sync your tasks here.
                 </p>
             </div>
 
-            {isLoading && <p className="font-bold text-nb-black/60 uppercase text-sm tracking-wide">Loading…</p>}
+            {isLoading && <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">Loading…</p>}
 
             {isError && (
                 <div className="border-2 border-nb-red bg-nb-red/10 p-3">

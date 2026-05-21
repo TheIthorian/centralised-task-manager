@@ -22,11 +22,11 @@ export function TaskFilters({ active, onChange }: TaskFiltersProps): React.JSX.E
                     key={value}
                     onClick={() => onChange(value)}
                     className={clsx(
-                        'px-3 py-1 border-2 border-nb-black font-black uppercase text-xs tracking-wide',
-                        'transition-colors duration-100',
+                        'px-3 py-1 border-2 border-nb-black dark:border-white/20 font-black uppercase text-xs tracking-wide',
+                        'transition-colors duration-100 cursor-pointer',
                         active === value
                             ? 'bg-nb-yellow text-nb-black'
-                            : 'bg-white text-nb-black hover:bg-nb-yellow/40',
+                            : 'bg-white dark:bg-neutral-800 text-nb-black dark:text-white hover:bg-nb-yellow/40 dark:hover:bg-nb-yellow/20',
                     )}
                 >
                     {label}

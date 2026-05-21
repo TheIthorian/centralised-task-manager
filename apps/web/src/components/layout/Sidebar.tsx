@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { useAuth } from '../../auth/AuthContext.js';
+import { useTheme } from '../../theme/ThemeContext.js';
 import { Button } from '../ui/index.js';
 import clsx from 'clsx';
 
@@ -13,6 +14,7 @@ const navItems = [
 /** Desktop left sidebar. Hidden on mobile via md: breakpoint in AppShell. */
 export function Sidebar(): React.JSX.Element {
     const { user, logout } = useAuth();
+    const { theme, toggle } = useTheme();
     const { pathname } = useLocation();
 
     return (
@@ -31,7 +33,7 @@ export function Sidebar(): React.JSX.Element {
                             to={path}
                             className={clsx(
                                 'flex items-center gap-2 px-3 py-2 font-black text-xs uppercase tracking-wide',
-                                'transition-colors duration-100',
+                                'transition-colors duration-100 cursor-pointer',
                                 active ? 'bg-nb-yellow text-nb-black' : 'text-white hover:bg-white/10',
                             )}
                         >
@@ -44,6 +46,13 @@ export function Sidebar(): React.JSX.Element {
 
             <div className="p-3 border-t-2 border-white/10 flex flex-col gap-2">
                 <p className="text-white/50 font-bold text-xs truncate">{user?.email}</p>
+                <button
+                    onClick={toggle}
+                    className="w-full border-2 border-white/20 font-black uppercase text-xs text-white/70 py-1 hover:bg-white/10 transition-colors"
+                    aria-label="Toggle dark mode"
+                >
+                    {theme === 'dark' ? '☀ Light' : '☾ Dark'}
+                </button>
                 <Button variant="secondary" onClick={logout} className="w-full text-xs py-1">
                     Logout
                 </Button>

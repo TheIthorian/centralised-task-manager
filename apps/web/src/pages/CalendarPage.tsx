@@ -116,27 +116,27 @@ export function CalendarPage(): React.JSX.Element {
         <div className="p-4 md:p-6">
             {/* Header */}
             <div className="flex items-center gap-3 mb-4">
-                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black">Calendar</h1>
+                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">Calendar</h1>
                 <div className="flex items-center gap-2 ml-auto">
                     <button
                         onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()); }}
-                        className="border-2 border-nb-black px-2 py-0.5 font-black text-xs uppercase"
+                        className="border-2 border-nb-black dark:border-white/20 px-2 py-0.5 font-black text-xs uppercase cursor-pointer dark:text-white"
                     >
                         Today
                     </button>
                     <button
                         onClick={prevMonth}
-                        className="border-2 border-nb-black px-2 py-0.5 font-black text-sm"
+                        className="border-2 border-nb-black dark:border-white/20 px-2 py-0.5 font-black text-sm cursor-pointer dark:text-white"
                         aria-label="Previous month"
                     >
                         ‹
                     </button>
-                    <span className="font-black text-sm uppercase min-w-[120px] text-center">
+                    <span className="font-black text-sm uppercase min-w-[120px] text-center dark:text-white">
                         {MONTH_NAMES[month]} {year}
                     </span>
                     <button
                         onClick={nextMonth}
-                        className="border-2 border-nb-black px-2 py-0.5 font-black text-sm"
+                        className="border-2 border-nb-black dark:border-white/20 px-2 py-0.5 font-black text-sm cursor-pointer dark:text-white"
                         aria-label="Next month"
                     >
                         ›
@@ -145,7 +145,7 @@ export function CalendarPage(): React.JSX.Element {
             </div>
 
             {/* Day name headers */}
-            <div className="grid grid-cols-7 border-2 border-b-0 border-nb-black">
+            <div className="grid grid-cols-7 border-2 border-b-0 border-nb-black dark:border-white/20">
                 {DAY_NAMES.map((d) => (
                     <div
                         key={d}
@@ -157,7 +157,7 @@ export function CalendarPage(): React.JSX.Element {
             </div>
 
             {/* Calendar grid */}
-            <div className="grid grid-cols-7 border-2 border-nb-black">
+            <div className="grid grid-cols-7 border-2 border-nb-black dark:border-white/20">
                 {cells.map((cell, idx) => {
                     const isToday = cell?.key === todayKey;
                     const cellTasks = cell ? (tasksByDate.get(cell.key) ?? []) : [];
@@ -165,13 +165,13 @@ export function CalendarPage(): React.JSX.Element {
                     return (
                         <div
                             key={idx}
-                            className="border-r-2 border-b-2 last-of-type:border-r-0 border-nb-black min-h-[80px] p-1 flex flex-col"
+                            className="border-r-2 border-b-2 last-of-type:border-r-0 border-nb-black dark:border-white/10 min-h-[80px] p-1 flex flex-col"
                         >
                             {cell !== null && (
                                 <>
                                     <span
                                         className={`font-black text-xs self-start px-1 mb-1 ${
-                                            isToday ? 'bg-nb-black text-nb-yellow' : 'text-nb-black'
+                                            isToday ? 'bg-nb-black text-nb-yellow' : 'text-nb-black dark:text-white'
                                         }`}
                                     >
                                         {cell.day}
@@ -181,7 +181,7 @@ export function CalendarPage(): React.JSX.Element {
                                             <button
                                                 key={task.id}
                                                 onClick={() => setEditTask(task)}
-                                                className={`text-left text-xs font-bold px-1 truncate border border-nb-black ${
+                                                className={`text-left text-xs font-bold px-1 truncate border border-nb-black cursor-pointer ${
                                                     PRIORITY_CHIP_CLASS[task.priority ?? 3]
                                                 } ${task.completed ? 'line-through opacity-50' : ''}`}
                                             >
