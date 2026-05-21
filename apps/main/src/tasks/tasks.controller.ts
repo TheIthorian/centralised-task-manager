@@ -1,16 +1,33 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, Request, UseGuards, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Put, Param, Body, Query, Request, UseGuards, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { TasksService } from './tasks.service.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
 import { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
+import { SetTaskStatusDto } from './dto/set-task-status.dto.js';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
+import type { TaskDocument } from './schemas/task.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 
 interface AuthRequest {
     user: JwtPayload;
 }
+
+type TaskResponse = {
+    id: string;
+    source: string;
+    sourceId: string;
+    title: string;
+    description: string | null;
+    completed: boolean;
+    priority: number | null;
+    tags: string[];
+    dueDate: string | null;
+    fuzzyDeadline: { type: string; remindEvery: string | null } | null;
+    createdAt: string;
+    updatedAt: string;
+};
 
 @ApiTags('Tasks')
 @ApiBearerAuth('jwt')
@@ -19,98 +36,92 @@ interface AuthRequest {
 export class TasksController {
     constructor(private readonly tasks: TasksService) {}
 
-    /** List tasks with optional filters (status, source, fuzzy, surfaced, page, limit). */
-    @ApiOperation({ summary: 'List tasks', description: 'Returns aggregated tasks across all connected sources.' })
-    @Get()
-    async list(@Request() req: AuthRequest, @Query() query: ListTasksQueryDto): Promise<unknown[]> {
-        const tasks = await this.tasks.list(req.user.sub, query);
-
-        return tasks.map((t) => ({
+    private toResponse(t: TaskDocument): TaskResponse {
+        return {
             id: String(t._id),
             source: t.source,
+            sourceId: t.sourceId,
             title: t.title,
             description: t.description,
-            status: t.status,
+            completed: t.status === 'done',
             priority: t.priority,
             tags: t.tags,
-            sourceDueDate: t.sourceDueDate,
-            fuzzyDeadline: t.fuzzyDeadline,
-        }));
+            dueDate: t.sourceDueDate ? t.sourceDueDate.toISOString() : null,
+            fuzzyDeadline: t.fuzzyDeadline
+                ? { type: t.fuzzyDeadline.type, remindEvery: t.fuzzyDeadline.remindEvery }
+                : null,
+            createdAt: t.createdAt ? t.createdAt.toISOString() : new Date().toISOString(),
+            updatedAt: t.updatedAt ? t.updatedAt.toISOString() : new Date().toISOString(),
+        };
+    }
+
+    /** List tasks with optional filters. */
+    @ApiOperation({ summary: 'List tasks' })
+    @Get()
+    async list(@Request() req: AuthRequest, @Query() query: ListTasksQueryDto): Promise<TaskResponse[]> {
+        const tasks = await this.tasks.list(req.user.sub, query);
+        return tasks.map((t) => this.toResponse(t));
     }
 
     /** Get a single task. */
     @ApiOperation({ summary: 'Get a task by id' })
     @ApiResponse({ status: 404, description: 'Task not found' })
     @Get(':id')
-    async findOne(@Request() req: AuthRequest, @Param('id') id: string): Promise<unknown> {
+    async findOne(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskResponse> {
         const t = await this.tasks.findOne({ taskId: id, userId: req.user.sub });
-
-        return {
-            id: String(t._id),
-            source: t.source,
-            title: t.title,
-            description: t.description,
-            status: t.status,
-            priority: t.priority,
-            tags: t.tags,
-            sourceDueDate: t.sourceDueDate,
-            fuzzyDeadline: t.fuzzyDeadline,
-        };
+        return this.toResponse(t);
     }
 
     /** Create a task (write-through to source). */
-    @ApiOperation({
-        summary: 'Create a task',
-        description: 'Creates the task in CTM and writes it through to the specified connector source.',
-    })
+    @ApiOperation({ summary: 'Create a task' })
     @Post()
-    async create(@Request() req: AuthRequest, @Body() dto: CreateTaskDto): Promise<unknown> {
+    async create(@Request() req: AuthRequest, @Body() dto: CreateTaskDto): Promise<TaskResponse> {
         const t = await this.tasks.create({ userId: req.user.sub, dto });
-
-        return { id: String(t._id), source: t.source, title: t.title, status: t.status };
+        return this.toResponse(t);
     }
 
     /** Update a task (write-through to source). */
     @ApiOperation({ summary: 'Update a task' })
     @Patch(':id')
-    async update(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: UpdateTaskDto): Promise<unknown> {
+    async update(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: UpdateTaskDto): Promise<TaskResponse> {
         const t = await this.tasks.update({ taskId: id, userId: req.user.sub, dto });
-
-        return { id: String(t._id), title: t.title, status: t.status };
+        return this.toResponse(t);
     }
 
-    /** Mark a task as complete (write-through to source). */
-    @ApiOperation({ summary: 'Complete a task' })
-    @Post(':id/complete')
-    async complete(@Request() req: AuthRequest, @Param('id') id: string): Promise<unknown> {
-        const t = await this.tasks.complete({ taskId: id, userId: req.user.sub });
-
-        return { id: String(t._id), status: t.status };
+    /** Set task status (complete or uncomplete). */
+    @ApiOperation({ summary: 'Set task status to open or done' })
+    @Put(':id/status')
+    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: SetTaskStatusDto): Promise<TaskResponse> {
+        const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, dto });
+        return this.toResponse(t);
     }
 
     /** Set the fuzzy deadline on a task (local-only). */
-    @ApiOperation({
-        summary: 'Set a fuzzy deadline',
-        description: 'Stores a fuzzy deadline locally. Never written back to the source.',
-    })
+    @ApiOperation({ summary: 'Set a fuzzy deadline' })
     @Patch(':id/fuzzy-deadline')
     async setFuzzyDeadline(
         @Request() req: AuthRequest,
         @Param('id') id: string,
         @Body() dto: SetFuzzyDeadlineDto,
-    ): Promise<unknown> {
+    ): Promise<TaskResponse> {
         const t = await this.tasks.setFuzzyDeadline({ taskId: id, userId: req.user.sub, dto });
-
-        return { id: String(t._id), fuzzyDeadline: t.fuzzyDeadline };
+        return this.toResponse(t);
     }
 
     /** Remove the fuzzy deadline from a task. */
     @ApiOperation({ summary: 'Remove a fuzzy deadline' })
     @Delete(':id/fuzzy-deadline')
-    async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string): Promise<unknown> {
+    async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskResponse> {
         const t = await this.tasks.removeFuzzyDeadline({ taskId: id, userId: req.user.sub });
+        return this.toResponse(t);
+    }
 
-        return { id: String(t._id), fuzzyDeadline: t.fuzzyDeadline };
+    /** Mark a task as complete (legacy — kept until Task 2 migration). */
+    @ApiOperation({ summary: 'Mark a task as complete' })
+    @Post(':id/complete')
+    async complete(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskResponse> {
+        const t = await this.tasks.complete({ taskId: id, userId: req.user.sub });
+        return this.toResponse(t);
     }
 
     /** Delete a task (write-through to source). */

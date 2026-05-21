@@ -58,6 +58,9 @@ export class Task {
 
     @Prop({ type: Date, required: true })
     syncedAt!: Date;
+
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

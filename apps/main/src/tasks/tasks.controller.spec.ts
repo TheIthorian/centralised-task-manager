@@ -202,7 +202,7 @@ describe('TasksModule', () => {
         });
 
         expect(res.statusCode).toBe(201);
-        expect(JSON.parse(res.body).status).toBe('done');
+        expect(JSON.parse(res.body).completed).toBe(true);
     });
 });
 
@@ -306,7 +306,7 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         expect(body).toHaveProperty('id');
         expect(body.source).toBe('local');
         expect(body.title).toBe('Buy milk');
-        expect(body.status).toBe('open');
+        expect(body.completed).toBe(false);
     });
 
     it('POST /tasks accepts optional priority and description', async () => {
@@ -355,7 +355,7 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         expect(body.id).toBe(id);
         expect(body.title).toBe(title);
         expect(body.source).toBe('local');
-        expect(body.status).toBe('open');
+        expect(body.completed).toBe(false);
         expect(body.priority).toBe(2);
         expect(body.description).toBe('Persisted desc');
     });
@@ -438,7 +438,7 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         });
 
         expect(completeRes.statusCode).toBe(201);
-        expect(JSON.parse(completeRes.body).status).toBe('done');
+        expect(JSON.parse(completeRes.body).completed).toBe(true);
 
         // Verify persistence
         const getRes = await app.inject({
@@ -447,7 +447,7 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
             headers: { authorization: `Bearer ${jwt}` },
         });
 
-        expect(JSON.parse(getRes.body).status).toBe('done');
+        expect(JSON.parse(getRes.body).completed).toBe(true);
     });
 
     // ── Delete + persistence ──────────────────────────────────────────────────
@@ -626,9 +626,9 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         });
 
         expect(res.statusCode).toBe(200);
-        const tasks = JSON.parse(res.body) as { id: string; status: string }[];
+        const tasks = JSON.parse(res.body) as { id: string; completed: boolean }[];
 
-        expect(tasks.every((t) => t.status === 'open')).toBe(true);
+        expect(tasks.every((t) => t.completed === false)).toBe(true);
         expect(tasks.some((t) => t.id === openId)).toBe(true);
         expect(tasks.some((t) => t.id === doneId)).toBe(false);
     });
@@ -643,9 +643,9 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
             headers: { authorization: `Bearer ${jwt}` },
         });
 
-        const tasks = JSON.parse(res.body) as { id: string; status: string }[];
+        const tasks = JSON.parse(res.body) as { id: string; completed: boolean }[];
 
-        expect(tasks.every((t) => t.status === 'done')).toBe(true);
+        expect(tasks.every((t) => t.completed === true)).toBe(true);
         expect(tasks.some((t) => t.id === id)).toBe(true);
     });
 });

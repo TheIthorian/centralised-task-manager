@@ -196,6 +196,11 @@ export class TasksService {
         ) as Promise<TaskDocument>;
     }
 
+    /** Set task status (stub — implemented in Task 2). */
+    async setStatus(_args: { taskId: string; userId: string; dto: { status: 'open' | 'done' } }): Promise<TaskDocument> {
+        throw new Error('Not yet implemented');
+    }
+
     /** Remove the fuzzy deadline from a task. */
     async removeFuzzyDeadline({ taskId, userId }: { taskId: string; userId: string }): Promise<TaskDocument> {
         await this.findOne({ taskId, userId });
