@@ -204,3 +204,149 @@ describe('DELETE /users/me', () => {
         expect(refreshRes.statusCode).toBe(401);
     });
 });
+
+// ─── Validation ──────────────────────────────────────────────────────────────
+
+describe('POST /auth/register — input validation', () => {
+    let app: NestFastifyApplication;
+
+    beforeAll(async () => {
+        const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+        app = module.createNestApplication(new FastifyAdapter());
+        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
+        await app.init();
+        await app.getHttpAdapter().getInstance().ready();
+    });
+
+    afterAll(async () => {
+        await app.close();
+    });
+
+    it('rejects missing name with 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { email: 'a@example.com', password: 'password123' },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('rejects missing email with 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Test', password: 'password123' },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('rejects a non-email string with 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Test', email: 'not-an-email', password: 'password123' },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('rejects password shorter than 8 characters with 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Test', email: 'b@example.com', password: 'short' },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('rejects an empty body with 400', async () => {
+        const res = await app.inject({ method: 'POST', url: '/auth/register', payload: {} });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('rejects unknown extra fields with 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Test', email: 'c@example.com', password: 'password123', role: 'admin' },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+});
+
+// ─── Persistence ─────────────────────────────────────────────────────────────
+
+describe('POST /auth/register — persistence', () => {
+    let app: NestFastifyApplication;
+
+    beforeAll(async () => {
+        const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+        app = module.createNestApplication(new FastifyAdapter());
+        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        await app.init();
+        await app.getHttpAdapter().getInstance().ready();
+    });
+
+    afterAll(async () => {
+        await app.close();
+    });
+
+    it('registered user can log in with the same credentials', async () => {
+        const email = `persist+${Date.now()}@example.com`;
+        const password = 'password123';
+
+        const regRes = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Persist User', email, password },
+        });
+
+        expect(regRes.statusCode).toBe(201);
+
+        const loginRes = await app.inject({
+            method: 'POST',
+            url: '/auth/login',
+            payload: { email, password },
+        });
+
+        expect(loginRes.statusCode).toBe(200);
+        expect(JSON.parse(loginRes.body)).toHaveProperty('accessToken');
+    });
+
+    it('register response includes user id and email but not the password', async () => {
+        const email = `shape+${Date.now()}@example.com`;
+
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Shape User', email, password: 'password123' },
+        });
+
+        const body = JSON.parse(res.body);
+
+        expect(body.user).toHaveProperty('id');
+        expect(body.user.email).toBe(email);
+        expect(body).not.toHaveProperty('password');
+    });
+
+    it('duplicate email returns 409 — user was actually stored', async () => {
+        const email = `dup+${Date.now()}@example.com`;
+
+        await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'First', email, password: 'password123' } });
+
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Second', email, password: 'password123' },
+        });
+
+        expect(res.statusCode).toBe(409);
+    });
+});

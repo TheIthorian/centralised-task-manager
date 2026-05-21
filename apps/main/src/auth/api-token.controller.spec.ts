@@ -113,3 +113,143 @@ describe('API token routes', () => {
         expect(deleteRes.statusCode).toBe(204);
     });
 });
+
+// ─── Auth guards, validation, user isolation ─────────────────────────────────
+
+describe('API token routes — auth guards, validation, isolation', () => {
+    let app: NestFastifyApplication;
+    let jwtA: string;
+    let jwtB: string;
+
+    beforeAll(async () => {
+        const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+        app = module.createNestApplication(new FastifyAdapter());
+        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
+        await app.init();
+        await app.getHttpAdapter().getInstance().ready();
+
+        const suffix = Date.now();
+
+        const regA = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'User A', email: `tokA+${suffix}@example.com`, password: 'password123' },
+        });
+
+        jwtA = JSON.parse(regA.body).accessToken;
+
+        const regB = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'User B', email: `tokB+${suffix}@example.com`, password: 'password123' },
+        });
+
+        jwtB = JSON.parse(regB.body).accessToken;
+    });
+
+    afterAll(async () => {
+        await app.close();
+    });
+
+    // Auth guards
+
+    it('POST /auth/tokens without auth returns 401', async () => {
+        const res = await app.inject({ method: 'POST', url: '/auth/tokens', payload: { label: 'test' } });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('GET /auth/tokens without auth returns 401', async () => {
+        const res = await app.inject({ method: 'GET', url: '/auth/tokens' });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('DELETE /auth/tokens/:id without auth returns 401', async () => {
+        const res = await app.inject({ method: 'DELETE', url: '/auth/tokens/000000000000000000000000' });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    // Validation
+
+    it('POST /auth/tokens with missing label returns 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/tokens',
+            payload: {},
+            headers: { authorization: `Bearer ${jwtA}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('POST /auth/tokens with empty label string returns 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/tokens',
+            payload: { label: '' },
+            headers: { authorization: `Bearer ${jwtA}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    // User isolation
+
+    it("User B cannot revoke User A's token — returns 404", async () => {
+        const issueRes = await app.inject({
+            method: 'POST',
+            url: '/auth/tokens',
+            payload: { label: 'isolation test' },
+            headers: { authorization: `Bearer ${jwtA}` },
+        });
+        const { id } = JSON.parse(issueRes.body);
+
+        const res = await app.inject({
+            method: 'DELETE',
+            url: `/auth/tokens/${id}`,
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    // Persistence
+
+    it('after revoking a ctm_ token it can no longer authenticate', async () => {
+        const issueRes = await app.inject({
+            method: 'POST',
+            url: '/auth/tokens',
+            payload: { label: 'revoke-check' },
+            headers: { authorization: `Bearer ${jwtA}` },
+        });
+        const { token, id } = JSON.parse(issueRes.body);
+
+        // Token works before revoke
+        const before = await app.inject({
+            method: 'GET',
+            url: '/auth/tokens',
+            headers: { authorization: `Bearer ${token}` },
+        });
+
+        expect(before.statusCode).toBe(200);
+
+        // Revoke
+        await app.inject({
+            method: 'DELETE',
+            url: `/auth/tokens/${id}`,
+            headers: { authorization: `Bearer ${jwtA}` },
+        });
+
+        // Token no longer works
+        const after = await app.inject({
+            method: 'GET',
+            url: '/auth/tokens',
+            headers: { authorization: `Bearer ${token}` },
+        });
+
+        expect(after.statusCode).toBe(401);
+    });
+});

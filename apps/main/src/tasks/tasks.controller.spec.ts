@@ -205,3 +205,537 @@ describe('TasksModule', () => {
         expect(JSON.parse(res.body).status).toBe('done');
     });
 });
+
+// ─── Local source: auth guards, CRUD, validation, filtering ──────────────────
+
+describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
+    let app: NestFastifyApplication;
+    let jwt: string;
+
+    /** Create a local task and return its id. */
+    async function createLocal(title: string, extra: Record<string, unknown> = {}): Promise<string> {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title, source: 'local', ...extra },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(201);
+
+        return JSON.parse(res.body).id;
+    }
+
+    beforeAll(async () => {
+        const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+        app = module.createNestApplication(new FastifyAdapter());
+        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
+        await app.init();
+        await app.getHttpAdapter().getInstance().ready();
+
+        const email = `local-tasks+${Date.now()}@example.com`;
+        const regRes = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Local Task Tester', email, password: 'password123' },
+        });
+
+        jwt = JSON.parse(regRes.body).accessToken;
+    });
+
+    afterAll(async () => {
+        await app.close();
+    });
+
+    // ── Auth guards ────────────────────────────────────────────────────────────
+
+    it('GET /tasks without auth returns 401', async () => {
+        const res = await app.inject({ method: 'GET', url: '/tasks' });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('POST /tasks without auth returns 401', async () => {
+        const res = await app.inject({ method: 'POST', url: '/tasks', payload: { title: 'x', source: 'local' } });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('GET /tasks/:id without auth returns 401', async () => {
+        const res = await app.inject({ method: 'GET', url: '/tasks/000000000000000000000000' });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('PATCH /tasks/:id without auth returns 401', async () => {
+        const res = await app.inject({ method: 'PATCH', url: '/tasks/000000000000000000000000', payload: { title: 'x' } });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('DELETE /tasks/:id without auth returns 401', async () => {
+        const res = await app.inject({ method: 'DELETE', url: '/tasks/000000000000000000000000' });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('POST /tasks/:id/complete without auth returns 401', async () => {
+        const res = await app.inject({ method: 'POST', url: '/tasks/000000000000000000000000/complete' });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    // ── Create + GET list ─────────────────────────────────────────────────────
+
+    it('POST /tasks with local source returns 201 with id, source, title, status', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title: 'Buy milk', source: 'local' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(201);
+        const body = JSON.parse(res.body);
+
+        expect(body).toHaveProperty('id');
+        expect(body.source).toBe('local');
+        expect(body.title).toBe('Buy milk');
+        expect(body.status).toBe('open');
+    });
+
+    it('POST /tasks accepts optional priority and description', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title: 'Detailed task', source: 'local', priority: 1, description: 'With details' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(201);
+        expect(JSON.parse(res.body).title).toBe('Detailed task');
+    });
+
+    it('GET /tasks returns an array that includes the created task', async () => {
+        const title = `List check ${Date.now()}`;
+        const id = await createLocal(title);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/tasks',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+        const tasks = JSON.parse(res.body) as { id: string }[];
+
+        expect(tasks.some((t) => t.id === id)).toBe(true);
+    });
+
+    // ── GET by id + persistence ────────────────────────────────────────────────
+
+    it('GET /tasks/:id returns the persisted task', async () => {
+        const title = `Persist ${Date.now()}`;
+        const id = await createLocal(title, { priority: 2, description: 'Persisted desc' });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+        const body = JSON.parse(res.body);
+
+        expect(body.id).toBe(id);
+        expect(body.title).toBe(title);
+        expect(body.source).toBe('local');
+        expect(body.status).toBe('open');
+        expect(body.priority).toBe(2);
+        expect(body.description).toBe('Persisted desc');
+    });
+
+    it('GET /tasks/:id returns 404 for a non-existent id', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/tasks/000000000000000000000000',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    // ── Update + persistence ───────────────────────────────────────────────────
+
+    it('PATCH /tasks/:id updates title and priority — change is persisted', async () => {
+        const id = await createLocal(`Update me ${Date.now()}`);
+
+        const patchRes = await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${id}`,
+            payload: { title: 'Updated title', priority: 1 },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(patchRes.statusCode).toBe(200);
+
+        // Verify via GET
+        const getRes = await app.inject({
+            method: 'GET',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+        const body = JSON.parse(getRes.body);
+
+        expect(body.title).toBe('Updated title');
+        expect(body.priority).toBe(1);
+    });
+
+    it('PATCH /tasks/:id updates tags — change is persisted', async () => {
+        const id = await createLocal(`Tag me ${Date.now()}`);
+
+        await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${id}`,
+            payload: { tags: ['work', 'urgent'] },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const getRes = await app.inject({
+            method: 'GET',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(JSON.parse(getRes.body).tags).toEqual(['work', 'urgent']);
+    });
+
+    it('PATCH /tasks/:id returns 404 for unknown id', async () => {
+        const res = await app.inject({
+            method: 'PATCH',
+            url: '/tasks/000000000000000000000000',
+            payload: { title: 'Ghost' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    // ── Complete + persistence ────────────────────────────────────────────────
+
+    it('POST /tasks/:id/complete sets status to done — persisted', async () => {
+        const id = await createLocal(`Complete me ${Date.now()}`);
+
+        const completeRes = await app.inject({
+            method: 'POST',
+            url: `/tasks/${id}/complete`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(completeRes.statusCode).toBe(201);
+        expect(JSON.parse(completeRes.body).status).toBe('done');
+
+        // Verify persistence
+        const getRes = await app.inject({
+            method: 'GET',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(JSON.parse(getRes.body).status).toBe('done');
+    });
+
+    // ── Delete + persistence ──────────────────────────────────────────────────
+
+    it('DELETE /tasks/:id removes the task — subsequent GET returns 404', async () => {
+        const id = await createLocal(`Delete me ${Date.now()}`);
+
+        const deleteRes = await app.inject({
+            method: 'DELETE',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(deleteRes.statusCode).toBe(204);
+
+        const getRes = await app.inject({
+            method: 'GET',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(getRes.statusCode).toBe(404);
+    });
+
+    it('DELETE /tasks/:id returns 404 for unknown id', async () => {
+        const res = await app.inject({
+            method: 'DELETE',
+            url: '/tasks/000000000000000000000000',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    // ── Fuzzy deadline ─────────────────────────────────────────────────────────
+
+    it('PATCH /tasks/:id/fuzzy-deadline persists type and remindEvery', async () => {
+        const id = await createLocal(`Fuzzy ${Date.now()}`);
+
+        const res = await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${id}/fuzzy-deadline`,
+            payload: { type: 'this_month', remindEvery: 'weekly' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body).fuzzyDeadline).toMatchObject({ type: 'this_month', remindEvery: 'weekly' });
+
+        // Verify in DB
+        const getRes = await app.inject({ method: 'GET', url: `/tasks/${id}`, headers: { authorization: `Bearer ${jwt}` } });
+
+        expect(JSON.parse(getRes.body).fuzzyDeadline).toMatchObject({ type: 'this_month', remindEvery: 'weekly' });
+    });
+
+    it('DELETE /tasks/:id/fuzzy-deadline clears it — persisted as null', async () => {
+        const id = await createLocal(`FuzzyClear ${Date.now()}`);
+        await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${id}/fuzzy-deadline`,
+            payload: { type: 'someday' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const res = await app.inject({
+            method: 'DELETE',
+            url: `/tasks/${id}/fuzzy-deadline`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body).fuzzyDeadline).toBeNull();
+    });
+
+    // ── Validation ────────────────────────────────────────────────────────────
+
+    it('POST /tasks missing title returns 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { source: 'local' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('POST /tasks missing source returns 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title: 'No source' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('POST /tasks with priority out of range returns 400', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title: 'Bad prio', source: 'local', priority: 5 },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('PATCH /tasks/:id with priority out of range returns 400', async () => {
+        const id = await createLocal(`Prio validate ${Date.now()}`);
+        const res = await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${id}`,
+            payload: { priority: 0 },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('PATCH /tasks/:id/fuzzy-deadline with invalid type returns 400', async () => {
+        const id = await createLocal(`Bad fuzzy ${Date.now()}`);
+        const res = await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${id}/fuzzy-deadline`,
+            payload: { type: 'next_year' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('GET /tasks with invalid status query returns 400', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/tasks?status=invalid',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    // ── Query filtering ────────────────────────────────────────────────────────
+
+    it('GET /tasks?status=open returns only open tasks', async () => {
+        const openId = await createLocal(`Open ${Date.now()}`);
+        const doneId = await createLocal(`Done ${Date.now()}`);
+
+        // Complete the second task
+        await app.inject({
+            method: 'POST',
+            url: `/tasks/${doneId}/complete`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/tasks?status=open',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+        const tasks = JSON.parse(res.body) as { id: string; status: string }[];
+
+        expect(tasks.every((t) => t.status === 'open')).toBe(true);
+        expect(tasks.some((t) => t.id === openId)).toBe(true);
+        expect(tasks.some((t) => t.id === doneId)).toBe(false);
+    });
+
+    it('GET /tasks?status=done returns only done tasks', async () => {
+        const id = await createLocal(`ToComplete ${Date.now()}`);
+        await app.inject({ method: 'POST', url: `/tasks/${id}/complete`, headers: { authorization: `Bearer ${jwt}` } });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/tasks?status=done',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const tasks = JSON.parse(res.body) as { id: string; status: string }[];
+
+        expect(tasks.every((t) => t.status === 'done')).toBe(true);
+        expect(tasks.some((t) => t.id === id)).toBe(true);
+    });
+});
+
+// ─── User isolation ───────────────────────────────────────────────────────────
+
+describe('Tasks — user isolation', () => {
+    let app: NestFastifyApplication;
+    let jwtA: string;
+    let jwtB: string;
+    let taskIdA: string;
+
+    beforeAll(async () => {
+        const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+        app = module.createNestApplication(new FastifyAdapter());
+        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        await app.init();
+        await app.getHttpAdapter().getInstance().ready();
+
+        const suffix = Date.now();
+
+        const regA = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'User A', email: `taskA+${suffix}@example.com`, password: 'password123' },
+        });
+
+        jwtA = JSON.parse(regA.body).accessToken;
+
+        const regB = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'User B', email: `taskB+${suffix}@example.com`, password: 'password123' },
+        });
+
+        jwtB = JSON.parse(regB.body).accessToken;
+
+        // User A creates a task
+        const createRes = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title: `User A task ${suffix}`, source: 'local' },
+            headers: { authorization: `Bearer ${jwtA}` },
+        });
+
+        taskIdA = JSON.parse(createRes.body).id;
+    });
+
+    afterAll(async () => {
+        await app.close();
+    });
+
+    it("User B's task list does not contain User A's task", async () => {
+        const res = await app.inject({ method: 'GET', url: '/tasks', headers: { authorization: `Bearer ${jwtB}` } });
+        const tasks = JSON.parse(res.body) as { id: string }[];
+
+        expect(tasks.some((t) => t.id === taskIdA)).toBe(false);
+    });
+
+    it("User B cannot GET User A's task by id — returns 404", async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: `/tasks/${taskIdA}`,
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    it("User B cannot PATCH User A's task — returns 404", async () => {
+        const res = await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${taskIdA}`,
+            payload: { title: 'Stolen' },
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    it("User B cannot complete User A's task — returns 404", async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: `/tasks/${taskIdA}/complete`,
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    it("User B cannot DELETE User A's task — returns 404", async () => {
+        const res = await app.inject({
+            method: 'DELETE',
+            url: `/tasks/${taskIdA}`,
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    it("User B cannot set fuzzy deadline on User A's task — returns 404", async () => {
+        const res = await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${taskIdA}/fuzzy-deadline`,
+            payload: { type: 'someday' },
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
+
+        expect(res.statusCode).toBe(404);
+    });
+});
