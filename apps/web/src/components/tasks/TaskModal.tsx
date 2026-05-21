@@ -124,7 +124,17 @@ export function TaskModal({
         <Modal open={open} onClose={onClose} title="Edit Task">
             <form onSubmit={handleSave} className="flex flex-col gap-4">
                 <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                <div className="flex flex-col gap-1">
+                    <label htmlFor="description" className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white">
+                        Description
+                    </label>
+                    <textarea
+                        id="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full h-32 border-2 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-800 font-bold p-2 text-nb-black dark:text-white resize-none overflow-y-auto focus:outline-none focus:shadow-[3px_3px_0px_#111] dark:focus:shadow-none placeholder:text-nb-grey placeholder:font-bold"
+                    />
+                </div>
                 <div>
                     <label className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white block mb-1">
                         Priority
