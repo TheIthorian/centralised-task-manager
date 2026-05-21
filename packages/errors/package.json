@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "lint": "oxlint src",
-    "format": "oxfmt --config ../../oxfmt.json src",
+    "format": "oxfmt --config ../../.oxfmtrc.json src",
     "dev": "tsc -p tsconfig.build.json --watch"
   },
   "devDependencies": {
