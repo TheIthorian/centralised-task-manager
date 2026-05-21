@@ -4,22 +4,22 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProfilePage } from './ProfilePage.js';
 
-// Mock api-client
-vi.mock('@ctm/api-client', () => ({
-    updateMe: vi.fn(),
-    deleteMe: vi.fn(),
-}));
-
 // Mock AuthContext
 const mockLogout = vi.fn();
+const mockUpdateUser = vi.fn();
+const mockApi = {
+    updateMe: vi.fn(),
+    deleteMe: vi.fn(),
+};
+
 vi.mock('../auth/AuthContext.js', () => ({
     useAuth: () => ({
         user: { id: '1', email: 'test@example.com', name: 'Test User' },
         logout: mockLogout,
+        updateUser: mockUpdateUser,
+        api: mockApi,
     }),
 }));
-
-import { updateMe, deleteMe } from '@ctm/api-client';
 
 function wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -38,7 +38,7 @@ describe('ProfilePage', () => {
     });
 
     it('calls updateMe with new email on save', async () => {
-        vi.mocked(updateMe).mockResolvedValue({ id: '1', email: 'new@example.com' });
+        mockApi.updateMe.mockResolvedValue({ id: '1', email: 'new@example.com' });
         render(<ProfilePage />, { wrapper });
 
         const emailInput = screen.getByDisplayValue('test@example.com');
@@ -47,7 +47,9 @@ describe('ProfilePage', () => {
         await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
         await waitFor(() => {
-            expect(updateMe).toHaveBeenCalledWith(expect.objectContaining({ email: 'new@example.com' }));
+            expect(mockApi.updateMe).toHaveBeenCalledWith({
+                dto: expect.objectContaining({ email: 'new@example.com' }),
+            });
         });
     });
 
@@ -59,12 +61,12 @@ describe('ProfilePage', () => {
 
         // Confirmation input should appear
         expect(screen.getByPlaceholderText(/type your email/i)).toBeInTheDocument();
-        // deleteMe should NOT have been called yet
-        expect(deleteMe).not.toHaveBeenCalled();
+        // delete should NOT have been called yet
+        expect(mockApi.deleteMe).not.toHaveBeenCalled();
     });
 
     it('calls deleteMe and logout after email confirmation', async () => {
-        vi.mocked(deleteMe).mockResolvedValue(undefined);
+        mockApi.deleteMe.mockResolvedValue(undefined);
         render(<ProfilePage />, { wrapper });
 
         await userEvent.click(screen.getByRole('button', { name: /delete account/i }));
@@ -74,7 +76,7 @@ describe('ProfilePage', () => {
         await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }));
 
         await waitFor(() => {
-            expect(deleteMe).toHaveBeenCalled();
+            expect(mockApi.deleteMe).toHaveBeenCalled();
             expect(mockLogout).toHaveBeenCalled();
         });
     });

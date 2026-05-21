@@ -1,13 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { updateMe, deleteMe } from '@ctm/api-client';
 import type { UpdateUserDto } from '@ctm/api-client';
 import { useAuth } from '../auth/AuthContext.js';
 import { Button, Input } from '../components/ui/index.js';
 
 /** Settings sub-page: user profile, password change, and account deletion. */
 export function ProfilePage(): React.JSX.Element {
-    const { user, logout } = useAuth();
+    const { user, logout, updateUser, api } = useAuth();
 
     // ── Update email / password form ──────────────────────────────────────
     const [email, setEmail] = useState(user?.email ?? '');
@@ -16,8 +15,9 @@ export function ProfilePage(): React.JSX.Element {
     const [saveSuccess, setSaveSuccess] = useState(false);
 
     const saveMutation = useMutation({
-        mutationFn: (dto: UpdateUserDto) => updateMe(dto),
-        onSuccess: () => {
+        mutationFn: (dto: UpdateUserDto) => api.updateMe({ dto }),
+        onSuccess: (nextUser) => {
+            updateUser(nextUser);
             setSaveSuccess(true);
             setCurrentPassword('');
             setNewPassword('');
@@ -40,7 +40,7 @@ export function ProfilePage(): React.JSX.Element {
     const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
 
     const deleteMutation = useMutation({
-        mutationFn: deleteMe,
+        mutationFn: () => api.deleteMe(),
         onSuccess: () => {
             logout();
         },

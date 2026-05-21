@@ -2,17 +2,19 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthProvider, useAuth } from './AuthContext.js';
+import { ToastProvider } from '../toast/ToastContext.js';
 
-vi.mock('@ctm/api-client', () => ({
+const mockApi = {
     login: vi.fn(),
     register: vi.fn(),
-    initClient: vi.fn(),
-    tokenStore: {
-        set: vi.fn(),
-        clear: vi.fn(),
-        getAccess: vi.fn(),
-        getRefresh: vi.fn(),
-    },
+};
+
+vi.mock('../api/web-api-client.js', () => ({
+    WebApiClient: vi.fn(class MockWebApiClient {
+        constructor() {
+            return mockApi;
+        }
+    }),
 }));
 
 vi.mock('js-cookie', () => {
@@ -31,7 +33,6 @@ vi.mock('js-cookie', () => {
     };
 });
 
-import * as apiClient from '@ctm/api-client';
 import Cookies from 'js-cookie';
 
 function TestConsumer(): React.JSX.Element {
@@ -54,9 +55,11 @@ describe('AuthContext', () => {
 
     it('starts with no user when no cookie is set', () => {
         render(
-            <AuthProvider>
-                <TestConsumer />
-            </AuthProvider>,
+            <ToastProvider>
+                <AuthProvider>
+                    <TestConsumer />
+                </AuthProvider>
+            </ToastProvider>,
         );
         expect(screen.getByTestId('user').textContent).toBe('none');
     });
@@ -64,41 +67,47 @@ describe('AuthContext', () => {
     it('sets user after successful login', async () => {
         const user = userEvent.setup();
 
-        vi.mocked(apiClient.login).mockResolvedValueOnce({
+        mockApi.login.mockResolvedValueOnce({
             accessToken: 'acc',
             refreshToken: 'ref',
             user: { id: '1', email: 'a@b.com' },
         });
 
         render(
-            <AuthProvider>
-                <TestConsumer />
-            </AuthProvider>,
+            <ToastProvider>
+                <AuthProvider>
+                    <TestConsumer />
+                </AuthProvider>
+            </ToastProvider>,
         );
         await user.click(screen.getByText('Login'));
 
         expect(screen.getByTestId('user').textContent).toBe('a@b.com');
-        expect(apiClient.tokenStore.set).toHaveBeenCalledWith('acc', 'ref');
+        expect(Cookies.get('ctm_access_token')).toBe('acc');
+        expect(Cookies.get('ctm_refresh_token')).toBe('ref');
     });
 
     it('clears user after logout', async () => {
         const user = userEvent.setup();
 
-        vi.mocked(apiClient.login).mockResolvedValueOnce({
+        mockApi.login.mockResolvedValueOnce({
             accessToken: 'acc',
             refreshToken: 'ref',
             user: { id: '1', email: 'a@b.com' },
         });
 
         render(
-            <AuthProvider>
-                <TestConsumer />
-            </AuthProvider>,
+            <ToastProvider>
+                <AuthProvider>
+                    <TestConsumer />
+                </AuthProvider>
+            </ToastProvider>,
         );
         await user.click(screen.getByText('Login'));
         await user.click(screen.getByText('Logout'));
 
         expect(screen.getByTestId('user').textContent).toBe('none');
-        expect(apiClient.tokenStore.clear).toHaveBeenCalled();
+        expect(Cookies.get('ctm_access_token')).toBeUndefined();
+        expect(Cookies.get('ctm_refresh_token')).toBeUndefined();
     });
 });

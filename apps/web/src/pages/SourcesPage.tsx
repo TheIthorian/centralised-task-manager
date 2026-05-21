@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listConnectors, getConnectorAuthUrl, disconnectConnector } from '@ctm/api-client';
 import type { ConnectorStatusDto } from '@ctm/api-client';
+import { useAuth } from '../auth/AuthContext.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 
 /** Settings sub-page: connected task sources. */
 export function SourcesPage(): React.JSX.Element {
     const qc = useQueryClient();
+    const { api } = useAuth();
 
     const {
         data: connectors = [],
@@ -13,18 +14,18 @@ export function SourcesPage(): React.JSX.Element {
         isError,
     } = useQuery({
         queryKey: ['connectors'],
-        queryFn: listConnectors,
+        queryFn: () => api.listConnectors(),
     });
 
     const connectMutation = useMutation({
         mutationFn: async (source: string) => {
-            const url = await getConnectorAuthUrl(source);
+            const url = await api.getConnectorAuthUrl({ source });
             window.location.href = url;
         },
     });
 
     const disconnectMutation = useMutation({
-        mutationFn: (source: string) => disconnectConnector(source),
+        mutationFn: (source: string) => api.disconnectConnector({ source }),
         onSuccess: (_data, source) => {
             qc.setQueryData<ConnectorStatusDto[]>(['connectors'], (prev = []) =>
                 prev.map((c) => (c.source === source ? { ...c, connected: false, lastSynced: undefined } : c)),

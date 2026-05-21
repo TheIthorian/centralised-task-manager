@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listTasks, createTask, updateTask, deleteTask } from '@ctm/api-client';
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto } from '@ctm/api-client';
+import { useAuth } from '../auth/AuthContext.js';
 import { TaskFilters } from '../components/tasks/TaskFilters.js';
 import { TaskList } from '../components/tasks/TaskList.js';
 import { AddTaskInline } from '../components/tasks/AddTaskInline.js';
@@ -13,6 +13,7 @@ export function TasksPage(): React.JSX.Element {
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
+    const { api } = useAuth();
 
     const qc = useQueryClient();
 
@@ -22,18 +23,18 @@ export function TasksPage(): React.JSX.Element {
         isError,
     } = useQuery({
         queryKey: ['tasks', filter],
-        queryFn: () => listTasks(filter),
+        queryFn: () => api.listTasks({ filter }),
     });
 
     const addMutation = useMutation({
-        mutationFn: (dto: CreateTaskDto) => createTask(dto),
+        mutationFn: (dto: CreateTaskDto) => api.createTask({ dto }),
         onSuccess: (created) => {
             qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) => [created, ...prev]);
         },
     });
 
     const toggleMutation = useMutation({
-        mutationFn: ({ id, completed }: { id: string; completed: boolean }) => updateTask(id, { completed }),
+        mutationFn: ({ id, completed }: { id: string; completed: boolean }) => api.updateTask({ id, dto: { completed } }),
         onMutate: async ({ id, completed }) => {
             await qc.cancelQueries({ queryKey: ['tasks', filter] });
             const prev = qc.getQueryData<TaskDto[]>(['tasks', filter]);
@@ -50,7 +51,7 @@ export function TasksPage(): React.JSX.Element {
     });
 
     const saveMutation = useMutation({
-        mutationFn: ({ id, dto }: { id: string; dto: UpdateTaskDto }) => updateTask(id, dto),
+        mutationFn: ({ id, dto }: { id: string; dto: UpdateTaskDto }) => api.updateTask({ id, dto }),
         onSuccess: (updated) => {
             qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
                 prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
@@ -59,7 +60,7 @@ export function TasksPage(): React.JSX.Element {
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id: string) => deleteTask(id),
+        mutationFn: (id: string) => api.deleteTask({ id }),
         onSuccess: (_data, id) => {
             qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) => prev.filter((t) => t.id !== id));
         },

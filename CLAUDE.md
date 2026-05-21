@@ -101,6 +101,7 @@ Docusaurus site. **This directory is for compiled/generated user-facing document
 ### TypeScript
 
 - **Never use `any`.** Avoid `unknown` where possible. When the type is not statically known, perform runtime validation (e.g. Zod, class-validator, or a type guard) rather than casting.
+- **Prefer `type` over `interface`.** Use `type` aliases by default; only use `interface` when a class must implement it.
 - **Explicit return types** — every function and method must have an explicit return type annotation.
 - **Object arguments** — when a function has two or more parameters, use a single object argument instead of positional params.
 - **Docstrings** — add a JSDoc comment to every public method on a class or interface, and every exported module-level function. Keep them concise: only document parameters, return value, or thrown errors when it genuinely adds information beyond the name.
@@ -116,6 +117,12 @@ Docusaurus site. **This directory is for compiled/generated user-facing document
 ### Auth
 
 App auth uses `@nestjs/passport` + `passport-local` (login) + `passport-jwt` (protected routes). Long-lived API tokens (for CLI and MCP) are issued via `POST /auth/tokens` and stored hashed in MongoDB.
+
+### Client Boundaries
+
+- `packages/api-client` must remain a pure typed REST wrapper with no UI/browser concerns (no cookies, redirects, toasts, or window usage); it should be safe for web, CLI, and MCP consumers.
+- UI-specific API behavior lives in `apps/web`, including auth token persistence, refresh handling, redirect-on-unauthenticated flows, and surfacing structured errors to the user.
+- API clients should be class-based; pass access/refresh tokens into the client constructor instead of relying on shared mutable singleton state.
 
 ### Git — Conventional Commits
 
