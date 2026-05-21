@@ -35,18 +35,15 @@ export function TasksPage(): React.JSX.Element {
         },
     });
 
-    const toggleMutation = useMutation({
-        mutationFn: ({ id }: { id: string; completed: boolean }) => api.completeTask({ id }),
+    const statusMutation = useMutation({
+        mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
+            api.setTaskStatus({ id, dto: { status: completed ? 'done' : 'open' } }),
         onMutate: async ({ id, completed }) => {
-            if (!completed) {
-                return { prev: qc.getQueryData<TaskDto[]>(['tasks', filter]) };
-            }
-
             await qc.cancelQueries({ queryKey: ['tasks', filter] });
             const prev = qc.getQueryData<TaskDto[]>(['tasks', filter]);
 
             qc.setQueryData<TaskDto[]>(['tasks', filter], (old = []) =>
-                old.map((t) => (t.id === id ? { ...t, completed: true } : t)),
+                old.map((t) => (t.id === id ? { ...t, completed } : t)),
             );
 
             return { prev };
@@ -109,9 +106,7 @@ export function TasksPage(): React.JSX.Element {
                     <TaskList
                         tasks={tasks}
                         onToggle={(id, completed) => {
-                            if (completed) {
-                                toggleMutation.mutate({ id, completed });
-                            }
+                            statusMutation.mutate({ id, completed });
                         }}
                         onEdit={setEditTask}
                     />
