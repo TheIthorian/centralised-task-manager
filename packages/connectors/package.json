@@ -13,11 +13,11 @@
   },
   "dependencies": {
     "@ctm/errors": "workspace:*",
-    "axios": "^1.9.0"
+    "axios": "^1.16.1"
   },
   "devDependencies": {
     "@ctm/tsconfig": "workspace:*",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.0"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
   }
 }

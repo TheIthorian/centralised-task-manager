@@ -1,6 +1,6 @@
-FROM node:24-alpine AS base
+FROM node:24.15.0-alpine3.23 AS base
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN apk upgrade --no-cache && corepack enable
 
 # ---- prune: extract only what apps/main needs ----
@@ -23,7 +23,7 @@ COPY --from=pruner /app/out/full/ .
 RUN pnpm build --filter=@ctm/main...
 
 # ---- runner: lean production image ----
-FROM node:24-alpine AS runner
+FROM node:24.15.0-alpine3.23 AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 RUN corepack enable

@@ -12,11 +12,11 @@
     "dev": "tsc -p tsconfig.build.json --watch"
   },
   "dependencies": {
-    "pino": "^9.7.0"
+    "pino": "^10.3.1"
   },
   "devDependencies": {
     "@ctm/tsconfig": "workspace:*",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.0"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
   }
 }
