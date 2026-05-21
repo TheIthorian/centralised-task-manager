@@ -11,6 +11,8 @@ import { SettingsLayout } from './pages/SettingsLayout.js';
 import { SourcesPage } from './pages/SourcesPage.js';
 import { ProfilePage } from './pages/ProfilePage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
+import { CalendarPage } from './pages/CalendarPage.js';
+import { TimelinePage } from './pages/TimelinePage.js';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -34,6 +36,8 @@ const router = createBrowserRouter([
         children: [
             { index: true, element: <Navigate to="/tasks" replace /> },
             { path: 'tasks', element: <TasksPage /> },
+            { path: 'calendar', element: <CalendarPage /> },
+            { path: 'timeline', element: <TimelinePage /> },
             {
                 path: 'settings',
                 element: <SettingsLayout />,
