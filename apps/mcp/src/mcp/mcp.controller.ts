@@ -31,9 +31,9 @@ export class McpController {
         const origin = req.headers.origin as string | undefined;
 
         if (origin) {
-            reply.header('Access-Control-Allow-Origin', origin);
-            reply.header('Access-Control-Allow-Credentials', 'true');
-            reply.header('Vary', 'Origin');
+            reply.raw.setHeader('Access-Control-Allow-Origin', origin);
+            reply.raw.setHeader('Access-Control-Allow-Credentials', 'true');
+            reply.raw.setHeader('Vary', 'Origin');
         }
 
         const token = req.headers['authorization']?.slice(7) ?? '';
