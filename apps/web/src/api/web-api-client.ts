@@ -16,6 +16,9 @@ import type {
     WebListTasksParams,
     WebLoginParams,
     WebRegisterParams,
+    WebRemoveFuzzyDeadlineParams,
+    WebSetFuzzyDeadlineParams,
+    WebSetTaskStatusParams,
     WebUpdateMeParams,
     WebUpdateTaskParams,
 } from './web-api-client.types.js';
@@ -73,9 +76,19 @@ export class WebApiClient {
         return this.execute({ request: () => this.apiClient.updateTask({ id, dto }) });
     }
 
-    /** Mark a task complete for the current user. */
-    async completeTask({ id }: WebDeleteTaskParams): Promise<TaskDto> {
-        return this.execute({ request: () => this.apiClient.completeTask({ id }) });
+    /** Set task status (complete or uncomplete). */
+    async setTaskStatus({ id, dto }: WebSetTaskStatusParams): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.setTaskStatus({ id, dto }) });
+    }
+
+    /** Set the fuzzy deadline on a task. */
+    async setFuzzyDeadline({ id, dto }: WebSetFuzzyDeadlineParams): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.setFuzzyDeadline({ id, dto }) });
+    }
+
+    /** Remove the fuzzy deadline from a task. */
+    async removeFuzzyDeadline({ id }: WebRemoveFuzzyDeadlineParams): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.removeFuzzyDeadline({ id }) });
     }
 
     /** Delete a task for the current user. */

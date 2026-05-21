@@ -1,4 +1,4 @@
-import type { CreateTaskDto, TaskFilter, UpdateTaskDto, UpdateUserDto } from '@ctm/api-client';
+import type { CreateTaskDto, SetFuzzyDeadlineDto, SetTaskStatusDto, TaskFilter, UpdateTaskDto, UpdateUserDto } from '@ctm/api-client';
 import type { StoredAuthTokens } from '../auth/auth-storage.js';
 
 export type WebApiError = {
@@ -39,6 +39,20 @@ export type WebCreateTaskParams = {
 export type WebUpdateTaskParams = {
     id: string;
     dto: UpdateTaskDto;
+};
+
+export type WebSetTaskStatusParams = {
+    id: string;
+    dto: SetTaskStatusDto;
+};
+
+export type WebSetFuzzyDeadlineParams = {
+    id: string;
+    dto: SetFuzzyDeadlineDto;
+};
+
+export type WebRemoveFuzzyDeadlineParams = {
+    id: string;
 };
 
 export type WebDeleteTaskParams = {
