@@ -2,6 +2,10 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
+    future: {
+        faster: true,
+        v4: true,
+    },
     title: 'CTM API Docs',
     tagline: 'Centralised Task Manager — API Reference & Guides',
     url: 'http://localhost:3001',

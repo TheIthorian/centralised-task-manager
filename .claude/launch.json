@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "landing",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ctm/landing", "dev"],
+      "port": 4321
+    },
+    {
+      "name": "docs",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ctm/docs", "dev"],
+      "port": 3001
+    }
+  ]
+}
