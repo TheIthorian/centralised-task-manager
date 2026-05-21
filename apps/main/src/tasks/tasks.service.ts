@@ -7,6 +7,7 @@ import { ConnectorsService } from '../connectors/connectors.service.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
 import type { UpdateTaskDto } from './dto/update-task.dto.js';
 import type { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
+import type { SetTaskStatusDto } from './dto/set-task-status.dto.js';
 import type { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 
 /** Source name reserved for tasks stored only in CTM (no external connector). */
@@ -145,12 +146,20 @@ export class TasksService {
         ) as Promise<TaskDocument>;
     }
 
-    /** Mark a task complete via write-through.
-     *  When source is 'local', skip the connector and update directly in CTM. */
-    async complete({ taskId, userId }: { taskId: string; userId: string }): Promise<TaskDocument> {
+    /** Set task status to 'open' or 'done' via write-through.
+     *  'done' calls the connector's completeTask for remote sources. 'open' is local-only. */
+    async setStatus({
+        taskId,
+        userId,
+        dto,
+    }: {
+        taskId: string;
+        userId: string;
+        dto: SetTaskStatusDto;
+    }): Promise<TaskDocument> {
         const task = await this.findOne({ taskId, userId });
 
-        if (task.source !== LOCAL_SOURCE) {
+        if (dto.status === 'done' && task.source !== LOCAL_SOURCE) {
             const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
             const connector = this.registry.get(task.source);
             await connector.completeTask(tokens, task.sourceId);
@@ -158,7 +167,7 @@ export class TasksService {
 
         return this.taskModel.findByIdAndUpdate(
             taskId,
-            { status: 'done', syncedAt: new Date() },
+            { status: dto.status, syncedAt: new Date() },
             { new: true },
         ) as Promise<TaskDocument>;
     }
@@ -194,11 +203,6 @@ export class TasksService {
             { fuzzyDeadline: { type: dto.type, remindEvery: dto.remindEvery ?? null } },
             { new: true },
         ) as Promise<TaskDocument>;
-    }
-
-    /** Set task status (stub — implemented in Task 2). */
-    async setStatus(_args: { taskId: string; userId: string; dto: { status: 'open' | 'done' } }): Promise<TaskDocument> {
-        throw new Error('Not yet implemented');
     }
 
     /** Remove the fuzzy deadline from a task. */

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Put, Param, Body, Query, Request, UseGuards, HttpCode, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Put, Param, Body, Query, Request, UseGuards, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { TasksService } from './tasks.service.js';
@@ -92,8 +92,9 @@ export class TasksController {
     /** Set task status (complete or uncomplete). */
     @ApiOperation({ summary: 'Set task status to open or done' })
     @Put(':id/status')
-    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() _dto: SetTaskStatusDto): Promise<TaskResponse> {
-        throw new HttpException('Not implemented — arrives in next commit', HttpStatus.NOT_IMPLEMENTED);
+    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: SetTaskStatusDto): Promise<TaskResponse> {
+        const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, dto });
+        return this.toResponse(t);
     }
 
     /** Set the fuzzy deadline on a task (local-only). */
@@ -113,14 +114,6 @@ export class TasksController {
     @Delete(':id/fuzzy-deadline')
     async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskResponse> {
         const t = await this.tasks.removeFuzzyDeadline({ taskId: id, userId: req.user.sub });
-        return this.toResponse(t);
-    }
-
-    /** Mark a task as complete (legacy — kept until Task 2 migration). */
-    @ApiOperation({ summary: 'Complete a task (deprecated — use PUT /status)', deprecated: true })
-    @Post(':id/complete')
-    async complete(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskResponse> {
-        const t = await this.tasks.complete({ taskId: id, userId: req.user.sub });
         return this.toResponse(t);
     }
 

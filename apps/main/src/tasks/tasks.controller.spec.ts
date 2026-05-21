@@ -186,22 +186,23 @@ describe('TasksModule', () => {
         expect(JSON.parse(res.body).fuzzyDeadline).toBeNull();
     });
 
-    it('POST /tasks/:id/complete marks task done', async () => {
+    it('PUT /tasks/:id/status sets status to done (write-through)', async () => {
         const createRes = await app.inject({
             method: 'POST',
             url: '/tasks',
-            payload: { title: `Complete task ${Date.now()}`, source: 'stub' },
+            payload: { title: `Status task ${Date.now()}`, source: 'stub' },
             headers: { authorization: `Bearer ${jwt}` },
         });
         const taskId = JSON.parse(createRes.body).id;
 
         const res = await app.inject({
-            method: 'POST',
-            url: `/tasks/${taskId}/complete`,
+            method: 'PUT',
+            url: `/tasks/${taskId}/status`,
+            payload: { status: 'done' },
             headers: { authorization: `Bearer ${jwt}` },
         });
 
-        expect(res.statusCode).toBe(201);
+        expect(res.statusCode).toBe(200);
         expect(JSON.parse(res.body).completed).toBe(true);
     });
 });
@@ -284,8 +285,12 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         expect(res.statusCode).toBe(401);
     });
 
-    it('POST /tasks/:id/complete without auth returns 401', async () => {
-        const res = await app.inject({ method: 'POST', url: '/tasks/000000000000000000000000/complete' });
+    it('PUT /tasks/:id/status without auth returns 401', async () => {
+        const res = await app.inject({
+            method: 'PUT',
+            url: '/tasks/000000000000000000000000/status',
+            payload: { status: 'done' },
+        });
 
         expect(res.statusCode).toBe(401);
     });
@@ -428,19 +433,19 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
 
     // ── Complete + persistence ────────────────────────────────────────────────
 
-    it('POST /tasks/:id/complete sets status to done — persisted', async () => {
+    it('PUT /tasks/:id/status done sets completed true — persisted', async () => {
         const id = await createLocal(`Complete me ${Date.now()}`);
 
-        const completeRes = await app.inject({
-            method: 'POST',
-            url: `/tasks/${id}/complete`,
+        const putRes = await app.inject({
+            method: 'PUT',
+            url: `/tasks/${id}/status`,
+            payload: { status: 'done' },
             headers: { authorization: `Bearer ${jwt}` },
         });
 
-        expect(completeRes.statusCode).toBe(201);
-        expect(JSON.parse(completeRes.body).completed).toBe(true);
+        expect(putRes.statusCode).toBe(200);
+        expect(JSON.parse(putRes.body).completed).toBe(true);
 
-        // Verify persistence
         const getRes = await app.inject({
             method: 'GET',
             url: `/tasks/${id}`,
@@ -448,6 +453,47 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         });
 
         expect(JSON.parse(getRes.body).completed).toBe(true);
+    });
+
+    it('PUT /tasks/:id/status open uncompletes a done task — persisted', async () => {
+        const id = await createLocal(`Uncomplete me ${Date.now()}`);
+
+        await app.inject({
+            method: 'PUT',
+            url: `/tasks/${id}/status`,
+            payload: { status: 'done' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const putRes = await app.inject({
+            method: 'PUT',
+            url: `/tasks/${id}/status`,
+            payload: { status: 'open' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(putRes.statusCode).toBe(200);
+        expect(JSON.parse(putRes.body).completed).toBe(false);
+
+        const getRes = await app.inject({
+            method: 'GET',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(JSON.parse(getRes.body).completed).toBe(false);
+    });
+
+    it('PUT /tasks/:id/status with invalid value returns 400', async () => {
+        const id = await createLocal(`Bad status ${Date.now()}`);
+        const res = await app.inject({
+            method: 'PUT',
+            url: `/tasks/${id}/status`,
+            payload: { status: 'archived' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
     });
 
     // ── Delete + persistence ──────────────────────────────────────────────────
@@ -614,8 +660,9 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
 
         // Complete the second task
         await app.inject({
-            method: 'POST',
-            url: `/tasks/${doneId}/complete`,
+            method: 'PUT',
+            url: `/tasks/${doneId}/status`,
+            payload: { status: 'done' },
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -635,7 +682,7 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
 
     it('GET /tasks?status=done returns only done tasks', async () => {
         const id = await createLocal(`ToComplete ${Date.now()}`);
-        await app.inject({ method: 'POST', url: `/tasks/${id}/complete`, headers: { authorization: `Bearer ${jwt}` } });
+        await app.inject({ method: 'PUT', url: `/tasks/${id}/status`, payload: { status: 'done' }, headers: { authorization: `Bearer ${jwt}` } });
 
         const res = await app.inject({
             method: 'GET',
@@ -727,10 +774,11 @@ describe('Tasks — user isolation', () => {
         expect(res.statusCode).toBe(404);
     });
 
-    it("User B cannot complete User A's task — returns 404", async () => {
+    it("User B cannot set status on User A's task — returns 404", async () => {
         const res = await app.inject({
-            method: 'POST',
-            url: `/tasks/${taskIdA}/complete`,
+            method: 'PUT',
+            url: `/tasks/${taskIdA}/status`,
+            payload: { status: 'done' },
             headers: { authorization: `Bearer ${jwtB}` },
         });
 
