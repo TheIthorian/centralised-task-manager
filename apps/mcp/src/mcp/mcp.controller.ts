@@ -15,23 +15,26 @@ export class McpController {
     @Post()
     @UseGuards(JwtAuthGuard)
     async post(@Req() req: AuthenticatedRequest, @Res() reply: FastifyReply): Promise<void> {
-        const token = (req.headers.authorization ?? '').slice(7);
-        const server = this.mcpService.createServer(token);
-        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-
-        await server.connect(transport);
-        await transport.handleRequest(req.raw, reply.raw, req.body);
+        await this.handle(req, reply, req.body);
     }
 
     /** MCP Streamable HTTP — server-to-client SSE stream. */
     @Get()
     @UseGuards(JwtAuthGuard)
     async get(@Req() req: AuthenticatedRequest, @Res() reply: FastifyReply): Promise<void> {
-        const token = (req.headers.authorization ?? '').slice(7);
+        await this.handle(req, reply, undefined);
+    }
+
+    private async handle(req: AuthenticatedRequest, reply: FastifyReply, body: unknown): Promise<void> {
+        const token = req.headers['authorization']?.slice(7) ?? '';
         const server = this.mcpService.createServer(token);
         const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
-        await server.connect(transport);
-        await transport.handleRequest(req.raw, reply.raw, undefined);
+        try {
+            await server.connect(transport);
+            await transport.handleRequest(req.raw, reply.raw, body);
+        } finally {
+            await server.close();
+        }
     }
 }
