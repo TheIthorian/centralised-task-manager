@@ -9,6 +9,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         {
             description: 'List tasks. Optionally filter by status.',
             inputSchema: { filter: z.enum(['all', 'today', 'upcoming', 'done']).default('all') },
+            annotations: { readOnlyHint: true },
         },
         async ({ filter }) => {
             const tasks = await client.listTasks({ filter });
@@ -27,6 +28,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
                 dueDate: z.string().optional(),
                 source: z.string().min(1),
             },
+            annotations: { destructiveHint: false, idempotentHint: false },
         },
         async ({ title, description, priority, dueDate, source }) => {
             const task = await client.createTask({ dto: { title, description, priority, dueDate, source } });
@@ -46,6 +48,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
                 dueDate: z.string().optional(),
                 tags: z.array(z.string()).optional(),
             },
+            annotations: { destructiveHint: false, idempotentHint: true },
         },
         async ({ id, title, description, priority, dueDate, tags }) => {
             const task = await client.updateTask({ id, dto: { title, description, priority, dueDate, tags } });
@@ -58,6 +61,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         {
             description: 'Mark a task as complete by ID.',
             inputSchema: { id: z.string().min(1) },
+            annotations: { destructiveHint: false, idempotentHint: true },
         },
         async ({ id }) => {
             const task = await client.setTaskStatus({ id, dto: { status: 'done' } });
@@ -70,6 +74,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         {
             description: 'Permanently delete a task by ID.',
             inputSchema: { id: z.string().min(1) },
+            annotations: { destructiveHint: true, idempotentHint: true },
         },
         async ({ id }) => {
             await client.deleteTask({ id });
@@ -86,6 +91,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
                 type: z.enum(['this_week', 'this_month', 'someday']),
                 remindEvery: z.enum(['daily', 'weekly']).optional(),
             },
+            annotations: { destructiveHint: false, idempotentHint: true },
         },
         async ({ id, type, remindEvery }) => {
             const task = await client.setFuzzyDeadline({ id, dto: { type, remindEvery } });

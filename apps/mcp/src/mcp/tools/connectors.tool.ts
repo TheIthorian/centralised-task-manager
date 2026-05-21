@@ -9,6 +9,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         {
             description: 'List all connected task sources and their sync status.',
             inputSchema: {},
+            annotations: { readOnlyHint: true },
         },
         async () => {
             const connectors = await client.listConnectors();
@@ -21,6 +22,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         {
             description: 'Get the OAuth authorisation URL to connect a task source (e.g. "todoist", "google").',
             inputSchema: { source: z.string().min(1) },
+            annotations: { readOnlyHint: true },
         },
         async ({ source }) => {
             const url = await client.getConnectorAuthUrl({ source });
@@ -33,6 +35,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         {
             description: 'Disconnect a task source by name.',
             inputSchema: { source: z.string().min(1) },
+            annotations: { destructiveHint: true, idempotentHint: true },
         },
         async ({ source }) => {
             await client.disconnectConnector({ source });
