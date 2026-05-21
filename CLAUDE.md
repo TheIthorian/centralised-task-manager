@@ -149,7 +149,7 @@ Key variables (see `.env.example` for full list):
 
 ### Communication Style
 
-Lean. Tool-first. Burn few tokens. Tokens expensive & finite. So we talk carefully; caveman/baby talk helps! Tool-focused.
+When you communicate to the agent controller, be lean, tool-first and burn few tokens. Tokens are expensive & finite. So we talk carefully; caveman/baby talk helps! Tool-focused.
 
 Core:
 
