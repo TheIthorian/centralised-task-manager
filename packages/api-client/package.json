@@ -19,13 +19,11 @@
     "format": "oxfmt --config ../../.oxfmtrc.json src '**/*.md'"
   },
   "dependencies": {
-    "axios": "^1.16.0",
-    "js-cookie": "^3.0.7"
+    "axios": "^1.16.1"
   },
   "devDependencies": {
     "@ctm/tsconfig": "workspace:*",
-    "@types/js-cookie": "^3.0.6",
-    "typescript": "^6.0.0",
-    "vitest": "^3.2.0"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
   }
 }

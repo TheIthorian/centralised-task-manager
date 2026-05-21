@@ -1,98 +1,235 @@
-import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
-import Cookies from 'js-cookie';
+import axios, { AxiosError, type AxiosInstance } from 'axios';
+import type {
+    ConnectorStatusDto,
+    TaskDto,
+    TaskFilter,
+    TokenPair,
+    UserDto,
+} from './types.js';
+import type {
+    ApiClientErrorOptions,
+    ApiClientOptions,
+    CreateTaskParams,
+    DeleteTaskParams,
+    DisconnectConnectorParams,
+    GetConnectorAuthUrlParams,
+    ListTasksParams,
+    LoginParams,
+    RefreshParams,
+    RegisterParams,
+    SetFuzzyDeadlineParams,
+    UpdateMeParams,
+    UpdateTaskParams,
+} from './client.types.js';
 
-const ACCESS_TOKEN_KEY = 'ctm_access_token';
-const REFRESH_TOKEN_KEY = 'ctm_refresh_token';
-const USER_KEY = 'ctm_user';
+/** Structured HTTP error returned by the REST wrapper. */
+export class ApiClientError extends Error {
+    readonly statusCode: number;
+    readonly method: string;
+    readonly path: string;
+    readonly responseBody?: unknown;
 
-/** Read/write helpers so the rest of the package doesn't touch cookies directly. */
-export const tokenStore = {
-    getAccess: (): string | null => Cookies.get(ACCESS_TOKEN_KEY) ?? null,
-    getRefresh: (): string | null => Cookies.get(REFRESH_TOKEN_KEY) ?? null,
-    /** Persist a new access + refresh token pair to cookies. */
-    set: (accessToken: string, refreshToken: string): void => {
-        Cookies.set(ACCESS_TOKEN_KEY, accessToken, { sameSite: 'strict' });
-        Cookies.set(REFRESH_TOKEN_KEY, refreshToken, { sameSite: 'strict' });
-    },
-    /** Remove all auth cookies (used on logout / auth failure). */
-    clear: (): void => {
-        Cookies.remove(ACCESS_TOKEN_KEY);
-        Cookies.remove(REFRESH_TOKEN_KEY);
-        Cookies.remove(USER_KEY);
-    },
-};
-
-interface ExtendedConfig extends InternalAxiosRequestConfig {
-    _retry?: boolean;
+    constructor({ message, statusCode, method, path, responseBody }: ApiClientErrorOptions) {
+        super(message);
+        this.name = 'ApiClientError';
+        this.statusCode = statusCode;
+        this.method = method;
+        this.path = path;
+        this.responseBody = responseBody;
+    }
 }
 
-let _client: AxiosInstance | null = null;
-let _baseURL = 'http://localhost:3000';
-let _onAuthFailure: () => void = () => {
-    if (typeof window !== 'undefined') window.location.href = '/login';
-};
+/** Pure typed REST client for the CTM API. */
+export class CtmApiClient {
+    private readonly client: AxiosInstance;
+    private readonly refreshToken: string | null;
 
-/**
- * Initialise the shared API client. Call once at app startup before any API calls.
- */
-export function initClient(baseURL: string, onAuthFailure?: () => void): void {
-    _baseURL = baseURL;
+    constructor({ baseUrl, accessToken, refreshToken }: ApiClientOptions) {
+        this.client = axios.create({
+            baseURL: baseUrl,
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+        });
+        this.refreshToken = refreshToken ?? null;
+    }
 
-    if (onAuthFailure) _onAuthFailure = onAuthFailure;
+    /** Login with email and password. */
+    async login({ email, password }: LoginParams): Promise<TokenPair> {
+        return this.request<TokenPair>({ method: 'POST', path: '/auth/login', body: { email, password } });
+    }
 
-    _client = createClient(_baseURL, _onAuthFailure);
-}
+    /** Register a new account. */
+    async register({ name, email, password }: RegisterParams): Promise<TokenPair> {
+        return this.request<TokenPair>({ method: 'POST', path: '/auth/register', body: { name, email, password } });
+    }
 
-/** Return the shared client, initialising with defaults if not yet set up. */
-export function getClient(): AxiosInstance {
-    if (!_client) _client = createClient(_baseURL, _onAuthFailure);
+    /** Exchange a refresh token for a new token pair. */
+    async refresh({ refreshToken }: RefreshParams = {}): Promise<TokenPair> {
+        const token = refreshToken ?? this.refreshToken;
 
-    return _client;
-}
+        if (!token) {
+            throw new ApiClientError({
+                message: 'No refresh token available',
+                statusCode: 0,
+                method: 'POST',
+                path: '/auth/refresh',
+            });
+        }
 
-function createClient(baseURL: string, onAuthFailure: () => void): AxiosInstance {
-    const instance = axios.create({ baseURL });
+        return this.request<TokenPair>({ method: 'POST', path: '/auth/refresh', body: { refreshToken: token } });
+    }
 
-    instance.interceptors.request.use((config) => {
-        const token = tokenStore.getAccess();
+    /** List tasks, optionally filtered by UI filter. */
+    async listTasks({ filter = 'all' }: ListTasksParams = {}): Promise<TaskDto[]> {
+        return this.request<TaskDto[]>({
+            method: 'GET',
+            path: '/tasks',
+            params: this.filterToParams(filter),
+        });
+    }
 
-        if (token) config.headers.Authorization = `Bearer ${token}`;
+    /** Create a new task. */
+    async createTask({ dto }: CreateTaskParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'POST', path: '/tasks', body: dto });
+    }
 
-        return config;
-    });
+    /** Update an existing task. */
+    async updateTask({ id, dto }: UpdateTaskParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'PATCH', path: `/tasks/${id}`, body: dto });
+    }
 
-    instance.interceptors.response.use(
-        (res) => res,
-        async (error: unknown) => {
-            if (!axios.isAxiosError(error)) return Promise.reject(error);
+    /** Delete a task permanently. */
+    async deleteTask({ id }: DeleteTaskParams): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: `/tasks/${id}` });
+    }
 
-            const config = error.config as ExtendedConfig | undefined;
+    /** Set the fuzzy deadline for an existing task. */
+    async setFuzzyDeadline({ id, dto }: SetFuzzyDeadlineParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'PATCH', path: `/tasks/${id}/fuzzy-deadline`, body: dto });
+    }
 
-            if (error.response?.status === 401 && config && !config._retry) {
-                config._retry = true;
-                const refreshToken = tokenStore.getRefresh();
+    /** List all connector statuses for the current user. */
+    async listConnectors(): Promise<ConnectorStatusDto[]> {
+        return this.request<ConnectorStatusDto[]>({ method: 'GET', path: '/connectors' });
+    }
 
-                if (refreshToken) {
-                    try {
-                        const { data } = await axios.post<{
-                            accessToken: string;
-                            refreshToken: string;
-                        }>(`${baseURL}/auth/refresh`, { refreshToken });
+    /** Get the OAuth authorisation URL for a connector source. */
+    async getConnectorAuthUrl({ source }: GetConnectorAuthUrlParams): Promise<string> {
+        const response = await this.request<{ url: string }>({ method: 'GET', path: `/connectors/${source}/auth` });
 
-                        tokenStore.set(data.accessToken, data.refreshToken);
-                        config.headers.Authorization = `Bearer ${data.accessToken}`;
+        return response.url;
+    }
 
-                        return instance(config);
-                    } catch {
-                        tokenStore.clear();
-                        onAuthFailure();
-                    }
-                }
-            }
+    /** Disconnect a connector source. */
+    async disconnectConnector({ source }: DisconnectConnectorParams): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: `/connectors/${source}` });
+    }
 
-            return Promise.reject(error);
-        },
-    );
+    /** Get the current user's profile. */
+    async getMe(): Promise<UserDto> {
+        return this.request<UserDto>({ method: 'GET', path: '/users/me' });
+    }
 
-    return instance;
+    /** Update the current user's profile. */
+    async updateMe({ dto }: UpdateMeParams): Promise<UserDto> {
+        return this.request<UserDto>({ method: 'PATCH', path: '/users/me', body: dto });
+    }
+
+    /** Permanently delete the current user's account. */
+    async deleteMe(): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: '/users/me' });
+    }
+
+    private filterToParams(filter: TaskFilter): Record<string, string> {
+        switch (filter) {
+            case 'done':
+                return { status: 'done' };
+            case 'today':
+            case 'upcoming':
+                return { status: 'open' };
+            case 'all':
+            default:
+                return {};
+        }
+    }
+
+    private async request<T>({
+        method,
+        path,
+        body,
+        params,
+    }: {
+        method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+        path: string;
+        body?: unknown;
+        params?: Record<string, string>;
+    }): Promise<T> {
+        try {
+            const response = await this.client.request<T>({
+                method,
+                url: path,
+                data: body,
+                params,
+            });
+
+            return response.data;
+        } catch (error) {
+            throw this.toApiClientError({ error, method, path });
+        }
+    }
+
+    private toApiClientError({
+        error,
+        method,
+        path,
+    }: {
+        error: unknown;
+        method: string;
+        path: string;
+    }): ApiClientError {
+        if (axios.isAxiosError(error)) {
+            return new ApiClientError({
+                message: this.extractMessage(error),
+                statusCode: error.response?.status ?? 0,
+                method,
+                path,
+                responseBody: error.response?.data,
+            });
+        }
+
+        if (error instanceof Error) {
+            return new ApiClientError({
+                message: error.message,
+                statusCode: 0,
+                method,
+                path,
+            });
+        }
+
+        return new ApiClientError({
+            message: 'Unknown API client error',
+            statusCode: 0,
+            method,
+            path,
+            responseBody: error,
+        });
+    }
+
+    private extractMessage(error: AxiosError): string {
+        const responseBody = error.response?.data;
+
+        if (typeof responseBody === 'string' && responseBody.length > 0) {
+            return responseBody;
+        }
+
+        if (
+            responseBody !== null &&
+            typeof responseBody === 'object' &&
+            'message' in responseBody &&
+            typeof responseBody.message === 'string'
+        ) {
+            return responseBody.message;
+        }
+
+        return error.message;
+    }
 }

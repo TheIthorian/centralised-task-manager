@@ -1,10 +1,10 @@
-export interface UserDto {
+export type UserDto = {
     id: string;
     email: string;
     name?: string;
-}
+};
 
-export interface TaskDto {
+export type TaskDto = {
     id: string;
     title: string;
     description?: string;
@@ -16,44 +16,44 @@ export interface TaskDto {
     sourceId: string;
     createdAt: string;
     updatedAt: string;
-}
+};
 
-export interface CreateTaskDto {
+export type CreateTaskDto = {
     title: string;
     description?: string;
     priority?: 1 | 2 | 3 | 4;
     dueDate?: string;
     source: string;
-}
+};
 
-export interface UpdateTaskDto {
+export type UpdateTaskDto = {
     title?: string;
     description?: string;
     priority?: 1 | 2 | 3 | 4;
     dueDate?: string;
     completed?: boolean;
-}
+};
 
-export interface SetFuzzyDeadlineDto {
+export type SetFuzzyDeadlineDto = {
     fuzzyDeadline: string;
-}
+};
 
-export interface ConnectorStatusDto {
+export type ConnectorStatusDto = {
     source: string;
     connected: boolean;
     lastSynced?: string;
-}
+};
 
-export interface UpdateUserDto {
+export type UpdateUserDto = {
     email?: string;
     currentPassword?: string;
     newPassword?: string;
-}
+};
 
-export interface TokenPair {
+export type TokenPair = {
     accessToken: string;
     refreshToken: string;
     user: UserDto;
-}
+};
 
 export type TaskFilter = 'all' | 'today' | 'upcoming' | 'done';

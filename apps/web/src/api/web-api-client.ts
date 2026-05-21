@@ -1,0 +1,245 @@
+import {
+    ApiClientError,
+    CtmApiClient,
+    type ConnectorStatusDto,
+    type TaskDto,
+    type TokenPair,
+    type UserDto,
+} from '@ctm/api-client';
+import type { StoredAuthTokens } from '../auth/auth-storage.js';
+import type {
+    WebApiClientOptions,
+    WebApiError,
+    WebConnectorParams,
+    WebCreateTaskParams,
+    WebDeleteTaskParams,
+    WebListTasksParams,
+    WebLoginParams,
+    WebRegisterParams,
+    WebUpdateMeParams,
+    WebUpdateTaskParams,
+} from './web-api-client.types.js';
+
+/** Web-only API wrapper with refresh, redirect, and toast behavior. */
+export class WebApiClient {
+    private readonly baseUrl: string;
+    private readonly onTokens: (tokens: StoredAuthTokens) => void;
+    private readonly onUnauthorized: () => void;
+    private readonly onError: (error: WebApiError) => void;
+    private accessToken: string | null;
+    private refreshToken: string | null;
+    private apiClient: CtmApiClient;
+
+    constructor({ baseUrl, accessToken, refreshToken, onTokens, onUnauthorized, onError }: WebApiClientOptions) {
+        this.baseUrl = baseUrl;
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.onTokens = onTokens;
+        this.onUnauthorized = onUnauthorized;
+        this.onError = onError;
+        this.apiClient = this.createApiClient();
+    }
+
+    /** Login with email and password. */
+    async login({ email, password }: WebLoginParams): Promise<TokenPair> {
+        return this.execute({
+            request: () => this.apiClient.login({ email, password }),
+            retryOnUnauthorized: false,
+            toastOnError: false,
+        });
+    }
+
+    /** Register a new account. */
+    async register({ name, email, password }: WebRegisterParams): Promise<TokenPair> {
+        return this.execute({
+            request: () => this.apiClient.register({ name, email, password }),
+            retryOnUnauthorized: false,
+            toastOnError: false,
+        });
+    }
+
+    /** List tasks for the current user. */
+    async listTasks({ filter }: WebListTasksParams = {}): Promise<TaskDto[]> {
+        return this.execute({ request: () => this.apiClient.listTasks({ filter }) });
+    }
+
+    /** Create a task for the current user. */
+    async createTask({ dto }: WebCreateTaskParams): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.createTask({ dto }) });
+    }
+
+    /** Update a task for the current user. */
+    async updateTask({ id, dto }: WebUpdateTaskParams): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.updateTask({ id, dto }) });
+    }
+
+    /** Delete a task for the current user. */
+    async deleteTask({ id }: WebDeleteTaskParams): Promise<void> {
+        await this.execute({ request: () => this.apiClient.deleteTask({ id }) });
+    }
+
+    /** List connector statuses for the current user. */
+    async listConnectors(): Promise<ConnectorStatusDto[]> {
+        return this.execute({ request: () => this.apiClient.listConnectors() });
+    }
+
+    /** Get the OAuth URL for a connector. */
+    async getConnectorAuthUrl({ source }: WebConnectorParams): Promise<string> {
+        return this.execute({ request: () => this.apiClient.getConnectorAuthUrl({ source }) });
+    }
+
+    /** Disconnect a connector for the current user. */
+    async disconnectConnector({ source }: WebConnectorParams): Promise<void> {
+        await this.execute({ request: () => this.apiClient.disconnectConnector({ source }) });
+    }
+
+    /** Get the current user profile. */
+    async getMe(): Promise<UserDto> {
+        return this.execute({ request: () => this.apiClient.getMe() });
+    }
+
+    /** Update the current user profile. */
+    async updateMe({ dto }: WebUpdateMeParams): Promise<UserDto> {
+        return this.execute({ request: () => this.apiClient.updateMe({ dto }) });
+    }
+
+    /** Delete the current user profile. */
+    async deleteMe(): Promise<void> {
+        await this.execute({ request: () => this.apiClient.deleteMe() });
+    }
+
+    private createApiClient(): CtmApiClient {
+        return new CtmApiClient({
+            baseUrl: this.baseUrl,
+            accessToken: this.accessToken,
+            refreshToken: this.refreshToken,
+        });
+    }
+
+    private setTokens({ accessToken, refreshToken }: StoredAuthTokens): void {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.apiClient = this.createApiClient();
+        this.onTokens({ accessToken, refreshToken });
+    }
+
+    private async execute<T>({
+        request,
+        retryOnUnauthorized = true,
+        toastOnError = true,
+    }: {
+        request: () => Promise<T>;
+        retryOnUnauthorized?: boolean;
+        toastOnError?: boolean;
+    }): Promise<T> {
+        try {
+            return await request();
+        } catch (error) {
+            if (error instanceof ApiClientError && error.statusCode === 401 && retryOnUnauthorized) {
+                return this.retryWithRefresh({ request, error, toastOnError });
+            }
+
+            const normalizedError = this.normalizeError(error);
+
+            if (normalizedError.code === 'unauthorized') {
+                this.onUnauthorized();
+            } else if (toastOnError) {
+                this.onError(normalizedError);
+            }
+
+            throw normalizedError;
+        }
+    }
+
+    private async retryWithRefresh<T>({
+        request,
+        error,
+        toastOnError,
+    }: {
+        request: () => Promise<T>;
+        error: ApiClientError;
+        toastOnError: boolean;
+    }): Promise<T> {
+        if (!this.refreshToken) {
+            const normalizedError = this.normalizeError(error);
+            this.onUnauthorized();
+            throw normalizedError;
+        }
+
+        try {
+            const refreshClient = new CtmApiClient({
+                baseUrl: this.baseUrl,
+                refreshToken: this.refreshToken,
+            });
+            const nextTokens = await refreshClient.refresh();
+
+            this.setTokens({
+                accessToken: nextTokens.accessToken,
+                refreshToken: nextTokens.refreshToken,
+            });
+
+            return await request();
+        } catch (refreshError) {
+            const normalizedError = this.normalizeError(refreshError);
+
+            this.onUnauthorized();
+
+            if (toastOnError && normalizedError.code !== 'unauthorized') {
+                this.onError(normalizedError);
+            }
+
+            throw normalizedError;
+        }
+    }
+
+    private normalizeError(error: unknown): WebApiError {
+        if (error instanceof ApiClientError) {
+            return {
+                statusCode: error.statusCode,
+                code: this.statusToCode(error.statusCode),
+                message: this.normalizeMessage(error),
+                cause: error,
+            };
+        }
+
+        if (error instanceof Error) {
+            return {
+                statusCode: 0,
+                code: 'unknown',
+                message: error.message,
+                cause: error,
+            };
+        }
+
+        return {
+            statusCode: 0,
+            code: 'unknown',
+            message: 'Unknown API error',
+            cause: error,
+        };
+    }
+
+    private statusToCode(statusCode: number): WebApiError['code'] {
+        if (statusCode === 401) return 'unauthorized';
+        if (statusCode === 403) return 'forbidden';
+        if (statusCode === 400 || statusCode === 422) return 'validation';
+        if (statusCode >= 500) return 'server';
+        if (statusCode === 0) return 'network';
+
+        return 'unknown';
+    }
+
+    private normalizeMessage(error: ApiClientError): string {
+        if (error.statusCode === 0) {
+            return 'Network request failed.';
+        }
+
+        if (error.responseBody && typeof error.responseBody === 'object' && 'message' in error.responseBody) {
+            const message = error.responseBody.message;
+
+            if (typeof message === 'string') return message;
+        }
+
+        return error.message;
+    }
+}

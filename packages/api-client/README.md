@@ -5,22 +5,23 @@ Typed HTTP client for `apps/main`. Used by `apps/web` and any other consumer of 
 ## Usage
 
 ```ts
-import { initClient, listTasks, createTask } from '@ctm/api-client';
+import { CtmApiClient } from '@ctm/api-client';
 
-initClient('http://localhost:3000');
+const client = new CtmApiClient({
+    baseUrl: 'http://localhost:3000',
+    accessToken: process.env.CTM_ACCESS_TOKEN ?? null,
+    refreshToken: process.env.CTM_REFRESH_TOKEN ?? null,
+});
 
-const tasks = await listTasks({ status: 'open' });
+const tasks = await client.listTasks({ filter: 'all' });
 ```
 
-Call `initClient(baseUrl)` once at app startup before any other calls. Auth tokens are managed internally via `tokenStore`.
+`@ctm/api-client` is intentionally pure: typed REST calls only. No cookies, redirects, toasts, or browser-only auth behavior live here.
 
 ## Exports
 
-| Export                                                                        | Description                                        |
-| ----------------------------------------------------------------------------- | -------------------------------------------------- |
-| `initClient` / `getClient`                                                    | Initialise and retrieve the underlying HTTP client |
-| `tokenStore`                                                                  | Access / set stored auth tokens                    |
-| `login` / `register` / `refresh`                                              | Auth endpoints                                     |
-| `listTasks` / `createTask` / `updateTask` / `deleteTask` / `setFuzzyDeadline` | Task endpoints                                     |
-| `listConnectors` / `getConnectorAuthUrl` / `disconnectConnector`              | Connector endpoints                                |
-| `getMe` / `updateMe` / `deleteMe`                                             | User profile endpoints                             |
+| Export           | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `CtmApiClient`   | Class-based typed wrapper for the CTM REST API |
+| `ApiClientError` | Structured HTTP error with status/path/body    |
+| DTO types        | Shared request/response types                  |

@@ -18,7 +18,8 @@ Vite + React SPA. The main user-facing task management interface. In production 
 - React Router v7
 - TanStack Query
 - Tailwind CSS v4
-- `@ctm/api-client` for all API calls
+- `@ctm/api-client` as the pure typed REST layer
+- a web-only API wrapper for cookie auth, refresh, redirect-on-401, and toast errors
 
 ## Setup
 

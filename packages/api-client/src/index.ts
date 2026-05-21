@@ -1,8 +1,21 @@
-export { initClient, getClient, tokenStore } from './client.js';
-export { login, register, refresh } from './auth.js';
-export { listTasks, createTask, updateTask, deleteTask, setFuzzyDeadline } from './tasks.js';
-export { listConnectors, getConnectorAuthUrl, disconnectConnector } from './connectors.js';
-export { getMe, updateMe, deleteMe } from './users.js';
+export {
+    ApiClientError,
+    CtmApiClient,
+} from './client.js';
+export type {
+    ApiClientOptions,
+    CreateTaskParams,
+    DeleteTaskParams,
+    DisconnectConnectorParams,
+    GetConnectorAuthUrlParams,
+    ListTasksParams,
+    LoginParams,
+    RefreshParams,
+    RegisterParams,
+    SetFuzzyDeadlineParams,
+    UpdateMeParams,
+    UpdateTaskParams,
+} from './client.types.js';
 export type {
     UserDto,
     TaskDto,
