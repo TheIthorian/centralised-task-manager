@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto } from '@ctm/api-client';
+import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { TaskFilters } from '../components/tasks/TaskFilters.js';
@@ -69,6 +69,25 @@ export function TasksPage(): React.JSX.Element {
         },
     });
 
+    const setFuzzyMutation = useMutation({
+        mutationFn: ({ id, dto }: { id: string; dto: SetFuzzyDeadlineDto }) =>
+            api.setFuzzyDeadline({ id, dto }),
+        onSuccess: (updated) => {
+            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
+                prev.map((t) => (t.id === updated.id ? { ...t, fuzzyDeadline: updated.fuzzyDeadline } : t)),
+            );
+        },
+    });
+
+    const removeFuzzyMutation = useMutation({
+        mutationFn: (id: string) => api.removeFuzzyDeadline({ id }),
+        onSuccess: (updated) => {
+            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
+                prev.map((t) => (t.id === updated.id ? { ...t, fuzzyDeadline: null } : t)),
+            );
+        },
+    });
+
     return (
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="flex items-center justify-between mb-4">
@@ -123,8 +142,16 @@ export function TasksPage(): React.JSX.Element {
                 onDelete={async (id) => {
                     await deleteMutation.mutateAsync(id);
                 }}
+                onSetFuzzyDeadline={async (id, dto) => {
+                    await setFuzzyMutation.mutateAsync({ id, dto });
+                }}
+                onRemoveFuzzyDeadline={async (id) => {
+                    await removeFuzzyMutation.mutateAsync(id);
+                }}
                 isSaving={saveMutation.isPending}
                 isDeleting={deleteMutation.isPending}
+                isSettingFuzzy={setFuzzyMutation.isPending}
+                isRemovingFuzzy={removeFuzzyMutation.isPending}
             />
         </div>
     );
