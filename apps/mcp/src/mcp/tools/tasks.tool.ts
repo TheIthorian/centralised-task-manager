@@ -4,25 +4,29 @@ import type { CtmApiClient } from '@ctm/api-client';
 
 /** Register all task-related MCP tools on the given server instance. */
 export function registerTaskTools(server: McpServer, client: CtmApiClient): void {
-    server.tool(
+    server.registerTool(
         'list_tasks',
-        'List tasks. Optionally filter by status.',
-        { filter: z.enum(['all', 'today', 'upcoming', 'done']).default('all') },
+        {
+            description: 'List tasks. Optionally filter by status.',
+            inputSchema: { filter: z.enum(['all', 'today', 'upcoming', 'done']).default('all') },
+        },
         async ({ filter }) => {
             const tasks = await client.listTasks({ filter });
             return { content: [{ type: 'text' as const, text: JSON.stringify(tasks) }] };
         },
     );
 
-    server.tool(
+    server.registerTool(
         'create_task',
-        'Create a new task.',
         {
-            title: z.string().min(1),
-            description: z.string().optional(),
-            priority: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
-            dueDate: z.string().optional(),
-            source: z.string().min(1),
+            description: 'Create a new task.',
+            inputSchema: {
+                title: z.string().min(1),
+                description: z.string().optional(),
+                priority: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+                dueDate: z.string().optional(),
+                source: z.string().min(1),
+            },
         },
         async ({ title, description, priority, dueDate, source }) => {
             const task = await client.createTask({ dto: { title, description, priority, dueDate, source } });
@@ -30,52 +34,61 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.tool(
+    server.registerTool(
         'update_task',
-        'Update an existing task by ID.',
         {
-            id: z.string().min(1),
-            title: z.string().optional(),
-            description: z.string().optional(),
-            priority: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
-            dueDate: z.string().optional(),
-            completed: z.boolean().optional(),
+            description: 'Update an existing task by ID.',
+            inputSchema: {
+                id: z.string().min(1),
+                title: z.string().optional(),
+                description: z.string().optional(),
+                priority: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+                dueDate: z.string().optional(),
+                tags: z.array(z.string()).optional(),
+            },
         },
-        async ({ id, title, description, priority, dueDate, completed }) => {
-            const task = await client.updateTask({ id, dto: { title, description, priority, dueDate, completed } });
+        async ({ id, title, description, priority, dueDate, tags }) => {
+            const task = await client.updateTask({ id, dto: { title, description, priority, dueDate, tags } });
             return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
         },
     );
 
-    server.tool(
+    server.registerTool(
         'complete_task',
-        'Mark a task as complete by ID.',
-        { id: z.string().min(1) },
+        {
+            description: 'Mark a task as complete by ID.',
+            inputSchema: { id: z.string().min(1) },
+        },
         async ({ id }) => {
-            const task = await client.completeTask({ id });
+            const task = await client.setTaskStatus({ id, dto: { status: 'done' } });
             return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
         },
     );
 
-    server.tool(
+    server.registerTool(
         'delete_task',
-        'Permanently delete a task by ID.',
-        { id: z.string().min(1) },
+        {
+            description: 'Permanently delete a task by ID.',
+            inputSchema: { id: z.string().min(1) },
+        },
         async ({ id }) => {
             await client.deleteTask({ id });
             return { content: [{ type: 'text' as const, text: `Task ${id} deleted.` }] };
         },
     );
 
-    server.tool(
+    server.registerTool(
         'set_fuzzy_deadline',
-        'Set a natural-language fuzzy deadline on a task (e.g. "end of next week").',
         {
-            id: z.string().min(1),
-            fuzzyDeadline: z.string().min(1),
+            description: 'Set a fuzzy deadline on a task.',
+            inputSchema: {
+                id: z.string().min(1),
+                type: z.enum(['this_week', 'this_month', 'someday']),
+                remindEvery: z.enum(['daily', 'weekly']).optional(),
+            },
         },
-        async ({ id, fuzzyDeadline }) => {
-            const task = await client.setFuzzyDeadline({ id, dto: { fuzzyDeadline } });
+        async ({ id, type, remindEvery }) => {
+            const task = await client.setFuzzyDeadline({ id, dto: { type, remindEvery } });
             return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
         },
     );

@@ -4,30 +4,36 @@ import type { CtmApiClient } from '@ctm/api-client';
 
 /** Register all connector-related MCP tools on the given server instance. */
 export function registerConnectorTools(server: McpServer, client: CtmApiClient): void {
-    server.tool(
+    server.registerTool(
         'list_connectors',
-        'List all connected task sources and their sync status.',
-        {},
+        {
+            description: 'List all connected task sources and their sync status.',
+            inputSchema: {},
+        },
         async () => {
             const connectors = await client.listConnectors();
             return { content: [{ type: 'text' as const, text: JSON.stringify(connectors) }] };
         },
     );
 
-    server.tool(
+    server.registerTool(
         'get_connector_auth_url',
-        'Get the OAuth authorisation URL to connect a task source (e.g. "todoist", "google").',
-        { source: z.string().min(1) },
+        {
+            description: 'Get the OAuth authorisation URL to connect a task source (e.g. "todoist", "google").',
+            inputSchema: { source: z.string().min(1) },
+        },
         async ({ source }) => {
             const url = await client.getConnectorAuthUrl({ source });
             return { content: [{ type: 'text' as const, text: url }] };
         },
     );
 
-    server.tool(
+    server.registerTool(
         'disconnect_connector',
-        'Disconnect a task source by name.',
-        { source: z.string().min(1) },
+        {
+            description: 'Disconnect a task source by name.',
+            inputSchema: { source: z.string().min(1) },
+        },
         async ({ source }) => {
             await client.disconnectConnector({ source });
             return { content: [{ type: 'text' as const, text: `Connector ${source} disconnected.` }] };
