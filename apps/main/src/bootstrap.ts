@@ -1,0 +1,30 @@
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { AppModule } from './app.module.js';
+
+interface CorsOptions {
+    origin: true | string[];
+    credentials: boolean;
+    methods: string[];
+}
+
+/** Build CORS options for the HTTP app from environment configuration. */
+export function buildCorsOptions(env: NodeJS.ProcessEnv): CorsOptions {
+    const corsOrigin = env['CORS_ORIGIN'] ?? '*';
+
+    return {
+        origin: corsOrigin === '*' ? true : corsOrigin.split(',').map((origin) => origin.trim()),
+        credentials: corsOrigin !== '*',
+        methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    };
+}
+
+/** Create and configure the Nest Fastify application. */
+export async function createApp(): Promise<NestFastifyApplication> {
+    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
+    app.enableCors(buildCorsOptions(process.env));
+
+    return app;
+}
