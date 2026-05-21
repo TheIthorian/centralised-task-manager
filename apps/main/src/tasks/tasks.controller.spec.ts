@@ -458,12 +458,14 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
     it('PUT /tasks/:id/status open uncompletes a done task — persisted', async () => {
         const id = await createLocal(`Uncomplete me ${Date.now()}`);
 
-        await app.inject({
+        const doneRes = await app.inject({
             method: 'PUT',
             url: `/tasks/${id}/status`,
             payload: { status: 'done' },
             headers: { authorization: `Bearer ${jwt}` },
         });
+        expect(doneRes.statusCode).toBe(200);
+        expect(JSON.parse(doneRes.body).completed).toBe(true);
 
         const putRes = await app.inject({
             method: 'PUT',
@@ -494,6 +496,8 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         });
 
         expect(res.statusCode).toBe(400);
+        const body = JSON.parse(res.body);
+        expect(typeof body.message === 'string' || Array.isArray(body.message)).toBe(true);
     });
 
     // ── Delete + persistence ──────────────────────────────────────────────────

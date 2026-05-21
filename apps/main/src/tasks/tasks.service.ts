@@ -147,7 +147,10 @@ export class TasksService {
     }
 
     /** Set task status to 'open' or 'done' via write-through.
-     *  'done' calls the connector's completeTask for remote sources. 'open' is local-only. */
+     *  When status is 'done', calls the connector's completeTask for remote sources.
+     *  When status is 'open', only the local DB is updated — remote sources (Todoist, Google Tasks)
+     *  do NOT support uncomplete; the connector is intentionally not called. Callers should be
+     *  aware that uncompleting a remote task produces a local-only change. */
     async setStatus({
         taskId,
         userId,
@@ -163,6 +166,7 @@ export class TasksService {
             const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
             const connector = this.registry.get(task.source);
             await connector.completeTask(tokens, task.sourceId);
+            // Note: there is no uncompleteTask connector method; 'open' is local-only.
         }
 
         return this.taskModel.findByIdAndUpdate(
