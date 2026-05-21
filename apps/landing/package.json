@@ -12,7 +12,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "lint": "oxlint src",
-    "format": "oxfmt src"
+    "format": "oxfmt --config ../../.oxfmtrc.json src"
   },
   "dependencies": {
     "astro": "^5.0.0",
