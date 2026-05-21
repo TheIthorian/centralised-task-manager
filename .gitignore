@@ -14,3 +14,4 @@ apps/main/openapi.json
 .playwright-mcp/
 .superpowers/
 .claude/plans/
+.astro/
