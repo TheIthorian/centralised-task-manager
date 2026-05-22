@@ -68,8 +68,8 @@ export class NotionConnector implements TaskConnector {
 **OAuth2:**
 - Auth URL: `https://api.notion.com/v1/oauth/authorize`
 - Token URL: `https://api.notion.com/v1/oauth/token` (Basic auth: `clientId:clientSecret`)
-- Notion access tokens do not expire — `expiresAt` set to year 2099, `refreshToken` is empty string
-- `refreshToken()` is a no-op passthrough (returns same tokens)
+- Token response includes `access_token` and `refresh_token` but no `expires_in` — set `expiresAt` to 1 hour from exchange as a conservative default
+- `refreshToken()` — POST to `/v1/oauth/token` with `grant_type: refresh_token`; response may omit `expires_in` so again default to 1 hour
 
 **`listDatabases(tokens)`** (not on the interface, called directly by the backend):
 - `POST /v1/search` with `{ filter: { value: 'database', property: 'object' } }`
