@@ -1,6 +1,6 @@
 import type { Command } from 'commander';
 import { buildClient } from '../client.js';
-import { formatJson, formatTable } from '../output.js';
+import { formatJson, formatTable, print } from '../output.js';
 import type { ConnectorStatusDto } from '@ctm/api-client';
 
 function connectorRow(c: ConnectorStatusDto): string[] {
@@ -26,9 +26,9 @@ export function registerConnectorsCommand(program: Command): void {
                 const result = await client.listConnectors();
 
                 if (opts.json) {
-                    console.log(formatJson(result));
+                    print(formatJson(result));
                 } else {
-                    console.log(formatTable(['Source', 'Status', 'Last Synced'], result.map(connectorRow)));
+                    print(formatTable(['Source', 'Status', 'Last Synced'], result.map(connectorRow)));
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -45,7 +45,7 @@ export function registerConnectorsCommand(program: Command): void {
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
                 const url = await client.getConnectorAuthUrl({ source });
-                console.log(`Opening: ${url}`);
+                print(`Opening: ${url}`);
                 const { default: open } = await import('open');
                 await open(url);
             } catch (err: unknown) {
@@ -63,7 +63,7 @@ export function registerConnectorsCommand(program: Command): void {
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
                 await client.disconnectConnector({ source });
-                console.log(`Connector ${source} disconnected.`);
+                print(`Connector ${source} disconnected.`);
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
                 process.exit(1);

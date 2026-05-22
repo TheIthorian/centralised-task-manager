@@ -1,5 +1,10 @@
 import Table from 'cli-table3';
 
+/** Write a line to stdout. Single bottleneck for all CLI output. */
+export function print(message: string): void {
+    console.log(message);
+}
+
 /** Serialize value to pretty-printed JSON string. */
 export function formatJson(value: unknown): string {
     return JSON.stringify(value, null, 2);

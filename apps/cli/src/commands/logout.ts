@@ -1,5 +1,6 @@
 import type { Command } from 'commander';
 import { clearConfig } from '../auth.js';
+import { print } from '../output.js';
 
 /** Register `ctm logout` on the given commander program. */
 export function registerLogoutCommand(program: Command): void {
@@ -8,6 +9,6 @@ export function registerLogoutCommand(program: Command): void {
         .description('Clear stored credentials')
         .action(() => {
             clearConfig();
-            console.log('Logged out.');
+            print('Logged out.');
         });
 }

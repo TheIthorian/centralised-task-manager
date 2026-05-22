@@ -3,6 +3,7 @@ import { input, password } from '@inquirer/prompts';
 import { CtmApiClient } from '@ctm/api-client';
 import { writeConfig } from '../auth.js';
 import { DEFAULT_BASE_URL } from '../client.js';
+import { print } from '../output.js';
 
 /** Register `ctm login` on the given commander program. */
 export function registerLoginCommand(program: Command): void {
@@ -23,7 +24,7 @@ export function registerLoginCommand(program: Command): void {
                     refreshToken: tokens.refreshToken,
                     baseUrl: opts.baseUrl,
                 });
-                console.log(`Logged in as ${tokens.user.email}`);
+                print(`Logged in as ${tokens.user.email}`);
             } catch (err: unknown) {
                 console.error('Login failed:', err instanceof Error ? err.message : String(err));
                 process.exit(1);

@@ -1,6 +1,6 @@
 import { type Command, Option } from 'commander';
 import { buildClient } from '../client.js';
-import { formatJson, formatTable } from '../output.js';
+import { formatJson, formatTable, print } from '../output.js';
 import type { TaskDto } from '@ctm/api-client';
 
 function taskRow(t: TaskDto): string[] {
@@ -25,7 +25,11 @@ export function registerTasksCommand(program: Command): void {
     tasks
         .command('list')
         .description('List tasks')
-        .addOption(new Option('--filter <filter>', 'Filter: all, today, upcoming, done').choices(['all', 'today', 'upcoming', 'done']).default('all'))
+        .addOption(
+            new Option('--filter <filter>', 'Filter: all, today, upcoming, done')
+                .choices(['all', 'today', 'upcoming', 'done'])
+                .default('all'),
+        )
         .option('--json', 'Output as JSON')
         .action(async (opts: { filter: 'all' | 'today' | 'upcoming' | 'done'; json?: boolean }) => {
             const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
@@ -35,12 +39,9 @@ export function registerTasksCommand(program: Command): void {
                 const result = await client.listTasks({ filter: opts.filter });
 
                 if (opts.json) {
-                    console.log(formatJson(result));
+                    print(formatJson(result));
                 } else {
-                    console.log(formatTable(
-                        ['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'],
-                        result.map(taskRow),
-                    ));
+                    print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'], result.map(taskRow)));
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -57,39 +58,54 @@ export function registerTasksCommand(program: Command): void {
         .option('--priority <n>', 'Priority 1-4')
         .option('--due <date>', 'Due date (ISO 8601)')
         .option('--json', 'Output as JSON')
-        .action(async (opts: { title: string; source: string; description?: string; priority?: string; due?: string; json?: boolean }) => {
-            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+        .action(
+            async (opts: {
+                title: string;
+                source: string;
+                description?: string;
+                priority?: string;
+                due?: string;
+                json?: boolean;
+            }) => {
+                const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
 
-            try {
-                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                try {
+                    const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
 
-                let priority: 1 | 2 | 3 | 4 | undefined;
+                    let priority: 1 | 2 | 3 | 4 | undefined;
 
-                if (opts.priority != null) {
-                    const p = Number(opts.priority);
+                    if (opts.priority != null) {
+                        const p = Number(opts.priority);
 
-                    if (!Number.isInteger(p) || p < 1 || p > 4) {
-                        console.error('Priority must be 1, 2, 3, or 4');
-                        process.exit(1);
+                        if (!Number.isInteger(p) || p < 1 || p > 4) {
+                            console.error('Priority must be 1, 2, 3, or 4');
+                            process.exit(1);
+                        }
+
+                        priority = p as 1 | 2 | 3 | 4;
                     }
 
-                    priority = p as 1 | 2 | 3 | 4;
-                }
+                    const task = await client.createTask({
+                        dto: {
+                            title: opts.title,
+                            source: opts.source,
+                            description: opts.description,
+                            priority,
+                            dueDate: opts.due,
+                        },
+                    });
 
-                const task = await client.createTask({
-                    dto: { title: opts.title, source: opts.source, description: opts.description, priority, dueDate: opts.due },
-                });
-
-                if (opts.json) {
-                    console.log(formatJson(task));
-                } else {
-                    console.log(formatTable(['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'], [taskRow(task)]));
+                    if (opts.json) {
+                        print(formatJson(task));
+                    } else {
+                        print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'], [taskRow(task)]));
+                    }
+                } catch (err: unknown) {
+                    console.error(err instanceof Error ? err.message : String(err));
+                    process.exit(1);
                 }
-            } catch (err: unknown) {
-                console.error(err instanceof Error ? err.message : String(err));
-                process.exit(1);
-            }
-        });
+            },
+        );
 
     tasks
         .command('update')
@@ -101,38 +117,53 @@ export function registerTasksCommand(program: Command): void {
         .option('--due <date>', 'New due date (ISO 8601)')
         .option('--tags <tags>', 'Comma-separated tags')
         .option('--json', 'Output as JSON')
-        .action(async (id: string, opts: { title?: string; description?: string; priority?: string; due?: string; tags?: string; json?: boolean }) => {
-            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+        .action(
+            async (
+                id: string,
+                opts: {
+                    title?: string;
+                    description?: string;
+                    priority?: string;
+                    due?: string;
+                    tags?: string;
+                    json?: boolean;
+                },
+            ) => {
+                const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
 
-            try {
-                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                try {
+                    const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
 
-                let priority: 1 | 2 | 3 | 4 | undefined;
+                    let priority: 1 | 2 | 3 | 4 | undefined;
 
-                if (opts.priority != null) {
-                    const p = Number(opts.priority);
+                    if (opts.priority != null) {
+                        const p = Number(opts.priority);
 
-                    if (!Number.isInteger(p) || p < 1 || p > 4) {
-                        console.error('Priority must be 1, 2, 3, or 4');
-                        process.exit(1);
+                        if (!Number.isInteger(p) || p < 1 || p > 4) {
+                            console.error('Priority must be 1, 2, 3, or 4');
+                            process.exit(1);
+                        }
+
+                        priority = p as 1 | 2 | 3 | 4;
                     }
 
-                    priority = p as 1 | 2 | 3 | 4;
-                }
+                    const tags = opts.tags != null ? opts.tags.split(',').map((t) => t.trim()) : undefined;
+                    const task = await client.updateTask({
+                        id,
+                        dto: { title: opts.title, description: opts.description, priority, dueDate: opts.due, tags },
+                    });
 
-                const tags = opts.tags != null ? opts.tags.split(',').map(t => t.trim()) : undefined;
-                const task = await client.updateTask({ id, dto: { title: opts.title, description: opts.description, priority, dueDate: opts.due, tags } });
-
-                if (opts.json) {
-                    console.log(formatJson(task));
-                } else {
-                    console.log(formatTable(['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'], [taskRow(task)]));
+                    if (opts.json) {
+                        print(formatJson(task));
+                    } else {
+                        print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'], [taskRow(task)]));
+                    }
+                } catch (err: unknown) {
+                    console.error(err instanceof Error ? err.message : String(err));
+                    process.exit(1);
                 }
-            } catch (err: unknown) {
-                console.error(err instanceof Error ? err.message : String(err));
-                process.exit(1);
-            }
-        });
+            },
+        );
 
     tasks
         .command('complete')
@@ -147,9 +178,9 @@ export function registerTasksCommand(program: Command): void {
                 const task = await client.setTaskStatus({ id, dto: { status: 'done' } });
 
                 if (opts.json) {
-                    console.log(formatJson(task));
+                    print(formatJson(task));
                 } else {
-                    console.log(`Task ${task.id} marked as done.`);
+                    print(`Task ${task.id} marked as done.`);
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -168,7 +199,7 @@ export function registerTasksCommand(program: Command): void {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
                 await client.deleteTask({ id });
 
-                console.log(`Task ${id} deleted.`);
+                print(`Task ${id} deleted.`);
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
                 process.exit(1);
@@ -179,24 +210,36 @@ export function registerTasksCommand(program: Command): void {
         .command('set-fuzzy-deadline')
         .description('Set a fuzzy deadline on a task')
         .argument('<id>', 'Task ID')
-        .addOption(new Option('--type <type>', 'Deadline type: this_week, this_month, someday').choices(['this_week', 'this_month', 'someday']).makeOptionMandatory())
+        .addOption(
+            new Option('--type <type>', 'Deadline type: this_week, this_month, someday')
+                .choices(['this_week', 'this_month', 'someday'])
+                .makeOptionMandatory(),
+        )
         .addOption(new Option('--remind <interval>', 'Reminder interval: daily, weekly').choices(['daily', 'weekly']))
         .option('--json', 'Output as JSON')
-        .action(async (id: string, opts: { type: 'this_week' | 'this_month' | 'someday'; remind?: 'daily' | 'weekly'; json?: boolean }) => {
-            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+        .action(
+            async (
+                id: string,
+                opts: { type: 'this_week' | 'this_month' | 'someday'; remind?: 'daily' | 'weekly'; json?: boolean },
+            ) => {
+                const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
 
-            try {
-                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                const task = await client.setFuzzyDeadline({ id, dto: { type: opts.type, remindEvery: opts.remind } });
+                try {
+                    const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                    const task = await client.setFuzzyDeadline({
+                        id,
+                        dto: { type: opts.type, remindEvery: opts.remind },
+                    });
 
-                if (opts.json) {
-                    console.log(formatJson(task));
-                } else {
-                    console.log(formatTable(['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'], [taskRow(task)]));
+                    if (opts.json) {
+                        print(formatJson(task));
+                    } else {
+                        print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'], [taskRow(task)]));
+                    }
+                } catch (err: unknown) {
+                    console.error(err instanceof Error ? err.message : String(err));
+                    process.exit(1);
                 }
-            } catch (err: unknown) {
-                console.error(err instanceof Error ? err.message : String(err));
-                process.exit(1);
-            }
-        });
+            },
+        );
 }
