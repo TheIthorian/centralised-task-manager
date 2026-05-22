@@ -10,6 +10,7 @@ import { TasksModule } from './tasks/tasks.module.js';
 import { RemindersModule } from './reminders/reminders.module.js';
 import { OAuthModule } from './oauth/oauth.module.js';
 import { SyncModule } from './sync/sync.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { SyncModule } from './sync/sync.module.js';
         RemindersModule,
         OAuthModule,
         SyncModule,
+        NotificationsModule,
     ],
 })
 export class AppModule implements NestModule {
