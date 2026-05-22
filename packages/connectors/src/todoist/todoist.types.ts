@@ -1,5 +1,5 @@
 /** Todoist API task object. See: https://developer.todoist.com/rest/reference#get-active-tasks */
-export interface TodoistTask {
+export type TodoistTask = {
     user_id: string;
     id: string;
     project_id: string;
@@ -9,8 +9,8 @@ export interface TodoistTask {
     assigned_by_uid: string | null;
     responsible_uid: string | null;
     labels: string[];
-    deadline: null;
-    duration: null;
+    deadline: { date: string; lang: string; string: string } | null;
+    duration: { amount: number; unit: 'minute' | 'day' } | null;
     is_collapsed: boolean;
     checked: boolean;
     is_deleted: boolean;
@@ -26,16 +26,16 @@ export interface TodoistTask {
     note_count: number;
     day_order: number;
     goal_ids: string[];
-}
+};
 
-export interface TodoistTokenResponse {
+export type TodoistTokenResponse = {
     access_token: string;
     refresh_token?: string;
     token_type: string;
     expires_in?: number;
-}
+};
 
-export interface TodoistTasksResponse {
+export type TodoistTasksResponse = {
     results: TodoistTask[];
     next_cursor: string | null;
-}
+};
