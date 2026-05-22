@@ -16,4 +16,7 @@ export const envSchema = Joi.object({
     RSA_PUBLIC_KEY: Joi.string().required(),
     JWT_ACCESS_EXPIRES: Joi.string().default('15m'),
     REFRESH_TOKEN_EXPIRES_DAYS: Joi.number().integer().min(1).default(30),
+    DISCORD_CLIENT_ID: Joi.string().allow('').default(''),
+    DISCORD_CLIENT_SECRET: Joi.string().allow('').default(''),
+    DISCORD_BOT_TOKEN: Joi.string().allow('').default(''),
 });
