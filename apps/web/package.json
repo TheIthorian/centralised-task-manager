@@ -18,7 +18,7 @@
     "js-cookie": "3.0.7",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "react-router": "5.3.4"
+    "react-router": "7.15.1"
   },
   "devDependencies": {
     "@ctm/tsconfig": "workspace:*",

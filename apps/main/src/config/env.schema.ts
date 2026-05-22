@@ -11,6 +11,7 @@ export const envSchema = Joi.object({
     GOOGLE_CLIENT_ID: Joi.string().allow('').default(''),
     GOOGLE_CLIENT_SECRET: Joi.string().allow('').default(''),
     REDIRECT_BASE_URL: Joi.string().default('http://localhost:3000'),
+    WEB_URL: Joi.string().default('http://localhost:3000'),
     RSA_PRIVATE_KEY: Joi.string().required(),
     RSA_PUBLIC_KEY: Joi.string().required(),
     JWT_ACCESS_EXPIRES: Joi.string().default('15m'),

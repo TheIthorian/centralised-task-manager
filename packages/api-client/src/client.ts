@@ -121,7 +121,7 @@ export class CtmApiClient {
 
     /** List all connector statuses for the current user. */
     async listConnectors(): Promise<ConnectorStatusDto[]> {
-        return this.request<ConnectorStatusDto[]>({ method: 'GET', path: '/connectors' });
+        return this.request<ConnectorStatusDto[]>({ method: 'GET', path: '/connectors/status' });
     }
 
     /** Get the OAuth authorisation URL for a connector source. */

@@ -81,6 +81,13 @@ export class ConnectorsService {
         return doc;
     }
 
+    /** Remove a connector config by source name. */
+    async removeBySource({ source, userId }: { source: string; userId: string }): Promise<void> {
+        const result = await this.configModel.deleteOne({ source, userId: new Types.ObjectId(userId) });
+
+        if (result.deletedCount === 0) throw new NotFoundException('Connector config not found');
+    }
+
     /** Remove a connector config and all synced tasks for that user+source. */
     async remove({ configId, userId }: { configId: string; userId: string }): Promise<void> {
         const result = await this.configModel.deleteOne({ _id: configId, userId: new Types.ObjectId(userId) });
