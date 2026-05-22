@@ -1,4 +1,4 @@
-import type { Command } from 'commander';
+import { type Command, Option } from 'commander';
 import { buildClient } from '../client.js';
 import { formatJson, formatTable } from '../output.js';
 import type { TaskDto } from '@ctm/api-client';
@@ -25,13 +25,13 @@ export function registerTasksCommand(program: Command): void {
     tasks
         .command('list')
         .description('List tasks')
-        .option('--filter <filter>', 'Filter: all, today, upcoming, done', 'all')
+        .addOption(new Option('--filter <filter>', 'Filter: all, today, upcoming, done').choices(['all', 'today', 'upcoming', 'done']).default('all'))
         .option('--json', 'Output as JSON')
         .action(async (opts: { filter: 'all' | 'today' | 'upcoming' | 'done'; json?: boolean }) => {
             const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
-            const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
 
             try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
                 const result = await client.listTasks({ filter: opts.filter });
 
                 if (opts.json) {
@@ -59,10 +59,23 @@ export function registerTasksCommand(program: Command): void {
         .option('--json', 'Output as JSON')
         .action(async (opts: { title: string; source: string; description?: string; priority?: string; due?: string; json?: boolean }) => {
             const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
-            const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-            const priority = opts.priority != null ? (Number(opts.priority) as 1 | 2 | 3 | 4) : undefined;
 
             try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+
+                let priority: 1 | 2 | 3 | 4 | undefined;
+
+                if (opts.priority != null) {
+                    const p = Number(opts.priority);
+
+                    if (!Number.isInteger(p) || p < 1 || p > 4) {
+                        console.error('Priority must be 1, 2, 3, or 4');
+                        process.exit(1);
+                    }
+
+                    priority = p as 1 | 2 | 3 | 4;
+                }
+
                 const task = await client.createTask({
                     dto: { title: opts.title, source: opts.source, description: opts.description, priority, dueDate: opts.due },
                 });
@@ -90,11 +103,24 @@ export function registerTasksCommand(program: Command): void {
         .option('--json', 'Output as JSON')
         .action(async (id: string, opts: { title?: string; description?: string; priority?: string; due?: string; tags?: string; json?: boolean }) => {
             const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
-            const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-            const priority = opts.priority != null ? (Number(opts.priority) as 1 | 2 | 3 | 4) : undefined;
-            const tags = opts.tags != null ? opts.tags.split(',').map(t => t.trim()) : undefined;
 
             try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+
+                let priority: 1 | 2 | 3 | 4 | undefined;
+
+                if (opts.priority != null) {
+                    const p = Number(opts.priority);
+
+                    if (!Number.isInteger(p) || p < 1 || p > 4) {
+                        console.error('Priority must be 1, 2, 3, or 4');
+                        process.exit(1);
+                    }
+
+                    priority = p as 1 | 2 | 3 | 4;
+                }
+
+                const tags = opts.tags != null ? opts.tags.split(',').map(t => t.trim()) : undefined;
                 const task = await client.updateTask({ id, dto: { title: opts.title, description: opts.description, priority, dueDate: opts.due, tags } });
 
                 if (opts.json) {
@@ -115,9 +141,9 @@ export function registerTasksCommand(program: Command): void {
         .option('--json', 'Output as JSON')
         .action(async (id: string, opts: { json?: boolean }) => {
             const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
-            const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
 
             try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
                 const task = await client.setTaskStatus({ id, dto: { status: 'done' } });
 
                 if (opts.json) {
@@ -137,10 +163,11 @@ export function registerTasksCommand(program: Command): void {
         .argument('<id>', 'Task ID')
         .action(async (id: string) => {
             const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
-            const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
 
             try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
                 await client.deleteTask({ id });
+
                 console.log(`Task ${id} deleted.`);
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -152,14 +179,14 @@ export function registerTasksCommand(program: Command): void {
         .command('set-fuzzy-deadline')
         .description('Set a fuzzy deadline on a task')
         .argument('<id>', 'Task ID')
-        .requiredOption('--type <type>', 'Deadline type: this_week, this_month, someday')
-        .option('--remind <interval>', 'Reminder interval: daily, weekly')
+        .addOption(new Option('--type <type>', 'Deadline type: this_week, this_month, someday').choices(['this_week', 'this_month', 'someday']).makeOptionMandatory())
+        .addOption(new Option('--remind <interval>', 'Reminder interval: daily, weekly').choices(['daily', 'weekly']))
         .option('--json', 'Output as JSON')
         .action(async (id: string, opts: { type: 'this_week' | 'this_month' | 'someday'; remind?: 'daily' | 'weekly'; json?: boolean }) => {
             const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
-            const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
 
             try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
                 const task = await client.setFuzzyDeadline({ id, dto: { type: opts.type, remindEvery: opts.remind } });
 
                 if (opts.json) {
