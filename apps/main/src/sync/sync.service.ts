@@ -52,17 +52,18 @@ export class SyncService {
 
     /** Cancel a queued or running job. No-op if already terminal. */
     async cancelJob({ userId, jobId }: { userId: string; jobId: string }): Promise<void> {
-        const job = await this.getJob({ userId, jobId });
+        // Verify ownership first
+        await this.getJob({ userId, jobId });
 
-        if (job.status !== 'queued' && job.status !== 'running') return;
-
-        const updated = await this.taskSyncModel.findByIdAndUpdate(
-            jobId,
+        // Atomic status-guarded update — prevents TOCTOU race with runSync completing
+        const updated = await this.taskSyncModel.findOneAndUpdate(
+            { _id: jobId, status: { $in: ['queued', 'running'] } },
             { status: 'cancelled', completedAt: new Date() },
             { new: true },
         );
 
         if (updated) this.gateway.emitProgress(userId, updated);
+        // If updated is null, job was already terminal — no-op is intentional
     }
 
     private async runSync(jobId: string, userId: string, source: string): Promise<void> {

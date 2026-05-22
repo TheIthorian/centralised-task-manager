@@ -10,7 +10,14 @@ import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
 
-@WebSocketGateway({ cors: { origin: '*', credentials: false } })
+@WebSocketGateway({
+    cors: {
+        origin: process.env['CORS_ORIGIN'] === '*' || !process.env['CORS_ORIGIN']
+            ? true
+            : process.env['CORS_ORIGIN']!.split(',').map((o) => o.trim()),
+        credentials: !!process.env['CORS_ORIGIN'] && process.env['CORS_ORIGIN'] !== '*',
+    },
+})
 export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     private readonly server!: Server;
