@@ -46,14 +46,12 @@ body::after {
     width: 75vmin;
     height: 75vmin;
     pointer-events: none;
-    z-index: -1;
-    background-color: rgba(17, 17, 17, 0.5);
-    -webkit-mask: url('/spiral.svg') bottom right / contain no-repeat;
-    mask: url('/spiral.svg') bottom right / contain no-repeat;
+    z-index: 1;
+    background: url('/spiral-light.svg') right bottom / contain no-repeat;
 }
 
 .dark body::after {
-    background-color: rgba(255, 222, 89, 0.16);
+    background-image: url('/spiral-dark.svg');
 }
 
 body::before {
