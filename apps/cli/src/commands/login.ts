@@ -2,8 +2,7 @@ import type { Command } from 'commander';
 import { input, password } from '@inquirer/prompts';
 import { CtmApiClient } from '@ctm/api-client';
 import { writeConfig } from '../auth.js';
-
-const DEFAULT_BASE_URL = 'http://localhost:3000';
+import { DEFAULT_BASE_URL } from '../client.js';
 
 /** Register `ctm login` on the given commander program. */
 export function registerLoginCommand(program: Command): void {
@@ -19,7 +18,11 @@ export function registerLoginCommand(program: Command): void {
 
             try {
                 const tokens = await client.login({ email, password: pwd });
-                writeConfig({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, baseUrl: opts.baseUrl });
+                writeConfig({
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken,
+                    baseUrl: opts.baseUrl,
+                });
                 console.log(`Logged in as ${tokens.user.email}`);
             } catch (err: unknown) {
                 console.error('Login failed:', err instanceof Error ? err.message : String(err));

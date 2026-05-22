@@ -1,7 +1,7 @@
 import { CtmApiClient } from '@ctm/api-client';
 import { readConfig } from './auth.js';
 
-const DEFAULT_BASE_URL = 'http://localhost:3000';
+export const DEFAULT_BASE_URL = 'http://localhost:3000';
 
 export type ClientOptions = {
     token?: string;
@@ -21,7 +21,9 @@ export function buildClient({ token, baseUrl }: ClientOptions): CtmApiClient {
 
     const resolvedToken = token ?? envToken ?? config?.accessToken ?? null;
     const resolvedBaseUrl = baseUrl ?? envBaseUrl ?? config?.baseUrl ?? DEFAULT_BASE_URL;
-    const refreshToken = config?.refreshToken ?? null;
+    // Only use the stored refresh token when we're actually using the stored access token
+    const usingStoredToken = token == null && envToken == null && config?.accessToken != null;
+    const refreshToken = usingStoredToken ? (config?.refreshToken ?? null) : null;
 
     return new CtmApiClient({
         baseUrl: resolvedBaseUrl,
