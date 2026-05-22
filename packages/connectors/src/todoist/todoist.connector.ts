@@ -21,7 +21,9 @@ interface TodoistTask {
 
 interface TodoistTokenResponse {
     access_token: string;
+    refresh_token?: string;
     token_type: string;
+    expires_in?: number;
 }
 
 interface TodoistTasksResponse {
@@ -52,10 +54,7 @@ export class TodoistConnector implements TaskConnector {
         return `https://todoist.com/oauth/authorize?${params.toString()}`;
     }
 
-    /**
-     * Todoist access tokens are long-lived (no expiry) and do not support refresh.
-     * refreshToken is stored as '' and refreshToken() is intentionally a no-op.
-     */
+    /** Exchange authorization code for OAuth tokens. New apps receive short-lived access tokens with a refresh token. */
     async exchangeCode(code: string): Promise<OAuthTokens> {
         const res = await this.authHttp.post<TodoistTokenResponse>('/oauth/access_token', {
             client_id: this.config.clientId,
@@ -64,16 +63,35 @@ export class TodoistConnector implements TaskConnector {
             redirect_uri: this.config.redirectUri,
         });
 
+        const expiresIn = res.expires_in ?? 365 * 24 * 60 * 60;
+
         return {
             accessToken: res.access_token,
-            refreshToken: '',
-            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            refreshToken: res.refresh_token ?? '',
+            expiresAt: new Date(Date.now() + expiresIn * 1000),
         };
     }
 
-    /** Todoist tokens do not expire; return tokens unchanged. */
+    /** Refresh an expired access token using the stored refresh token. */
     async refreshToken(tokens: OAuthTokens): Promise<OAuthTokens> {
-        return tokens;
+        if (!tokens.refreshToken) {
+            return tokens;
+        }
+
+        const res = await this.authHttp.post<TodoistTokenResponse>('/oauth/access_token', {
+            client_id: this.config.clientId,
+            client_secret: this.config.clientSecret,
+            grant_type: 'refresh_token',
+            refresh_token: tokens.refreshToken,
+        });
+
+        const expiresIn = res.expires_in ?? 365 * 24 * 60 * 60;
+
+        return {
+            accessToken: res.access_token,
+            refreshToken: res.refresh_token ?? tokens.refreshToken,
+            expiresAt: new Date(Date.now() + expiresIn * 1000),
+        };
     }
 
     /** Fetch all open tasks from the authenticated user's Todoist account. */
