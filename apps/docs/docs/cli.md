@@ -32,7 +32,7 @@ ctm login
 Generate a long-lived token in the web app or via the API (`POST /auth/tokens`), then pass it via flag or environment variable:
 
 ```bash
-ctm --token <your-token> tasks list
+ctm tasks --token <your-token> list
 # or
 CTM_TOKEN=<your-token> ctm tasks list
 ```
@@ -40,7 +40,7 @@ CTM_TOKEN=<your-token> ctm tasks list
 ### Custom server URL
 
 ```bash
-ctm --base-url https://your-server.example.com tasks list
+ctm tasks --base-url https://your-server.example.com list
 # or
 CTM_BASE_URL=https://your-server.example.com ctm tasks list
 ```
@@ -50,6 +50,10 @@ CTM_BASE_URL=https://your-server.example.com ctm tasks list
 ### `ctm login`
 
 Prompts for email and password, stores access and refresh tokens locally.
+
+```bash
+ctm login [--base-url <url>]
+```
 
 ### `ctm logout`
 
@@ -78,7 +82,7 @@ ctm tasks update <id> [--title "New title"] [--description "..."] [--priority 2]
 ### `ctm tasks complete`
 
 ```bash
-ctm tasks complete <id>
+ctm tasks complete <id> [--json]
 ```
 
 ### `ctm tasks delete`
@@ -112,9 +116,11 @@ ctm connectors connect todoist
 ctm connectors disconnect todoist
 ```
 
-## Global Flags
+## Flags
 
-| Flag | Env var | Description |
-|------|---------|-------------|
-| `--token <t>` | `CTM_TOKEN` | Override stored credentials |
-| `--base-url <url>` | `CTM_BASE_URL` | Override API base URL |
+`--token` and `--base-url` are available on the `tasks` and `connectors` command groups:
+
+| Flag | Env var | Description | Example |
+|------|---------|-------------|---------|
+| `--token <t>` | `CTM_TOKEN` | Override stored credentials | `ctm tasks --token <t> list` |
+| `--base-url <url>` | `CTM_BASE_URL` | Override API base URL | `ctm tasks --base-url http://... list` |
