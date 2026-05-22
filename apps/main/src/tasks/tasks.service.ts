@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ConnectorRegistry } from '@ctm/connectors';
+import { ConnectorRegistry, type RemoteTask } from '@ctm/connectors';
 import { Task, type TaskDocument } from './schemas/task.schema.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
@@ -221,5 +221,72 @@ export class TasksService {
             { fuzzyDeadline: null },
             { new: true },
         ) as Promise<TaskDocument>;
+    }
+
+    /** Pull-sync: upsert remote tasks into CTM. CTM-local changes win — any task where
+     *  updatedAt > syncedAt is skipped. Uses { timestamps: false } on updates so that
+     *  Mongoose does not bump updatedAt during sync writes, preserving the user-edit signal. */
+    async upsertFromRemote({
+        userId,
+        source,
+        remoteTasks,
+    }: {
+        userId: string;
+        source: string;
+        remoteTasks: RemoteTask[];
+    }): Promise<{ synced: number; skipped: number }> {
+        let synced = 0;
+        let skipped = 0;
+
+        for (const remote of remoteTasks) {
+            const existing = await this.taskModel.findOne({
+                userId: new Types.ObjectId(userId),
+                source,
+                sourceId: remote.sourceId,
+            });
+
+            if (!existing) {
+                await this.taskModel.create({
+                    userId: new Types.ObjectId(userId),
+                    source,
+                    sourceId: remote.sourceId,
+                    title: remote.title,
+                    description: remote.description ?? null,
+                    status: remote.status,
+                    priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
+                    tags: remote.tags,
+                    sourceDueDate: remote.dueDate ?? null,
+                    syncedAt: new Date(),
+                });
+
+                synced++;
+                continue;
+            }
+
+            const hasLocalChanges = existing.updatedAt !== undefined && existing.updatedAt > existing.syncedAt;
+
+            if (hasLocalChanges) {
+                skipped++;
+                continue;
+            }
+
+            await this.taskModel.findByIdAndUpdate(
+                existing._id,
+                {
+                    title: remote.title,
+                    description: remote.description ?? null,
+                    status: remote.status,
+                    priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
+                    tags: remote.tags,
+                    sourceDueDate: remote.dueDate ?? null,
+                    syncedAt: new Date(),
+                },
+                { timestamps: false },
+            );
+
+            synced++;
+        }
+
+        return { synced, skipped };
     }
 }
