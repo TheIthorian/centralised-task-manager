@@ -3,7 +3,7 @@ import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nest
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorRegistry } from '@ctm/connectors';
-import { Job, type JobDocument } from '../jobs/schemas/job.schema.js';
+import { Job } from '../jobs/schemas/job.schema.js';
 import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import { TasksService } from '../tasks/tasks.service.js';
@@ -14,7 +14,8 @@ export class SyncService {
     private readonly logger = new Logger(SyncService.name);
 
     constructor(
-        @InjectModel(Job.name) private readonly jobModel: Model<JobDocument>,
+        // Injected to ensure Mongoose registers the base Job model before the discriminator is used.
+        @InjectModel(Job.name) _jobModel: Model<never>,
         @InjectModel('task-sync') private readonly taskSyncModel: Model<TaskSyncJobDocument>,
         private readonly connectors: ConnectorsService,
         private readonly registry: ConnectorRegistry,
