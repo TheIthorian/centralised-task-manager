@@ -156,9 +156,101 @@ If validation fails, reject with `400`. Connector receives no parent info.
 
 ---
 
-## 6. Out of Scope
+## 6. API Client (`packages/api-client`)
+
+`TaskDto` gains new fields mirroring the schema:
+
+```ts
+due: { date: string; timezone: string | null; recurrence: string | null } | null
+deadlineDate: string | null   // ISO date string
+duration: { amount: number; unit: 'minute' | 'day' } | null
+parentId: string | null       // CTM MongoDB ObjectId
+```
+
+`dueDate` removed from `TaskDto`, `CreateTaskDto`, and `UpdateTaskDto`. Replaced by `due`.
+
+---
+
+## 7. Web UI (`apps/web`)
+
+### TaskCard
+
+Display new fields beneath the title (where space allows):
+- **Due date** — from `task.due.date` (replaces `task.dueDate`)
+- **Recurring badge** — small "↻" indicator if `task.due.recurrence` is set
+- **Deadline** — shown in red if `task.deadlineDate` is set
+- **Duration** — shown as e.g. "90 min" or "2 days" if set
+
+### TaskModal (edit)
+
+Replace the single `Due Date` input with three new fields:
+
+| Field | Input type | Notes |
+|---|---|---|
+| Due date | `<input type="date">` | Maps to `due.date` |
+| Recurrence | `<select>` with common options + "Custom RRULE" text input | Maps to `due.recurrence` |
+| Deadline | `<input type="date">` | Maps to `deadlineDate` |
+| Duration amount | `<input type="number">` | Maps to `duration.amount` |
+| Duration unit | `<select>` (minutes / days) | Maps to `duration.unit` |
+
+Recurrence select options: None, Daily, Weekly, Every weekday, Monthly, Yearly, Custom. "Custom" reveals a text input for raw RRULE.
+
+### AddTaskInline / CreateTaskModal
+
+Add `due.date`, `deadlineDate`, `duration`, and `parentId` inputs. `parentId` is an optional task picker (search existing tasks by title).
+
+### Child task display
+
+In `TaskList`, indent child tasks under their parent (group by `parentId`). If parent is not in the current filtered view, show child at root level.
+
+---
+
+## 8. CLI (`apps/cli`)
+
+### `ctm tasks create`
+
+New flags:
+- `--due <date>` — ISO date (maps to `due.date`)
+- `--recurrence <rrule>` — RRULE string (maps to `due.recurrence`)
+- `--deadline <date>` — ISO date (maps to `deadlineDate`)
+- `--duration <amount>` — number
+- `--duration-unit <unit>` — `minute` or `day`
+- `--parent <id>` — CTM task ID
+
+### `ctm tasks update`
+
+Same new flags as create (all optional).
+
+### `ctm tasks list`
+
+Table gains `Deadline` and `Duration` columns. `Due` column updated to read from `due.date`. Add `↻` suffix to due date if recurring.
+
+---
+
+## 9. MCP (`apps/mcp`)
+
+### `create_task` tool
+
+Add to input schema:
+```ts
+due: z.object({ date: z.string(), timezone: z.string().optional(), recurrence: z.string().optional() }).optional()
+deadlineDate: z.string().optional()
+duration: z.object({ amount: z.number(), unit: z.enum(['minute', 'day']) }).optional()
+parentId: z.string().optional()
+```
+
+### `update_task` tool
+
+Same additions as `create_task` (all optional).
+
+### `list_tasks` tool
+
+No schema change — output already includes full task JSON, which will naturally include new fields.
+
+---
+
+## 10. Out of Scope
 
 - Reparenting tasks after creation.
 - Cross-source parent/child (e.g. Todoist child under a local parent).
 - Recurrence instance expansion (generating future occurrences).
-- UI changes (separate concern).
