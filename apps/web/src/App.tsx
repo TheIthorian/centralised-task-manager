@@ -13,6 +13,7 @@ import { ProfilePage } from './pages/ProfilePage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
 import { CalendarPage } from './pages/CalendarPage.js';
 import { TimelinePage } from './pages/TimelinePage.js';
+import { ErrorPage } from './pages/ErrorPage.js';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
                 <AppShell />
             </ProtectedRoute>
         ),
+        errorElement: <ErrorPage />,
         children: [
             { index: true, element: <Navigate to="/tasks" replace /> },
             { path: 'tasks', element: <TasksPage /> },
