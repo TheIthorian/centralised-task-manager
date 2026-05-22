@@ -18,6 +18,7 @@ Users can trigger a manual sync per connector from the Sources settings page. Th
 A MongoDB collection with Mongoose discriminators supports multiple job types in one collection.
 
 **Base schema (`Job`):**
+
 ```
 _id        ObjectId
 userId     ObjectId   (ref: User)
@@ -29,6 +30,7 @@ error      string?
 ```
 
 **`TaskSyncJob` discriminator (`type: 'task-sync'`):**
+
 ```
 source  string           (e.g. 'todoist', 'google-tasks')
 stage   enum: fetching | upserting  (nullable)
@@ -43,10 +45,12 @@ Future job types (e.g. exports) extend the base schema with their own discrimina
 Responsible for creating and executing `TaskSyncJob` documents.
 
 **`createJob({ userId, source })`**
+
 - Creates a `TaskSyncJob` with `status: queued`
 - Kicks off async execution (no await), returns `jobId`
 
 **Async sync execution:**
+
 1. Set `status: running`, `stage: fetching` — emit WS progress
 2. Call `connector.fetchTasks(tokens)` via `ConnectorsService.getDecryptedTokens` + `ConnectorRegistry`
 3. Set `stage: upserting` — emit WS progress
@@ -57,6 +61,7 @@ Responsible for creating and executing `TaskSyncJob` documents.
 On any thrown error: set `status: failed`, `error: message`, emit WS progress.
 
 **CTM-priority upsert logic:**
+
 - Match on `{ userId, source, sourceId }`
 - If no existing doc → insert
 - If existing and `updatedAt <= syncedAt` → update title, description, priority, dueDate, status, tags from remote; set `syncedAt: now`
@@ -89,9 +94,9 @@ Emits `sync:progress` events with the full `TaskSyncJobDto` payload after each s
 ### API Client additions (`packages/api-client`)
 
 ```ts
-syncConnector({ source })             // POST /connectors/:source/sync → { jobId }
-getSyncJob({ source, jobId })         // GET  /connectors/:source/sync/:jobId
-cancelSyncJob({ source, jobId })      // DELETE /connectors/:source/sync/:jobId
+syncConnector({ source }); // POST /connectors/:source/sync → { jobId }
+getSyncJob({ source, jobId }); // GET  /connectors/:source/sync/:jobId
+cancelSyncJob({ source, jobId }); // DELETE /connectors/:source/sync/:jobId
 ```
 
 ### SourcesPage (`apps/web/src/pages/SourcesPage.tsx`)
@@ -106,6 +111,7 @@ cancelSyncJob({ source, jobId })      // DELETE /connectors/:source/sync/:jobId
 ### SourceCard (`apps/web/src/components/sources/SourceCard.tsx`)
 
 New props:
+
 ```ts
 onSync: (source: string) => void
 syncJob?: TaskSyncJobDto
@@ -114,6 +120,7 @@ syncJob?: TaskSyncJobDto
 **When connected and no active sync job:** shows a "Sync" button alongside Disconnect.
 
 **When `syncJob.status` is `queued` or `running`:**
+
 - Progress bar (indeterminate) with stage label (`Fetching…` / `Upserting…`)
 - Cancel button calls `cancelSyncJob`
 
