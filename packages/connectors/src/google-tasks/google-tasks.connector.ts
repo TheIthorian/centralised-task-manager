@@ -2,6 +2,7 @@ import { type Logger, HttpClient } from '@ctm/http-client';
 import { ExternalServiceError } from '@ctm/errors';
 
 import type { CreateTaskDto, OAuthTokens, RemoteTask, TaskConnector, UpdateTaskDto } from '../types.js';
+import type { GoogleTaskList, GoogleTask, GoogleTokenResponse } from './google-tasks.types.js';
 
 export type GoogleTasksConnectorConfig = {
     clientId: string;
@@ -9,35 +10,6 @@ export type GoogleTasksConnectorConfig = {
     redirectUri: string;
     logger?: Logger;
 };
-
-interface GoogleTaskList {
-    id: string;
-    title: string;
-}
-
-/** Google Tasks API task object. See: https://developers.google.com/tasks/reference/rest/v1/tasks */
-interface GoogleTask {
-    kind: string;
-    id: string;
-    etag: string;
-    title: string;
-    updated: string;
-    selfLink: string;
-    position: string;
-    status: 'needsAction' | 'completed';
-    due?: string;
-    notes?: string;
-    links?: Array<{ type?: string; description?: string; link?: string }>;
-    webViewLink?: string;
-    deleted?: boolean;
-    hidden?: boolean;
-}
-
-interface GoogleTokenResponse {
-    access_token: string;
-    refresh_token?: string;
-    expires_in: number;
-}
 
 export class GoogleTasksConnector implements TaskConnector {
     readonly source = 'google_tasks';

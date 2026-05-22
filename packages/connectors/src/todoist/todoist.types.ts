@@ -1,0 +1,41 @@
+/** Todoist API task object. See: https://developer.todoist.com/rest/reference#get-active-tasks */
+export interface TodoistTask {
+    user_id: string;
+    id: string;
+    project_id: string;
+    section_id: string | null;
+    parent_id: string | null;
+    added_by_uid: string;
+    assigned_by_uid: string | null;
+    responsible_uid: string | null;
+    labels: string[];
+    deadline: null;
+    duration: null;
+    is_collapsed: boolean;
+    checked: boolean;
+    is_deleted: boolean;
+    added_at: string;
+    completed_at: string | null;
+    completed_by_uid: string | null;
+    updated_at: string;
+    due: { date: string; timezone: string | null; string: string; lang: string; is_recurring: boolean } | null;
+    priority: number;
+    child_order: number;
+    content: string;
+    description: string;
+    note_count: number;
+    day_order: number;
+    goal_ids: string[];
+}
+
+export interface TodoistTokenResponse {
+    access_token: string;
+    refresh_token?: string;
+    token_type: string;
+    expires_in?: number;
+}
+
+export interface TodoistTasksResponse {
+    results: TodoistTask[];
+    next_cursor: string | null;
+}
