@@ -444,6 +444,9 @@ importers:
       '@ctm/errors':
         specifier: workspace:*
         version: link:../errors
+      '@ctm/http-client':
+        specifier: workspace:*
+        version: link:../http-client
       axios:
         specifier: 1.16.1
         version: 1.16.1
@@ -482,6 +485,9 @@ importers:
       '@ctm/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      pino:
+        specifier: 10.3.1
+        version: 10.3.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3

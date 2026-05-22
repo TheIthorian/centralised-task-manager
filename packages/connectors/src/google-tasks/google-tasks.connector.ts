@@ -1,12 +1,14 @@
-import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
+import { type Logger, HttpClient } from '@ctm/http-client';
 import { ExternalServiceError } from '@ctm/errors';
+
 import type { CreateTaskDto, OAuthTokens, RemoteTask, TaskConnector, UpdateTaskDto } from '../types.js';
 
-export interface GoogleTasksConnectorConfig {
+export type GoogleTasksConnectorConfig = {
     clientId: string;
     clientSecret: string;
     redirectUri: string;
-}
+    logger?: Logger;
+};
 
 interface GoogleTaskList {
     id: string;
@@ -32,17 +34,13 @@ interface GoogleTokenResponse {
 export class GoogleTasksConnector implements TaskConnector {
     readonly source = 'google_tasks';
 
-    private readonly http: AxiosInstance = axios.create({
-        baseURL: 'https://tasks.googleapis.com/tasks/v1',
-        headers: { 'Content-Type': 'application/json' },
-    });
+    private readonly http: HttpClient;
+    private readonly authHttp: HttpClient;
 
-    private readonly authHttp: AxiosInstance = axios.create({
-        baseURL: 'https://oauth2.googleapis.com',
-        headers: { 'Content-Type': 'application/json' },
-    });
-
-    constructor(private readonly config: GoogleTasksConnectorConfig) {}
+    constructor(private readonly config: GoogleTasksConnectorConfig) {
+        this.http = new HttpClient({ baseUrl: 'https://tasks.googleapis.com/tasks/v1', logger: config.logger });
+        this.authHttp = new HttpClient({ baseUrl: 'https://oauth2.googleapis.com', logger: config.logger });
+    }
 
     /** PKCE deferred to a future version — requires app-level verifier state management */
     getAuthUrl(userId: string): string {
@@ -60,15 +58,13 @@ export class GoogleTasksConnector implements TaskConnector {
 
     /** Exchange authorization code for OAuth tokens. */
     async exchangeCode(code: string): Promise<OAuthTokens> {
-        const response = await this.call<GoogleTokenResponse>(() =>
-            this.authHttp.post('/token', {
-                client_id: this.config.clientId,
-                client_secret: this.config.clientSecret,
-                code,
-                redirect_uri: this.config.redirectUri,
-                grant_type: 'authorization_code',
-            }),
-        );
+        const response = await this.authHttp.post<GoogleTokenResponse>('/token', {
+            client_id: this.config.clientId,
+            client_secret: this.config.clientSecret,
+            code,
+            redirect_uri: this.config.redirectUri,
+            grant_type: 'authorization_code',
+        });
 
         return {
             accessToken: response.access_token,
@@ -79,14 +75,12 @@ export class GoogleTasksConnector implements TaskConnector {
 
     /** Refresh an expired access token using the stored refresh token. */
     async refreshToken(tokens: OAuthTokens): Promise<OAuthTokens> {
-        const response = await this.call<GoogleTokenResponse>(() =>
-            this.authHttp.post('/token', {
-                client_id: this.config.clientId,
-                client_secret: this.config.clientSecret,
-                refresh_token: tokens.refreshToken,
-                grant_type: 'refresh_token',
-            }),
-        );
+        const response = await this.authHttp.post<GoogleTokenResponse>('/token', {
+            client_id: this.config.clientId,
+            client_secret: this.config.clientSecret,
+            refresh_token: tokens.refreshToken,
+            grant_type: 'refresh_token',
+        });
 
         return {
             accessToken: response.access_token,
@@ -98,17 +92,13 @@ export class GoogleTasksConnector implements TaskConnector {
     /** Fetch all tasks across all task lists. */
     async fetchTasks(tokens: OAuthTokens): Promise<RemoteTask[]> {
         const authHeader = { Authorization: `Bearer ${tokens.accessToken}` };
-        const { items: lists } = await this.call<{ items: GoogleTaskList[] }>(() =>
-            this.http.get('/users/@me/lists', { headers: authHeader }),
-        );
+        const { items: lists } = await this.http.get<{ items: GoogleTaskList[] }>('/users/@me/lists', authHeader);
 
         const taskArrays = await Promise.all(
             lists.map(async (list) => {
-                const { items = [] } = await this.call<{ items?: GoogleTask[] }>(() =>
-                    this.http.get(`/lists/${list.id}/tasks`, {
-                        params: { showCompleted: true, showHidden: false },
-                        headers: authHeader,
-                    }),
+                const { items = [] } = await this.http.get<{ items?: GoogleTask[] }>(
+                    `/lists/${list.id}/tasks?showCompleted=true&showHidden=false`,
+                    authHeader,
                 );
 
                 return items.filter((t) => !t.deleted && !t.hidden).map((t) => this.toRemoteTask(list.id, t));
@@ -121,16 +111,14 @@ export class GoogleTasksConnector implements TaskConnector {
     /** Create a new task in the first task list. */
     async createTask(tokens: OAuthTokens, task: CreateTaskDto): Promise<RemoteTask> {
         const listId = await this.getFirstListId(tokens);
-        const created = await this.call<GoogleTask>(() =>
-            this.http.post(
-                `/lists/${listId}/tasks`,
-                {
-                    title: task.title,
-                    notes: task.description ?? '',
-                    due: task.dueDate?.toISOString(),
-                },
-                { headers: { Authorization: `Bearer ${tokens.accessToken}` } },
-            ),
+        const created = await this.http.post<GoogleTask>(
+            `/lists/${listId}/tasks`,
+            {
+                title: task.title,
+                notes: task.description ?? '',
+                due: task.dueDate?.toISOString(),
+            },
+            { Authorization: `Bearer ${tokens.accessToken}` },
         );
 
         return this.toRemoteTask(listId, created);
@@ -139,16 +127,14 @@ export class GoogleTasksConnector implements TaskConnector {
     /** Update an existing task. */
     async updateTask(tokens: OAuthTokens, sourceId: string, patch: UpdateTaskDto): Promise<RemoteTask> {
         const [listId, taskId] = this.splitSourceId(sourceId);
-        const updated = await this.call<GoogleTask>(() =>
-            this.http.patch(
-                `/lists/${listId}/tasks/${taskId}`,
-                {
-                    title: patch.title,
-                    notes: patch.description,
-                    due: patch.dueDate?.toISOString(),
-                },
-                { headers: { Authorization: `Bearer ${tokens.accessToken}` } },
-            ),
+        const updated = await this.http.patch<GoogleTask>(
+            `/lists/${listId}/tasks/${taskId}`,
+            {
+                title: patch.title,
+                notes: patch.description,
+                due: patch.dueDate?.toISOString(),
+            },
+            { Authorization: `Bearer ${tokens.accessToken}` },
         );
 
         return this.toRemoteTask(listId, updated);
@@ -157,31 +143,25 @@ export class GoogleTasksConnector implements TaskConnector {
     /** Mark a task as completed. */
     async completeTask(tokens: OAuthTokens, sourceId: string): Promise<void> {
         const [listId, taskId] = this.splitSourceId(sourceId);
-        await this.call<unknown>(() =>
-            this.http.patch(
-                `/lists/${listId}/tasks/${taskId}`,
-                { status: 'completed' },
-                { headers: { Authorization: `Bearer ${tokens.accessToken}` } },
-            ),
+        await this.http.patch<unknown>(
+            `/lists/${listId}/tasks/${taskId}`,
+            { status: 'completed' },
+            { Authorization: `Bearer ${tokens.accessToken}` },
         );
     }
 
     /** Delete a task. */
     async deleteTask(tokens: OAuthTokens, sourceId: string): Promise<void> {
         const [listId, taskId] = this.splitSourceId(sourceId);
-        await this.call<void>(() =>
-            this.http.delete(`/lists/${listId}/tasks/${taskId}`, {
-                headers: { Authorization: `Bearer ${tokens.accessToken}` },
-            }),
-        );
+        await this.http.delete(`/lists/${listId}/tasks/${taskId}`, {
+            Authorization: `Bearer ${tokens.accessToken}`,
+        });
     }
 
     private async getFirstListId(tokens: OAuthTokens): Promise<string> {
-        const { items } = await this.call<{ items: GoogleTaskList[] }>(() =>
-            this.http.get('/users/@me/lists', {
-                headers: { Authorization: `Bearer ${tokens.accessToken}` },
-            }),
-        );
+        const { items } = await this.http.get<{ items: GoogleTaskList[] }>('/users/@me/lists', {
+            Authorization: `Bearer ${tokens.accessToken}`,
+        });
 
         if (!items.length) throw new ExternalServiceError(this.source, 'No Google Task lists found');
 
@@ -191,25 +171,6 @@ export class GoogleTasksConnector implements TaskConnector {
     private splitSourceId(sourceId: string): [string, string] {
         const idx = sourceId.indexOf(':');
         return [sourceId.slice(0, idx), sourceId.slice(idx + 1)];
-    }
-
-    /** Wrap an axios call, mapping AxiosError → ExternalServiceError. */
-    private async call<T>(fn: () => Promise<AxiosResponse<T>>): Promise<T> {
-        try {
-            const res = await fn();
-
-            return res.data;
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                const status = error.response?.status ?? 0;
-                const body = error.response?.data;
-                const text = typeof body === 'string' ? body : body !== undefined ? JSON.stringify(body) : '';
-
-                throw new ExternalServiceError(this.source, `HTTP ${status}: ${text}`);
-            }
-
-            throw error;
-        }
     }
 
     private toRemoteTask(listId: string, task: GoogleTask): RemoteTask {

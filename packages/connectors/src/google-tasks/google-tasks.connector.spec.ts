@@ -1,10 +1,12 @@
-import axios, { type AxiosInstance } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { ExternalServiceError } from '@ctm/errors';
+import { HttpClient } from '@ctm/http-client';
+
 import type { OAuthTokens } from '../types.js';
 import { GoogleTasksConnector } from './google-tasks.connector.js';
 
-vi.mock('axios');
+vi.mock('@ctm/http-client', () => ({ HttpClient: vi.fn() }));
 
 const config = {
     clientId: 'google_client_id',
@@ -20,30 +22,26 @@ const tokens: OAuthTokens = {
 
 describe('GoogleTasksConnector', () => {
     let connector: GoogleTasksConnector;
-    let mockGet: ReturnType<typeof vi.fn>;
-    let mockPost: ReturnType<typeof vi.fn>;
-    let mockPatch: ReturnType<typeof vi.fn>;
-    let mockDelete: ReturnType<typeof vi.fn>;
+    let mockHttp: {
+        get: ReturnType<typeof vi.fn>;
+        post: ReturnType<typeof vi.fn>;
+        patch: ReturnType<typeof vi.fn>;
+        delete: ReturnType<typeof vi.fn>;
+    };
+    let mockAuthHttp: { post: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
         vi.resetAllMocks();
 
-        mockGet = vi.fn();
-        mockPost = vi.fn();
-        mockPatch = vi.fn();
-        mockDelete = vi.fn();
+        mockHttp = { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() };
+        mockAuthHttp = { post: vi.fn() };
 
-        // GoogleTasksConnector creates two axios instances: http (tasks API) then authHttp (auth API).
-        vi.mocked(axios.create)
-            .mockReturnValueOnce({
-                get: mockGet,
-                post: mockPost,
-                patch: mockPatch,
-                delete: mockDelete,
-            } as unknown as AxiosInstance)
-            .mockReturnValueOnce({ post: mockPost } as unknown as AxiosInstance);
-
-        vi.mocked(axios.isAxiosError).mockReturnValue(false);
+        // GoogleTasksConnector creates two HttpClients: http (tasks API) then authHttp (auth API).
+        vi.mocked(HttpClient)
+            // eslint-disable-next-line prefer-arrow-callback
+            .mockImplementationOnce(function () { return mockHttp as unknown as HttpClient; })
+            // eslint-disable-next-line prefer-arrow-callback
+            .mockImplementationOnce(function () { return mockAuthHttp as unknown as HttpClient; });
 
         connector = new GoogleTasksConnector(config);
     });
@@ -62,20 +60,18 @@ describe('GoogleTasksConnector', () => {
 
     describe('fetchTasks', () => {
         it('fetches task lists then tasks, maps to RemoteTask', async () => {
-            mockGet
-                .mockResolvedValueOnce({ data: { items: [{ id: 'list-1', title: 'My Tasks' }] } })
+            mockHttp.get
+                .mockResolvedValueOnce({ items: [{ id: 'list-1', title: 'My Tasks' }] })
                 .mockResolvedValueOnce({
-                    data: {
-                        items: [
-                            {
-                                id: 'gtask-1',
-                                title: 'Read a book',
-                                notes: 'Fiction',
-                                status: 'needsAction',
-                                due: '2026-06-15T00:00:00.000Z',
-                            },
-                        ],
-                    },
+                    items: [
+                        {
+                            id: 'gtask-1',
+                            title: 'Read a book',
+                            notes: 'Fiction',
+                            status: 'needsAction',
+                            due: '2026-06-15T00:00:00.000Z',
+                        },
+                    ],
                 });
 
             const tasks = await connector.fetchTasks(tokens);
@@ -91,12 +87,10 @@ describe('GoogleTasksConnector', () => {
         });
 
         it('maps completed tasks to status "done"', async () => {
-            mockGet
-                .mockResolvedValueOnce({ data: { items: [{ id: 'list-1', title: 'My Tasks' }] } })
+            mockHttp.get
+                .mockResolvedValueOnce({ items: [{ id: 'list-1', title: 'My Tasks' }] })
                 .mockResolvedValueOnce({
-                    data: {
-                        items: [{ id: 'gtask-2', title: 'Done', notes: '', status: 'completed' }],
-                    },
+                    items: [{ id: 'gtask-2', title: 'Done', notes: '', status: 'completed' }],
                 });
 
             const tasks = await connector.fetchTasks(tokens);
@@ -105,15 +99,13 @@ describe('GoogleTasksConnector', () => {
         });
 
         it('filters out deleted and hidden tasks', async () => {
-            mockGet
-                .mockResolvedValueOnce({ data: { items: [{ id: 'list-1', title: 'My Tasks' }] } })
+            mockHttp.get
+                .mockResolvedValueOnce({ items: [{ id: 'list-1', title: 'My Tasks' }] })
                 .mockResolvedValueOnce({
-                    data: {
-                        items: [
-                            { id: 'task-2', title: 'Deleted', status: 'needsAction', deleted: true },
-                            { id: 'task-3', title: 'Hidden', status: 'needsAction', hidden: true },
-                        ],
-                    },
+                    items: [
+                        { id: 'task-2', title: 'Deleted', status: 'needsAction', deleted: true },
+                        { id: 'task-3', title: 'Hidden', status: 'needsAction', hidden: true },
+                    ],
                 });
 
             const tasks = await connector.fetchTasks(tokens);
@@ -124,27 +116,29 @@ describe('GoogleTasksConnector', () => {
 
     describe('createTask', () => {
         it('GETs lists then POSTs task to first list', async () => {
-            mockGet.mockResolvedValue({ data: { items: [{ id: 'list-1', title: 'My Tasks' }] } });
-            mockPost.mockResolvedValue({ data: { id: 'task-new', title: 'New task', status: 'needsAction' } });
+            mockHttp.get.mockResolvedValue({ items: [{ id: 'list-1', title: 'My Tasks' }] });
+            mockHttp.post.mockResolvedValue({ id: 'task-new', title: 'New task', status: 'needsAction' });
+
             const task = await connector.createTask(tokens, { title: 'New task' });
+
             expect(task.sourceId).toBe('list-1:task-new');
             expect(task.title).toBe('New task');
-            expect(mockPost).toHaveBeenCalledWith(
+            expect(mockHttp.post).toHaveBeenCalledWith(
                 '/lists/list-1/tasks',
                 expect.objectContaining({ title: 'New task' }),
-                expect.objectContaining({
-                    headers: expect.objectContaining({ Authorization: 'Bearer google_access_token' }),
-                }),
+                { Authorization: 'Bearer google_access_token' },
             );
         });
     });
 
     describe('updateTask', () => {
         it('PATCHes task fields', async () => {
-            mockPatch.mockResolvedValue({ data: { id: 'task-1', title: 'Updated', status: 'needsAction' } });
+            mockHttp.patch.mockResolvedValue({ id: 'task-1', title: 'Updated', status: 'needsAction' });
+
             const task = await connector.updateTask(tokens, 'list-1:task-1', { title: 'Updated' });
+
             expect(task.title).toBe('Updated');
-            expect(mockPatch).toHaveBeenCalledWith(
+            expect(mockHttp.patch).toHaveBeenCalledWith(
                 '/lists/list-1/tasks/task-1',
                 expect.objectContaining({ title: 'Updated' }),
                 expect.anything(),
@@ -154,46 +148,41 @@ describe('GoogleTasksConnector', () => {
 
     describe('completeTask', () => {
         it('PATCHes status to completed using list:task sourceId', async () => {
-            mockPatch.mockResolvedValue({ data: { id: 'gtask-1', title: 'Done', status: 'completed' } });
+            mockHttp.patch.mockResolvedValue({ id: 'gtask-1', title: 'Done', status: 'completed' });
 
             await connector.completeTask(tokens, 'list-1:gtask-1');
 
-            expect(mockPatch).toHaveBeenCalledWith(
+            expect(mockHttp.patch).toHaveBeenCalledWith(
                 '/lists/list-1/tasks/gtask-1',
                 { status: 'completed' },
-                expect.objectContaining({
-                    headers: expect.objectContaining({ Authorization: 'Bearer google_access_token' }),
-                }),
+                { Authorization: 'Bearer google_access_token' },
             );
         });
     });
 
     describe('deleteTask', () => {
         it('sends DELETE using list:task sourceId', async () => {
-            mockDelete.mockResolvedValue({ data: undefined });
+            mockHttp.delete.mockResolvedValue(undefined);
 
             await connector.deleteTask(tokens, 'list-1:gtask-1');
 
-            expect(mockDelete).toHaveBeenCalledWith(
-                '/lists/list-1/tasks/gtask-1',
-                expect.objectContaining({
-                    headers: expect.objectContaining({ Authorization: 'Bearer google_access_token' }),
-                }),
-            );
+            expect(mockHttp.delete).toHaveBeenCalledWith('/lists/list-1/tasks/gtask-1', {
+                Authorization: 'Bearer google_access_token',
+            });
         });
     });
 
     describe('error handling', () => {
-        it('wraps AxiosError as ExternalServiceError', async () => {
-            vi.mocked(axios.isAxiosError).mockReturnValue(true);
-            mockGet.mockRejectedValue({ isAxiosError: true, response: { status: 403, data: 'forbidden' } });
+        it('propagates ExternalServiceError from HttpClient', async () => {
+            mockHttp.get.mockRejectedValue(
+                new ExternalServiceError('https://tasks.googleapis.com/tasks/v1/users/@me/lists', 'HTTP 403: forbidden'),
+            );
 
             await expect(connector.fetchTasks(tokens)).rejects.toThrow(ExternalServiceError);
         });
 
-        it('rethrows non-axios errors unchanged', async () => {
-            vi.mocked(axios.isAxiosError).mockReturnValue(false);
-            mockGet.mockRejectedValue(new TypeError('network fail'));
+        it('rethrows non-http errors unchanged', async () => {
+            mockHttp.get.mockRejectedValue(new TypeError('network fail'));
 
             await expect(connector.fetchTasks(tokens)).rejects.toThrow(TypeError);
         });
