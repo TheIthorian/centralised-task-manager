@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { ConnectorStatusDto } from '@ctm/api-client';
+import { io, type Socket } from 'socket.io-client';
+import type { ConnectorStatusDto, TaskSyncJobDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
+import { readTokens } from '../auth/auth-storage.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 
 /** Settings sub-page: connected task sources. */
@@ -12,6 +14,8 @@ export function SourcesPage(): React.JSX.Element {
     const { api } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const [banner, setBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [syncJobs, setSyncJobs] = useState<Map<string, TaskSyncJobDto>>(new Map());
+    const socketRef = useRef<Socket | null>(null);
 
     const {
         data: connectors = [],
@@ -22,6 +26,32 @@ export function SourcesPage(): React.JSX.Element {
         queryKey: ['connectors'],
         queryFn: () => api.listConnectors(),
     });
+
+    // WebSocket connection — opens once, cleans up on unmount
+    useEffect(() => {
+        const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+        const { accessToken } = readTokens();
+
+        const socket = io(baseUrl, {
+            auth: { token: accessToken },
+            transports: ['websocket'],
+        });
+
+        socket.on('sync:progress', (job: TaskSyncJobDto) => {
+            setSyncJobs((prev) => new Map(prev).set(job.source, job));
+
+            if (job.status === 'done') {
+                void qc.invalidateQueries({ queryKey: ['tasks'] });
+                void qc.invalidateQueries({ queryKey: ['connectors'] });
+            }
+        });
+
+        socketRef.current = socket;
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
 
     const connectMutation = useMutation({
         mutationFn: async (source: string) => {
@@ -39,20 +69,36 @@ export function SourcesPage(): React.JSX.Element {
         },
     });
 
+    const syncMutation = useMutation({
+        mutationFn: (source: string) => api.syncConnector({ source }),
+        onSuccess: (job) => {
+            setSyncJobs((prev) => new Map(prev).set(job.source, job));
+        },
+    });
+
+    const cancelSyncMutation = useMutation({
+        mutationFn: ({ source, jobId }: { source: string; jobId: string }) =>
+            api.cancelSyncJob({ source, jobId }),
+    });
+
     useEffect(() => {
         const connected = searchParams.get('connected');
-        const error = searchParams.get('error');
+        const errorParam = searchParams.get('error');
 
         if (connected) {
             setBanner({ type: 'success', message: `${connected} connected successfully.` });
             setSearchParams({}, { replace: true });
-        } else if (error) {
-            setBanner({ type: 'error', message: error });
+        } else if (errorParam) {
+            setBanner({ type: 'error', message: errorParam });
             setSearchParams({}, { replace: true });
         }
     }, []);
 
-    const isPending = connectMutation.isPending || disconnectMutation.isPending;
+    const isPending =
+        connectMutation.isPending ||
+        disconnectMutation.isPending ||
+        syncMutation.isPending ||
+        cancelSyncMutation.isPending;
 
     return (
         <div className="p-4 md:p-6 max-w-2xl">
@@ -70,16 +116,15 @@ export function SourcesPage(): React.JSX.Element {
                     <p className={`font-bold text-sm ${banner.type === 'success' ? 'text-green-700 dark:text-green-400' : 'text-nb-red'}`}>
                         {banner.message}
                     </p>
-                    <button
-                        onClick={() => setBanner(null)}
-                        className="ml-4 text-xs font-bold opacity-60 hover:opacity-100"
-                    >
+                    <button onClick={() => setBanner(null)} className="ml-4 text-xs font-bold opacity-60 hover:opacity-100">
                         ✕
                     </button>
                 </div>
             )}
 
-            {isLoading && <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">Loading…</p>}
+            {isLoading && (
+                <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">Loading…</p>
+            )}
 
             {isError && (
                 <div className="border-2 border-nb-red bg-nb-red/10 p-3">
@@ -106,6 +151,9 @@ export function SourcesPage(): React.JSX.Element {
                             connector={connector}
                             onConnect={(source) => connectMutation.mutate(source)}
                             onDisconnect={(source) => disconnectMutation.mutate(source)}
+                            onSync={(source) => syncMutation.mutate(source)}
+                            onCancelSync={(source, jobId) => cancelSyncMutation.mutate({ source, jobId })}
+                            syncJob={syncJobs.get(connector.source)}
                             isPending={isPending}
                         />
                     ))}
