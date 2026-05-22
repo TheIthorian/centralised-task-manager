@@ -15,12 +15,20 @@ interface GoogleTaskList {
     title: string;
 }
 
+/** Google Tasks API task object. See: https://developers.google.com/tasks/reference/rest/v1/tasks */
 interface GoogleTask {
+    kind: string;
     id: string;
+    etag: string;
     title: string;
-    notes?: string;
+    updated: string;
+    selfLink: string;
+    position: string;
     status: 'needsAction' | 'completed';
     due?: string;
+    notes?: string;
+    links?: Array<{ type?: string; description?: string; link?: string }>;
+    webViewLink?: string;
     deleted?: boolean;
     hidden?: boolean;
 }
