@@ -44,21 +44,23 @@ apps/mcp/
 ## MCP Tools
 
 ### Tasks
-| Tool | Maps to |
-|------|---------|
-| `list_tasks` | `client.listTasks({ filter })` |
-| `create_task` | `client.createTask({ dto })` |
-| `update_task` | `client.updateTask({ id, dto })` |
-| `complete_task` | `client.completeTask({ id })` |
-| `delete_task` | `client.deleteTask({ id })` |
+
+| Tool                 | Maps to                                |
+| -------------------- | -------------------------------------- |
+| `list_tasks`         | `client.listTasks({ filter })`         |
+| `create_task`        | `client.createTask({ dto })`           |
+| `update_task`        | `client.updateTask({ id, dto })`       |
+| `complete_task`      | `client.completeTask({ id })`          |
+| `delete_task`        | `client.deleteTask({ id })`            |
 | `set_fuzzy_deadline` | `client.setFuzzyDeadline({ id, dto })` |
 
 ### Connectors
-| Tool | Maps to |
-|------|---------|
-| `list_connectors` | `client.listConnectors()` |
+
+| Tool                     | Maps to                                  |
+| ------------------------ | ---------------------------------------- |
+| `list_connectors`        | `client.listConnectors()`                |
 | `get_connector_auth_url` | `client.getConnectorAuthUrl({ source })` |
-| `disconnect_connector` | `client.disconnectConnector({ source })` |
+| `disconnect_connector`   | `client.disconnectConnector({ source })` |
 
 ## Auth Flow
 
@@ -81,15 +83,16 @@ MCP client → POST /mcp (Bearer JWT)
 
 ## Environment Variables
 
-| Variable | Used by |
-|----------|---------|
-| `CTM_API_BASE_URL` | apps/mcp — base URL of apps/main |
-| `JWT_SECRET` | apps/mcp — shared with apps/main for token validation |
-| `PORT` | apps/mcp — HTTP port (default 3002) |
+| Variable           | Used by                                               |
+| ------------------ | ----------------------------------------------------- |
+| `CTM_API_BASE_URL` | apps/mcp — base URL of apps/main                      |
+| `JWT_SECRET`       | apps/mcp — shared with apps/main for token validation |
+| `PORT`             | apps/mcp — HTTP port (default 3002)                   |
 
 ## Transport
 
 MCP Streamable HTTP transport (`@modelcontextprotocol/sdk`):
+
 - `POST /mcp` — client → server messages
 - `GET /mcp` — server-sent events stream
 
