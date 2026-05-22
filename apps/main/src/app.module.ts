@@ -9,6 +9,7 @@ import { ConnectorsModule } from './connectors/connectors.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
 import { RemindersModule } from './reminders/reminders.module.js';
 import { OAuthModule } from './oauth/oauth.module.js';
+import { SyncModule } from './sync/sync.module.js';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { OAuthModule } from './oauth/oauth.module.js';
         TasksModule,
         RemindersModule,
         OAuthModule,
+        SyncModule,
     ],
 })
 export class AppModule implements NestModule {

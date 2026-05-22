@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module.js';
 
 interface CorsOptions {
@@ -25,6 +26,7 @@ export async function createApp(): Promise<NestFastifyApplication> {
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
     app.enableCors(buildCorsOptions(process.env));
+    app.useWebSocketAdapter(new IoAdapter(app));
 
     return app;
 }
