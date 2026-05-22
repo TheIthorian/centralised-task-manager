@@ -32,7 +32,6 @@ export function TaskModal({
     onSave,
     onDelete,
     onSetFuzzyDeadline,
-    onRemoveFuzzyDeadline,
     isSaving = false,
     isDeleting = false,
     isSettingFuzzy = false,
@@ -104,16 +103,6 @@ export function TaskModal({
         }
     };
 
-    const handleRemoveFuzzy = async (): Promise<void> => {
-        setErrorMessage('');
-
-        try {
-            await onRemoveFuzzyDeadline(task.id);
-        } catch (error) {
-            setErrorMessage(getErrorMessage(error, 'Failed to remove fuzzy deadline.'));
-        }
-    };
-
     const busy = isSaving || isDeleting || isSettingFuzzy || isRemovingFuzzy;
 
     return (
@@ -122,7 +111,10 @@ export function TaskModal({
                 <form onSubmit={handleSave} className="flex flex-col gap-4">
                     <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
                     <div className="flex flex-col gap-1">
-                        <label htmlFor="description" className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white">
+                        <label
+                            htmlFor="description"
+                            className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white"
+                        >
                             Description
                         </label>
                         <textarea
@@ -144,7 +136,9 @@ export function TaskModal({
                                         type="button"
                                         onClick={() => setPriority(p)}
                                         className={`border-2 border-nb-black dark:border-white/30 px-2 py-1 font-black text-xs ${
-                                            priority === p ? 'bg-nb-black dark:bg-white text-white dark:text-nb-black' : 'bg-white dark:bg-neutral-800 text-nb-black dark:text-white'
+                                            priority === p
+                                                ? 'bg-nb-black dark:bg-white text-white dark:text-nb-black'
+                                                : 'bg-white dark:bg-neutral-800 text-nb-black dark:text-white'
                                         }`}
                                     >
                                         P{p}
@@ -152,12 +146,19 @@ export function TaskModal({
                                 ))}
                             </div>
                         </div>
-                        <Input label="Due Date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                        <Input
+                            label="Due Date"
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                        />
                     </div>
 
                     {/* Fuzzy Deadline */}
                     <div className="border-t-2 border-nb-black/20 dark:border-white/10 pt-3">
-                        <p className="font-black uppercase text-xs tracking-widest text-nb-black/40 dark:text-white/30 mb-2">Fuzzy Deadline</p>
+                        <p className="font-black uppercase text-xs tracking-widest text-nb-black/40 dark:text-white/30 mb-2">
+                            Fuzzy Deadline
+                        </p>
                         {task.fuzzyDeadline && (
                             <p className="text-nb-black/60 dark:text-white/50 font-bold text-xs mb-2">
                                 Current: {FUZZY_TYPE_LABELS[task.fuzzyDeadline.type]}
@@ -209,7 +210,9 @@ export function TaskModal({
                         </div>
                     </div>
                     {confirmDelete && (
-                        <p className="text-xs font-bold text-nb-red -mt-2">Click again to confirm permanent deletion.</p>
+                        <p className="text-xs font-bold text-nb-red -mt-2">
+                            Click again to confirm permanent deletion.
+                        </p>
                     )}
                 </form>
             </div>
