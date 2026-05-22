@@ -1,7 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsISO8601, Min, Max, IsInt, MaxLength, IsArray, ValidateNested } from 'class-validator';
+import {
+    IsString, IsNotEmpty, IsOptional, IsISO8601, Min, Max, IsInt,
+    MaxLength, IsArray, ValidateNested, IsMongoId,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { LocationDto } from './update-task.dto.js';
+import { LocationDto, DueDateDto, DurationDto } from './update-task.dto.js';
 
 export class CreateTaskDto {
     @ApiProperty({ example: 'Write quarterly report', maxLength: 200 })
@@ -16,10 +19,22 @@ export class CreateTaskDto {
     @MaxLength(2000)
     description?: string;
 
-    @ApiPropertyOptional({ example: '2026-06-01T00:00:00.000Z' })
+    @ApiPropertyOptional({ type: DueDateDto })
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => DueDateDto)
+    due?: DueDateDto;
+
+    @ApiPropertyOptional({ example: '2026-06-30' })
     @IsOptional()
     @IsISO8601()
-    dueDate?: string;
+    deadlineDate?: string;
+
+    @ApiPropertyOptional({ type: DurationDto })
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => DurationDto)
+    duration?: DurationDto;
 
     @ApiPropertyOptional({ minimum: 1, maximum: 4, example: 2 })
     @IsOptional()
@@ -34,6 +49,11 @@ export class CreateTaskDto {
     @ValidateNested({ each: true })
     @Type(() => LocationDto)
     locations?: LocationDto[];
+
+    @ApiPropertyOptional({ example: 'abc123', description: 'CTM task ObjectId of parent task' })
+    @IsOptional()
+    @IsMongoId()
+    parentId?: string;
 
     @ApiProperty({
         example: 'todoist',
