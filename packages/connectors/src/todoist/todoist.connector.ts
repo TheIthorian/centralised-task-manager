@@ -171,7 +171,7 @@ export class TodoistConnector implements TaskConnector {
             sourceId: task.id,
             title: task.content,
             description: task.description !== '' ? task.description : null,
-            status: task.is_completed ? 'done' : 'open',
+            status: task.checked ? 'done' : 'open',
             priority: task.priority,
             dueDate: task.due ? new Date(task.due.date) : null,
             tags: task.labels,

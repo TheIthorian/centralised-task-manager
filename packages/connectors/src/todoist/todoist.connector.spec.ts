@@ -60,9 +60,9 @@ describe('TodoistConnector', () => {
                         id: 'task-1',
                         content: 'Buy milk',
                         description: 'From the supermarket',
-                        is_completed: false,
+                        checked: false,
                         priority: 2,
-                        due: { date: '2026-06-01' },
+                        due: { date: '2026-06-01', timezone: null, string: '', lang: 'en', is_recurring: false },
                         labels: ['shopping', 'errands'],
                     },
                 ],
@@ -90,7 +90,7 @@ describe('TodoistConnector', () => {
                         id: 't2',
                         content: 'Done task',
                         description: '',
-                        is_completed: true,
+                        checked: true,
                         priority: 1,
                         due: null,
                         labels: [],
@@ -107,7 +107,7 @@ describe('TodoistConnector', () => {
         it('sets dueDate to null when no due date', async () => {
             mockHttp.get.mockResolvedValue({
                 results: [
-                    { id: 't3', content: 'No due', description: '', is_completed: false, priority: 1, due: null, labels: [] },
+                    { id: 't3', content: 'No due', description: '', checked: false, priority: 1, due: null, labels: [] },
                 ],
                 next_cursor: null,
             });
