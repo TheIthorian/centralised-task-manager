@@ -12,7 +12,7 @@
     "start": "node dist/main.js",
     "test": "vitest run",
     "lint": "oxlint src",
-    "format": "oxfmt --config ../../.oxfmtrc.json src '**/*.md'"
+    "format": "oxfmt --no-error-on-unmatched-pattern --config ../../.oxfmtrc.json src '**/*.md'"
   },
   "dependencies": {
     "@ctm/api-client": "workspace:*",

@@ -7,10 +7,7 @@ import { registerConnectorsCommand } from './commands/connectors.js';
 
 const program = new Command();
 
-program
-    .name('ctm')
-    .description('Centralised Task Manager CLI')
-    .version('0.0.1');
+program.name('ctm').description('Centralised Task Manager CLI').version('0.0.1');
 
 registerLoginCommand(program);
 registerLogoutCommand(program);

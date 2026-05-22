@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readConfig, writeConfig, clearConfig } from './auth.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as os from 'node:os';
 
 vi.mock('node:fs');
 vi.mock('node:os', () => ({ homedir: () => '/mock-home' }));

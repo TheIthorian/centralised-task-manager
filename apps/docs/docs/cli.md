@@ -120,7 +120,7 @@ ctm connectors disconnect todoist
 
 `--token` and `--base-url` are available on the `tasks` and `connectors` command groups:
 
-| Flag | Env var | Description | Example |
-|------|---------|-------------|---------|
-| `--token <t>` | `CTM_TOKEN` | Override stored credentials | `ctm tasks --token <t> list` |
-| `--base-url <url>` | `CTM_BASE_URL` | Override API base URL | `ctm tasks --base-url http://... list` |
+| Flag               | Env var        | Description                 | Example                                |
+| ------------------ | -------------- | --------------------------- | -------------------------------------- |
+| `--token <t>`      | `CTM_TOKEN`    | Override stored credentials | `ctm tasks --token <t> list`           |
+| `--base-url <url>` | `CTM_BASE_URL` | Override API base URL       | `ctm tasks --base-url http://... list` |
