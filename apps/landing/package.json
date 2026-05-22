@@ -15,19 +15,19 @@
     "format": "oxfmt --config ../../.oxfmtrc.json src '**/*.md'"
   },
   "dependencies": {
-    "@astrojs/react": "^5.0.5",
-    "astro": "^6.3.5",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "@astrojs/react": "5.0.5",
+    "astro": "6.3.5",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.9",
+    "@astrojs/check": "0.9.9",
     "@ctm/tsconfig": "workspace:*",
-    "@tailwindcss/vite": "^4.3.0",
-    "vite": "^7.3.2",
-    "@types/react": "^19.2.15",
-    "@types/react-dom": "^19.2.3",
-    "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3"
+    "@tailwindcss/vite": "4.3.0",
+    "vite": "7.3.3",
+    "@types/react": "19.2.15",
+    "@types/react-dom": "19.2.3",
+    "tailwindcss": "4.3.0",
+    "typescript": "6.0.3"
   }
 }

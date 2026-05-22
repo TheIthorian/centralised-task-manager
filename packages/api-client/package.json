@@ -21,11 +21,11 @@
     "format": "oxfmt --config ../../.oxfmtrc.json src '**/*.md'"
   },
   "dependencies": {
-    "axios": "^1.16.1"
+    "axios": "1.16.1"
   },
   "devDependencies": {
     "@ctm/tsconfig": "workspace:*",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "typescript": "6.0.3",
+    "vitest": "4.1.7"
   }
 }

@@ -9,7 +9,7 @@
     "format": "oxfmt --config ../../.oxfmtrc.json '**/*.md'"
   },
   "dependencies": {
-    "oxfmt": "^0.51.0",
-    "oxlint": "^1.66.0"
+    "oxfmt": "0.51.0",
+    "oxlint": "1.66.0"
   }
 }
