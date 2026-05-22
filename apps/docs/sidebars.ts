@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
         'authentication',
         'connectors',
         'tasks',
+        'cli',
     ],
     apiSidebar: [
         {

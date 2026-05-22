@@ -12,6 +12,7 @@ Turborepo monorepo managed with **pnpm workspaces**.
 apps/
   main/             # NestJS REST API + auth server (primary backend)
   web/              # Vite + React SPA (served by apps/main in production)
+  cli/              # Node.js CLI (`ctm`) — task and connector management
   docs/             # Docusaurus site — compiled user-facing docs + OpenAPI reference
                     # (do NOT store internal markdown here)
 packages/
