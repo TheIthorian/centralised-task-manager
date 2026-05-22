@@ -82,7 +82,7 @@ export function SourceCard({
                         {syncJob?.stage ? STAGE_LABEL[syncJob.stage] ?? 'Working…' : 'Starting…'}
                     </p>
                     <div className="w-full h-1.5 bg-nb-black/10 dark:bg-white/10 overflow-hidden">
-                        <div className="h-full bg-nb-black dark:bg-white animate-pulse w-1/2" />
+                        <div className="h-full bg-nb-black dark:bg-white animate-pulse w-full" />
                     </div>
                 </div>
             )}
