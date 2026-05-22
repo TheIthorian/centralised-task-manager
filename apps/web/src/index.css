@@ -43,15 +43,11 @@ body::after {
     position: fixed;
     bottom: 0;
     right: 0;
-    width: 75vmin;
-    height: 75vmin;
+    width: 128vmin;
+    height: 128vmin;
     pointer-events: none;
     z-index: 1;
     background: url('/spiral-light.svg') right bottom / contain no-repeat;
-}
-
-.dark body::after {
-    background-image: url('/spiral-dark.svg');
 }
 
 body::before {
