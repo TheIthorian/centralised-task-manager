@@ -66,3 +66,17 @@ export type WebConnectorParams = {
 export type WebUpdateMeParams = {
     dto: UpdateUserDto;
 };
+
+export type WebSyncConnectorParams = {
+    source: string;
+};
+
+export type WebGetSyncJobParams = {
+    source: string;
+    jobId: string;
+};
+
+export type WebCancelSyncJobParams = {
+    source: string;
+    jobId: string;
+};

@@ -3,6 +3,7 @@ import {
     CtmApiClient,
     type ConnectorStatusDto,
     type TaskDto,
+    type TaskSyncJobDto,
     type TokenPair,
     type UserDto,
 } from '@ctm/api-client';
@@ -10,15 +11,18 @@ import type { StoredAuthTokens } from '../auth/auth-storage.js';
 import type {
     WebApiClientOptions,
     WebApiError,
+    WebCancelSyncJobParams,
     WebConnectorParams,
     WebCreateTaskParams,
     WebDeleteTaskParams,
+    WebGetSyncJobParams,
     WebListTasksParams,
     WebLoginParams,
     WebRegisterParams,
     WebRemoveFuzzyDeadlineParams,
     WebSetFuzzyDeadlineParams,
     WebSetTaskStatusParams,
+    WebSyncConnectorParams,
     WebUpdateMeParams,
     WebUpdateTaskParams,
 } from './web-api-client.types.js';
@@ -109,6 +113,21 @@ export class WebApiClient {
     /** Disconnect a connector for the current user. */
     async disconnectConnector({ source }: WebConnectorParams): Promise<void> {
         await this.execute({ request: () => this.apiClient.disconnectConnector({ source }) });
+    }
+
+    /** Start a pull-sync job for a connected source. */
+    async syncConnector({ source }: WebSyncConnectorParams): Promise<TaskSyncJobDto> {
+        return this.execute({ request: () => this.apiClient.syncConnector({ source }) });
+    }
+
+    /** Get the status of a sync job. */
+    async getSyncJob({ source, jobId }: WebGetSyncJobParams): Promise<TaskSyncJobDto> {
+        return this.execute({ request: () => this.apiClient.getSyncJob({ source, jobId }) });
+    }
+
+    /** Cancel a sync job. */
+    async cancelSyncJob({ source, jobId }: WebCancelSyncJobParams): Promise<void> {
+        await this.execute({ request: () => this.apiClient.cancelSyncJob({ source, jobId }) });
     }
 
     /** Get the current user profile. */
