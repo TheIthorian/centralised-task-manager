@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
         if (fallback) return fallback;
 
         return (
-            <div className="m-4 border-4 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-900 shadow-[4px_4px_0px_#111] dark:shadow-none p-6 max-w-lg">
+            <div role="alert" className="m-4 border-4 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-900 shadow-[4px_4px_0px_#111] dark:shadow-none p-6 max-w-lg">
                 <h2 className="text-xl font-black uppercase text-nb-black dark:text-white mb-2">
                     Something went wrong
                 </h2>
@@ -52,6 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
                     </details>
                 )}
                 <button
+                    type="button"
                     onClick={() => window.location.reload()}
                     className="inline-flex items-center justify-center gap-2 border-2 border-nb-black dark:border-white/20 font-black uppercase tracking-wide text-sm px-4 py-2 bg-nb-black dark:bg-nb-yellow text-white dark:text-nb-black shadow-[3px_3px_0px_#111] dark:shadow-none transition-all duration-100 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none cursor-pointer"
                 >
