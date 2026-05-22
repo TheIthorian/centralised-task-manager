@@ -1,4 +1,3 @@
-// apps/main/src/sync/sync.module.ts
 import { Module } from '@nestjs/common';
 import { JobsModule } from '../jobs/jobs.module.js';
 import { ConnectorsModule } from '../connectors/connectors.module.js';

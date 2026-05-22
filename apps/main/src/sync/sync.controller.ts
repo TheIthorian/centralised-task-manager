@@ -1,40 +1,13 @@
-// apps/main/src/sync/sync.controller.ts
 import { Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { SyncService } from './sync.service.js';
-import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
+import { type SyncJobDto, toSyncJobDto } from './sync-job.dto.js';
 
-interface AuthRequest {
+type AuthRequest = {
     user: JwtPayload;
-}
-
-type SyncJobDto = {
-    id: string;
-    type: string;
-    status: string;
-    source: string;
-    stage: string | null;
-    synced: number;
-    skipped: number;
-    error: string | null;
-    completedAt: string | null;
 };
-
-function toDto(job: TaskSyncJobDocument): SyncJobDto {
-    return {
-        id: String(job._id),
-        type: job.type,
-        status: job.status,
-        source: job.source,
-        stage: job.stage,
-        synced: job.synced,
-        skipped: job.skipped,
-        error: job.error,
-        completedAt: job.completedAt?.toISOString() ?? null,
-    };
-}
 
 @ApiTags('Sync')
 @Controller('connectors/:source/sync')
@@ -52,7 +25,7 @@ export class SyncController {
     ): Promise<SyncJobDto> {
         const job = await this.sync.createJob({ userId: req.user.sub, source });
 
-        return toDto(job);
+        return toSyncJobDto(job);
     }
 
     /** Get the status of a sync job. */
@@ -64,7 +37,7 @@ export class SyncController {
     ): Promise<SyncJobDto> {
         const job = await this.sync.getJob({ userId: req.user.sub, jobId });
 
-        return toDto(job);
+        return toSyncJobDto(job);
     }
 
     /** Cancel a running or queued sync job. */

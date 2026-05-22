@@ -1,10 +1,9 @@
-// apps/main/src/sync/sync.service.ts
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorRegistry } from '@ctm/connectors';
 import { Job } from '../jobs/schemas/job.schema.js';
-import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
+import { TASK_SYNC_JOB_MODEL, type TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import { TasksService } from '../tasks/tasks.service.js';
 import { SyncGateway } from './sync.gateway.js';
@@ -16,7 +15,7 @@ export class SyncService {
     constructor(
         // Injected to ensure Mongoose registers the base Job model before the discriminator is used.
         @InjectModel(Job.name) _jobModel: Model<never>,
-        @InjectModel('task-sync') private readonly taskSyncModel: Model<TaskSyncJobDocument>,
+        @InjectModel(TASK_SYNC_JOB_MODEL) private readonly taskSyncModel: Model<TaskSyncJobDocument>,
         private readonly connectors: ConnectorsService,
         private readonly registry: ConnectorRegistry,
         private readonly tasks: TasksService,
@@ -67,11 +66,6 @@ export class SyncService {
     }
 
     private async runSync(jobId: string, userId: string, source: string): Promise<void> {
-        const isCancelled = async (): Promise<boolean> => {
-            const j = await this.taskSyncModel.findById(jobId);
-            return !j || j.status === 'cancelled';
-        };
-
         const update = async (patch: Partial<TaskSyncJobDocument>): Promise<TaskSyncJobDocument | null> =>
             this.taskSyncModel.findByIdAndUpdate(jobId, patch, { new: true });
 
@@ -82,23 +76,24 @@ export class SyncService {
 
             this.gateway.emitProgress(userId, job);
 
-            if (await isCancelled()) return;
+            if (job.status === 'cancelled') return;
 
             const tokens = await this.connectors.getDecryptedTokens({ userId, source });
             const connector = this.registry.get(source);
             const remoteTasks = await connector.fetchTasks(tokens);
 
-            if (await isCancelled()) return;
-
             job = await update({ stage: 'upserting' });
 
-            if (!job) return;
+            if (!job || job.status === 'cancelled') return;
 
             this.gateway.emitProgress(userId, job);
 
             const { synced, skipped } = await this.tasks.upsertFromRemote({ userId, source, remoteTasks });
 
-            if (await isCancelled()) return;
+            // Re-fetch to check for cancellation that arrived during upsertFromRemote
+            job = await this.taskSyncModel.findById(jobId);
+
+            if (!job || job.status === 'cancelled') return;
 
             await this.connectors.updateLastSyncedAt({ userId, source });
 

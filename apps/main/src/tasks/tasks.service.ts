@@ -224,8 +224,9 @@ export class TasksService {
     }
 
     /** Pull-sync: upsert remote tasks into CTM. CTM-local changes win — any task where
-     *  updatedAt > syncedAt is skipped. Uses { timestamps: false } on updates so that
-     *  Mongoose does not bump updatedAt during sync writes, preserving the user-edit signal. */
+     *  updatedAt > syncedAt is skipped. Existing tasks are fetched in a single query and
+     *  updates are applied via bulkWrite to avoid N+1 DB calls. Uses timestamps: false so
+     *  that Mongoose does not bump updatedAt during sync writes, preserving the user-edit signal. */
     async upsertFromRemote({
         userId,
         source,
@@ -235,28 +236,43 @@ export class TasksService {
         source: string;
         remoteTasks: RemoteTask[];
     }): Promise<{ synced: number; skipped: number }> {
+        if (remoteTasks.length === 0) return { synced: 0, skipped: 0 };
+
+        const userObjectId = new Types.ObjectId(userId);
+        const sourceIds = remoteTasks.map((r) => r.sourceId);
+
+        const existingTasks = await this.taskModel.find({
+            userId: userObjectId,
+            source,
+            sourceId: { $in: sourceIds },
+        });
+
+        const existingBySourceId = new Map(existingTasks.map((t) => [t.sourceId, t]));
+        const now = new Date();
         let synced = 0;
         let skipped = 0;
 
+        const ops: Parameters<typeof this.taskModel.bulkWrite>[0] = [];
+
         for (const remote of remoteTasks) {
-            const existing = await this.taskModel.findOne({
-                userId: new Types.ObjectId(userId),
-                source,
-                sourceId: remote.sourceId,
-            });
+            const existing = existingBySourceId.get(remote.sourceId);
 
             if (!existing) {
-                await this.taskModel.create({
-                    userId: new Types.ObjectId(userId),
-                    source,
-                    sourceId: remote.sourceId,
-                    title: remote.title,
-                    description: remote.description ?? null,
-                    status: remote.status,
-                    priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
-                    tags: remote.tags,
-                    sourceDueDate: remote.dueDate ?? null,
-                    syncedAt: new Date(),
+                ops.push({
+                    insertOne: {
+                        document: {
+                            userId: userObjectId,
+                            source,
+                            sourceId: remote.sourceId,
+                            title: remote.title,
+                            description: remote.description ?? null,
+                            status: remote.status,
+                            priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
+                            tags: remote.tags,
+                            sourceDueDate: remote.dueDate ?? null,
+                            syncedAt: now,
+                        },
+                    },
                 });
 
                 synced++;
@@ -270,21 +286,29 @@ export class TasksService {
                 continue;
             }
 
-            await this.taskModel.findByIdAndUpdate(
-                existing._id,
-                {
-                    title: remote.title,
-                    description: remote.description ?? null,
-                    status: remote.status,
-                    priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
-                    tags: remote.tags,
-                    sourceDueDate: remote.dueDate ?? null,
-                    syncedAt: new Date(),
+            ops.push({
+                updateOne: {
+                    filter: { _id: existing._id },
+                    update: {
+                        $set: {
+                            title: remote.title,
+                            description: remote.description ?? null,
+                            status: remote.status,
+                            priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
+                            tags: remote.tags,
+                            sourceDueDate: remote.dueDate ?? null,
+                            syncedAt: now,
+                        },
+                    },
                 },
-                { timestamps: false },
-            );
+            });
 
             synced++;
+        }
+
+        if (ops.length > 0) {
+            // timestamps: false prevents Mongoose from bumping updatedAt on sync writes
+            await this.taskModel.bulkWrite(ops, { timestamps: false } as Parameters<typeof this.taskModel.bulkWrite>[1]);
         }
 
         return { synced, skipped };

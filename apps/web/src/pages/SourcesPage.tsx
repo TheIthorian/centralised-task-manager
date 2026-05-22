@@ -79,6 +79,9 @@ export function SourcesPage(): React.JSX.Element {
     const cancelSyncMutation = useMutation({
         mutationFn: ({ source, jobId }: { source: string; jobId: string }) =>
             api.cancelSyncJob({ source, jobId }),
+        onError: (err) => {
+            setBanner({ type: 'error', message: getErrorMessage(err, 'Failed to cancel sync.') });
+        },
     });
 
     useEffect(() => {

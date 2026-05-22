@@ -1,8 +1,7 @@
-// apps/main/src/jobs/jobs.module.ts
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Job, JobSchema } from './schemas/job.schema.js';
-import { TaskSyncJobSchema } from './schemas/task-sync-job.schema.js';
+import { TASK_SYNC_JOB_MODEL, TaskSyncJobSchema } from './schemas/task-sync-job.schema.js';
 
 @Module({
     imports: [
@@ -10,7 +9,7 @@ import { TaskSyncJobSchema } from './schemas/task-sync-job.schema.js';
             {
                 name: Job.name,
                 schema: JobSchema,
-                discriminators: [{ name: 'task-sync', schema: TaskSyncJobSchema }],
+                discriminators: [{ name: TASK_SYNC_JOB_MODEL, schema: TaskSyncJobSchema }],
             },
         ]),
     ],

@@ -1,6 +1,9 @@
 import { Schema } from 'mongoose';
 import type { JobDocument } from './job.schema.js';
 
+/** Injection token for the TaskSyncJob discriminator model. */
+export const TASK_SYNC_JOB_MODEL = 'task-sync';
+
 export type SyncStage = 'fetching' | 'upserting';
 
 export type TaskSyncJobDocument = JobDocument & {

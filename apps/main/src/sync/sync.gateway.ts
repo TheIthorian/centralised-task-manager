@@ -1,4 +1,3 @@
-// apps/main/src/sync/sync.gateway.ts
 import {
     WebSocketGateway,
     WebSocketServer,
@@ -9,6 +8,7 @@ import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
+import { toSyncJobDto } from './sync-job.dto.js';
 
 @WebSocketGateway({
     cors: {
@@ -52,16 +52,6 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     /** Emit current job state to all sockets belonging to this user. */
     emitProgress(userId: string, job: TaskSyncJobDocument): void {
-        this.server.to(`user:${userId}`).emit('sync:progress', {
-            id: String(job._id),
-            type: job.type,
-            status: job.status,
-            source: job.source,
-            stage: job.stage,
-            synced: job.synced,
-            skipped: job.skipped,
-            error: job.error,
-            completedAt: job.completedAt?.toISOString() ?? null,
-        });
+        this.server.to(`user:${userId}`).emit('sync:progress', toSyncJobDto(job));
     }
 }
