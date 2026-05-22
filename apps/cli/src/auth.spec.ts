@@ -22,6 +22,18 @@ describe('readConfig', () => {
         );
         expect(readConfig()).toEqual({ accessToken: 'at', refreshToken: 'rt', baseUrl: 'http://localhost:3000' });
     });
+
+    it('returns null when config file contains invalid JSON', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue('not-json');
+        expect(readConfig()).toBeNull();
+    });
+
+    it('returns null when config file is missing required fields', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ accessToken: 'at' }));
+        expect(readConfig()).toBeNull();
+    });
 });
 
 describe('writeConfig', () => {
