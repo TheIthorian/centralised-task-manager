@@ -4,10 +4,12 @@ export {
 } from './client.js';
 export type {
     ApiClientOptions,
+    CancelSyncJobParams,
     CreateTaskParams,
     DeleteTaskParams,
     DisconnectConnectorParams,
     GetConnectorAuthUrlParams,
+    GetSyncJobParams,
     ListTasksParams,
     LoginParams,
     RefreshParams,
@@ -15,6 +17,7 @@ export type {
     RemoveFuzzyDeadlineParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
+    SyncConnectorParams,
     UpdateMeParams,
     UpdateTaskParams,
 } from './client.types.js';
@@ -28,6 +31,7 @@ export type {
     SetTaskStatusDto,
     SetFuzzyDeadlineDto,
     ConnectorStatusDto,
+    TaskSyncJobDto,
     UpdateUserDto,
     TokenPair,
     TaskFilter,

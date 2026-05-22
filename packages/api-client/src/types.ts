@@ -63,6 +63,18 @@ export type ConnectorStatusDto = {
     lastSynced?: string;
 };
 
+export type TaskSyncJobDto = {
+    id: string;
+    type: string;
+    status: 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
+    source: string;
+    stage: 'fetching' | 'upserting' | null;
+    synced: number;
+    skipped: number;
+    error: string | null;
+    completedAt: string | null;
+};
+
 export type UpdateUserDto = {
     email?: string;
     currentPassword?: string;

@@ -3,16 +3,19 @@ import type {
     ConnectorStatusDto,
     TaskDto,
     TaskFilter,
+    TaskSyncJobDto,
     TokenPair,
     UserDto,
 } from './types.js';
 import type {
     ApiClientErrorOptions,
     ApiClientOptions,
+    CancelSyncJobParams,
     CreateTaskParams,
     DeleteTaskParams,
     DisconnectConnectorParams,
     GetConnectorAuthUrlParams,
+    GetSyncJobParams,
     ListTasksParams,
     LoginParams,
     RefreshParams,
@@ -20,6 +23,7 @@ import type {
     RemoveFuzzyDeadlineParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
+    SyncConnectorParams,
     UpdateMeParams,
     UpdateTaskParams,
 } from './client.types.js';
@@ -134,6 +138,21 @@ export class CtmApiClient {
     /** Disconnect a connector source. */
     async disconnectConnector({ source }: DisconnectConnectorParams): Promise<void> {
         await this.request<void>({ method: 'DELETE', path: `/connectors/${source}` });
+    }
+
+    /** Start a pull-sync job for a connected source. */
+    async syncConnector({ source }: SyncConnectorParams): Promise<TaskSyncJobDto> {
+        return this.request<TaskSyncJobDto>({ method: 'POST', path: `/connectors/${source}/sync` });
+    }
+
+    /** Get the status of a sync job. */
+    async getSyncJob({ source, jobId }: GetSyncJobParams): Promise<TaskSyncJobDto> {
+        return this.request<TaskSyncJobDto>({ method: 'GET', path: `/connectors/${source}/sync/${jobId}` });
+    }
+
+    /** Cancel a sync job. */
+    async cancelSyncJob({ source, jobId }: CancelSyncJobParams): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: `/connectors/${source}/sync/${jobId}` });
     }
 
     /** Get the current user's profile. */

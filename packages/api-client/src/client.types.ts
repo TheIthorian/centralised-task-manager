@@ -64,6 +64,20 @@ export type RemoveFuzzyDeadlineParams = {
     id: string;
 };
 
+export type SyncConnectorParams = {
+    source: string;
+};
+
+export type GetSyncJobParams = {
+    source: string;
+    jobId: string;
+};
+
+export type CancelSyncJobParams = {
+    source: string;
+    jobId: string;
+};
+
 export type ApiClientErrorOptions = {
     message: string;
     statusCode: number;
