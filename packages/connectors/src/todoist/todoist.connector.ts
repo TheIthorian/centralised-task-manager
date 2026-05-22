@@ -24,6 +24,11 @@ interface TodoistTokenResponse {
     token_type: string;
 }
 
+interface TodoistTasksResponse {
+    results: TodoistTask[];
+    next_cursor: string | null;
+}
+
 export class TodoistConnector implements TaskConnector {
     readonly source = 'todoist';
 
@@ -31,7 +36,7 @@ export class TodoistConnector implements TaskConnector {
     private readonly authHttp: HttpClient;
 
     constructor(private readonly config: TodoistConnectorConfig) {
-        this.http = new HttpClient({ baseUrl: 'https://api.todoist.com/rest/v2', logger: config.logger });
+        this.http = new HttpClient({ baseUrl: 'https://api.todoist.com/api/v1', logger: config.logger });
         this.authHttp = new HttpClient({ baseUrl: 'https://todoist.com', logger: config.logger });
     }
 
@@ -73,11 +78,11 @@ export class TodoistConnector implements TaskConnector {
 
     /** Fetch all open tasks from the authenticated user's Todoist account. */
     async fetchTasks(tokens: OAuthTokens): Promise<RemoteTask[]> {
-        const tasks = await this.http.get<TodoistTask[]>('/tasks', {
+        const res = await this.http.get<TodoistTasksResponse>('/tasks', {
             Authorization: `Bearer ${tokens.accessToken}`,
         });
 
-        return tasks.map((t) => this.toRemoteTask(t));
+        return res.results.map((t) => this.toRemoteTask(t));
     }
 
     /** Create a new task in Todoist. */
@@ -115,11 +120,7 @@ export class TodoistConnector implements TaskConnector {
 
     /** Mark a task as complete by posting to the close endpoint. */
     async completeTask(tokens: OAuthTokens, sourceId: string): Promise<void> {
-        await this.http.post<void>(
-            `/tasks/${sourceId}/close`,
-            {},
-            { Authorization: `Bearer ${tokens.accessToken}` },
-        );
+        await this.http.post<void>(`/tasks/${sourceId}/close`, {}, { Authorization: `Bearer ${tokens.accessToken}` });
     }
 
     /** Permanently delete a task from Todoist. */

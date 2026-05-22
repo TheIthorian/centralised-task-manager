@@ -54,17 +54,20 @@ describe('TodoistConnector', () => {
 
     describe('fetchTasks', () => {
         it('maps Todoist tasks to RemoteTask shape', async () => {
-            mockHttp.get.mockResolvedValue([
-                {
-                    id: 'task-1',
-                    content: 'Buy milk',
-                    description: 'From the supermarket',
-                    is_completed: false,
-                    priority: 2,
-                    due: { date: '2026-06-01' },
-                    labels: ['shopping', 'errands'],
-                },
-            ]);
+            mockHttp.get.mockResolvedValue({
+                results: [
+                    {
+                        id: 'task-1',
+                        content: 'Buy milk',
+                        description: 'From the supermarket',
+                        is_completed: false,
+                        priority: 2,
+                        due: { date: '2026-06-01' },
+                        labels: ['shopping', 'errands'],
+                    },
+                ],
+                next_cursor: null,
+            });
 
             const tasks = await connector.fetchTasks(tokens);
 
@@ -81,17 +84,20 @@ describe('TodoistConnector', () => {
         });
 
         it('maps completed tasks to status "done"', async () => {
-            mockHttp.get.mockResolvedValue([
-                {
-                    id: 't2',
-                    content: 'Done task',
-                    description: '',
-                    is_completed: true,
-                    priority: 1,
-                    due: null,
-                    labels: [],
-                },
-            ]);
+            mockHttp.get.mockResolvedValue({
+                results: [
+                    {
+                        id: 't2',
+                        content: 'Done task',
+                        description: '',
+                        is_completed: true,
+                        priority: 1,
+                        due: null,
+                        labels: [],
+                    },
+                ],
+                next_cursor: null,
+            });
 
             const tasks = await connector.fetchTasks(tokens);
 
@@ -99,9 +105,12 @@ describe('TodoistConnector', () => {
         });
 
         it('sets dueDate to null when no due date', async () => {
-            mockHttp.get.mockResolvedValue([
-                { id: 't3', content: 'No due', description: '', is_completed: false, priority: 1, due: null, labels: [] },
-            ]);
+            mockHttp.get.mockResolvedValue({
+                results: [
+                    { id: 't3', content: 'No due', description: '', is_completed: false, priority: 1, due: null, labels: [] },
+                ],
+                next_cursor: null,
+            });
 
             const tasks = await connector.fetchTasks(tokens);
 
