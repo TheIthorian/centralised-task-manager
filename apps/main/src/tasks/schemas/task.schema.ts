@@ -28,6 +28,31 @@ class FuzzyDeadline {
 
 const FuzzyDeadlineSchema = SchemaFactory.createForClass(FuzzyDeadline);
 
+@Schema({ _id: false })
+class DueDate {
+    @Prop({ type: Date, required: true })
+    date!: Date;
+
+    @Prop({ type: String, default: null })
+    timezone!: string | null;
+
+    @Prop({ type: String, default: null })
+    recurrence!: string | null;
+}
+
+const DueDateSchema = SchemaFactory.createForClass(DueDate);
+
+@Schema({ _id: false })
+class Duration {
+    @Prop({ type: Number, required: true })
+    amount!: number;
+
+    @Prop({ type: String, required: true, enum: ['minute', 'day'] })
+    unit!: 'minute' | 'day';
+}
+
+const DurationSchema = SchemaFactory.createForClass(Duration);
+
 @Schema({ timestamps: true })
 export class Task {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
@@ -61,8 +86,17 @@ export class Task {
     })
     tags!: string[];
 
+    @Prop({ type: DueDateSchema, default: null })
+    due!: { date: Date; timezone: string | null; recurrence: string | null } | null;
+
     @Prop({ type: Date, default: null })
-    sourceDueDate!: Date | null;
+    deadlineDate!: Date | null;
+
+    @Prop({ type: DurationSchema, default: null })
+    duration!: { amount: number; unit: 'minute' | 'day' } | null;
+
+    @Prop({ type: Types.ObjectId, ref: 'Task', default: null })
+    parentId!: Types.ObjectId | null;
 
     @Prop({ type: FuzzyDeadlineSchema, default: null })
     fuzzyDeadline!: FuzzyDeadline | null;

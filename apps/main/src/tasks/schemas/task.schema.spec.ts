@@ -24,4 +24,33 @@ describe('TaskSchema', () => {
         expect(locationsPath).toBeDefined();
         expect(locationsPath.options.default).toEqual([]);
     });
+
+    it('has due sub-document with date, timezone, recurrence', () => {
+        const duePath = TaskSchema.path('due');
+        expect(duePath).toBeDefined();
+        expect(TaskSchema.path('due.date')).toBeDefined();
+        expect(TaskSchema.path('due.timezone')).toBeDefined();
+        expect(TaskSchema.path('due.recurrence')).toBeDefined();
+    });
+
+    it('has deadlineDate field defaulting to null', () => {
+        const path = TaskSchema.path('deadlineDate');
+        expect(path).toBeDefined();
+        expect(path.options.default).toBeNull();
+    });
+
+    it('has duration sub-document with amount and unit', () => {
+        expect(TaskSchema.path('duration.amount')).toBeDefined();
+        expect(TaskSchema.path('duration.unit')).toBeDefined();
+    });
+
+    it('has parentId field defaulting to null', () => {
+        const path = TaskSchema.path('parentId');
+        expect(path).toBeDefined();
+        expect(path.options.default).toBeNull();
+    });
+
+    it('does not have sourceDueDate field', () => {
+        expect(TaskSchema.path('sourceDueDate')).toBeUndefined();
+    });
 });
