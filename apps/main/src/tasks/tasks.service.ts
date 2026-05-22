@@ -68,6 +68,7 @@ export class TasksService {
                 status: 'open',
                 priority: (dto.priority ?? 3) as 1 | 2 | 3 | 4,
                 tags: [],
+                locations: dto.locations ?? [],
                 sourceDueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
                 syncedAt: new Date(),
             });
@@ -118,6 +119,7 @@ export class TasksService {
                     ...(dto.priority !== undefined && { priority: dto.priority }),
                     ...(dto.dueDate !== undefined && { sourceDueDate: new Date(dto.dueDate) }),
                     ...(dto.tags !== undefined && { tags: dto.tags }),
+                    ...(dto.locations !== undefined && { locations: dto.locations }),
                 },
                 { new: true },
             ) as Promise<TaskDocument>;
@@ -140,6 +142,7 @@ export class TasksService {
                 priority: remote.priority,
                 sourceDueDate: remote.dueDate,
                 tags: dto.tags ?? task.tags,
+                locations: dto.locations ?? task.locations,
                 syncedAt: new Date(),
             },
             { new: true },

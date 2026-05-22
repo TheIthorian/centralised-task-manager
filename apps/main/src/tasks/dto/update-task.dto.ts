@@ -1,5 +1,19 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsISO8601, IsInt, Min, Max, IsArray, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsISO8601, IsInt, Min, Max, IsArray, MaxLength, IsUrl, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class LocationDto {
+    @ApiPropertyOptional({ example: 'Eiffel Tower', maxLength: 200 })
+    @IsString()
+    @MaxLength(200)
+    name!: string;
+
+    @ApiPropertyOptional({ example: 'https://maps.google.com/?q=Eiffel+Tower', maxLength: 500 })
+    @IsString()
+    @IsUrl()
+    @MaxLength(500)
+    googleMapsUrl!: string;
+}
 
 export class UpdateTaskDto {
     @ApiPropertyOptional({ example: 'Updated title', maxLength: 200 })
@@ -32,4 +46,11 @@ export class UpdateTaskDto {
     @IsString({ each: true })
     @MaxLength(50, { each: true })
     tags?: string[];
+
+    @ApiPropertyOptional({ type: [LocationDto], description: 'Locations with Google Maps links' })
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LocationDto)
+    locations?: LocationDto[];
 }

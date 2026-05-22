@@ -420,6 +420,51 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         expect(JSON.parse(getRes.body).tags).toEqual(['work', 'urgent']);
     });
 
+    it('POST /tasks with locations persists them', async () => {
+        const location = { name: 'Eiffel Tower', googleMapsUrl: 'https://maps.google.com/?q=Eiffel+Tower' };
+        const res = await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title: `Located task ${Date.now()}`, source: 'local', locations: [location] },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(201);
+        expect(JSON.parse(res.body).locations).toEqual([location]);
+    });
+
+    it('PATCH /tasks/:id updates locations — change is persisted', async () => {
+        const id = await createLocal(`Location me ${Date.now()}`);
+        const location = { name: 'Big Ben', googleMapsUrl: 'https://maps.google.com/?q=Big+Ben' };
+
+        await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${id}`,
+            payload: { locations: [location] },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const getRes = await app.inject({
+            method: 'GET',
+            url: `/tasks/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(JSON.parse(getRes.body).locations).toEqual([location]);
+    });
+
+    it('PATCH /tasks/:id with invalid location url returns 400', async () => {
+        const id = await createLocal(`Bad location ${Date.now()}`);
+        const res = await app.inject({
+            method: 'PATCH',
+            url: `/tasks/${id}`,
+            payload: { locations: [{ name: 'Bad', googleMapsUrl: 'not-a-url' }] },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
     it('PATCH /tasks/:id returns 404 for unknown id', async () => {
         const res = await app.inject({
             method: 'PATCH',

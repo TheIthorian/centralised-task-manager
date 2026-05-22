@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { getErrorMessage } from '../../api/error-message.js';
 import { useToast } from '../../toast/ToastContext.js';
 import { Modal, Button, Input } from '../ui/index.js';
-import type { FuzzyDeadlineInfo, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
+import type { FuzzyDeadlineInfo, LocationDto, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
 
 type TaskModalProps = {
     task: TaskDto | null;
@@ -47,6 +47,9 @@ export function TaskModal({
 
     const [fuzzyType, setFuzzyType] = useState<FuzzyDeadlineInfo['type']>('this_week');
     const [fuzzyRemindEvery, setFuzzyRemindEvery] = useState<'daily' | 'weekly' | ''>('');
+    const [locations, setLocations] = useState<LocationDto[]>([]);
+    const [newLocName, setNewLocName] = useState('');
+    const [newLocUrl, setNewLocUrl] = useState('');
 
     useEffect(() => {
         if (task) {
@@ -58,6 +61,9 @@ export function TaskModal({
             setErrorMessage('');
             setFuzzyType(task.fuzzyDeadline?.type ?? 'this_week');
             setFuzzyRemindEvery(task.fuzzyDeadline?.remindEvery ?? '');
+            setLocations(task.locations ?? []);
+            setNewLocName('');
+            setNewLocUrl('');
         }
     }, [task]);
 
@@ -74,6 +80,7 @@ export function TaskModal({
                     description: description || undefined,
                     priority,
                     dueDate: dueDate || undefined,
+                    locations,
                 }),
                 onSetFuzzyDeadline(task.id, {
                     type: fuzzyType,
@@ -186,6 +193,66 @@ export function TaskModal({
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                             </select>
+                        </div>
+                    </div>
+
+                    {/* Locations */}
+                    <div className="border-t-2 border-nb-black/20 dark:border-white/10 pt-3">
+                        <p className="font-black uppercase text-xs tracking-widest text-nb-black/40 dark:text-white/30 mb-2">
+                            Locations
+                        </p>
+                        {locations.length > 0 && (
+                            <ul className="flex flex-col gap-1 mb-2">
+                                {locations.map((loc, i) => (
+                                    <li key={i} className="flex items-center gap-2 text-xs font-bold">
+                                        <a
+                                            href={loc.googleMapsUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-nb-black dark:text-white underline truncate flex-1"
+                                        >
+                                            📍 {loc.name}
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={() => setLocations((prev) => prev.filter((_, j) => j !== i))}
+                                            className="text-nb-red font-black text-xs hover:underline flex-shrink-0"
+                                            disabled={busy}
+                                        >
+                                            Remove
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <div className="flex gap-2">
+                            <Input
+                                label=""
+                                placeholder="Name"
+                                value={newLocName}
+                                onChange={(e) => setNewLocName(e.target.value)}
+                            />
+                            <Input
+                                label=""
+                                placeholder="Google Maps URL"
+                                value={newLocUrl}
+                                onChange={(e) => setNewLocUrl(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                disabled={!newLocName.trim() || !newLocUrl.trim() || busy}
+                                onClick={() => {
+                                    setLocations((prev) => [
+                                        ...prev,
+                                        { name: newLocName.trim(), googleMapsUrl: newLocUrl.trim() },
+                                    ]);
+                                    setNewLocName('');
+                                    setNewLocUrl('');
+                                }}
+                                className="border-2 border-nb-black dark:border-white/30 px-2 py-1 font-black text-xs bg-white dark:bg-neutral-800 text-nb-black dark:text-white disabled:opacity-40 self-end"
+                            >
+                                Add
+                            </button>
                         </div>
                     </div>
 

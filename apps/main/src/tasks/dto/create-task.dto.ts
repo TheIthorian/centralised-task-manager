@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsISO8601, Min, Max, IsInt, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsISO8601, Min, Max, IsInt, MaxLength, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { LocationDto } from './update-task.dto.js';
 
 export class CreateTaskDto {
     @ApiProperty({ example: 'Write quarterly report', maxLength: 200 })
@@ -25,6 +27,13 @@ export class CreateTaskDto {
     @Min(1)
     @Max(4)
     priority?: number;
+
+    @ApiPropertyOptional({ type: [LocationDto], description: 'Locations with Google Maps links' })
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LocationDto)
+    locations?: LocationDto[];
 
     @ApiProperty({
         example: 'todoist',

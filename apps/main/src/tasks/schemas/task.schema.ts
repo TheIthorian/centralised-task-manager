@@ -7,6 +7,17 @@ export type FuzzyDeadlineType = 'this_week' | 'this_month' | 'someday';
 export type RemindEvery = 'daily' | 'weekly';
 
 @Schema({ _id: false })
+class Location {
+    @Prop({ type: String, required: true, maxlength: 200 })
+    name!: string;
+
+    @Prop({ type: String, required: true, maxlength: 500 })
+    googleMapsUrl!: string;
+}
+
+const LocationSchema = SchemaFactory.createForClass(Location);
+
+@Schema({ _id: false })
 class FuzzyDeadline {
     @Prop({ type: String, required: true, enum: ['this_week', 'this_month', 'someday'] })
     type!: FuzzyDeadlineType;
@@ -55,6 +66,9 @@ export class Task {
 
     @Prop({ type: FuzzyDeadlineSchema, default: null })
     fuzzyDeadline!: FuzzyDeadline | null;
+
+    @Prop({ type: [LocationSchema], default: [] })
+    locations!: { name: string; googleMapsUrl: string }[];
 
     @Prop({ type: Date, required: true })
     syncedAt!: Date;

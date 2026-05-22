@@ -44,6 +44,11 @@ export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.E
             </button>
 
             <div className="flex items-center gap-1.5 flex-shrink-0">
+                {task.locations?.length > 0 && (
+                    <span className="text-xs" title={task.locations.map((l) => l.name).join(', ')}>
+                        📍
+                    </span>
+                )}
                 <Badge variant="source">{sourceLabel}</Badge>
                 {task.priority && (
                     <Badge variant={priorityVariant[task.priority as 1 | 2 | 3 | 4]}>P{task.priority}</Badge>

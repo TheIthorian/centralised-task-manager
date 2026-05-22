@@ -18,4 +18,10 @@ describe('TaskSchema', () => {
         expect(TaskSchema.path('title').options.maxlength).toBe(200);
         expect(TaskSchema.path('description').options.maxlength).toBe(2000);
     });
+
+    it('has locations array field defaulting to []', () => {
+        const locationsPath = TaskSchema.path('locations');
+        expect(locationsPath).toBeDefined();
+        expect(locationsPath.options.default).toEqual([]);
+    });
 });

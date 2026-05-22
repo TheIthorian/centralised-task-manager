@@ -9,6 +9,11 @@ export type UserDto = {
     name?: string;
 };
 
+export type LocationDto = {
+    name: string;
+    googleMapsUrl: string;
+};
+
 export type TaskDto = {
     id: string;
     title: string;
@@ -20,6 +25,7 @@ export type TaskDto = {
     source: string;
     sourceId: string;
     tags: string[];
+    locations: LocationDto[];
     createdAt: string;
     updatedAt: string;
 };
@@ -30,6 +36,7 @@ export type CreateTaskDto = {
     priority?: 1 | 2 | 3 | 4;
     dueDate?: string;
     source: string;
+    locations?: LocationDto[];
 };
 
 export type UpdateTaskDto = {
@@ -38,6 +45,7 @@ export type UpdateTaskDto = {
     priority?: 1 | 2 | 3 | 4;
     dueDate?: string;
     tags?: string[];
+    locations?: LocationDto[];
 };
 
 export type SetTaskStatusDto = {

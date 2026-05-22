@@ -23,6 +23,7 @@ type TaskResponse = {
     completed: boolean;
     priority: number | null;
     tags: string[];
+    locations: { name: string; googleMapsUrl: string }[];
     dueDate: string | null;
     fuzzyDeadline: { type: FuzzyDeadlineType; remindEvery: RemindEvery | null } | null;
     createdAt: string;
@@ -47,6 +48,7 @@ export class TasksController {
             completed: t.status === 'done',
             priority: t.priority,
             tags: t.tags,
+            locations: t.locations,
             dueDate: t.sourceDueDate ? t.sourceDueDate.toISOString() : null,
             fuzzyDeadline: t.fuzzyDeadline
                 ? { type: t.fuzzyDeadline.type, remindEvery: t.fuzzyDeadline.remindEvery }
