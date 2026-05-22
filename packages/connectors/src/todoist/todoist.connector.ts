@@ -2,6 +2,7 @@ import { type Logger, HttpClient } from '@ctm/http-client';
 
 import type { CreateTaskDto, OAuthTokens, RemoteTask, TaskConnector, UpdateTaskDto } from '../types.js';
 import type { TodoistTask, TodoistTokenResponse, TodoistTasksResponse } from './todoist.types.js';
+import { todoistStringToRrule, rruleToTodoistString } from './todoist-recurrence.js';
 
 export type TodoistConnectorConfig = {
     clientId: string;
@@ -84,14 +85,32 @@ export class TodoistConnector implements TaskConnector {
 
     /** Create a new task in Todoist. */
     async createTask(tokens: OAuthTokens, task: CreateTaskDto): Promise<RemoteTask> {
+        const body: Record<string, unknown> = {
+            content: task.title,
+            description: task.description ?? '',
+            priority: task.priority ?? 1,
+        };
+
+        if (task.due) {
+            body['due_date'] = task.due.date.toISOString().split('T')[0];
+
+            if (task.due.recurrence) {
+                body['due_string'] = rruleToTodoistString(task.due.recurrence);
+            }
+        }
+
+        if (task.deadlineDate) {
+            body['deadline'] = { date: task.deadlineDate.toISOString().split('T')[0] };
+        }
+
+        if (task.duration) {
+            body['duration'] = task.duration.amount;
+            body['duration_unit'] = task.duration.unit;
+        }
+
         const created = await this.http.post<TodoistTask>(
             '/tasks',
-            {
-                content: task.title,
-                description: task.description ?? '',
-                due_date: task.dueDate?.toISOString().split('T')[0],
-                priority: task.priority ?? 1,
-            },
+            body,
             { Authorization: `Bearer ${tokens.accessToken}` },
         );
 
@@ -100,15 +119,37 @@ export class TodoistConnector implements TaskConnector {
 
     /** Update an existing task in Todoist. */
     async updateTask(tokens: OAuthTokens, sourceId: string, patch: UpdateTaskDto): Promise<RemoteTask> {
+        const body: Record<string, unknown> = {
+            content: patch.title,
+            description: patch.description,
+            priority: patch.priority,
+        };
+
+        if (patch.due !== undefined) {
+            if (patch.due === null) {
+                body['due_date'] = null;
+            } else {
+                body['due_date'] = patch.due.date.toISOString().split('T')[0];
+
+                if (patch.due.recurrence) {
+                    body['due_string'] = rruleToTodoistString(patch.due.recurrence);
+                }
+            }
+        }
+
+        if (patch.deadlineDate !== undefined) {
+            body['deadline'] = patch.deadlineDate ? { date: patch.deadlineDate.toISOString().split('T')[0] } : null;
+        }
+
+        if (patch.duration !== undefined) {
+            body['duration'] = patch.duration?.amount ?? null;
+            body['duration_unit'] = patch.duration?.unit ?? null;
+        }
+
         // Todoist REST v2 uses POST (not PATCH) for task updates
         const updated = await this.http.post<TodoistTask>(
             `/tasks/${sourceId}`,
-            {
-                content: patch.title,
-                description: patch.description,
-                due_date: patch.dueDate?.toISOString().split('T')[0],
-                priority: patch.priority,
-            },
+            body,
             { Authorization: `Bearer ${tokens.accessToken}` },
         );
 
@@ -126,13 +167,26 @@ export class TodoistConnector implements TaskConnector {
     }
 
     private toRemoteTask(task: TodoistTask): RemoteTask {
+        const due = task.due
+            ? {
+                date: new Date(task.due.date),
+                timezone: task.due.timezone,
+                recurrence: task.due.is_recurring
+                    ? todoistStringToRrule(task.due.string, this.config.logger)
+                    : null,
+            }
+            : null;
+
         return {
             sourceId: task.id,
             title: task.content,
             description: task.description !== '' ? task.description : null,
             status: task.checked ? 'done' : 'open',
             priority: task.priority,
-            dueDate: task.due ? new Date(task.due.date) : null,
+            due,
+            deadline: task.deadline ? new Date(task.deadline.date) : null,
+            duration: task.duration ?? null,
+            parentSourceId: task.parent_id,
             tags: task.labels,
         };
     }

@@ -31,7 +31,6 @@ describe('TodoistConnector', () => {
         mockHttp = { get: vi.fn(), post: vi.fn(), delete: vi.fn() };
         mockAuthHttp = { post: vi.fn() };
 
-        // TodoistConnector creates two HttpClients: http (tasks API) then authHttp (auth API).
         vi.mocked(HttpClient)
             // eslint-disable-next-line prefer-arrow-callback
             .mockImplementationOnce(function () { return mockHttp as unknown as HttpClient; })
@@ -62,7 +61,10 @@ describe('TodoistConnector', () => {
                         description: 'From the supermarket',
                         checked: false,
                         priority: 2,
-                        due: { date: '2026-06-01', timezone: null, string: '', lang: 'en', is_recurring: false },
+                        due: { date: '2026-06-01', timezone: 'America/New_York', string: '', lang: 'en', is_recurring: false },
+                        deadline: null,
+                        duration: null,
+                        parent_id: null,
                         labels: ['shopping', 'errands'],
                     },
                 ],
@@ -79,8 +81,85 @@ describe('TodoistConnector', () => {
                 status: 'open',
                 priority: 2,
                 tags: ['shopping', 'errands'],
+                deadline: null,
+                duration: null,
+                parentSourceId: null,
             });
-            expect(tasks[0].dueDate).toBeInstanceOf(Date);
+            expect(tasks[0].due).toMatchObject({ timezone: 'America/New_York', recurrence: null });
+            expect(tasks[0].due?.date).toBeInstanceOf(Date);
+        });
+
+        it('maps recurring due dates to RRULE recurrence string', async () => {
+            mockHttp.get.mockResolvedValue({
+                results: [
+                    {
+                        id: 'task-2',
+                        content: 'Daily standup',
+                        description: '',
+                        checked: false,
+                        priority: 1,
+                        due: { date: '2026-06-01', timezone: null, string: 'every day', lang: 'en', is_recurring: true },
+                        deadline: null,
+                        duration: null,
+                        parent_id: null,
+                        labels: [],
+                    },
+                ],
+                next_cursor: null,
+            });
+
+            const tasks = await connector.fetchTasks(tokens);
+
+            expect(tasks[0].due?.recurrence).toBe('FREQ=DAILY');
+        });
+
+        it('maps deadline and duration fields', async () => {
+            mockHttp.get.mockResolvedValue({
+                results: [
+                    {
+                        id: 'task-3',
+                        content: 'Sprint task',
+                        description: '',
+                        checked: false,
+                        priority: 1,
+                        due: null,
+                        deadline: { date: '2026-06-15', lang: 'en', string: 'Jun 15' },
+                        duration: { amount: 90, unit: 'minute' },
+                        parent_id: null,
+                        labels: [],
+                    },
+                ],
+                next_cursor: null,
+            });
+
+            const tasks = await connector.fetchTasks(tokens);
+
+            expect(tasks[0].deadline).toBeInstanceOf(Date);
+            expect(tasks[0].duration).toEqual({ amount: 90, unit: 'minute' });
+        });
+
+        it('maps parent_id to parentSourceId', async () => {
+            mockHttp.get.mockResolvedValue({
+                results: [
+                    {
+                        id: 'child-1',
+                        content: 'Child task',
+                        description: '',
+                        checked: false,
+                        priority: 1,
+                        due: null,
+                        deadline: null,
+                        duration: null,
+                        parent_id: 'parent-1',
+                        labels: [],
+                    },
+                ],
+                next_cursor: null,
+            });
+
+            const tasks = await connector.fetchTasks(tokens);
+
+            expect(tasks[0].parentSourceId).toBe('parent-1');
         });
 
         it('maps completed tasks to status "done"', async () => {
@@ -93,6 +172,9 @@ describe('TodoistConnector', () => {
                         checked: true,
                         priority: 1,
                         due: null,
+                        deadline: null,
+                        duration: null,
+                        parent_id: null,
                         labels: [],
                     },
                 ],
@@ -104,17 +186,28 @@ describe('TodoistConnector', () => {
             expect(tasks[0].status).toBe('done');
         });
 
-        it('sets dueDate to null when no due date', async () => {
+        it('sets due to null when no due date', async () => {
             mockHttp.get.mockResolvedValue({
                 results: [
-                    { id: 't3', content: 'No due', description: '', checked: false, priority: 1, due: null, labels: [] },
+                    {
+                        id: 't3',
+                        content: 'No due',
+                        description: '',
+                        checked: false,
+                        priority: 1,
+                        due: null,
+                        deadline: null,
+                        duration: null,
+                        parent_id: null,
+                        labels: [],
+                    },
                 ],
                 next_cursor: null,
             });
 
             const tasks = await connector.fetchTasks(tokens);
 
-            expect(tasks[0].dueDate).toBeNull();
+            expect(tasks[0].due).toBeNull();
         });
     });
 
@@ -124,9 +217,12 @@ describe('TodoistConnector', () => {
                 id: 'new-1',
                 content: 'Buy coffee',
                 description: '',
-                is_completed: false,
+                checked: false,
                 priority: 2,
                 due: null,
+                deadline: null,
+                duration: null,
+                parent_id: null,
                 labels: [],
             });
 
@@ -140,6 +236,32 @@ describe('TodoistConnector', () => {
                 { Authorization: 'Bearer test_access_token' },
             );
         });
+
+        it('sends due_date and due_string for recurring tasks', async () => {
+            mockHttp.post.mockResolvedValue({
+                id: 'new-2',
+                content: 'Stand up',
+                description: '',
+                checked: false,
+                priority: 1,
+                due: { date: '2026-06-01', timezone: null, string: 'every day', lang: 'en', is_recurring: true },
+                deadline: null,
+                duration: null,
+                parent_id: null,
+                labels: [],
+            });
+
+            await connector.createTask(tokens, {
+                title: 'Stand up',
+                due: { date: new Date('2026-06-01'), recurrence: 'FREQ=DAILY' },
+            });
+
+            expect(mockHttp.post).toHaveBeenCalledWith(
+                '/tasks',
+                expect.objectContaining({ due_date: '2026-06-01', due_string: 'every day' }),
+                expect.anything(),
+            );
+        });
     });
 
     describe('updateTask', () => {
@@ -148,9 +270,12 @@ describe('TodoistConnector', () => {
                 id: 'task-1',
                 content: 'Updated',
                 description: '',
-                is_completed: false,
+                checked: false,
                 priority: 1,
                 due: null,
+                deadline: null,
+                duration: null,
+                parent_id: null,
                 labels: [],
             });
 
