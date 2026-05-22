@@ -33,6 +33,7 @@ export function ErrorPage(): React.JSX.Element {
                 <div className="flex gap-3 justify-center">
                     <button
                         type="button"
+                        aria-label="Reload page"
                         onClick={() => window.location.reload()}
                         className="inline-flex items-center justify-center gap-2 border-2 border-nb-black dark:border-white/20 font-black uppercase tracking-wide text-sm px-4 py-2 bg-white dark:bg-neutral-800 text-nb-black dark:text-white shadow-[3px_3px_0px_#111] dark:shadow-none transition-all duration-100 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none cursor-pointer"
                     >

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { MemoryRouter } from 'react-router';
 
 // Mock useRouteError to control what error is returned
@@ -15,6 +15,10 @@ import { useRouteError } from 'react-router';
 import { ErrorPage } from './ErrorPage.js';
 
 describe('ErrorPage', () => {
+    afterEach(() => {
+        vi.resetAllMocks();
+    });
+
     it('renders error heading', () => {
         vi.mocked(useRouteError).mockReturnValue(new Error('Route crashed'));
         render(
@@ -53,5 +57,6 @@ describe('ErrorPage', () => {
             </MemoryRouter>,
         );
         expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+        expect(screen.getByText('a plain string error')).toBeInTheDocument();
     });
 });
