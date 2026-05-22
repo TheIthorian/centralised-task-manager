@@ -96,7 +96,7 @@ export class GoogleTasksConnector implements TaskConnector {
             {
                 title: task.title,
                 notes: task.description ?? '',
-                due: task.dueDate?.toISOString(),
+                due: task.due?.date.toISOString(),
             },
             { Authorization: `Bearer ${tokens.accessToken}` },
         );
@@ -112,7 +112,7 @@ export class GoogleTasksConnector implements TaskConnector {
             {
                 title: patch.title,
                 notes: patch.description,
-                due: patch.dueDate?.toISOString(),
+                due: patch.due?.date.toISOString(),
             },
             { Authorization: `Bearer ${tokens.accessToken}` },
         );
@@ -160,7 +160,10 @@ export class GoogleTasksConnector implements TaskConnector {
             description: task.notes ?? null,
             status: task.status === 'completed' ? 'done' : 'open',
             priority: null,
-            dueDate: task.due ? new Date(task.due) : null,
+            due: task.due ? { date: new Date(task.due), timezone: null, recurrence: null } : null,
+            deadline: null,
+            duration: null,
+            parentSourceId: null,
             tags: [],
         };
     }

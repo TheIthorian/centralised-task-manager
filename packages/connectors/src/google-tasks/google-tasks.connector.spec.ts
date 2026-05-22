@@ -82,7 +82,7 @@ describe('GoogleTasksConnector', () => {
                 title: 'Read a book',
                 description: 'Fiction',
                 status: 'open',
-                dueDate: expect.any(Date),
+                due: expect.objectContaining({ date: expect.any(Date) }),
             });
         });
 
