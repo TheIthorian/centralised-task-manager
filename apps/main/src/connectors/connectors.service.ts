@@ -107,4 +107,12 @@ export class ConnectorsService {
             expiresAt: config.tokenExpiresAt,
         };
     }
+
+    /** Update lastSyncedAt timestamp for a user+source connector config. */
+    async updateLastSyncedAt({ userId, source }: { userId: string; source: string }): Promise<void> {
+        await this.configModel.findOneAndUpdate(
+            { userId: new Types.ObjectId(userId), source },
+            { lastSyncedAt: new Date() },
+        );
+    }
 }
