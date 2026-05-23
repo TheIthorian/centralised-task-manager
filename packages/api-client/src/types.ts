@@ -1,3 +1,14 @@
+export type DueDate = {
+    date: string;
+    timezone: string | null;
+    recurrence: string | null;
+};
+
+export type Duration = {
+    amount: number;
+    unit: 'minute' | 'day';
+};
+
 export type FuzzyDeadlineInfo = {
     type: 'this_week' | 'this_month' | 'someday';
     remindEvery: 'daily' | 'weekly' | null;
@@ -19,7 +30,10 @@ export type TaskDto = {
     title: string;
     description?: string | null;
     priority?: 1 | 2 | 3 | 4 | null;
-    dueDate?: string | null;
+    due?: DueDate | null;
+    deadlineDate?: string | null;
+    duration?: Duration | null;
+    parentId?: string | null;
     fuzzyDeadline?: FuzzyDeadlineInfo | null;
     completed: boolean;
     source: string;
@@ -34,7 +48,10 @@ export type CreateTaskDto = {
     title: string;
     description?: string;
     priority?: 1 | 2 | 3 | 4;
-    dueDate?: string;
+    due?: { date: string; timezone?: string; recurrence?: string };
+    deadlineDate?: string;
+    duration?: Duration;
+    parentId?: string;
     source: string;
     locations?: LocationDto[];
 };
@@ -43,7 +60,9 @@ export type UpdateTaskDto = {
     title?: string;
     description?: string;
     priority?: 1 | 2 | 3 | 4;
-    dueDate?: string;
+    due?: { date: string; timezone?: string; recurrence?: string };
+    deadlineDate?: string;
+    duration?: Duration;
     tags?: string[];
     locations?: LocationDto[];
 };
