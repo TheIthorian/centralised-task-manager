@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthContext.js';
 import { Button } from '../ui/index.js';
 
 type NotionSetupModalProps = {
+    source: string;
     onComplete: () => void;
     onClose: () => void;
 };
 
 /** Post-OAuth setup modal: lets the user pick which Notion database to sync. */
-export function NotionSetupModal({ onComplete, onClose }: NotionSetupModalProps): React.JSX.Element {
+export function NotionSetupModal({ source, onComplete, onClose }: NotionSetupModalProps): React.JSX.Element {
     const { api } = useAuth();
     const [selectedId, setSelectedId] = useState<string>('');
 
@@ -20,11 +21,21 @@ export function NotionSetupModal({ onComplete, onClose }: NotionSetupModalProps)
 
     const saveMutation = useMutation({
         mutationFn: () =>
-            api.setConnectionDetails({ source: 'notion', details: { databaseId: selectedId } }),
+            api.setConnectionDetails({ source, details: { databaseId: selectedId } }),
         onSuccess: () => {
             onComplete();
         },
     });
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent): void => {
+            if (e.key === 'Escape') onClose();
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -45,9 +56,16 @@ export function NotionSetupModal({ onComplete, onClose }: NotionSetupModalProps)
                 )}
 
                 {!isLoading && !isError && databases.length === 0 && (
-                    <p className="font-bold text-nb-black/60 dark:text-white/50 text-sm">
-                        No databases found. Share a database with your Notion integration first.
-                    </p>
+                    <div className="mb-4">
+                        <p className="font-bold text-nb-black/60 dark:text-white/50 text-sm mb-3">
+                            No databases found. Share a database with your Notion integration first.
+                        </p>
+                        <div className="flex justify-end">
+                            <Button variant="secondary" onClick={onClose}>
+                                Close
+                            </Button>
+                        </div>
+                    </div>
                 )}
 
                 {!isLoading && !isError && databases.length > 0 && (

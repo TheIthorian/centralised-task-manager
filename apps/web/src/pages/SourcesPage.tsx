@@ -224,8 +224,10 @@ export function SourcesPage(): React.JSX.Element {
                     testSent={discordTestSent}
                 />
             )}
-        {setupSource && (
+
+            {setupSource && (
                 <NotionSetupModal
+                    source={setupSource}
                     onComplete={() => {
                         setBanner({ type: 'success', message: `${setupSource} connected successfully.` });
                         setSetupSource(null);
