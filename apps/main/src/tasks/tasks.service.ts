@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorRegistry, type RemoteTask } from '@ctm/connectors';
@@ -58,6 +58,18 @@ export class TasksService {
     /** Create a task via write-through: call connector, then persist locally.
      *  When source is 'local', skip the connector and store the task directly in CTM. */
     async create({ userId, dto }: { userId: string; dto: CreateTaskDto }): Promise<TaskDocument> {
+        if (dto.parentId) {
+            const parent = await this.taskModel.findOne({
+                _id: dto.parentId,
+                userId: new Types.ObjectId(userId),
+            });
+
+            if (!parent) throw new BadRequestException('Parent task not found');
+        }
+
+        const due = dto.due ? { date: new Date(dto.due.date), timezone: dto.due.timezone ?? null, recurrence: dto.due.recurrence ?? null } : undefined;
+        const deadlineDate = dto.deadlineDate ? new Date(dto.deadlineDate) : undefined;
+
         if (dto.source === LOCAL_SOURCE) {
             return this.taskModel.create({
                 userId: new Types.ObjectId(userId),
@@ -69,7 +81,10 @@ export class TasksService {
                 priority: (dto.priority ?? 3) as 1 | 2 | 3 | 4,
                 tags: [],
                 locations: dto.locations ?? [],
-                sourceDueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+                due: due ?? null,
+                deadlineDate: deadlineDate ?? null,
+                duration: dto.duration ?? null,
+                parentId: dto.parentId ? new Types.ObjectId(dto.parentId) : null,
                 syncedAt: new Date(),
             });
         }
@@ -79,7 +94,9 @@ export class TasksService {
         const remote = await connector.createTask(tokens, {
             title: dto.title,
             description: dto.description,
-            dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+            due: due ? { date: due.date, timezone: due.timezone ?? undefined, recurrence: due.recurrence ?? undefined } : undefined,
+            deadlineDate,
+            duration: dto.duration,
             priority: dto.priority,
         });
 
@@ -92,7 +109,10 @@ export class TasksService {
             status: remote.status,
             priority: remote.priority as 1 | 2 | 3 | 4 | null,
             tags: remote.tags,
-            sourceDueDate: remote.dueDate,
+            due: remote.due ?? null,
+            deadlineDate: remote.deadline ?? null,
+            duration: remote.duration ?? null,
+            parentId: dto.parentId ? new Types.ObjectId(dto.parentId) : null,
             syncedAt: new Date(),
         });
     }
@@ -110,6 +130,9 @@ export class TasksService {
     }): Promise<TaskDocument> {
         const task = await this.findOne({ taskId, userId });
 
+        const due = dto.due ? { date: new Date(dto.due.date), timezone: dto.due.timezone ?? null, recurrence: dto.due.recurrence ?? null } : undefined;
+        const deadlineDate = dto.deadlineDate ? new Date(dto.deadlineDate) : undefined;
+
         if (task.source === LOCAL_SOURCE) {
             return this.taskModel.findByIdAndUpdate(
                 taskId,
@@ -117,7 +140,9 @@ export class TasksService {
                     ...(dto.title !== undefined && { title: dto.title }),
                     ...(dto.description !== undefined && { description: dto.description }),
                     ...(dto.priority !== undefined && { priority: dto.priority }),
-                    ...(dto.dueDate !== undefined && { sourceDueDate: new Date(dto.dueDate) }),
+                    ...(due !== undefined && { due }),
+                    ...(deadlineDate !== undefined && { deadlineDate }),
+                    ...(dto.duration !== undefined && { duration: dto.duration }),
                     ...(dto.tags !== undefined && { tags: dto.tags }),
                     ...(dto.locations !== undefined && { locations: dto.locations }),
                 },
@@ -130,7 +155,9 @@ export class TasksService {
         const remote = await connector.updateTask(tokens, task.sourceId, {
             title: dto.title,
             description: dto.description,
-            dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+            due: due ? { date: due.date, timezone: due.timezone ?? undefined, recurrence: due.recurrence ?? undefined } : undefined,
+            deadlineDate,
+            duration: dto.duration,
             priority: dto.priority,
         });
 
@@ -140,10 +167,11 @@ export class TasksService {
                 title: remote.title,
                 description: remote.description,
                 priority: remote.priority,
-                sourceDueDate: remote.dueDate,
+                due: remote.due ?? null,
+                deadlineDate: remote.deadline ?? null,
+                duration: remote.duration ?? null,
                 tags: dto.tags ?? task.tags,
                 locations: dto.locations ?? task.locations,
-                syncedAt: new Date(),
             },
             { new: true },
         ) as Promise<TaskDocument>;
@@ -252,29 +280,72 @@ export class TasksService {
         let synced = 0;
         let skipped = 0;
 
-        const ops: Parameters<typeof this.taskModel.bulkWrite>[0] = [];
+        // Pre-generate _ids for root inserts so child tasks can reference them in the same batch
+        const newIdBySourceId = new Map<string, Types.ObjectId>();
 
         for (const remote of remoteTasks) {
+            if (!existingBySourceId.has(remote.sourceId)) {
+                newIdBySourceId.set(remote.sourceId, new Types.ObjectId());
+            }
+        }
+
+        const ops: Parameters<typeof this.taskModel.bulkWrite>[0] = [];
+
+        // Process in two passes: roots first, then children — only for inserts
+        const roots = remoteTasks.filter((r) => r.parentSourceId === null);
+        const children = remoteTasks.filter((r) => r.parentSourceId !== null);
+
+        const buildInsert = (remote: RemoteTask, id: Types.ObjectId): object => {
+            const parentSourceId = remote.parentSourceId;
+            let parentId: Types.ObjectId | null = null;
+
+            if (parentSourceId) {
+                const existingParent = existingBySourceId.get(parentSourceId);
+
+                if (existingParent) {
+                    parentId = existingParent._id as Types.ObjectId;
+                } else {
+                    parentId = newIdBySourceId.get(parentSourceId) ?? null;
+                }
+            }
+
+            return {
+                _id: id,
+                userId: userObjectId,
+                source,
+                sourceId: remote.sourceId,
+                title: remote.title,
+                description: remote.description ?? null,
+                status: remote.status,
+                priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
+                tags: remote.tags,
+                due: remote.due ?? null,
+                deadlineDate: remote.deadline ?? null,
+                duration: remote.duration ?? null,
+                parentId,
+                syncedAt: now,
+            };
+        };
+
+        const buildUpdate = (remote: RemoteTask): object => ({
+            title: remote.title,
+            description: remote.description ?? null,
+            status: remote.status,
+            priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
+            tags: remote.tags,
+            due: remote.due ?? null,
+            deadlineDate: remote.deadline ?? null,
+            duration: remote.duration ?? null,
+            syncedAt: now,
+        });
+
+        for (const remote of [...roots, ...children]) {
             const existing = existingBySourceId.get(remote.sourceId);
 
             if (!existing) {
-                ops.push({
-                    insertOne: {
-                        document: {
-                            userId: userObjectId,
-                            source,
-                            sourceId: remote.sourceId,
-                            title: remote.title,
-                            description: remote.description ?? null,
-                            status: remote.status,
-                            priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
-                            tags: remote.tags,
-                            sourceDueDate: remote.dueDate ?? null,
-                            syncedAt: now,
-                        },
-                    },
-                });
+                const id = newIdBySourceId.get(remote.sourceId)!;
 
+                ops.push({ insertOne: { document: buildInsert(remote, id) } });
                 synced++;
                 continue;
             }
@@ -289,17 +360,7 @@ export class TasksService {
             ops.push({
                 updateOne: {
                     filter: { _id: existing._id },
-                    update: {
-                        $set: {
-                            title: remote.title,
-                            description: remote.description ?? null,
-                            status: remote.status,
-                            priority: (remote.priority ?? null) as 1 | 2 | 3 | 4 | null,
-                            tags: remote.tags,
-                            sourceDueDate: remote.dueDate ?? null,
-                            syncedAt: now,
-                        },
-                    },
+                    update: { $set: buildUpdate(remote) },
                 },
             });
 
@@ -307,7 +368,6 @@ export class TasksService {
         }
 
         if (ops.length > 0) {
-            // timestamps: false prevents Mongoose from bumping updatedAt on sync writes
             await this.taskModel.bulkWrite(ops, { timestamps: false } as Parameters<typeof this.taskModel.bulkWrite>[1]);
         }
 
