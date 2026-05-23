@@ -141,7 +141,7 @@ export class ConnectorsController {
         const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173');
 
         try {
-            const userId = this.connectors.verifyState(state);
+            const { userId } = this.connectors.verifyState(state);
 
             await this.connectors.handleCallback({ source, code, userId });
 

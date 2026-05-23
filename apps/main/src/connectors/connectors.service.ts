@@ -36,12 +36,12 @@ export class ConnectorsService {
         return connector.getAuthUrl(state);
     }
 
-    /** Verify an OAuth state JWT and return the userId. Throws if invalid or expired. */
-    verifyState(state: string): string {
+    /** Verify an OAuth state JWT. Throws if invalid or expired. */
+    verifyState(state: string): { userId: string } {
         try {
             const payload = this.jwt.verify<OAuthStatePayload>(state);
 
-            return payload.sub;
+            return { userId: payload.sub };
         } catch {
             throw new UnauthorizedException('Invalid or expired OAuth state');
         }
