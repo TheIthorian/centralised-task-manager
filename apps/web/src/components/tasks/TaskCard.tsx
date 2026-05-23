@@ -9,6 +9,10 @@ interface TaskCardProps {
     onEdit: (task: TaskDto) => void;
 }
 
+function formatDuration(d: { amount: number; unit: 'minute' | 'day' }): string {
+    return d.unit === 'minute' ? `${d.amount} min` : `${d.amount}d`;
+}
+
 const priorityVariant = {
     1: 'p1',
     2: 'p2',
@@ -37,11 +41,24 @@ export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.E
                 >
                     {task.title}
                 </span>
-                {task.dueDate && (
-                    <span className="text-nb-grey text-xs font-bold block">
-                        {new Date(task.dueDate).toLocaleDateString()}
-                    </span>
-                )}
+                <span className="flex items-center gap-2 flex-wrap">
+                    {task.due && (
+                        <span className="text-nb-grey text-xs font-bold">
+                            {new Date(task.due.date).toLocaleDateString()}
+                            {task.due.recurrence && ' ↻'}
+                        </span>
+                    )}
+                    {task.deadlineDate && (
+                        <span className="text-red-600 dark:text-red-400 text-xs font-bold">
+                            ⚑ {new Date(task.deadlineDate).toLocaleDateString()}
+                        </span>
+                    )}
+                    {task.duration && (
+                        <span className="text-nb-grey text-xs font-bold">
+                            ⏱ {formatDuration(task.duration)}
+                        </span>
+                    )}
+                </span>
             </button>
 
             <div className="flex items-center gap-1.5 flex-shrink-0">
