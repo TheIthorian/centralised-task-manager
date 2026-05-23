@@ -55,12 +55,15 @@ pnpm generate-openapi     # emit openapi.json to disk
 
 ```
 src/
-  auth/         # login, register, JWT strategy, API tokens
-  tasks/        # task CRUD
-  connectors/   # OAuth + encrypted token storage
-  oauth/        # OAuth callback handling
-  reminders/    # scheduled reminders
-  users/        # user profile
-  database/     # Mongoose connection
-  config/       # env schema validation
+  auth/          # login, register, JWT strategy, API tokens
+  tasks/         # task CRUD with write-through to connectors
+  connectors/    # OAuth flows + encrypted token storage for external sources
+  oauth/         # OAuth 2.0 authorization server (used by MCP)
+  sync/          # on-demand sync jobs + Socket.IO progress
+  notifications/ # fan-out to in-app, email, and Discord channels
+  reminders/     # daily cron for task reminders and deadline alerts
+  jobs/          # base Mongoose job schema (extended via discriminators)
+  users/         # user profile and notification preferences
+  database/      # Mongoose connection
+  config/        # env schema validation
 ```

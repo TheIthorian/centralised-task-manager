@@ -8,7 +8,8 @@ Shared typed error classes used across `apps/main`, `apps/sync`, and `packages/c
 AppError (base — message, code, statusCode)
 ├── NotFoundError       (404)
 ├── UnauthorizedError   (401)
-└── ExternalServiceError
+├── ConflictError       (409)
+└── ExternalServiceError (502)
 ```
 
 ## Usage
