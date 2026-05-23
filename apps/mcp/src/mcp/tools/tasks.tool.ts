@@ -2,6 +2,17 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { CtmApiClient } from '@ctm/api-client';
 
+const dueSchema = z.object({
+    date: z.string(),
+    timezone: z.string().optional(),
+    recurrence: z.string().optional(),
+});
+
+const durationSchema = z.object({
+    amount: z.number().int().min(1),
+    unit: z.enum(['minute', 'day']),
+});
+
 /** Register all task-related MCP tools on the given server instance. */
 export function registerTaskTools(server: McpServer, client: CtmApiClient): void {
     server.registerTool(
@@ -25,13 +36,18 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
                 title: z.string().min(1),
                 description: z.string().optional(),
                 priority: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
-                dueDate: z.string().optional(),
+                due: dueSchema.optional(),
+                deadlineDate: z.string().optional(),
+                duration: durationSchema.optional(),
+                parentId: z.string().optional(),
                 source: z.string().min(1),
             },
             annotations: { destructiveHint: false, idempotentHint: false },
         },
-        async ({ title, description, priority, dueDate, source }) => {
-            const task = await client.createTask({ dto: { title, description, priority, dueDate, source } });
+        async ({ title, description, priority, due, deadlineDate, duration, parentId, source }) => {
+            const task = await client.createTask({
+                dto: { title, description, priority, due, deadlineDate, duration, parentId, source },
+            });
             return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
         },
     );
@@ -45,13 +61,18 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
                 title: z.string().optional(),
                 description: z.string().optional(),
                 priority: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
-                dueDate: z.string().optional(),
+                due: dueSchema.optional(),
+                deadlineDate: z.string().optional(),
+                duration: durationSchema.optional(),
                 tags: z.array(z.string()).optional(),
             },
             annotations: { destructiveHint: false, idempotentHint: true },
         },
-        async ({ id, title, description, priority, dueDate, tags }) => {
-            const task = await client.updateTask({ id, dto: { title, description, priority, dueDate, tags } });
+        async ({ id, title, description, priority, due, deadlineDate, duration, tags }) => {
+            const task = await client.updateTask({
+                id,
+                dto: { title, description, priority, due, deadlineDate, duration, tags },
+            });
             return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
         },
     );
