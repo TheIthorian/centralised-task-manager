@@ -97,6 +97,7 @@ export class NotionConnector implements TaskConnector {
     /** Fetch all tasks from the user's chosen Notion database. Paginates automatically. */
     async fetchTasks(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<RemoteTask[]> {
         const databaseId = String(connectionDetails?.['databaseId'] ?? '');
+        if (!databaseId) throw new Error('NotionConnector: connectionDetails.databaseId is required');
         const headers = this.notionHeaders(tokens);
         const tasks: RemoteTask[] = [];
         let cursor: string | null = null;
@@ -119,6 +120,7 @@ export class NotionConnector implements TaskConnector {
         connectionDetails?: Record<string, unknown>,
     ): Promise<RemoteTask> {
         const databaseId = String(connectionDetails?.['databaseId'] ?? '');
+        if (!databaseId) throw new Error('NotionConnector: connectionDetails.databaseId is required');
         const properties: Record<string, unknown> = {
             Name: { title: [{ text: { content: task.title } }] },
         };
@@ -158,9 +160,7 @@ export class NotionConnector implements TaskConnector {
         }
 
         if (patch.due !== undefined) {
-            properties['Due date'] = patch.due
-                ? { date: { start: patch.due.date.toISOString().split('T')[0] } }
-                : { date: null };
+            properties['Due date'] = { date: { start: patch.due.date.toISOString().split('T')[0] } };
         }
 
         if (patch.priority !== undefined) {
