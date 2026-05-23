@@ -161,6 +161,11 @@ export class WebApiClient {
         await this.execute({ request: () => this.apiClient.disconnectDiscord() });
     }
 
+    /** Send a test DM via Discord. */
+    async testDiscordConnection(): Promise<{ sent: boolean }> {
+        return this.execute({ request: () => this.apiClient.testDiscordConnection() });
+    }
+
     private createApiClient(): CtmApiClient {
         return new CtmApiClient({
             baseUrl: this.baseUrl,

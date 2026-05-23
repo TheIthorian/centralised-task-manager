@@ -221,6 +221,11 @@ export class CtmApiClient {
         await this.request<void>({ method: 'DELETE', path: '/connectors/discord' });
     }
 
+    /** Send a test DM via Discord. */
+    async testDiscordConnection(): Promise<{ sent: boolean }> {
+        return this.request<{ sent: boolean }>({ method: 'POST', path: '/connectors/discord/test' });
+    }
+
     private filterToParams(filter: TaskFilter): Record<string, string> {
         switch (filter) {
             case 'done':

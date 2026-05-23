@@ -104,6 +104,15 @@ export function SourcesPage(): React.JSX.Element {
         },
     });
 
+    const [discordTestSent, setDiscordTestSent] = useState(false);
+    const discordTestMutation = useMutation({
+        mutationFn: () => api.testDiscordConnection(),
+        onSuccess: () => {
+            setDiscordTestSent(true);
+            setTimeout(() => setDiscordTestSent(false), 4000);
+        },
+    });
+
     useEffect(() => {
         const connected = searchParams.get('connected');
         const discord = searchParams.get('discord');
@@ -128,7 +137,8 @@ export function SourcesPage(): React.JSX.Element {
         syncMutation.isPending ||
         cancelSyncMutation.isPending ||
         discordConnectMutation.isPending ||
-        discordDisconnectMutation.isPending;
+        discordDisconnectMutation.isPending ||
+        discordTestMutation.isPending;
 
     return (
         <div className="p-4 md:p-6 max-w-2xl">
@@ -202,7 +212,9 @@ export function SourcesPage(): React.JSX.Element {
                     status={discordStatus}
                     onConnect={() => discordConnectMutation.mutate()}
                     onDisconnect={() => discordDisconnectMutation.mutate()}
+                    onTest={() => discordTestMutation.mutate()}
                     isPending={isPending}
+                    testSent={discordTestSent}
                 />
             )}
         </div>
