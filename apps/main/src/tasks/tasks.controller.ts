@@ -10,9 +10,9 @@ import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 import type { TaskDocument, FuzzyDeadlineType, RemindEvery } from './schemas/task.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 
-interface AuthRequest {
+type AuthRequest = {
     user: JwtPayload;
-}
+};
 
 type TaskResponse = {
     id: string;

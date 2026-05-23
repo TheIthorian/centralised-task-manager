@@ -67,8 +67,7 @@ export class TasksService {
             if (!parent) throw new BadRequestException('Parent task not found');
         }
 
-        const due = dto.due ? { date: new Date(dto.due.date), timezone: dto.due.timezone ?? null, recurrence: dto.due.recurrence ?? null } : undefined;
-        const deadlineDate = dto.deadlineDate ? new Date(dto.deadlineDate) : undefined;
+        const { due, deadlineDate } = this.parseDueFields(dto);
 
         if (dto.source === LOCAL_SOURCE) {
             return this.taskModel.create({
@@ -130,8 +129,7 @@ export class TasksService {
     }): Promise<TaskDocument> {
         const task = await this.findOne({ taskId, userId });
 
-        const due = dto.due ? { date: new Date(dto.due.date), timezone: dto.due.timezone ?? null, recurrence: dto.due.recurrence ?? null } : undefined;
-        const deadlineDate = dto.deadlineDate ? new Date(dto.deadlineDate) : undefined;
+        const { due, deadlineDate } = this.parseDueFields(dto);
 
         if (task.source === LOCAL_SOURCE) {
             return this.taskModel.findByIdAndUpdate(
@@ -368,9 +366,22 @@ export class TasksService {
         }
 
         if (ops.length > 0) {
+            // Cast needed: Mongoose typings don't expose the `timestamps` bulkWrite option
             await this.taskModel.bulkWrite(ops, { timestamps: false } as Parameters<typeof this.taskModel.bulkWrite>[1]);
         }
 
         return { synced, skipped };
+    }
+
+    private parseDueFields(dto: { due?: { date: string; timezone?: string; recurrence?: string }; deadlineDate?: string }): {
+        due: { date: Date; timezone: string | null; recurrence: string | null } | undefined;
+        deadlineDate: Date | undefined;
+    } {
+        return {
+            due: dto.due
+                ? { date: new Date(dto.due.date), timezone: dto.due.timezone ?? null, recurrence: dto.due.recurrence ?? null }
+                : undefined,
+            deadlineDate: dto.deadlineDate ? new Date(dto.deadlineDate) : undefined,
+        };
     }
 }
