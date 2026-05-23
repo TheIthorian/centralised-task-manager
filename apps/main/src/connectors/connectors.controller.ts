@@ -22,7 +22,6 @@ import { ConnectorRegistry, NotionConnector } from '@ctm/connectors';
 import type { ConnectionDetailsSchema } from '@ctm/connectors';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
-import { DiscordService } from './discord.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 
@@ -37,7 +36,6 @@ export class ConnectorsController {
 
     constructor(
         private readonly connectors: ConnectorsService,
-        private readonly discord: DiscordService,
         private readonly registry: ConnectorRegistry,
         private readonly config: ConfigService,
     ) {}
@@ -80,7 +78,7 @@ export class ConnectorsController {
         const configs = await this.connectors.listConfigs(req.user.sub);
         const configMap = new Map(configs.map((c) => [c.source, c]));
 
-        const taskStatuses = available.map((source) => {
+        return available.map((source) => {
             const config = configMap.get(source);
 
             return {
@@ -89,13 +87,6 @@ export class ConnectorsController {
                 lastSynced: config?.lastSyncedAt?.toISOString(),
             };
         });
-
-        const discordStatus = await this.discord.getStatus(req.user.sub);
-
-        return [
-            ...taskStatuses,
-            { source: 'discord', connected: discordStatus.connected },
-        ];
     }
 
     /** Get the OAuth URL for a connector source. */
@@ -107,10 +98,7 @@ export class ConnectorsController {
     @Post('configs')
     @UseGuards(CombinedAuthGuard)
     async getOAuthUrl(@Request() req: AuthRequest, @Body('source') source: string): Promise<{ url: string }> {
-        const url =
-            source === 'discord'
-                ? this.discord.getAuthUrl(req.user.sub)
-                : await this.connectors.getOAuthUrl({ userId: req.user.sub, source });
+        const url = await this.connectors.getOAuthUrl({ userId: req.user.sub, source });
 
         return { url };
     }
@@ -185,10 +173,7 @@ export class ConnectorsController {
     async getOAuthUrlBySource(@Request() req: AuthRequest, @Param('source') source: string): Promise<{ url: string }> {
         this.logger.log(`getOAuthUrl source=${source} userId=${req.user.sub}`);
 
-        const url =
-            source === 'discord'
-                ? this.discord.getAuthUrl(req.user.sub)
-                : await this.connectors.getOAuthUrl({ userId: req.user.sub, source });
+        const url = await this.connectors.getOAuthUrl({ userId: req.user.sub, source });
 
         this.logger.log(`getOAuthUrl url=${url}`);
 
@@ -203,11 +188,7 @@ export class ConnectorsController {
     @UseGuards(CombinedAuthGuard)
     @HttpCode(204)
     async removeBySource(@Request() req: AuthRequest, @Param('source') source: string): Promise<void> {
-        if (source === 'discord') {
-            await this.discord.disconnect(req.user.sub);
-        } else {
-            await this.connectors.removeBySource({ source, userId: req.user.sub });
-        }
+        await this.connectors.removeBySource({ source, userId: req.user.sub });
     }
 
     /** OAuth callback — called by the provider after user grants access. */
@@ -229,15 +210,11 @@ export class ConnectorsController {
         try {
             const { userId } = this.connectors.verifyState(state);
 
-            if (source === 'discord') {
-                await this.discord.handleCallback({ code, userId });
-            } else {
-                await this.connectors.handleCallback({ source, code, userId });
-            }
+            await this.connectors.handleCallback({ source, code, userId });
 
             this.logger.log(`oauthCallback handleCallback done, redirecting to ${webUrl}/settings/sources`);
 
-            const registeredConnector = source !== 'discord' ? this.registry.get(source) : null;
+            const registeredConnector = this.registry.get(source);
             const needsSetup = Object.keys(registeredConnector?.connectionDetailsSchema ?? {}).length > 0;
             const redirectQuery = needsSetup
                 ? `connected=${source}&setup=required`

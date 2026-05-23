@@ -8,7 +8,6 @@ import { DiscordConnection, DiscordConnectionSchema } from './schemas/discord-co
 import { ConnectorsService } from './connectors.service.js';
 import { ConnectorsController } from './connectors.controller.js';
 import { DiscordController } from './discord.controller.js';
-import { DiscordService } from './discord.service.js';
 import { EncryptionService } from './encryption.service.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
@@ -25,7 +24,6 @@ import { UsersModule } from '../users/users.module.js';
     controllers: [ConnectorsController, DiscordController],
     providers: [
         ConnectorsService,
-        DiscordService,
         EncryptionService,
         {
             provide: ConnectorRegistry,
