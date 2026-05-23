@@ -24,7 +24,10 @@ type TaskResponse = {
     priority: number | null;
     tags: string[];
     locations: { name: string; googleMapsUrl: string }[];
-    dueDate: string | null;
+    due: { date: string; timezone: string | null; recurrence: string | null } | null;
+    deadlineDate: string | null;
+    duration: { amount: number; unit: 'minute' | 'day' } | null;
+    parentId: string | null;
     fuzzyDeadline: { type: FuzzyDeadlineType; remindEvery: RemindEvery | null } | null;
     createdAt: string;
     updatedAt: string;
@@ -49,7 +52,12 @@ export class TasksController {
             priority: t.priority,
             tags: t.tags,
             locations: t.locations,
-            dueDate: t.sourceDueDate ? t.sourceDueDate.toISOString() : null,
+            due: t.due
+                ? { date: t.due.date.toISOString(), timezone: t.due.timezone, recurrence: t.due.recurrence }
+                : null,
+            deadlineDate: t.deadlineDate ? t.deadlineDate.toISOString() : null,
+            duration: t.duration ?? null,
+            parentId: t.parentId ? String(t.parentId) : null,
             fuzzyDeadline: t.fuzzyDeadline
                 ? { type: t.fuzzyDeadline.type, remindEvery: t.fuzzyDeadline.remindEvery }
                 : null,
