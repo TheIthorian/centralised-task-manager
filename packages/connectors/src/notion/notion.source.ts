@@ -129,7 +129,9 @@ export class NotionTaskSource implements ExternalTaskSource {
         if (patch.priority !== undefined) {
             const priorityName = Object.entries(PRIORITY_MAP).find(([, v]) => v === patch.priority)?.[0];
 
-            properties['Priority'] = priorityName ? { select: { name: this.capitalize(priorityName) } } : { select: null };
+            properties['Priority'] = priorityName
+                ? { select: { name: this.capitalize(priorityName) } }
+                : { select: null };
         }
 
         const page = await this.http.patch<NotionPage>(
@@ -160,11 +162,7 @@ export class NotionTaskSource implements ExternalTaskSource {
         sourceId: string,
         _connectionDetails?: Record<string, unknown>,
     ): Promise<void> {
-        await this.http.patch<NotionPage>(
-            `/v1/pages/${sourceId}`,
-            { archived: true },
-            this.notionHeaders(tokens),
-        );
+        await this.http.patch<NotionPage>(`/v1/pages/${sourceId}`, { archived: true }, this.notionHeaders(tokens));
     }
 
     /** List all databases the user has shared with this integration. */
@@ -196,8 +194,15 @@ export class NotionTaskSource implements ExternalTaskSource {
 
     private extractBlockText(block: NotionBlock): string {
         const richTextTypes = [
-            'paragraph', 'heading_1', 'heading_2', 'heading_3',
-            'bulleted_list_item', 'numbered_list_item', 'quote', 'callout', 'toggle',
+            'paragraph',
+            'heading_1',
+            'heading_2',
+            'heading_3',
+            'bulleted_list_item',
+            'numbered_list_item',
+            'quote',
+            'callout',
+            'toggle',
         ];
 
         for (const blockType of richTextTypes) {
@@ -211,13 +216,13 @@ export class NotionTaskSource implements ExternalTaskSource {
         return '';
     }
 
-    private toRemoteTask(page: NotionPage, description: string | null): RemoteTask {
+    private toRemoteTask(page: NotionPage, description?: string | null): RemoteTask {
         const props = page.properties;
 
         return {
             sourceId: page.id,
             title: this.extractTitle(props),
-            description,
+            description: description ?? null,
             status: this.extractStatus(props),
             priority: this.extractPriority(props),
             due: this.extractDue(props),

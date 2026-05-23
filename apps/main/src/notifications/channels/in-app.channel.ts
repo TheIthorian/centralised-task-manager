@@ -10,12 +10,6 @@ export class InAppChannel {
 
     /** Write a notification to the user's in-app inbox. */
     async send({ userId, type, title, body }: SendNotificationDto): Promise<void> {
-        await this.model.create({
-            userId: new Types.ObjectId(userId),
-            type,
-            title,
-            body,
-            read: false,
-        });
+        await this.model.create({ userId: new Types.ObjectId(userId), type, title, body, read: false });
     }
 }

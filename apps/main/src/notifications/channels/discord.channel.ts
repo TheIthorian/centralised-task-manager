@@ -1,81 +1,64 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { DiscordConnection, type DiscordConnectionDocument } from '../../connectors/schemas/discord-connection.schema.js';
+import { DiscordChannel as DiscordChannelConnector } from '@ctm/connectors';
+import {
+    ConnectorConfig,
+    type ConnectorConfigDocument,
+    type TypedConnectorConfig,
+} from '../../connectors/schemas/connector-config.schema.js';
 import type { SendNotificationDto } from '../dto/send-notification.dto.js';
 
-const DISCORD_API = 'https://discord.com/api/v10';
+const connector = new DiscordChannelConnector();
 
+/** Thrown when the Discord connection/bot token is expired or unauthorized. */
 export class DiscordAuthExpiredError extends Error {
     constructor() {
-        super('Discord bot token is invalid');
+        super('Discord token expired or unauthorized');
         this.name = 'DiscordAuthExpiredError';
     }
 }
 
 @Injectable()
 export class DiscordChannel {
-    private readonly logger = new Logger(DiscordChannel.name);
-    private readonly botToken: string;
+    constructor(@InjectModel(ConnectorConfig.name) private readonly model: Model<ConnectorConfigDocument>) {}
 
-    constructor(
-        @InjectModel(DiscordConnection.name) private readonly model: Model<DiscordConnectionDocument>,
-        config: ConfigService,
-    ) {
-        this.botToken = config.getOrThrow<string>('DISCORD_BOT_TOKEN');
-    }
-
-    /** Send a DM via Discord bot. No-op if the user has no DiscordConnection. */
+    /** Send a DM via Discord bot. No-op if the user has no discord ConnectorConfig. */
     async send({ userId, title, body }: SendNotificationDto): Promise<void> {
-        const connection = await this.model.findOne({ userId: new Types.ObjectId(userId) });
+        const config = await this.model.findOne({ userId: new Types.ObjectId(userId), source: 'discord' });
 
-        if (!connection) return;
+        if (!config) return;
 
-        const channelId = connection.dmChannelId ?? (await this.openDmChannel(connection));
+        const typed = config as unknown as TypedConnectorConfig & { source: 'discord' };
+        const { discordUserId } = typed.settings;
+        const { botToken, dmChannelId } = typed.internalSettings;
 
-        await this.sendMessage({ channelId, content: `**${title}**\n${body}`, connection });
-    }
+        try {
+            if (!dmChannelId) {
+                const openedChannelId = await connector.openDmChannel({ botToken, discordUserId });
 
-    private async openDmChannel(connection: DiscordConnectionDocument): Promise<string> {
-        const res = await fetch(`${DISCORD_API}/users/@me/channels`, {
-            method: 'POST',
-            headers: { Authorization: `Bot ${this.botToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipient_id: connection.discordUserId }),
-        });
+                await this.model.findOneAndUpdate(
+                    { userId: new Types.ObjectId(userId), source: 'discord' },
+                    { 'internalSettings.dmChannelId': openedChannelId },
+                );
 
-        if (res.status === 401) throw new DiscordAuthExpiredError();
+                await connector.send({
+                    config: { discordUserId, botToken, dmChannelId: openedChannelId },
+                    title,
+                    body,
+                });
 
-        if (!res.ok) throw new Error(`Discord open DM failed: ${res.status}`);
+                return;
+            }
 
-        const data = (await res.json()) as { id: string };
+            await connector.send({ config: { discordUserId, botToken, dmChannelId }, title, body });
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (msg.includes('401') || msg.includes('Unauthorized')) {
+                throw new DiscordAuthExpiredError();
+            }
 
-        await this.model.findByIdAndUpdate(connection._id, { dmChannelId: data.id });
-
-        return data.id;
-    }
-
-    private async sendMessage({
-        channelId,
-        content,
-        connection,
-    }: {
-        channelId: string;
-        content: string;
-        connection: DiscordConnectionDocument;
-    }): Promise<void> {
-        const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
-            method: 'POST',
-            headers: { Authorization: `Bot ${this.botToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content }),
-        });
-
-        if (res.status === 401) {
-            this.logger.warn(`Discord bot token invalid — removing connection for userId=${String(connection.userId)}`);
-            await this.model.deleteOne({ _id: connection._id });
-            throw new DiscordAuthExpiredError();
+            throw err;
         }
-
-        if (!res.ok) throw new Error(`Discord send message failed: ${res.status}`);
     }
 }
