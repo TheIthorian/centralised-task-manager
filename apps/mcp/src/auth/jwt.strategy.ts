@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
+/** Decoded JWT claims attached to the request as `req.user`. */
 export type JwtPayload = {
     sub: string;
     email: string;

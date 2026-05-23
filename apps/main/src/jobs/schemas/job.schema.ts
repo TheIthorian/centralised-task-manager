@@ -1,8 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
+/** Lifecycle status of a background job. */
 export type JobStatus = 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
 
+/** Hydrated Mongoose document type for a Job. */
 export type JobDocument = HydratedDocument<Job>;
 
 @Schema({ discriminatorKey: 'type', timestamps: true })

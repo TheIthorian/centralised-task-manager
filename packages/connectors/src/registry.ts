@@ -1,5 +1,6 @@
 import type { TaskConnector } from './types.js';
 
+/** In-memory registry that maps source names to their {@link TaskConnector} implementations. */
 export class ConnectorRegistry {
     private readonly connectors = new Map<string, TaskConnector>();
 

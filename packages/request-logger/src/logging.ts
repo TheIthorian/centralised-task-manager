@@ -3,6 +3,7 @@ import { createLogger, type Logger } from '@ctm/logger';
 
 export type { Logger };
 
+/** Structured fields captured for each logged HTTP request. */
 export type RequestLog = {
     method: string;
     url: string;

@@ -10,6 +10,7 @@ import { createRequestLogger, logRequest, logRequestError } from './logging.js';
 export class RequestLoggingMiddleware implements NestMiddleware {
     private readonly logger = createRequestLogger('http');
 
+    /** Attach finish/error listeners then delegate to the next handler. */
     use(req: IncomingMessage, res: ServerResponse, next: () => void): void {
         const start = Date.now();
 

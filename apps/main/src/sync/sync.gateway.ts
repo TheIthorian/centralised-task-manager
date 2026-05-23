@@ -26,6 +26,7 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     constructor(private readonly jwt: JwtService) {}
 
+    /** Authenticate the connecting socket via JWT; joins it to a user-scoped room or disconnects. */
     handleConnection(client: Socket): void {
         const token = client.handshake.auth['token'] as string | undefined
             ?? client.handshake.headers['authorization']?.replace('Bearer ', '');

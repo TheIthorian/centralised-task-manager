@@ -28,6 +28,7 @@ export type TodoistTask = {
     goal_ids: string[];
 };
 
+/** OAuth2 token response from the Todoist token endpoint. */
 export type TodoistTokenResponse = {
     access_token: string;
     refresh_token?: string;
@@ -35,6 +36,7 @@ export type TodoistTokenResponse = {
     expires_in?: number;
 };
 
+/** Paginated response envelope for the Todoist tasks list endpoint. */
 export type TodoistTasksResponse = {
     results: TodoistTask[];
     next_cursor: string | null;

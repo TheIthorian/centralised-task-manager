@@ -4,6 +4,7 @@ import { ExternalServiceError } from '@ctm/errors';
 import type { CreateTaskDto, OAuthTokens, RemoteTask, TaskConnector, UpdateTaskDto } from '../types.js';
 import type { GoogleTaskList, GoogleTask, GoogleTokenResponse } from './google-tasks.types.js';
 
+/** Configuration required to instantiate a {@link GoogleTasksConnector}. */
 export type GoogleTasksConnectorConfig = {
     clientId: string;
     clientSecret: string;
@@ -11,6 +12,7 @@ export type GoogleTasksConnectorConfig = {
     logger?: Logger;
 };
 
+/** TaskConnector implementation for the Google Tasks API. */
 export class GoogleTasksConnector implements TaskConnector {
     readonly source = 'google_tasks';
 

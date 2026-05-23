@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
+/** Mongoose document type for ConnectorConfig. */
 export type ConnectorConfigDocument = HydratedDocument<ConnectorConfig>;
 
 @Schema({ timestamps: true })

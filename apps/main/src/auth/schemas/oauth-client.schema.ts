@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
+/** Mongoose document type for OAuthClient. */
 export type OAuthClientDocument = HydratedDocument<OAuthClient>;
 
 @Schema({ timestamps: true })

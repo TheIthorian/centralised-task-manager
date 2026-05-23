@@ -1,3 +1,4 @@
+/** A Google Tasks task list container. */
 export interface GoogleTaskList {
     id: string;
     title: string;
@@ -21,6 +22,7 @@ export interface GoogleTask {
     hidden?: boolean;
 }
 
+/** OAuth2 token response from the Google token endpoint. */
 export interface GoogleTokenResponse {
     access_token: string;
     refresh_token?: string;

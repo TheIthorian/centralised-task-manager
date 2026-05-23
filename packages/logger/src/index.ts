@@ -1,5 +1,6 @@
 import pino from 'pino';
 
+/** Re-exported Pino logger type used across the monorepo. */
 export type Logger = pino.Logger;
 
 /** Creates a named Pino logger for the given context. */

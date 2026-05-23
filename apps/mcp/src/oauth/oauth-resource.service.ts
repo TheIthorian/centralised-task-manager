@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+/** RFC 9728 protected resource metadata document shape. */
 export type OAuthProtectedResourceMetadata = {
     resource: string;
     authorization_servers: string[];

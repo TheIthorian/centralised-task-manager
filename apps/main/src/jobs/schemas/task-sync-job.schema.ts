@@ -4,8 +4,10 @@ import type { JobDocument } from './job.schema.js';
 /** Injection token for the TaskSyncJob discriminator model. */
 export const TASK_SYNC_JOB_MODEL = 'task-sync';
 
+/** Current processing stage of a task-sync job. */
 export type SyncStage = 'fetching' | 'upserting';
 
+/** Hydrated Mongoose document type for a TaskSyncJob discriminator. */
 export type TaskSyncJobDocument = JobDocument & {
 	type: 'task-sync';
 	source: string;

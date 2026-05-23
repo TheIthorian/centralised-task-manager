@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
+/** Mongoose document type for DiscordConnection. */
 export type DiscordConnectionDocument = HydratedDocument<DiscordConnection>;
 
 @Schema({ timestamps: true })

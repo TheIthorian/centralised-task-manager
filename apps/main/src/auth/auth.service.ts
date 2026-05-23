@@ -9,6 +9,7 @@ import { RefreshToken, type RefreshTokenDocument } from './schemas/refresh-token
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 
+/** A JWT access token paired with a long-lived refresh token. */
 export interface TokenPair {
     accessToken: string;
     refreshToken: string;

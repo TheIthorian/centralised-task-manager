@@ -1,10 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { JwtService } from '@nestjs/jwt';
 import { Model, Types } from 'mongoose';
 import { ConnectorRegistry } from '@ctm/connectors';
 import type { OAuthTokens } from '@ctm/connectors';
 import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
 import { EncryptionService } from './encryption.service.js';
+
+type OAuthStatePayload = { sub: string };
 
 @Injectable()
 export class ConnectorsService {
@@ -12,6 +15,7 @@ export class ConnectorsService {
         @InjectModel(ConnectorConfig.name) private readonly configModel: Model<ConnectorConfigDocument>,
         private readonly registry: ConnectorRegistry,
         private readonly encryption: EncryptionService,
+        private readonly jwt: JwtService,
     ) {}
 
     /** List all available connector source names. */
@@ -27,8 +31,20 @@ export class ConnectorsService {
     /** Get the OAuth authorization URL for a connector source. */
     async getOAuthUrl({ userId, source }: { userId: string; source: string }): Promise<string> {
         const connector = this.registry.get(source);
+        const state = this.jwt.sign({ sub: userId }, { expiresIn: '15m' });
 
-        return connector.getAuthUrl(userId);
+        return connector.getAuthUrl(state);
+    }
+
+    /** Verify an OAuth state JWT and return the userId. Throws if invalid or expired. */
+    verifyState(state: string): string {
+        try {
+            const payload = this.jwt.verify<OAuthStatePayload>(state);
+
+            return payload.sub;
+        } catch {
+            throw new UnauthorizedException('Invalid or expired OAuth state');
+        }
     }
 
     /** Handle OAuth callback: exchange code, encrypt and upsert tokens. */

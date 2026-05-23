@@ -1,6 +1,7 @@
 import type { CreateTaskDto, SetFuzzyDeadlineDto, SetTaskStatusDto, TaskFilter, UpdateTaskDto, UpdateUserDto } from '@ctm/api-client';
 import type { StoredAuthTokens } from '../auth/auth-storage.js';
 
+/** Normalized API error surfaced to UI consumers. */
 export type WebApiError = {
     statusCode: number;
     code: 'unauthorized' | 'forbidden' | 'validation' | 'server' | 'network' | 'unknown';
@@ -8,12 +9,16 @@ export type WebApiError = {
     cause?: unknown;
 };
 
+/** Constructor options for {@link WebApiClient}. */
 export type WebApiClientOptions = {
     baseUrl: string;
     accessToken: string | null;
     refreshToken: string | null;
+    /** Called whenever tokens are refreshed so the caller can persist them. */
     onTokens: (tokens: StoredAuthTokens) => void;
+    /** Called when the session is no longer valid (redirect to login). */
     onUnauthorized: () => void;
+    /** Called on non-auth errors so the caller can show a toast. */
     onError: (error: WebApiError) => void;
 };
 

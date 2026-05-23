@@ -17,6 +17,7 @@ class ChannelPrefs {
 
 const ChannelPrefsSchema = SchemaFactory.createForClass(ChannelPrefs);
 
+/** Per-trigger channel enable/disable preferences for a user. */
 export type NotificationPreferences = {
     connectorReconnect: ChannelPrefs;
     dailySummary: ChannelPrefs;

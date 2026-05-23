@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
+/** Decoded payload stored inside a signed JWT. */
 export interface JwtPayload {
     sub: string;
     email: string;

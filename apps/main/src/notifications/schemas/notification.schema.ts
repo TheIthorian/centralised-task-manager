@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import type { NotificationType } from '../dto/send-notification.dto.js';
 
+/** Hydrated Mongoose document type for a Notification. */
 export type NotificationDocument = HydratedDocument<Notification>;
 
 @Schema({ timestamps: true })

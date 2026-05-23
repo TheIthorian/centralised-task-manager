@@ -4,6 +4,7 @@ import type { CreateTaskDto, OAuthTokens, RemoteTask, TaskConnector, UpdateTaskD
 import type { TodoistTask, TodoistTokenResponse, TodoistTasksResponse } from './todoist.types.js';
 import { todoistStringToRrule, rruleToTodoistString } from './todoist-recurrence.js';
 
+/** Configuration required to instantiate a {@link TodoistConnector}. */
 export type TodoistConnectorConfig = {
     clientId: string;
     clientSecret: string;

@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import type { OAuthClientDocument } from './schemas/oauth-client.schema.js';
 import { OAuthClient } from './schemas/oauth-client.schema.js';
 
+/** Input payload for RFC 7591 dynamic client registration. */
 export type RegisterClientInput = {
     client_name?: string;
     redirect_uris: string[];
@@ -14,6 +15,7 @@ export type RegisterClientInput = {
     scopes?: string[];
 };
 
+/** Response returned after successful dynamic client registration. */
 export type RegisterClientOutput = {
     client_id: string;
     client_secret: string;

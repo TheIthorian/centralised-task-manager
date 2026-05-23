@@ -1,12 +1,15 @@
-import { Controller, Get, Post, Delete, Query, Request, Res, UseGuards, HttpCode, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Query, Request, Res, UseGuards, HttpCode, Logger, UnauthorizedException } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { DiscordConnection, type DiscordConnectionDocument } from './schemas/discord-connection.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+
+type OAuthStatePayload = { sub: string };
 
 const TEST_MESSAGES = [
     '👋 Hey! Your CTM notifications are working perfectly!',
@@ -31,6 +34,7 @@ export class DiscordController {
 
     constructor(
         private readonly config: ConfigService,
+        private readonly jwt: JwtService,
         @InjectModel(DiscordConnection.name) private readonly discordModel: Model<DiscordConnectionDocument>,
     ) {
         this.botToken = config.getOrThrow<string>('DISCORD_BOT_TOKEN');
@@ -53,7 +57,7 @@ export class DiscordController {
             `&response_type=code` +
             `&scope=identify%20bot` +
             `&permissions=2048` +
-            `&state=${req.user.sub}`;
+            `&state=${this.jwt.sign({ sub: req.user.sub }, { expiresIn: '15m' })}`;
 
         return { url };
     }
@@ -80,15 +84,24 @@ export class DiscordController {
         const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173');
 
         try {
+            let userId: string;
+
+            try {
+                const payload = this.jwt.verify<OAuthStatePayload>(state);
+                userId = payload.sub;
+            } catch {
+                throw new UnauthorizedException('Invalid or expired OAuth state');
+            }
+
             const discordUserId = await this.exchangeCodeForUserId({ code });
 
             await this.discordModel.findOneAndUpdate(
-                { userId: new Types.ObjectId(state) },
-                { userId: new Types.ObjectId(state), discordUserId, dmChannelId: null },
+                { userId: new Types.ObjectId(userId) },
+                { userId: new Types.ObjectId(userId), discordUserId, dmChannelId: null },
                 { upsert: true, new: true },
             );
 
-            this.logger.log(`Discord connected: appUserId=${state} discordUserId=${discordUserId}`);
+            this.logger.log(`Discord connected: appUserId=${userId} discordUserId=${discordUserId}`);
 
             await res.status(302).header('Location', `${webUrl}/settings/sources?discord=connected`).send();
         } catch (err) {

@@ -3,7 +3,10 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type TaskDocument = HydratedDocument<Task>;
 
+/** The fuzzy (non-exact) deadline bucket for a task. */
 export type FuzzyDeadlineType = 'this_week' | 'this_month' | 'someday';
+
+/** How often a task with a fuzzy deadline should be surfaced in reminders. */
 export type RemindEvery = 'daily' | 'weekly';
 
 @Schema({ _id: false })

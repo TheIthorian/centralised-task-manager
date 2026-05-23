@@ -10,6 +10,7 @@ import { UsersService } from '../users/users.service.js';
 import { ConfigService } from '@nestjs/config';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 
+/** Token set returned from the OAuth token endpoint. */
 export interface TokenResponse {
     access_token: string;
     id_token: string;

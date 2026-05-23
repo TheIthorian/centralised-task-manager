@@ -3,6 +3,7 @@ import { readConfig } from './auth.js';
 
 export const DEFAULT_BASE_URL = 'http://localhost:3000';
 
+/** Options accepted by {@link buildClient}. */
 export type ClientOptions = {
     token?: string;
     baseUrl?: string;

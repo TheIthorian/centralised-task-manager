@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
+/** Hydrated Mongoose document type for an AuthCode. */
 export type AuthCodeDocument = HydratedDocument<AuthCode>;
 
 @Schema({ timestamps: true })

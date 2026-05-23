@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+/** Credentials and API base URL persisted to ~/.config/ctm/config.json. */
 export type CliConfig = {
     accessToken: string;
     refreshToken: string;

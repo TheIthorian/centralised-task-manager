@@ -5,6 +5,7 @@ const ACCESS_TOKEN_KEY = 'ctm_access_token';
 const REFRESH_TOKEN_KEY = 'ctm_refresh_token';
 const USER_KEY = 'ctm_user';
 
+/** Access and refresh token pair persisted in cookies. */
 export type StoredAuthTokens = {
     accessToken: string | null;
     refreshToken: string | null;

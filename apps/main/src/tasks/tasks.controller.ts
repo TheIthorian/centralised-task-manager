@@ -14,6 +14,7 @@ type AuthRequest = {
     user: JwtPayload;
 };
 
+/** Wire-format representation of a task returned by the API. */
 type TaskResponse = {
     id: string;
     source: string;

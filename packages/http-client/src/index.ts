@@ -20,6 +20,7 @@ function redactObject(obj: unknown, obfuscate: boolean): unknown {
 
 export type { Logger };
 
+/** Options for constructing an {@link HttpClient} instance. */
 export type HttpClientOptions = {
     baseUrl: string;
     headers?: Record<string, string>;
@@ -27,6 +28,7 @@ export type HttpClientOptions = {
     obfuscateLogs?: boolean;
 };
 
+/** Thin Axios wrapper with optional debug logging and automatic error mapping to {@link ExternalServiceError}. */
 export class HttpClient {
     private readonly client: AxiosInstance;
 
