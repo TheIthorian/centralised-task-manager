@@ -7,6 +7,7 @@ import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { readTokens } from '../auth/auth-storage.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
+import { DiscordCard } from '../components/sources/DiscordCard.js';
 
 /** Settings sub-page: connected task sources. */
 export function SourcesPage(): React.JSX.Element {
@@ -84,11 +85,35 @@ export function SourcesPage(): React.JSX.Element {
         },
     });
 
+    const { data: discordStatus, refetch: refetchDiscord } = useQuery({
+        queryKey: ['discord-status'],
+        queryFn: () => api.getDiscordStatus(),
+    });
+
+    const discordConnectMutation = useMutation({
+        mutationFn: async () => {
+            const url = await api.getDiscordConnectUrl();
+            window.location.href = url;
+        },
+    });
+
+    const discordDisconnectMutation = useMutation({
+        mutationFn: () => api.disconnectDiscord(),
+        onSuccess: () => {
+            void refetchDiscord();
+        },
+    });
+
     useEffect(() => {
         const connected = searchParams.get('connected');
+        const discord = searchParams.get('discord');
         const errorParam = searchParams.get('error');
 
-        if (connected) {
+        if (discord === 'connected') {
+            setBanner({ type: 'success', message: 'Discord connected successfully.' });
+            void refetchDiscord();
+            setSearchParams({}, { replace: true });
+        } else if (connected) {
             setBanner({ type: 'success', message: `${connected} connected successfully.` });
             setSearchParams({}, { replace: true });
         } else if (errorParam) {
@@ -101,7 +126,9 @@ export function SourcesPage(): React.JSX.Element {
         connectMutation.isPending ||
         disconnectMutation.isPending ||
         syncMutation.isPending ||
-        cancelSyncMutation.isPending;
+        cancelSyncMutation.isPending ||
+        discordConnectMutation.isPending ||
+        discordDisconnectMutation.isPending;
 
     return (
         <div className="p-4 md:p-6 max-w-2xl">
@@ -161,6 +188,22 @@ export function SourcesPage(): React.JSX.Element {
                         />
                     ))}
                 </div>
+            )}
+
+            <div className="mt-8 mb-6">
+                <h2 className="text-lg font-black uppercase tracking-tight text-nb-black dark:text-white">Notification Connectors</h2>
+                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
+                    Connect notification channels to receive alerts outside the app.
+                </p>
+            </div>
+
+            {discordStatus && (
+                <DiscordCard
+                    status={discordStatus}
+                    onConnect={() => discordConnectMutation.mutate()}
+                    onDisconnect={() => discordDisconnectMutation.mutate()}
+                    isPending={isPending}
+                />
             )}
         </div>
     );

@@ -205,6 +205,12 @@ export class CtmApiClient {
         return this.request<NotificationPreferencesDto>({ method: 'PATCH', path: '/notifications/preferences', body: dto });
     }
 
+    /** Get the Discord OAuth URL for connecting. */
+    async getDiscordConnectUrl(): Promise<string> {
+        const response = await this.request<{ url: string }>({ method: 'GET', path: '/connectors/discord/connect-url' });
+        return response.url;
+    }
+
     /** Get Discord connection status. */
     async getDiscordStatus(): Promise<DiscordStatusDto> {
         return this.request<DiscordStatusDto>({ method: 'GET', path: '/connectors/discord/status' });

@@ -25,11 +25,11 @@ export class DiscordController {
         @InjectModel(DiscordConnection.name) private readonly discordModel: Model<DiscordConnectionDocument>,
     ) {}
 
-    /** Redirect user to Discord OAuth2 consent screen. */
+    /** Return the Discord OAuth2 URL (for programmatic clients). */
     @ApiBearerAuth('jwt')
-    @ApiOperation({ summary: 'Connect Discord — redirect to OAuth' })
-    @Get('connect')
-    async connect(@Request() req: AuthRequest, @Res() res: FastifyReply): Promise<void> {
+    @ApiOperation({ summary: 'Get Discord OAuth URL' })
+    @Get('connect-url')
+    connectUrl(@Request() req: AuthRequest): { url: string } {
         const clientId = this.config.getOrThrow<string>('DISCORD_CLIENT_ID');
         const redirectUri = encodeURIComponent(
             `${this.config.getOrThrow<string>('REDIRECT_BASE_URL')}/connectors/discord/callback`,
@@ -42,6 +42,15 @@ export class DiscordController {
             `&scope=identify` +
             `&state=${req.user.sub}`;
 
+        return { url };
+    }
+
+    /** Redirect user to Discord OAuth2 consent screen. */
+    @ApiBearerAuth('jwt')
+    @ApiOperation({ summary: 'Connect Discord — redirect to OAuth' })
+    @Get('connect')
+    async connect(@Request() req: AuthRequest, @Res() res: FastifyReply): Promise<void> {
+        const { url } = this.connectUrl(req);
         await res.status(302).header('Location', url).send();
     }
 

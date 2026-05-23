@@ -2,6 +2,7 @@ import {
     ApiClientError,
     CtmApiClient,
     type ConnectorStatusDto,
+    type DiscordStatusDto,
     type TaskDto,
     type TaskSyncJobDto,
     type TokenPair,
@@ -143,6 +144,21 @@ export class WebApiClient {
     /** Delete the current user profile. */
     async deleteMe(): Promise<void> {
         await this.execute({ request: () => this.apiClient.deleteMe() });
+    }
+
+    /** Get the Discord OAuth connect URL. */
+    async getDiscordConnectUrl(): Promise<string> {
+        return this.execute({ request: () => this.apiClient.getDiscordConnectUrl() });
+    }
+
+    /** Get Discord connection status. */
+    async getDiscordStatus(): Promise<DiscordStatusDto> {
+        return this.execute({ request: () => this.apiClient.getDiscordStatus() });
+    }
+
+    /** Disconnect Discord. */
+    async disconnectDiscord(): Promise<void> {
+        await this.execute({ request: () => this.apiClient.disconnectDiscord() });
     }
 
     private createApiClient(): CtmApiClient {
