@@ -42,6 +42,10 @@ export function TaskModal({
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<1 | 2 | 3 | 4>(2);
     const [dueDate, setDueDate] = useState('');
+    const [dueRecurrence, setDueRecurrence] = useState('');
+    const [deadlineDate, setDeadlineDate] = useState('');
+    const [durationAmount, setDurationAmount] = useState('');
+    const [durationUnit, setDurationUnit] = useState<'minute' | 'day'>('minute');
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
@@ -56,7 +60,11 @@ export function TaskModal({
             setTitle(task.title);
             setDescription(task.description ?? '');
             setPriority((task.priority ?? 2) as 1 | 2 | 3 | 4);
-            setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : '');
+            setDueDate(task.due?.date ? task.due.date.slice(0, 10) : '');
+            setDueRecurrence(task.due?.recurrence ?? '');
+            setDeadlineDate(task.deadlineDate ? task.deadlineDate.slice(0, 10) : '');
+            setDurationAmount(task.duration ? String(task.duration.amount) : '');
+            setDurationUnit(task.duration?.unit ?? 'minute');
             setConfirmDelete(false);
             setErrorMessage('');
             setFuzzyType(task.fuzzyDeadline?.type ?? 'this_week');
@@ -79,7 +87,9 @@ export function TaskModal({
                     title,
                     description: description || undefined,
                     priority,
-                    dueDate: dueDate || undefined,
+                    due: dueDate ? { date: dueDate, recurrence: dueRecurrence || undefined } : undefined,
+                    deadlineDate: deadlineDate || undefined,
+                    duration: durationAmount ? { amount: Number(durationAmount), unit: durationUnit } : undefined,
                     locations,
                 }),
                 onSetFuzzyDeadline(task.id, {
@@ -153,12 +163,65 @@ export function TaskModal({
                                 ))}
                             </div>
                         </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
                         <Input
                             label="Due Date"
                             type="date"
                             value={dueDate}
                             onChange={(e) => setDueDate(e.target.value)}
                         />
+                        <Input
+                            label="Deadline"
+                            type="date"
+                            value={deadlineDate}
+                            onChange={(e) => setDeadlineDate(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                            <label className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white">
+                                Recurrence
+                            </label>
+                            <select
+                                value={dueRecurrence}
+                                onChange={(e) => setDueRecurrence(e.target.value)}
+                                className="border-2 border-nb-black dark:border-white/20 font-bold text-xs px-2 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white"
+                                disabled={busy}
+                            >
+                                <option value="">None</option>
+                                <option value="FREQ=DAILY">Daily</option>
+                                <option value="FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR">Every weekday</option>
+                                <option value="FREQ=WEEKLY">Weekly</option>
+                                <option value="FREQ=MONTHLY">Monthly</option>
+                                <option value="FREQ=YEARLY">Yearly</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white">
+                                Duration
+                            </label>
+                            <div className="flex gap-1">
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={durationAmount}
+                                    onChange={(e) => setDurationAmount(e.target.value)}
+                                    placeholder="Amount"
+                                    className="border-2 border-nb-black dark:border-white/20 font-bold text-xs px-2 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white w-20"
+                                    disabled={busy}
+                                />
+                                <select
+                                    value={durationUnit}
+                                    onChange={(e) => setDurationUnit(e.target.value as 'minute' | 'day')}
+                                    className="border-2 border-nb-black dark:border-white/20 font-bold text-xs px-2 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white"
+                                    disabled={busy}
+                                >
+                                    <option value="minute">min</option>
+                                    <option value="day">day</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Fuzzy Deadline */}
