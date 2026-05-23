@@ -4,6 +4,21 @@ import { HydratedDocument, Types } from 'mongoose';
 /** Mongoose document type for ConnectorConfig. */
 export type ConnectorConfigDocument = HydratedDocument<ConnectorConfig>;
 
+type OAuthConnectorConfig = {
+    source: 'todoist' | 'google_tasks' | 'notion';
+    settings: Record<string, unknown>;
+    internalSettings: Record<string, unknown>;
+};
+
+type DiscordConnectorConfig = {
+    source: 'discord';
+    settings: { discordUserId: string };
+    internalSettings: { botToken: string; dmChannelId: string | null };
+};
+
+/** `ConnectorConfig` narrowed by `source` discriminant. */
+export type TypedConnectorConfig = ConnectorConfig & (OAuthConnectorConfig | DiscordConnectorConfig);
+
 @Schema({ timestamps: true })
 export class ConnectorConfig {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
@@ -23,6 +38,10 @@ export class ConnectorConfig {
 
     @Prop({ type: Object, default: {} })
     settings!: Record<string, unknown>;
+
+    /** Server-only config — never included in API responses. */
+    @Prop({ type: Object, default: {} })
+    internalSettings!: Record<string, unknown>;
 
     @Prop({ type: Date, default: null })
     lastSyncedAt!: Date | null;
