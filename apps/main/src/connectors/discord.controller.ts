@@ -16,7 +16,6 @@ interface AuthRequest {
 
 @ApiTags('Discord')
 @Controller('connectors/discord')
-@UseGuards(CombinedAuthGuard)
 export class DiscordController {
     private readonly logger = new Logger(DiscordController.name);
 
@@ -28,6 +27,7 @@ export class DiscordController {
     /** Return the Discord OAuth2 URL (for programmatic clients). */
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Get Discord OAuth URL' })
+    @UseGuards(CombinedAuthGuard)
     @Get('connect-url')
     connectUrl(@Request() req: AuthRequest): { url: string } {
         const clientId = this.config.getOrThrow<string>('DISCORD_CLIENT_ID');
@@ -49,13 +49,14 @@ export class DiscordController {
     /** Redirect user to Discord OAuth2 consent screen. */
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Connect Discord — redirect to OAuth' })
+    @UseGuards(CombinedAuthGuard)
     @Get('connect')
     async connect(@Request() req: AuthRequest, @Res() res: FastifyReply): Promise<void> {
         const { url } = this.connectUrl(req);
         await res.status(302).header('Location', url).send();
     }
 
-    /** Discord OAuth2 callback — exchange code for user ID and store connection. */
+    /** Discord OAuth2 callback — called by Discord after user grants access. No auth required. */
     @ApiOperation({ summary: 'Discord OAuth callback (called by Discord)' })
     @Get('callback')
     @HttpCode(302)
@@ -77,7 +78,7 @@ export class DiscordController {
 
             this.logger.log(`Discord connected: appUserId=${state} discordUserId=${discordUserId}`);
 
-            await res.status(302).header('Location', `${webUrl}/settings/notifications?discord=connected`).send();
+            await res.status(302).header('Location', `${webUrl}/settings/sources?discord=connected`).send();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
 
@@ -85,7 +86,7 @@ export class DiscordController {
 
             await res
                 .status(302)
-                .header('Location', `${webUrl}/settings/notifications?error=${encodeURIComponent(message)}`)
+                .header('Location', `${webUrl}/settings/sources?error=${encodeURIComponent(message)}`)
                 .send();
         }
     }
@@ -93,6 +94,7 @@ export class DiscordController {
     /** Disconnect Discord — removes stored connection. */
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Disconnect Discord' })
+    @UseGuards(CombinedAuthGuard)
     @Delete()
     @HttpCode(204)
     async disconnect(@Request() req: AuthRequest): Promise<void> {
@@ -102,6 +104,7 @@ export class DiscordController {
     /** Get Discord connection status for the current user. */
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Get Discord connection status' })
+    @UseGuards(CombinedAuthGuard)
     @Get('status')
     async status(@Request() req: AuthRequest): Promise<{ connected: boolean; discordUserId?: string }> {
         const connection = await this.discordModel.findOne({ userId: new Types.ObjectId(req.user.sub) });
