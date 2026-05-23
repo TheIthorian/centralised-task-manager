@@ -14,8 +14,8 @@ function groupByDueDate(tasks: TaskDto[]): Map<string, TaskDto[]> {
     const map = new Map<string, TaskDto[]>();
 
     for (const task of tasks) {
-        if (!task.dueDate) continue;
-        const key = task.dueDate.slice(0, 10);
+        if (!task.due?.date) continue;
+        const key = task.due.date.slice(0, 10);
         const existing = map.get(key) ?? [];
         existing.push(task);
         map.set(key, existing);

@@ -77,7 +77,7 @@ export function TimelinePage(): React.JSX.Element {
     const tasksWithDates = tasks.filter((t) => t.createdAt);
     const starts = tasksWithDates.map((t) => startOfDay(new Date(t.createdAt)));
     const ends = tasksWithDates.map((t) =>
-        t.dueDate ? startOfDay(new Date(t.dueDate)) : startOfDay(new Date(t.createdAt)),
+        t.due?.date ? startOfDay(new Date(t.due.date)) : startOfDay(new Date(t.createdAt)),
     );
 
     const minDate = starts.length > 0 ? new Date(Math.min(...starts.map((d) => d.getTime()))) : today;
@@ -166,8 +166,8 @@ export function TimelinePage(): React.JSX.Element {
                             {/* Task rows */}
                             {tasks.map((task) => {
                                 const taskStart = startOfDay(new Date(task.createdAt));
-                                const taskEnd = task.dueDate
-                                    ? startOfDay(new Date(task.dueDate))
+                                const taskEnd = task.due?.date
+                                    ? startOfDay(new Date(task.due.date))
                                     : taskStart;
                                 const leftPx = diffDays(rangeStart, taskStart) * DAY_WIDTH_PX;
                                 const widthDays = Math.max(diffDays(taskStart, taskEnd), 1);
