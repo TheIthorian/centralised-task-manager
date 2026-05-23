@@ -2,20 +2,26 @@
 
 OAuth 2.0 authorization server module for `apps/main`.
 
-## Responsibilities
+Allows the MCP app to authenticate users through a standard browser-based flow rather than requiring them to share API tokens directly. Implements authorization code + PKCE so the flow is safe for public clients. Tokens are RSA-signed so the MCP app can verify them offline via the JWKS endpoint without round-tripping to the auth server.
 
-Implements a minimal OAuth 2.0 authorization code flow with PKCE, used by the MCP app to obtain tokens on behalf of users.
+## Authorization code flow
 
-- **Authorization endpoint** — `GET /oauth/authorize` renders a login/consent page; on success calls `OAuthService.createAuthCode` to store a short-lived (5 min) code with the PKCE code challenge.
-- **Token endpoint** — `POST /oauth/token` exchanges the code for `access_token + id_token + refresh_token` after verifying PKCE (`SHA-256(code_verifier) == code_challenge`).
-- **Refresh** — `POST /oauth/token` with `grant_type=refresh_token` rotates the refresh token.
-- **RSA signing** — tokens are signed with the RSA private key (`RSA_PRIVATE_KEY`) so the MCP app can verify them using the JWKS endpoint.
-- **JWKS / discovery** — `well-known.controller.ts` serves `/.well-known/oauth-authorization-server` and `/.well-known/jwks.json` via `OAuthKeyService`.
+```mermaid
+sequenceDiagram
+    participant MCP as MCP app
+    participant Browser
+    participant CTM as apps/main (/oauth)
 
-## Schema
-
-`AuthCode` (`authcodes` collection) — short-lived authorization codes with PKCE challenge, redirect URI, scopes, and expiry.
-
-## Key service: `OAuthKeyService`
-
-Parses `RSA_PRIVATE_KEY` / `RSA_PUBLIC_KEY` from env, exposes the public key as a JWKS document.
+    MCP->>Browser: Redirect to GET /oauth/authorize<br/>(code_challenge, redirect_uri, state)
+    Browser->>CTM: GET /oauth/authorize
+    CTM-->>Browser: Render login form
+    Browser->>CTM: POST /oauth/authorize (email + password)
+    CTM->>CTM: Validate credentials,<br/>store auth code + code_challenge (5 min TTL)
+    CTM-->>Browser: 302 → redirect_uri?code=…&state=…
+    Browser->>MCP: Deliver code + state
+    MCP->>CTM: POST /oauth/token<br/>(code, code_verifier, redirect_uri)
+    CTM->>CTM: SHA-256(code_verifier) == code_challenge?
+    CTM-->>MCP: access_token + id_token + refresh_token
+    MCP->>CTM: POST /oauth/token (grant_type=refresh_token)
+    CTM-->>MCP: New token set (refresh token rotated)
+```

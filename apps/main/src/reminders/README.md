@@ -4,16 +4,26 @@ Scheduled reminder module for `apps/main`.
 
 ## Responsibilities
 
-`RemindersService` runs a daily cron job at **09:00** that fans out three notification types:
+- **Task reminders** — surfaces tasks the user has flagged for recurring attention (daily or weekly), so they're not buried in the full task list.
+- **Upcoming deadlines** — proactively alerts users to tasks due this week, even if they haven't set an explicit reminder.
+- **Connector reconnect** — notifies users when a connector has a persistent error so broken syncs don't go unnoticed.
 
-1. **Task reminders** — finds open tasks where `fuzzyDeadline.remindEvery` is `"daily"` (or `"weekly"` on Mondays), groups by user, and sends a `reminder` notification listing the tasks.
-2. **Upcoming deadlines** — finds open tasks with `fuzzyDeadline.type === "this_week"` and sends an `upcoming_deadline` notification.
-3. **Connector reconnect alerts** — finds connector configs with a `lastError` set and sends a `connector_reconnect` notification listing the broken sources.
+The cron runs daily at 09:00. `getSurfacedTaskIds` is also used by `TasksService` to support filtering by `surfaced=true`.
 
-`getSurfacedTaskIds` is also exposed for use by `TasksService.list` when filtering by `surfaced=true` — returns task IDs that would be surfaced today.
+## Daily cron flow
 
-## Schedule
+```mermaid
+flowchart TD
+    Cron["@Cron 09:00"] --> Reminders & Connectors
 
-Cron expression: `0 9 * * *` (09:00 every day, server timezone).
+    Reminders["sendTaskReminders()"]
+    Reminders --> R1["Query open tasks\nwhere remindEvery=daily\n(+ weekly on Mondays)"]
+    R1 --> R2["Group by user\n→ send reminder notification"]
+    R2 --> R3["sendUpcomingDeadlines()"]
+    R3 --> R4["Query open tasks\nwhere fuzzyDeadline.type=this_week"]
+    R4 --> R5["Group by user\n→ send upcoming_deadline notification"]
 
-Uses `@nestjs/schedule` (`CronExpression` / `@Cron` decorator).
+    Connectors["sendConnectorReconnectAlerts()"]
+    Connectors --> C1["Query enabled connectors\nwhere lastError ≠ null"]
+    C1 --> C2["Group by user\n→ send connector_reconnect notification"]
+```

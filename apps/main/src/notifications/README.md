@@ -2,26 +2,11 @@
 
 User notification module for `apps/main`.
 
+Notifications are in-app alerts, emails, or Discord DMs triggered by app events — reminders, upcoming deadlines, connector failures. This module decouples the events from the delivery: callers send a typed notification and this module routes it to whichever channels the user has configured.
+
 ## Responsibilities
 
-- **Fan-out** — `NotificationsService.send` reads the user's per-trigger channel preferences and dispatches to each enabled channel.
-- **Channels** — `InAppChannel` (persists to DB), `EmailChannel` (placeholder), `DiscordChannel` (DM via bot token).
-- **Discord auth recovery** — if Discord delivery fails with `DiscordAuthExpiredError`, an in-app `connector_reconnect` notification is sent instead.
-- **Preference management** — `NotificationsController` exposes `GET/PATCH /notifications/preferences` for reading and updating per-trigger channel settings.
-
-## Notification types
-
-| Type                  | Trigger key          | Default channels |
-| --------------------- | -------------------- | ---------------- |
-| `reminder`            | `reminder`           | in-app           |
-| `upcoming_deadline`   | `upcomingDeadline`   | in-app           |
-| `connector_reconnect` | `connectorReconnect` | in-app           |
-| `daily_summary`       | `dailySummary`       | in-app           |
-
-## Schema
-
-`Notification` (`notifications` collection) — stores in-app notifications with a `read` flag.
-
-## Channel defaults
-
-All channels default to `{ inApp: true, discord: false, email: false }` when no user preference is stored.
+- **Fan-out** — decouples the act of sending a notification from the delivery mechanism; callers emit a typed notification and this module routes it to whichever channels the user has enabled.
+- **Channel abstraction** — in-app, email, and Discord are interchangeable delivery backends; adding a new channel doesn't require changing callers.
+- **Preference management** — users control per-trigger channel settings (e.g. reminders via Discord, daily summary in-app only) so notifications stay relevant rather than noisy.
+- **Auth recovery** — if a Discord delivery fails due to an expired token, an in-app reconnect prompt is sent automatically rather than silently dropping the notification.

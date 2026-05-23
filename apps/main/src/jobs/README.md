@@ -2,13 +2,6 @@
 
 Base job schema module for `apps/main`.
 
-Provides the Mongoose `Job` base schema and `JobsModule`, which other modules extend via discriminators.
+A job is a persistent record of a long-running background operation (e.g. a task sync). Storing jobs in the DB means progress and failure are visible across requests rather than lost in memory.
 
-## Schemas
-
-| Schema        | Collection                               | Notes                                                                                                                       |
-| ------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `Job`         | `jobs`                                   | Base discriminator — fields: `userId`, `status` (`queued` \| `running` \| `done` \| `failed` \| `cancelled`), `completedAt` |
-| `TaskSyncJob` | `jobs` (discriminator key `TaskSyncJob`) | Extends `Job` with `source`, `stage`, `synced`, `skipped`, `error`                                                          |
-
-`TaskSyncJob` is defined here because it is tightly coupled to the base `Job` model. The `SyncModule` injects it via `TASK_SYNC_JOB_MODEL` token.
+This module provides the base `Job` schema. Other modules (e.g. `sync`) extend it via Mongoose discriminators — a single `jobs` collection holds all job types, distinguished by a `__t` field.

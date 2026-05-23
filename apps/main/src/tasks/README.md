@@ -2,32 +2,11 @@
 
 Task management module for `apps/main`.
 
+Tasks are the core data model — sourced either from a connected external service (Todoist, Google Tasks) or created locally. The module acts as the single write path for tasks: mutations go to the connector first (if applicable), then to the local DB, keeping both in sync without requiring a full re-fetch.
+
 ## Responsibilities
 
-- **CRUD with write-through** — create, update, delete operations call the appropriate connector first, then persist the result locally. Source `"local"` skips the connector entirely.
-- **Status** — `setStatus` calls `connector.completeTask` for remote sources when marking done. Uncompleting is local-only (no connector method exists for it).
-- **Fuzzy deadlines** — `setFuzzyDeadline` / `removeFuzzyDeadline` are local-only annotations (never written to the source).
-- **Sync ingestion** — `upsertFromRemote` bulk-upserts tasks from a connector fetch. Tasks with local edits (`updatedAt > syncedAt`) are skipped to preserve user changes.
-- **Filtering / pagination** — `list` supports `status`, `source`, `fuzzy`, and `surfaced` (tasks due today based on `remindEvery`).
-
-## Schema
-
-`Task` (`tasks` collection) — key fields:
-
-| Field           | Notes                                                                       |
-| --------------- | --------------------------------------------------------------------------- |
-| `source`        | Connector name or `"local"`                                                 |
-| `sourceId`      | Remote task ID (stable across syncs)                                        |
-| `status`        | `"open"` \| `"done"`                                                        |
-| `fuzzyDeadline` | Local-only: `{ type, remindEvery }`                                         |
-| `syncedAt`      | Set on every sync write; compared against `updatedAt` to detect local edits |
-
-## Write-through pattern
-
-```
-create/update/delete
-  └─ connector.createTask / updateTask / deleteTask  (skipped for source="local")
-  └─ taskModel.create / findByIdAndUpdate / deleteOne
-```
-
-Sync writes use `timestamps: false` in `bulkWrite` so Mongoose does not bump `updatedAt`, preserving the local-edit signal.
+- **Write-through** — mutations are applied to the remote source first, then persisted locally, so the local DB stays consistent with the connector without requiring a full sync.
+- **Fuzzy deadlines** — deadline annotations (e.g. "this week", remind daily) are local-only enrichment that external sources don't support, stored alongside synced tasks without touching the connector.
+- **Sync ingestion** — bulk upserts from connector fetches skip tasks that have been locally edited since the last sync, so user changes aren't overwritten.
+- **Filtering** — the `surfaced` filter delegates to `RemindersService` so task listing and reminder logic stay in sync.

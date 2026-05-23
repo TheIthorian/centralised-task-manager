@@ -2,6 +2,4 @@
 
 MongoDB connection module for `apps/main`.
 
-`DatabaseModule` is a thin wrapper around `@nestjs/mongoose`'s `MongooseModule.forRootAsync`. It reads `MONGODB_URI` from `ConfigService` and registers the connection for the whole app.
-
-Imported once in `AppModule`; all feature modules import `MongooseModule.forFeature(...)` to register their schemas.
+Centralises the Mongoose connection so `MONGODB_URI` is read from config in one place and the connection is shared app-wide. Without this, each feature module would need to configure its own connection. Feature modules register their own schemas separately via `MongooseModule.forFeature`.
