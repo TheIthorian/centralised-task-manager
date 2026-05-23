@@ -88,3 +88,16 @@ export type ExternalTaskSource = {
     deleteTask(tokens: OAuthTokens, sourceId: string, connectionDetails?: Record<string, unknown>): Promise<void>;
 };
 
+/** Config passed per-send to a Discord notification channel. */
+export type DiscordChannelConfig = {
+    discordUserId: string;
+    botToken: string;
+    dmChannelId?: string | null;
+};
+
+/** Notification delivery contract. Generic over per-channel connection config. */
+export type NotificationChannel<TConfig> = {
+    readonly name: string;
+    send(args: { config: TConfig; title: string; body: string }): Promise<void>;
+};
+
