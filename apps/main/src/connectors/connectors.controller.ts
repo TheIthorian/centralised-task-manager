@@ -13,6 +13,7 @@ import {
     HttpCode,
     Logger,
     BadRequestException,
+    NotFoundException,
 } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
@@ -134,9 +135,12 @@ export class ConnectorsController {
     @Get(':source/connection-schema')
     @UseGuards(CombinedAuthGuard)
     getConnectionSchema(@Param('source') source: string): ConnectionDetailsSchema {
-        const connector = this.registry.get(source);
-
-        return connector.connectionDetailsSchema ?? {};
+        try {
+            const connector = this.registry.get(source);
+            return connector.connectionDetailsSchema ?? {};
+        } catch {
+            throw new NotFoundException(`Unknown connector source: ${source}`);
+        }
     }
 
     /** Validate required fields against the connector's schema, then store in ConnectorConfig.settings. */
@@ -150,11 +154,16 @@ export class ConnectorsController {
         @Param('source') source: string,
         @Body() body: Record<string, unknown>,
     ): Promise<{ ok: boolean }> {
-        const connector = this.registry.get(source);
+        let connector;
+        try {
+            connector = this.registry.get(source);
+        } catch {
+            throw new NotFoundException(`Unknown connector source: ${source}`);
+        }
         const schema = connector.connectionDetailsSchema ?? {};
 
         for (const [key, field] of Object.entries(schema)) {
-            if (field.required && !body[key]) {
+            if (field.required && (body[key] === undefined || body[key] === null)) {
                 throw new BadRequestException(`Missing required field: ${key}`);
             }
         }
