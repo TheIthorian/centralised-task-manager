@@ -120,6 +120,17 @@ export type UpdateNotificationPreferencesParams = {
     dto: UpdateNotificationPreferencesDto;
 };
 
+/** Parameters for {@link CtmApiClient.getConnectionSchema}. */
+export type GetConnectionSchemaParams = {
+    source: string;
+};
+
+/** Parameters for {@link CtmApiClient.setConnectionDetails}. */
+export type SetConnectionDetailsParams = {
+    source: string;
+    details: Record<string, unknown>;
+};
+
 /** Options for constructing an {@link ApiClientError}. */
 export type ApiClientErrorOptions = {
     message: string;

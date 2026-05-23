@@ -17,6 +17,7 @@ import type {
     CreateTaskParams,
     DeleteTaskParams,
     DisconnectConnectorParams,
+    GetConnectionSchemaParams,
     GetConnectorAuthUrlParams,
     GetSyncJobParams,
     ListNotificationsParams,
@@ -26,6 +27,7 @@ import type {
     RefreshParams,
     RegisterParams,
     RemoveFuzzyDeadlineParams,
+    SetConnectionDetailsParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
     SyncConnectorParams,
@@ -159,6 +161,21 @@ export class CtmApiClient {
     /** Cancel a sync job. */
     async cancelSyncJob({ source, jobId }: CancelSyncJobParams): Promise<void> {
         await this.request<void>({ method: 'DELETE', path: `/connectors/${source}/sync/${jobId}` });
+    }
+
+    /** Get the connection details schema for a connector (empty object if none). */
+    async getConnectionSchema({ source }: GetConnectionSchemaParams): Promise<Record<string, unknown>> {
+        return this.request<Record<string, unknown>>({ method: 'GET', path: `/connectors/${source}/connection-schema` });
+    }
+
+    /** Save connection details for a connector (e.g. Notion database ID). */
+    async setConnectionDetails({ source, details }: SetConnectionDetailsParams): Promise<void> {
+        await this.request<void>({ method: 'POST', path: `/connectors/${source}/connection-details`, body: details });
+    }
+
+    /** List Notion databases accessible via the user's Notion integration. */
+    async listNotionDatabases(): Promise<{ id: string; name: string }[]> {
+        return this.request<{ id: string; name: string }[]>({ method: 'GET', path: '/connectors/notion/databases' });
     }
 
     /** Get the current user's profile. */

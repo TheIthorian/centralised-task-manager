@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext.js';
 import { readTokens } from '../auth/auth-storage.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 import { DiscordCard } from '../components/sources/DiscordCard.js';
+import { NotionSetupModal } from '../components/sources/NotionSetupModal.js';
 
 /** Settings sub-page: connected task sources. */
 export function SourcesPage(): React.JSX.Element {
@@ -104,6 +105,8 @@ export function SourcesPage(): React.JSX.Element {
         },
     });
 
+    const [setupSource, setSetupSource] = useState<string | null>(null);
+
     const [discordTestSent, setDiscordTestSent] = useState(false);
     const discordTestMutation = useMutation({
         mutationFn: () => api.testDiscordConnection(),
@@ -115,12 +118,16 @@ export function SourcesPage(): React.JSX.Element {
 
     useEffect(() => {
         const connected = searchParams.get('connected');
+        const setup = searchParams.get('setup');
         const discord = searchParams.get('discord');
         const errorParam = searchParams.get('error');
 
         if (discord === 'connected') {
             setBanner({ type: 'success', message: 'Discord connected successfully.' });
             void refetchDiscord();
+            setSearchParams({}, { replace: true });
+        } else if (connected && setup === 'required') {
+            setSetupSource(connected);
             setSearchParams({}, { replace: true });
         } else if (connected) {
             setBanner({ type: 'success', message: `${connected} connected successfully.` });
@@ -215,6 +222,19 @@ export function SourcesPage(): React.JSX.Element {
                     onTest={() => discordTestMutation.mutate()}
                     isPending={isPending}
                     testSent={discordTestSent}
+                />
+            )}
+        {setupSource && (
+                <NotionSetupModal
+                    onComplete={() => {
+                        setBanner({ type: 'success', message: `${setupSource} connected successfully.` });
+                        setSetupSource(null);
+                        void qc.invalidateQueries({ queryKey: ['connectors'] });
+                    }}
+                    onClose={() => {
+                        setBanner({ type: 'error', message: 'Setup cancelled. Notion was not fully configured.' });
+                        setSetupSource(null);
+                    }}
                 />
             )}
         </div>

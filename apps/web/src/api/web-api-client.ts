@@ -166,6 +166,21 @@ export class WebApiClient {
         return this.execute({ request: () => this.apiClient.testDiscordConnection() });
     }
 
+    /** Get the connection details schema for a connector (empty object if none). */
+    async getConnectionSchema({ source }: WebConnectorParams): Promise<Record<string, unknown>> {
+        return this.execute({ request: () => this.apiClient.getConnectionSchema({ source }) });
+    }
+
+    /** Save connection details for a connector (e.g. Notion database ID). */
+    async setConnectionDetails({ source, details }: { source: string; details: Record<string, unknown> }): Promise<void> {
+        await this.execute({ request: () => this.apiClient.setConnectionDetails({ source, details }) });
+    }
+
+    /** List Notion databases accessible via the user's Notion integration. */
+    async listNotionDatabases(): Promise<{ id: string; name: string }[]> {
+        return this.execute({ request: () => this.apiClient.listNotionDatabases() });
+    }
+
     private createApiClient(): CtmApiClient {
         return new CtmApiClient({
             baseUrl: this.baseUrl,

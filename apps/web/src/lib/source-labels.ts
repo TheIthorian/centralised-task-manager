@@ -1,6 +1,7 @@
 const SOURCE_LABELS: Record<string, string> = {
     todoist: 'Todoist',
     google_tasks: 'Google Tasks',
+    notion: 'Notion',
 };
 
 /** Get a human-readable label for a connector source. */
