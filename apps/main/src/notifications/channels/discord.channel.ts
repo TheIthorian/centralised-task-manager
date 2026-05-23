@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { DiscordConnection, type DiscordConnectionDocument } from '../schemas/discord-connection.schema.js';
+import { DiscordConnection, type DiscordConnectionDocument } from '../../connectors/schemas/discord-connection.schema.js';
 import type { SendNotificationDto } from '../dto/send-notification.dto.js';
 
 const DISCORD_API = 'https://discord.com/api/v10';

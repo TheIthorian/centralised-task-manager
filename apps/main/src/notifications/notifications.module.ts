@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Notification, NotificationSchema } from './schemas/notification.schema.js';
-import { DiscordConnection, DiscordConnectionSchema } from './schemas/discord-connection.schema.js';
+import { DiscordConnection, DiscordConnectionSchema } from '../connectors/schemas/discord-connection.schema.js';
 import { User, UserSchema } from '../users/schemas/user.schema.js';
 import { InAppChannel } from './channels/in-app.channel.js';
 import { EmailChannel } from './channels/email.channel.js';

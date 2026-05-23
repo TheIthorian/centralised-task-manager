@@ -207,12 +207,12 @@ export class CtmApiClient {
 
     /** Get Discord connection status. */
     async getDiscordStatus(): Promise<DiscordStatusDto> {
-        return this.request<DiscordStatusDto>({ method: 'GET', path: '/notifications/discord/status' });
+        return this.request<DiscordStatusDto>({ method: 'GET', path: '/connectors/discord/status' });
     }
 
     /** Disconnect Discord. */
     async disconnectDiscord(): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: '/notifications/discord' });
+        await this.request<void>({ method: 'DELETE', path: '/connectors/discord' });
     }
 
     private filterToParams(filter: TaskFilter): Record<string, string> {

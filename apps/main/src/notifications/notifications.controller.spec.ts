@@ -2,11 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { ConfigService } from '@nestjs/config';
 import { NotificationsController } from './notifications.controller.js';
 import { UsersService } from '../users/users.service.js';
 import { Notification } from './schemas/notification.schema.js';
-import { DiscordConnection } from './schemas/discord-connection.schema.js';
 
 const userId = new Types.ObjectId().toHexString();
 const authReq = { user: { sub: userId, email: 'a@b.com' } };
@@ -42,18 +40,7 @@ describe('NotificationsController', () => {
             controllers: [NotificationsController],
             providers: [
                 { provide: UsersService, useValue: mockUsersService },
-                {
-                    provide: ConfigService,
-                    useValue: {
-                        get: vi.fn().mockReturnValue('http://localhost:5173'),
-                        getOrThrow: vi.fn().mockReturnValue('test-value'),
-                    },
-                },
                 { provide: getModelToken(Notification.name), useValue: mockNotificationModel },
-                {
-                    provide: getModelToken(DiscordConnection.name),
-                    useValue: { findOne: vi.fn().mockResolvedValue(null), deleteOne: vi.fn(), findOneAndUpdate: vi.fn() },
-                },
             ],
         }).compile();
 
@@ -103,10 +90,5 @@ describe('NotificationsController', () => {
         mockUsersService.updateNotificationPreferences.mockResolvedValue({ dailySummary: { discord: true } });
         const result = await controller.updatePreferences(authReq as never, { dailySummary: { discord: true } });
         expect(result).toMatchObject({ dailySummary: { discord: true } });
-    });
-
-    it('discordStatus returns connected=false when no connection', async () => {
-        const result = await controller.discordStatus(authReq as never);
-        expect(result).toEqual({ connected: false });
     });
 });
