@@ -4,7 +4,6 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { NotificationsController } from './notifications.controller.js';
-import { NotificationsService } from './notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { Notification } from './schemas/notification.schema.js';
 import { DiscordConnection } from './schemas/discord-connection.schema.js';
@@ -42,7 +41,6 @@ describe('NotificationsController', () => {
         const module = await Test.createTestingModule({
             controllers: [NotificationsController],
             providers: [
-                { provide: NotificationsService, useValue: {} },
                 { provide: UsersService, useValue: mockUsersService },
                 {
                     provide: ConfigService,

@@ -1,4 +1,12 @@
-import type { CreateTaskDto, SetFuzzyDeadlineDto, SetTaskStatusDto, TaskFilter, UpdateTaskDto, UpdateUserDto } from './types.js';
+import type {
+    CreateTaskDto,
+    SetFuzzyDeadlineDto,
+    SetTaskStatusDto,
+    TaskFilter,
+    UpdateNotificationPreferencesDto,
+    UpdateTaskDto,
+    UpdateUserDto,
+} from './types.js';
 
 export type ApiClientOptions = {
     baseUrl: string;
@@ -76,6 +84,20 @@ export type GetSyncJobParams = {
 export type CancelSyncJobParams = {
     source: string;
     jobId: string;
+};
+
+export type ListNotificationsParams = {
+    page?: number;
+    limit?: number;
+    unreadOnly?: boolean;
+};
+
+export type MarkNotificationReadParams = {
+    id: string;
+};
+
+export type UpdateNotificationPreferencesParams = {
+    dto: UpdateNotificationPreferencesDto;
 };
 
 export type ApiClientErrorOptions = {

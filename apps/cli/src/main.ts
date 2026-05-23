@@ -4,6 +4,7 @@ import { registerLoginCommand } from './commands/login.js';
 import { registerLogoutCommand } from './commands/logout.js';
 import { registerTasksCommand } from './commands/tasks.js';
 import { registerConnectorsCommand } from './commands/connectors.js';
+import { registerNotificationsCommand } from './commands/notifications.js';
 
 const program = new Command();
 
@@ -13,5 +14,6 @@ registerLoginCommand(program);
 registerLogoutCommand(program);
 registerTasksCommand(program);
 registerConnectorsCommand(program);
+registerNotificationsCommand(program);
 
 program.parse();

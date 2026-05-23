@@ -1,6 +1,9 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
 import type {
     ConnectorStatusDto,
+    DiscordStatusDto,
+    NotificationDto,
+    NotificationPreferencesDto,
     TaskDto,
     TaskFilter,
     TaskSyncJobDto,
@@ -16,8 +19,10 @@ import type {
     DisconnectConnectorParams,
     GetConnectorAuthUrlParams,
     GetSyncJobParams,
+    ListNotificationsParams,
     ListTasksParams,
     LoginParams,
+    MarkNotificationReadParams,
     RefreshParams,
     RegisterParams,
     RemoveFuzzyDeadlineParams,
@@ -25,6 +30,7 @@ import type {
     SetTaskStatusParams,
     SyncConnectorParams,
     UpdateMeParams,
+    UpdateNotificationPreferencesParams,
     UpdateTaskParams,
 } from './client.types.js';
 
@@ -168,6 +174,45 @@ export class CtmApiClient {
     /** Permanently delete the current user's account. */
     async deleteMe(): Promise<void> {
         await this.request<void>({ method: 'DELETE', path: '/users/me' });
+    }
+
+    /** List in-app notifications for the current user. */
+    async listNotifications({ page = 1, limit = 20, unreadOnly = false }: ListNotificationsParams = {}): Promise<NotificationDto[]> {
+        return this.request<NotificationDto[]>({
+            method: 'GET',
+            path: '/notifications',
+            params: { page: String(page), limit: String(limit), unreadOnly: String(unreadOnly) },
+        });
+    }
+
+    /** Mark a single notification as read. */
+    async markNotificationRead({ id }: MarkNotificationReadParams): Promise<{ id: string; read: boolean }> {
+        return this.request<{ id: string; read: boolean }>({ method: 'PATCH', path: `/notifications/${id}/read` });
+    }
+
+    /** Mark all notifications as read. */
+    async markAllNotificationsRead(): Promise<{ updated: number }> {
+        return this.request<{ updated: number }>({ method: 'PATCH', path: '/notifications/read-all' });
+    }
+
+    /** Get notification preferences for the current user. */
+    async getNotificationPreferences(): Promise<NotificationPreferencesDto> {
+        return this.request<NotificationPreferencesDto>({ method: 'GET', path: '/notifications/preferences' });
+    }
+
+    /** Update notification preferences (partial). */
+    async updateNotificationPreferences({ dto }: UpdateNotificationPreferencesParams): Promise<NotificationPreferencesDto> {
+        return this.request<NotificationPreferencesDto>({ method: 'PATCH', path: '/notifications/preferences', body: dto });
+    }
+
+    /** Get Discord connection status. */
+    async getDiscordStatus(): Promise<DiscordStatusDto> {
+        return this.request<DiscordStatusDto>({ method: 'GET', path: '/notifications/discord/status' });
+    }
+
+    /** Disconnect Discord. */
+    async disconnectDiscord(): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: '/notifications/discord' });
     }
 
     private filterToParams(filter: TaskFilter): Record<string, string> {

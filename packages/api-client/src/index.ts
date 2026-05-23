@@ -10,8 +10,10 @@ export type {
     DisconnectConnectorParams,
     GetConnectorAuthUrlParams,
     GetSyncJobParams,
+    ListNotificationsParams,
     ListTasksParams,
     LoginParams,
+    MarkNotificationReadParams,
     RefreshParams,
     RegisterParams,
     RemoveFuzzyDeadlineParams,
@@ -19,6 +21,7 @@ export type {
     SetTaskStatusParams,
     SyncConnectorParams,
     UpdateMeParams,
+    UpdateNotificationPreferencesParams,
     UpdateTaskParams,
 } from './client.types.js';
 export type {
@@ -36,4 +39,11 @@ export type {
     UpdateUserDto,
     TokenPair,
     TaskFilter,
+    NotificationType,
+    NotificationDto,
+    ChannelPrefsDto,
+    NotificationPreferencesDto,
+    UpdateChannelPrefsDto,
+    UpdateNotificationPreferencesDto,
+    DiscordStatusDto,
 } from './types.js';

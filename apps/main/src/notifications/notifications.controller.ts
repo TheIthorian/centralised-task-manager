@@ -19,7 +19,6 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
-import { NotificationsService } from './notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { Notification, type NotificationDocument } from './schemas/notification.schema.js';
 import { DiscordConnection, type DiscordConnectionDocument } from './schemas/discord-connection.schema.js';
@@ -39,7 +38,6 @@ export class NotificationsController {
     private readonly logger = new Logger(NotificationsController.name);
 
     constructor(
-        private readonly notificationsService: NotificationsService,
         private readonly usersService: UsersService,
         private readonly config: ConfigService,
         @InjectModel(Notification.name) private readonly notificationModel: Model<NotificationDocument>,
@@ -160,7 +158,7 @@ export class NotificationsController {
         const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173');
 
         try {
-            const discordUserId = await this.exchangeCodeForUserId({ code, state });
+            const discordUserId = await this.exchangeCodeForUserId({ code });
 
             await this.discordModel.findOneAndUpdate(
                 { userId: new Types.ObjectId(state) },
@@ -204,7 +202,7 @@ export class NotificationsController {
         return { connected: true, discordUserId: connection.discordUserId };
     }
 
-    private async exchangeCodeForUserId({ code, state }: { code: string; state: string }): Promise<string> {
+    private async exchangeCodeForUserId({ code }: { code: string }): Promise<string> {
         const clientId = this.config.getOrThrow<string>('DISCORD_CLIENT_ID');
         const clientSecret = this.config.getOrThrow<string>('DISCORD_CLIENT_SECRET');
         const redirectUri = `${this.config.getOrThrow<string>('REDIRECT_BASE_URL')}/notifications/discord/callback`;
@@ -232,8 +230,6 @@ export class NotificationsController {
         if (!userRes.ok) throw new Error(`Discord user fetch failed: ${userRes.status}`);
 
         const userData = (await userRes.json()) as { id: string };
-
-        void state;
 
         return userData.id;
     }

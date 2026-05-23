@@ -107,3 +107,45 @@ export type TokenPair = {
 };
 
 export type TaskFilter = 'all' | 'today' | 'upcoming' | 'done';
+
+export type NotificationType = 'connector_reconnect' | 'daily_summary' | 'reminder' | 'upcoming_deadline';
+
+export type NotificationDto = {
+    id: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    read: boolean;
+    createdAt: string;
+};
+
+export type ChannelPrefsDto = {
+    inApp: boolean;
+    discord: boolean;
+    email: boolean;
+};
+
+export type NotificationPreferencesDto = {
+    connectorReconnect: ChannelPrefsDto;
+    dailySummary: ChannelPrefsDto;
+    reminder: ChannelPrefsDto;
+    upcomingDeadline: ChannelPrefsDto;
+};
+
+export type UpdateChannelPrefsDto = {
+    inApp?: boolean;
+    discord?: boolean;
+    email?: boolean;
+};
+
+export type UpdateNotificationPreferencesDto = {
+    connectorReconnect?: UpdateChannelPrefsDto;
+    dailySummary?: UpdateChannelPrefsDto;
+    reminder?: UpdateChannelPrefsDto;
+    upcomingDeadline?: UpdateChannelPrefsDto;
+};
+
+export type DiscordStatusDto = {
+    connected: boolean;
+    discordUserId?: string;
+};
