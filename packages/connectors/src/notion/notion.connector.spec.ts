@@ -34,6 +34,8 @@ describe('NotionConnector', () => {
 
         vi.mocked(HttpClient).mockImplementation(function () { return mockHttp as unknown as HttpClient; });
 
+        mockHttp.get.mockResolvedValue({ results: [], has_more: false, next_cursor: null });
+
         connector = new NotionConnector(config);
     });
 
@@ -270,6 +272,100 @@ describe('NotionConnector', () => {
                 { start_cursor: 'cursor-1' },
                 expect.anything(),
             );
+        });
+
+        it('maps Status as select type "Done 🙌" to "done"', async () => {
+            mockHttp.post.mockResolvedValueOnce({
+                results: [
+                    {
+                        id: 'page-select-done',
+                        archived: false,
+                        properties: {
+                            Name: { type: 'title', title: [{ plain_text: 'Done via select' }] },
+                            Status: { type: 'select', select: { id: 's3', name: 'Done 🙌', color: 'green' } },
+                        },
+                    },
+                ],
+                has_more: false,
+                next_cursor: null,
+            });
+
+            const tasks = await connector.fetchTasks(tokens, connectionDetails);
+
+            expect(tasks[0]!.status).toBe('done');
+        });
+
+        it('maps Status as select type "Tomorrow" to "open"', async () => {
+            mockHttp.post.mockResolvedValueOnce({
+                results: [
+                    {
+                        id: 'page-select-open',
+                        archived: false,
+                        properties: {
+                            Name: { type: 'title', title: [{ plain_text: 'Tomorrow task' }] },
+                            Status: { type: 'select', select: { id: 's4', name: 'Tomorrow', color: 'blue' } },
+                        },
+                    },
+                ],
+                has_more: false,
+                next_cursor: null,
+            });
+
+            const tasks = await connector.fetchTasks(tokens, connectionDetails);
+
+            expect(tasks[0]!.status).toBe('open');
+        });
+
+        it('populates description from page blocks', async () => {
+            mockHttp.post.mockResolvedValueOnce({
+                results: [
+                    {
+                        id: 'page-with-body',
+                        archived: false,
+                        properties: {
+                            Name: { type: 'title', title: [{ plain_text: 'Task with body' }] },
+                        },
+                    },
+                ],
+                has_more: false,
+                next_cursor: null,
+            });
+            mockHttp.get.mockResolvedValueOnce({
+                results: [
+                    { type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'First line' }] } },
+                    { type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Second line' }] } },
+                ],
+                has_more: false,
+                next_cursor: null,
+            });
+
+            const tasks = await connector.fetchTasks(tokens, connectionDetails);
+
+            expect(mockHttp.get).toHaveBeenCalledWith(
+                '/v1/blocks/page-with-body/children',
+                expect.objectContaining({ Authorization: 'Bearer test_access_token' }),
+            );
+            expect(tasks[0]!.description).toBe('First line\nSecond line');
+        });
+
+        it('returns null description when page has no blocks', async () => {
+            mockHttp.post.mockResolvedValueOnce({
+                results: [
+                    {
+                        id: 'page-no-body',
+                        archived: false,
+                        properties: {
+                            Name: { type: 'title', title: [{ plain_text: 'No body task' }] },
+                        },
+                    },
+                ],
+                has_more: false,
+                next_cursor: null,
+            });
+
+            const tasks = await connector.fetchTasks(tokens, connectionDetails);
+
+            expect(tasks[0]!.description).toBeNull();
         });
 
         it('maps Medium priority to 2 and Low priority to 1', async () => {

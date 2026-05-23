@@ -55,3 +55,16 @@ export type NotionSearchResponse = {
     has_more: boolean;
     next_cursor: string | null;
 };
+
+/** A single block from GET /v1/blocks/:id/children */
+export type NotionBlock = {
+    type: string;
+    [key: string]: unknown;
+};
+
+/** Response from GET /v1/blocks/:id/children */
+export type NotionBlocksResponse = {
+    results: NotionBlock[];
+    has_more: boolean;
+    next_cursor: string | null;
+};

@@ -9,6 +9,8 @@ import type {
     UpdateTaskDto,
 } from '../types.js';
 import type {
+    NotionBlock,
+    NotionBlocksResponse,
     NotionDatabase,
     NotionPage,
     NotionPropertyValue,
@@ -59,7 +61,15 @@ export class NotionTaskSource implements ExternalTaskSource {
             const body: Record<string, unknown> = cursor ? { start_cursor: cursor } : {};
             const res = await this.http.post<NotionQueryResponse>(`/v1/databases/${databaseId}/query`, body, headers);
 
-            tasks.push(...res.results.map((p) => this.toRemoteTask(p)));
+            const remoteTasks = await Promise.all(
+                res.results.map(async (p) => {
+                    const description = await this.fetchPageDescription(p.id, headers);
+
+                    return this.toRemoteTask(p, description);
+                }),
+            );
+
+            tasks.push(...remoteTasks);
             cursor = res.has_more ? res.next_cursor : null;
         } while (cursor);
 
@@ -171,13 +181,43 @@ export class NotionTaskSource implements ExternalTaskSource {
         }));
     }
 
-    private toRemoteTask(page: NotionPage): RemoteTask {
+    private async fetchPageDescription(pageId: string, headers: Record<string, string>): Promise<string | null> {
+        const res = await this.http.get<NotionBlocksResponse>(`/v1/blocks/${pageId}/children`, headers);
+        const lines: string[] = [];
+
+        for (const block of res.results) {
+            const text = this.extractBlockText(block);
+
+            if (text) lines.push(text);
+        }
+
+        return lines.length > 0 ? lines.join('\n') : null;
+    }
+
+    private extractBlockText(block: NotionBlock): string {
+        const richTextTypes = [
+            'paragraph', 'heading_1', 'heading_2', 'heading_3',
+            'bulleted_list_item', 'numbered_list_item', 'quote', 'callout', 'toggle',
+        ];
+
+        for (const blockType of richTextTypes) {
+            if (block.type === blockType) {
+                const inner = block[blockType] as { rich_text?: Array<{ plain_text: string }> } | undefined;
+
+                return inner?.rich_text?.map((t) => t.plain_text).join('') ?? '';
+            }
+        }
+
+        return '';
+    }
+
+    private toRemoteTask(page: NotionPage, description: string | null): RemoteTask {
         const props = page.properties;
 
         return {
             sourceId: page.id,
             title: this.extractTitle(props),
-            description: null,
+            description,
             status: this.extractStatus(props),
             priority: this.extractPriority(props),
             due: this.extractDue(props),
@@ -205,13 +245,21 @@ export class NotionTaskSource implements ExternalTaskSource {
 
         const prop = props[statusKey];
 
-        if (!prop || prop.type !== 'status') return 'open';
+        if (!prop) return 'open';
 
-        const statusProp = prop as Extract<NotionPropertyValue, { type: 'status' }>;
+        if (prop.type === 'status') {
+            const statusProp = prop as Extract<NotionPropertyValue, { type: 'status' }>;
 
-        if (!statusProp.status) return 'open';
+            return statusProp.status && /done/i.test(statusProp.status.name) ? 'done' : 'open';
+        }
 
-        return /done/i.test(statusProp.status.name) ? 'done' : 'open';
+        if (prop.type === 'select') {
+            const selectProp = prop as Extract<NotionPropertyValue, { type: 'select' }>;
+
+            return selectProp.select && /done/i.test(selectProp.select.name) ? 'done' : 'open';
+        }
+
+        return 'open';
     }
 
     private extractPriority(props: Record<string, NotionPropertyValue>): number | null {
