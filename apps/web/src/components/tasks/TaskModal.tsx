@@ -11,7 +11,6 @@ type TaskModalProps = {
     onSave: (id: string, dto: UpdateTaskDto) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
     onSetFuzzyDeadline: (id: string, dto: SetFuzzyDeadlineDto) => Promise<void>;
-    onRemoveFuzzyDeadline: (id: string) => Promise<void>;
     isSaving?: boolean;
     isDeleting?: boolean;
     isSettingFuzzy?: boolean;

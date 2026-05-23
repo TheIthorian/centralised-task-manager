@@ -2,10 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { Button, Input } from '../ui/index.js';
 import type { CreateTaskDto } from '@ctm/api-client';
 
-interface AddTaskInlineProps {
+type AddTaskInlineProps = {
     onAdd: (dto: CreateTaskDto) => Promise<void>;
     isPending?: boolean;
-}
+};
 
 /** Expandable inline form for quickly adding a task. */
 export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps): React.JSX.Element {

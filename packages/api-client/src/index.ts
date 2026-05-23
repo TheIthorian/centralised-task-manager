@@ -25,6 +25,7 @@ export type {
     UserDto,
     TaskDto,
     LocationDto,
+    Duration,
     FuzzyDeadlineInfo,
     CreateTaskDto,
     UpdateTaskDto,

@@ -213,7 +213,6 @@ export function TimelinePage(): React.JSX.Element {
                 onSave={async (id, dto) => { await saveMutation.mutateAsync({ id, dto }); }}
                 onDelete={async (id) => { await deleteMutation.mutateAsync(id); }}
                 onSetFuzzyDeadline={async (id, dto) => { await setFuzzyMutation.mutateAsync({ id, dto }); }}
-                onRemoveFuzzyDeadline={async (id) => { await removeFuzzyMutation.mutateAsync(id); }}
                 isSaving={saveMutation.isPending}
                 isDeleting={deleteMutation.isPending}
                 isSettingFuzzy={setFuzzyMutation.isPending}

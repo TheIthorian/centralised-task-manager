@@ -1,15 +1,15 @@
 import clsx from 'clsx';
 import { Badge, Checkbox } from '../ui/index.js';
-import type { TaskDto } from '@ctm/api-client';
+import type { Duration, TaskDto } from '@ctm/api-client';
 import { getSourceLabel } from '../../lib/source-labels.js';
 
-interface TaskCardProps {
+type TaskCardProps = {
     task: TaskDto;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
-}
+};
 
-function formatDuration(d: { amount: number; unit: 'minute' | 'day' }): string {
+function formatDuration(d: Duration): string {
     return d.unit === 'minute' ? `${d.amount} min` : `${d.amount}d`;
 }
 

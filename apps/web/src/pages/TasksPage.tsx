@@ -145,9 +145,6 @@ export function TasksPage(): React.JSX.Element {
                 onSetFuzzyDeadline={async (id, dto) => {
                     await setFuzzyMutation.mutateAsync({ id, dto });
                 }}
-                onRemoveFuzzyDeadline={async (id) => {
-                    await removeFuzzyMutation.mutateAsync(id);
-                }}
                 isSaving={saveMutation.isPending}
                 isDeleting={deleteMutation.isPending}
                 isSettingFuzzy={setFuzzyMutation.isPending}
