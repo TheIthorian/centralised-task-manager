@@ -32,7 +32,7 @@ describe('NotionConnector', () => {
 
         mockHttp = { get: vi.fn(), post: vi.fn(), patch: vi.fn() };
 
-        vi.mocked(HttpClient).mockImplementation(() => mockHttp as unknown as HttpClient);
+        vi.mocked(HttpClient).mockImplementation(function () { return mockHttp as unknown as HttpClient; });
 
         connector = new NotionConnector(config);
     });
