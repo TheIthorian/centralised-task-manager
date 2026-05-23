@@ -10,7 +10,7 @@ import { AppModule } from '../app.module.js';
 import { EncryptionService } from '../connectors/encryption.service.js';
 
 class StubTaskSource implements ExternalTaskSource {
-    readonly source = 'stub';
+    readonly name = 'stub';
     private counter = 0;
 
     private makeTask(title: string): RemoteTask {

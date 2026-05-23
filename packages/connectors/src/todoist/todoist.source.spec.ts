@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { ExternalServiceError } from '@ctm/errors';
 import { HttpClient } from '@ctm/http-client';
-
+import { ExternalServiceError } from '@ctm/errors';
+import { TodoistTaskSource } from './todoist.source.js';
 import type { OAuthTokens } from '../types.js';
-import { TodoistConnector } from './todoist.connector.js';
 
-vi.mock('@ctm/http-client', () => ({ HttpClient: vi.fn() }));
-
-const config = {
-    clientId: 'test_client_id',
-    clientSecret: 'test_secret',
-    redirectUri: 'http://localhost:3000/connectors/oauth/callback/todoist',
-};
+vi.mock('@ctm/http-client', () => {
+    return {
+        HttpClient: class MockHttpClient {
+            get = vi.fn();
+            post = vi.fn();
+            delete = vi.fn();
+        },
+    };
+});
 
 const tokens: OAuthTokens = {
     accessToken: 'test_access_token',
@@ -20,34 +20,19 @@ const tokens: OAuthTokens = {
     expiresAt: new Date(Date.now() + 3_600_000),
 };
 
-describe('TodoistConnector', () => {
-    let connector: TodoistConnector;
-    let mockHttp: { get: ReturnType<typeof vi.fn>; post: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
-    let mockAuthHttp: { post: ReturnType<typeof vi.fn> };
+describe('TodoistTaskSource', () => {
+    let source: TodoistTaskSource;
+    let mockHttp: any;
 
     beforeEach(() => {
-        vi.resetAllMocks();
-
-        mockHttp = { get: vi.fn(), post: vi.fn(), delete: vi.fn() };
-        mockAuthHttp = { post: vi.fn() };
-
-        vi.mocked(HttpClient)
-            // eslint-disable-next-line prefer-arrow-callback
-            .mockImplementationOnce(function () { return mockHttp as unknown as HttpClient; })
-            // eslint-disable-next-line prefer-arrow-callback
-            .mockImplementationOnce(function () { return mockAuthHttp as unknown as HttpClient; });
-
-        connector = new TodoistConnector(config);
+        vi.clearAllMocks();
+        source = new TodoistTaskSource({});
+        mockHttp = (source as any).http;
     });
 
-    describe('getAuthUrl', () => {
-        it('includes client_id, redirect_uri, scope, and state', () => {
-            const url = connector.getAuthUrl('user-123');
-
-            expect(url).toContain('client_id=test_client_id');
-            expect(url).toContain('redirect_uri=');
-            expect(url).toContain('state=user-123');
-            expect(url).toContain('scope=task%3Aadd%2Cdata%3Aread%2Cdata%3Adelete');
+    describe('source properties', () => {
+        it('name is "todoist"', () => {
+            expect(source.name).toBe('todoist');
         });
     });
 
@@ -71,8 +56,11 @@ describe('TodoistConnector', () => {
                 next_cursor: null,
             });
 
-            const tasks = await connector.fetchTasks(tokens);
+            const tasks = await source.fetchTasks(tokens);
 
+            expect(mockHttp.get).toHaveBeenCalledWith('/tasks', {
+                Authorization: 'Bearer test_access_token',
+            });
             expect(tasks).toHaveLength(1);
             expect(tasks[0]).toMatchObject({
                 sourceId: 'task-1',
@@ -108,7 +96,7 @@ describe('TodoistConnector', () => {
                 next_cursor: null,
             });
 
-            const tasks = await connector.fetchTasks(tokens);
+            const tasks = await source.fetchTasks(tokens);
 
             expect(tasks[0].due?.recurrence).toBe('FREQ=DAILY');
         });
@@ -132,7 +120,7 @@ describe('TodoistConnector', () => {
                 next_cursor: null,
             });
 
-            const tasks = await connector.fetchTasks(tokens);
+            const tasks = await source.fetchTasks(tokens);
 
             expect(tasks[0].deadline).toBeInstanceOf(Date);
             expect(tasks[0].duration).toEqual({ amount: 90, unit: 'minute' });
@@ -157,7 +145,7 @@ describe('TodoistConnector', () => {
                 next_cursor: null,
             });
 
-            const tasks = await connector.fetchTasks(tokens);
+            const tasks = await source.fetchTasks(tokens);
 
             expect(tasks[0].parentSourceId).toBe('parent-1');
         });
@@ -181,7 +169,7 @@ describe('TodoistConnector', () => {
                 next_cursor: null,
             });
 
-            const tasks = await connector.fetchTasks(tokens);
+            const tasks = await source.fetchTasks(tokens);
 
             expect(tasks[0].status).toBe('done');
         });
@@ -205,7 +193,7 @@ describe('TodoistConnector', () => {
                 next_cursor: null,
             });
 
-            const tasks = await connector.fetchTasks(tokens);
+            const tasks = await source.fetchTasks(tokens);
 
             expect(tasks[0].due).toBeNull();
         });
@@ -226,7 +214,7 @@ describe('TodoistConnector', () => {
                 labels: [],
             });
 
-            const task = await connector.createTask(tokens, { title: 'Buy coffee', priority: 2 });
+            const task = await source.createTask(tokens, { title: 'Buy coffee', priority: 2 });
 
             expect(task.sourceId).toBe('new-1');
             expect(task.title).toBe('Buy coffee');
@@ -251,7 +239,7 @@ describe('TodoistConnector', () => {
                 labels: [],
             });
 
-            await connector.createTask(tokens, {
+            await source.createTask(tokens, {
                 title: 'Stand up',
                 due: { date: new Date('2026-06-01'), recurrence: 'FREQ=DAILY' },
             });
@@ -279,7 +267,7 @@ describe('TodoistConnector', () => {
                 labels: [],
             });
 
-            const task = await connector.updateTask(tokens, 'task-1', { title: 'Updated' });
+            const task = await source.updateTask(tokens, 'task-1', { title: 'Updated' });
 
             expect(task.title).toBe('Updated');
             expect(mockHttp.post).toHaveBeenCalledWith(
@@ -294,7 +282,7 @@ describe('TodoistConnector', () => {
         it('POSTs to the close endpoint with the task id', async () => {
             mockHttp.post.mockResolvedValue(undefined);
 
-            await connector.completeTask(tokens, 'task-1');
+            await source.completeTask(tokens, 'task-1');
 
             expect(mockHttp.post).toHaveBeenCalledWith('/tasks/task-1/close', {}, {
                 Authorization: 'Bearer test_access_token',
@@ -306,7 +294,7 @@ describe('TodoistConnector', () => {
         it('sends DELETE to the task endpoint', async () => {
             mockHttp.delete.mockResolvedValue(undefined);
 
-            await connector.deleteTask(tokens, 'task-1');
+            await source.deleteTask(tokens, 'task-1');
 
             expect(mockHttp.delete).toHaveBeenCalledWith('/tasks/task-1', {
                 Authorization: 'Bearer test_access_token',
@@ -318,13 +306,13 @@ describe('TodoistConnector', () => {
         it('propagates ExternalServiceError from HttpClient', async () => {
             mockHttp.get.mockRejectedValue(new ExternalServiceError('https://api.todoist.com/rest/v2/tasks', 'HTTP 429: rate limited'));
 
-            await expect(connector.fetchTasks(tokens)).rejects.toThrow(ExternalServiceError);
+            await expect(source.fetchTasks(tokens)).rejects.toThrow(ExternalServiceError);
         });
 
         it('rethrows non-http errors unchanged', async () => {
             mockHttp.get.mockRejectedValue(new TypeError('network fail'));
 
-            await expect(connector.fetchTasks(tokens)).rejects.toThrow(TypeError);
+            await expect(source.fetchTasks(tokens)).rejects.toThrow(TypeError);
         });
     });
 });

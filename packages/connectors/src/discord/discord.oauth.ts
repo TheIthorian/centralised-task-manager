@@ -1,19 +1,23 @@
+import { HttpClient, type Logger } from '@ctm/http-client';
 import type { OAuthConnector, OAuthTokens } from '../types.js';
 import type { DiscordTokenResponse, DiscordUserResponse } from './discord.types.js';
-
-const DISCORD_API = 'https://discord.com/api/v10';
 
 /** Configuration required to instantiate a {@link DiscordOAuthConnector}. */
 export type DiscordOAuthConnectorConfig = {
     clientId: string;
     clientSecret: string;
     redirectUri: string;
+    logger?: Logger;
 };
 
 export class DiscordOAuthConnector implements OAuthConnector {
     readonly name = 'discord';
 
-    constructor(private readonly config: DiscordOAuthConnectorConfig) {}
+    private readonly http: HttpClient;
+
+    constructor(private readonly config: DiscordOAuthConnectorConfig) {
+        this.http = new HttpClient({ baseUrl: 'https://discord.com/api/v10', logger: config.logger });
+    }
 
     /** Build the Discord OAuth2 authorization URL. Requests identify + bot scopes with DM permission. */
     getAuthUrl(state: string): string {
@@ -31,21 +35,15 @@ export class DiscordOAuthConnector implements OAuthConnector {
 
     /** Exchange authorization code for Discord OAuth tokens. */
     async exchangeCode(code: string): Promise<OAuthTokens> {
-        const res = await fetch(`${DISCORD_API}/oauth2/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
+        const data = await this.postToken(
+            new URLSearchParams({
                 grant_type: 'authorization_code',
                 code,
                 redirect_uri: this.config.redirectUri,
                 client_id: this.config.clientId,
                 client_secret: this.config.clientSecret,
             }),
-        });
-
-        if (!res.ok) throw new Error(`Discord token exchange failed: ${res.status}`);
-
-        const data = (await res.json()) as DiscordTokenResponse;
+        );
 
         return {
             accessToken: data.access_token,
@@ -56,20 +54,14 @@ export class DiscordOAuthConnector implements OAuthConnector {
 
     /** Refresh an expired Discord access token. */
     async refreshToken(tokens: OAuthTokens): Promise<OAuthTokens> {
-        const res = await fetch(`${DISCORD_API}/oauth2/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
+        const data = await this.postToken(
+            new URLSearchParams({
                 grant_type: 'refresh_token',
                 refresh_token: tokens.refreshToken,
                 client_id: this.config.clientId,
                 client_secret: this.config.clientSecret,
             }),
-        });
-
-        if (!res.ok) throw new Error(`Discord token refresh failed: ${res.status}`);
-
-        const data = (await res.json()) as DiscordTokenResponse;
+        );
 
         return {
             accessToken: data.access_token,
@@ -80,14 +72,18 @@ export class DiscordOAuthConnector implements OAuthConnector {
 
     /** Fetch the Discord snowflake user ID for the given access token. */
     async resolveUserId(tokens: OAuthTokens): Promise<string> {
-        const res = await fetch(`${DISCORD_API}/users/@me`, {
-            headers: { Authorization: `Bearer ${tokens.accessToken}` },
+        const data = await this.http.get<DiscordUserResponse>('/users/@me', {
+            Authorization: `Bearer ${tokens.accessToken}`,
         });
 
-        if (!res.ok) throw new Error(`Discord user fetch failed: ${res.status}`);
-
-        const data = (await res.json()) as DiscordUserResponse;
-
         return data.id;
+    }
+
+    private async postToken(params: URLSearchParams): Promise<DiscordTokenResponse> {
+        return await this.http.post<DiscordTokenResponse>(
+            '/oauth2/token',
+            params,
+            { 'Content-Type': 'application/x-www-form-urlencoded' },
+        );
     }
 }

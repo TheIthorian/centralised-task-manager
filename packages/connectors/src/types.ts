@@ -79,25 +79,20 @@ export type ExternalTaskSource = {
     /** Fetch all tasks accessible with the given token set. */
     fetchTasks(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<RemoteTask[]>;
     /** Create a new task and return the created representation. */
-    createTask(tokens: OAuthTokens, task: CreateTaskDto, connectionDetails?: Record<string, unknown>): Promise<RemoteTask>;
+    createTask(
+        tokens: OAuthTokens,
+        task: CreateTaskDto,
+        connectionDetails?: Record<string, unknown>,
+    ): Promise<RemoteTask>;
     /** Apply a partial update to an existing task and return the updated representation. */
-    updateTask(tokens: OAuthTokens, sourceId: string, patch: UpdateTaskDto, connectionDetails?: Record<string, unknown>): Promise<RemoteTask>;
+    updateTask(
+        tokens: OAuthTokens,
+        sourceId: string,
+        patch: UpdateTaskDto,
+        connectionDetails?: Record<string, unknown>,
+    ): Promise<RemoteTask>;
     /** Mark a task as complete. */
     completeTask(tokens: OAuthTokens, sourceId: string, connectionDetails?: Record<string, unknown>): Promise<void>;
     /** Permanently delete a task. */
     deleteTask(tokens: OAuthTokens, sourceId: string, connectionDetails?: Record<string, unknown>): Promise<void>;
 };
-
-/** Config passed per-send to a Discord notification channel. */
-export type DiscordChannelConfig = {
-    discordUserId: string;
-    botToken: string;
-    dmChannelId?: string | null;
-};
-
-/** Notification delivery contract. Generic over per-channel connection config. */
-export type NotificationChannel<TConfig> = {
-    readonly name: string;
-    send(args: { config: TConfig; title: string; body: string }): Promise<void>;
-};
-

@@ -236,7 +236,7 @@ export class NotionTaskSource implements ExternalTaskSource {
     private extractTitle(props: Record<string, NotionPropertyValue>): string {
         const titleProp = Object.values(props).find((p) => p.type === 'title');
 
-        if (!titleProp || titleProp.type !== 'title') return '';
+        if (!titleProp) return '';
 
         const typedProp = titleProp as Extract<NotionPropertyValue, { type: 'title' }>;
 

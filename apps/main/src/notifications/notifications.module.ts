@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { DiscordMessageClient } from '@ctm/connectors';
+import { HttpClient } from '@ctm/http-client';
 import { Notification, NotificationSchema } from './schemas/notification.schema.js';
 import { DiscordConnection, DiscordConnectionSchema } from '../connectors/schemas/discord-connection.schema.js';
 import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
@@ -22,7 +24,16 @@ import { UsersModule } from '../users/users.module.js';
         UsersModule,
     ],
     controllers: [NotificationsController],
-    providers: [NotificationsService, InAppChannel, EmailChannel, DiscordChannel],
+    providers: [
+        NotificationsService,
+        InAppChannel,
+        EmailChannel,
+        DiscordChannel,
+        {
+            provide: DiscordMessageClient,
+            useFactory: () => new DiscordMessageClient(new HttpClient({ baseUrl: 'https://discord.com/api/v10' })),
+        },
+    ],
     exports: [NotificationsService],
 })
 export class NotificationsModule {}

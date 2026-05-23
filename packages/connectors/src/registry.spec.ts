@@ -2,18 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { OAuthConnectorRegistry, ExternalTaskSourceRegistry } from './registry.js';
 import type { OAuthConnector, ExternalTaskSource } from './types.js';
 
-function makeStubOAuth(source: string): OAuthConnector {
+function makeStubOAuth(name: string): OAuthConnector {
     return {
-        source,
+        name,
         getAuthUrl: () => '',
         exchangeCode: async () => ({ accessToken: '', refreshToken: '', expiresAt: new Date() }),
         refreshToken: async (t) => t,
     };
 }
 
-function makeStubSource(source: string): ExternalTaskSource {
+function makeStubSource(name: string): ExternalTaskSource {
     return {
-        source,
+        name,
         fetchTasks: async () => [],
         createTask: async () => ({
             sourceId: '',
