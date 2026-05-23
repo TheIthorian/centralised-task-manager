@@ -4,11 +4,19 @@ import { formatJson, formatTable, print } from '../output.js';
 import type { TaskDto } from '@ctm/api-client';
 
 function taskRow(t: TaskDto): string[] {
+    const dueStr = t.due ? new Date(t.due.date).toLocaleDateString() + (t.due.recurrence ? ' ↻' : '') : '-';
+    const deadlineStr = t.deadlineDate ? new Date(t.deadlineDate).toLocaleDateString() : '-';
+    const durationStr = t.duration
+        ? t.duration.unit === 'minute' ? `${t.duration.amount}m` : `${t.duration.amount}d`
+        : '-';
+
     return [
         t.id,
         t.title,
         t.priority != null ? String(t.priority) : '-',
-        t.dueDate ?? '-',
+        dueStr,
+        deadlineStr,
+        durationStr,
         t.completed ? 'done' : 'open',
         t.tags.length > 0 ? t.tags.join(', ') : '-',
     ];
@@ -41,7 +49,7 @@ export function registerTasksCommand(program: Command): void {
                 if (opts.json) {
                     print(formatJson(result));
                 } else {
-                    print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Status', 'Tags'], result.map(taskRow)));
+                    print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'], result.map(taskRow)));
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -56,7 +64,12 @@ export function registerTasksCommand(program: Command): void {
         .requiredOption('--source <source>', 'Task source (e.g. "local")')
         .option('--description <desc>', 'Task description')
         .option('--priority <n>', 'Priority 1-4')
-        .option('--due <date>', 'Due date (ISO 8601)')
+        .option('--due <date>', 'Due date (ISO 8601, e.g. 2026-06-01)')
+        .option('--recurrence <rrule>', 'Recurrence RRULE string (e.g. FREQ=WEEKLY;BYDAY=MO)')
+        .option('--deadline <date>', 'Hard deadline date (ISO 8601)')
+        .option('--duration <amount>', 'Duration amount (integer)')
+        .option('--duration-unit <unit>', 'Duration unit: minute or day')
+        .option('--parent <id>', 'Parent task CTM ID')
         .option('--json', 'Output as JSON')
         .action(
             async (opts: {
@@ -65,6 +78,11 @@ export function registerTasksCommand(program: Command): void {
                 description?: string;
                 priority?: string;
                 due?: string;
+                recurrence?: string;
+                deadline?: string;
+                duration?: string;
+                durationUnit?: string;
+                parent?: string;
                 json?: boolean;
             }) => {
                 const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
@@ -91,7 +109,12 @@ export function registerTasksCommand(program: Command): void {
                             source: opts.source,
                             description: opts.description,
                             priority,
-                            dueDate: opts.due,
+                            due: opts.due ? { date: opts.due, recurrence: opts.recurrence } : undefined,
+                            deadlineDate: opts.deadline,
+                            duration: opts.duration
+                                ? { amount: Number(opts.duration), unit: (opts.durationUnit ?? 'minute') as 'minute' | 'day' }
+                                : undefined,
+                            parentId: opts.parent,
                         },
                     });
 
@@ -115,6 +138,10 @@ export function registerTasksCommand(program: Command): void {
         .option('--description <desc>', 'New description')
         .option('--priority <n>', 'New priority 1-4')
         .option('--due <date>', 'New due date (ISO 8601)')
+        .option('--recurrence <rrule>', 'Recurrence RRULE string')
+        .option('--deadline <date>', 'Hard deadline date (ISO 8601)')
+        .option('--duration <amount>', 'Duration amount')
+        .option('--duration-unit <unit>', 'Duration unit: minute or day')
         .option('--tags <tags>', 'Comma-separated tags')
         .option('--json', 'Output as JSON')
         .action(
@@ -125,6 +152,10 @@ export function registerTasksCommand(program: Command): void {
                     description?: string;
                     priority?: string;
                     due?: string;
+                    recurrence?: string;
+                    deadline?: string;
+                    duration?: string;
+                    durationUnit?: string;
                     tags?: string;
                     json?: boolean;
                 },
@@ -150,7 +181,17 @@ export function registerTasksCommand(program: Command): void {
                     const tags = opts.tags != null ? opts.tags.split(',').map((t) => t.trim()) : undefined;
                     const task = await client.updateTask({
                         id,
-                        dto: { title: opts.title, description: opts.description, priority, dueDate: opts.due, tags },
+                        dto: {
+                            title: opts.title,
+                            description: opts.description,
+                            priority,
+                            due: opts.due ? { date: opts.due, recurrence: opts.recurrence } : undefined,
+                            deadlineDate: opts.deadline,
+                            duration: opts.duration
+                                ? { amount: Number(opts.duration), unit: (opts.durationUnit ?? 'minute') as 'minute' | 'day' }
+                                : undefined,
+                            tags,
+                        },
                     });
 
                     if (opts.json) {
