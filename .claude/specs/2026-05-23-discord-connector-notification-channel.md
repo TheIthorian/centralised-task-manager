@@ -91,16 +91,18 @@ export type TypedConnectorConfig = ConnectorConfig & (OAuthConnectorConfig | Dis
 ## 4. Discord connection flow (updated `apps/main`)
 
 **`DiscordController.callback`:**
+
 1. Verifies JWT state → `userId`
 2. Calls `DiscordOAuthConnector.exchangeCode(code)` → `OAuthTokens`
 3. Calls `DiscordOAuthConnector.resolveUserId(tokens)` → `discordUserId`
 4. Upserts `ConnectorConfig` with:
-   - `source: 'discord'`
-   - `accessToken`, `refreshToken`, `tokenExpiresAt` from tokens
-   - `settings: { discordUserId }`
-   - `internalSettings: { botToken: <from ConfigService>, dmChannelId: null }`
+    - `source: 'discord'`
+    - `accessToken`, `refreshToken`, `tokenExpiresAt` from tokens
+    - `settings: { discordUserId }`
+    - `internalSettings: { botToken: <from ConfigService>, dmChannelId: null }`
 
 **`DiscordChannel` in `apps/main` (NestJS wrapper):**
+
 - Fetches `ConnectorConfig` where `{ userId, source: 'discord' }`
 - Narrows to `DiscordConnectorConfig`
 - Calls `packages/connectors` `DiscordChannel.send({ config: { discordUserId, botToken, dmChannelId }, title, body })`
