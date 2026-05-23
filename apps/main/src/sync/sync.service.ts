@@ -79,8 +79,9 @@ export class SyncService {
             if (job.status === 'cancelled') return;
 
             const tokens = await this.connectors.getDecryptedTokens({ userId, source });
+            const settings = await this.connectors.getSettings({ userId, source });
             const connector = this.registry.get(source);
-            const remoteTasks = await connector.fetchTasks(tokens);
+            const remoteTasks = await connector.fetchTasks(tokens, settings);
 
             job = await update({ stage: 'upserting' });
 

@@ -124,6 +124,22 @@ export class ConnectorsService {
         };
     }
 
+    /** Get the stored settings for a user+source connector. Returns empty object if not found. */
+    async getSettings({ userId, source }: { userId: string; source: string }): Promise<Record<string, unknown>> {
+        const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
+
+        return config?.settings ?? {};
+    }
+
+    /** Get the config document ID for a user+source. Throws NotFoundException if not found. */
+    async getConfigIdBySource({ userId, source }: { userId: string; source: string }): Promise<string> {
+        const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
+
+        if (!config) throw new NotFoundException(`Not connected to ${source}`);
+
+        return String(config._id);
+    }
+
     /** Update lastSyncedAt timestamp for a user+source connector config. */
     async updateLastSyncedAt({ userId, source }: { userId: string; source: string }): Promise<void> {
         await this.configModel.findOneAndUpdate(

@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConnectorRegistry, TodoistConnector, GoogleTasksConnector } from '@ctm/connectors';
+import { ConnectorRegistry, TodoistConnector, GoogleTasksConnector, NotionConnector } from '@ctm/connectors';
 import { createLogger } from '@ctm/logger';
 import { ConnectorConfig, ConnectorConfigSchema } from './schemas/connector-config.schema.js';
 import { DiscordConnection, DiscordConnectionSchema } from './schemas/discord-connection.schema.js';
 import { ConnectorsService } from './connectors.service.js';
 import { ConnectorsController } from './connectors.controller.js';
 import { DiscordController } from './discord.controller.js';
+import { DiscordService } from './discord.service.js';
 import { EncryptionService } from './encryption.service.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
@@ -24,6 +25,7 @@ import { UsersModule } from '../users/users.module.js';
     controllers: [ConnectorsController, DiscordController],
     providers: [
         ConnectorsService,
+        DiscordService,
         EncryptionService,
         {
             provide: ConnectorRegistry,
@@ -46,6 +48,15 @@ import { UsersModule } from '../users/users.module.js';
                         clientId: config.getOrThrow<string>('GOOGLE_CLIENT_ID'),
                         clientSecret: config.getOrThrow<string>('GOOGLE_CLIENT_SECRET'),
                         redirectUri: `${config.getOrThrow<string>('REDIRECT_BASE_URL')}/connectors/oauth/callback/google_tasks`,
+                        logger,
+                    }),
+                );
+
+                registry.register(
+                    new NotionConnector({
+                        clientId: config.getOrThrow<string>('NOTION_CLIENT_ID'),
+                        clientSecret: config.getOrThrow<string>('NOTION_CLIENT_SECRET'),
+                        redirectUri: `${config.getOrThrow<string>('REDIRECT_BASE_URL')}/connectors/oauth/callback/notion`,
                         logger,
                     }),
                 );
