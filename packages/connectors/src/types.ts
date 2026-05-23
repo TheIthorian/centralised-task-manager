@@ -58,18 +58,24 @@ export type ConnectionField =
 
 export type ConnectionDetailsSchema = Record<string, ConnectionField>;
 
-/** Contract that every task-source connector must implement. */
-export type TaskConnector = {
+/** OAuth2 flow contract for connectors that authenticate via OAuth. */
+export type OAuthConnector = {
     /** Unique identifier for the task source (e.g. `"todoist"`, `"google_tasks"`). */
-    readonly source: string;
-    /** Optional schema describing per-user connection fields (e.g. database picker). */
-    readonly connectionDetailsSchema?: ConnectionDetailsSchema;
+    readonly name: string;
     /** Build the OAuth authorization URL for the given user state value. */
     getAuthUrl(userId: string): string;
     /** Exchange an OAuth authorization code for a token set. */
     exchangeCode(code: string): Promise<OAuthTokens>;
     /** Refresh an expired access token using the stored refresh token. */
     refreshToken(tokens: OAuthTokens): Promise<OAuthTokens>;
+};
+
+/** Task CRUD contract for connectors that read and write remote tasks. */
+export type ExternalTaskSource = {
+    /** Unique identifier for the task source (e.g. `"todoist"`, `"google_tasks"`). */
+    readonly name: string;
+    /** Optional schema describing per-user connection fields (e.g. database picker). */
+    readonly connectionDetailsSchema?: ConnectionDetailsSchema;
     /** Fetch all tasks accessible with the given token set. */
     fetchTasks(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<RemoteTask[]>;
     /** Create a new task and return the created representation. */
@@ -81,3 +87,4 @@ export type TaskConnector = {
     /** Permanently delete a task. */
     deleteTask(tokens: OAuthTokens, sourceId: string, connectionDetails?: Record<string, unknown>): Promise<void>;
 };
+

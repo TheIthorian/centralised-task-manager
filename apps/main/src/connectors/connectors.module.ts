@@ -1,7 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConnectorRegistry, TodoistConnector, GoogleTasksConnector, NotionConnector } from '@ctm/connectors';
+import {
+    OAuthConnectorRegistry,
+    ExternalTaskSourceRegistry,
+    TodoistOAuthConnector,
+    TodoistTaskSource,
+    GoogleTasksOAuthConnector,
+    GoogleTasksTaskSource,
+    NotionOAuthConnector,
+    NotionTaskSource,
+} from '@ctm/connectors';
 import { createLogger } from '@ctm/logger';
 import { ConnectorConfig, ConnectorConfigSchema } from './schemas/connector-config.schema.js';
 import { DiscordConnection, DiscordConnectionSchema } from './schemas/discord-connection.schema.js';
@@ -26,14 +35,14 @@ import { UsersModule } from '../users/users.module.js';
         ConnectorsService,
         EncryptionService,
         {
-            provide: ConnectorRegistry,
+            provide: OAuthConnectorRegistry,
             inject: [ConfigService],
-            useFactory: (config: ConfigService): ConnectorRegistry => {
-                const registry = new ConnectorRegistry();
+            useFactory: (config: ConfigService): OAuthConnectorRegistry => {
+                const registry = new OAuthConnectorRegistry();
                 const logger = createLogger('connectors');
 
                 registry.register(
-                    new TodoistConnector({
+                    new TodoistOAuthConnector({
                         clientId: config.getOrThrow<string>('TODOIST_CLIENT_ID'),
                         clientSecret: config.getOrThrow<string>('TODOIST_CLIENT_SECRET'),
                         redirectUri: `${config.getOrThrow<string>('REDIRECT_BASE_URL')}/connectors/oauth/callback/todoist`,
@@ -42,7 +51,7 @@ import { UsersModule } from '../users/users.module.js';
                 );
 
                 registry.register(
-                    new GoogleTasksConnector({
+                    new GoogleTasksOAuthConnector({
                         clientId: config.getOrThrow<string>('GOOGLE_CLIENT_ID'),
                         clientSecret: config.getOrThrow<string>('GOOGLE_CLIENT_SECRET'),
                         redirectUri: `${config.getOrThrow<string>('REDIRECT_BASE_URL')}/connectors/oauth/callback/google_tasks`,
@@ -51,7 +60,7 @@ import { UsersModule } from '../users/users.module.js';
                 );
 
                 registry.register(
-                    new NotionConnector({
+                    new NotionOAuthConnector({
                         clientId: config.getOrThrow<string>('NOTION_CLIENT_ID'),
                         clientSecret: config.getOrThrow<string>('NOTION_CLIENT_SECRET'),
                         redirectUri: `${config.getOrThrow<string>('REDIRECT_BASE_URL')}/connectors/oauth/callback/notion`,
@@ -62,7 +71,20 @@ import { UsersModule } from '../users/users.module.js';
                 return registry;
             },
         },
+        {
+            provide: ExternalTaskSourceRegistry,
+            useFactory: (): ExternalTaskSourceRegistry => {
+                const registry = new ExternalTaskSourceRegistry();
+                const logger = createLogger('connectors');
+
+                registry.register(new TodoistTaskSource({ logger }));
+                registry.register(new GoogleTasksTaskSource({ logger }));
+                registry.register(new NotionTaskSource({ logger }));
+
+                return registry;
+            },
+        },
     ],
-    exports: [ConnectorsService, EncryptionService, ConnectorRegistry],
+    exports: [ConnectorsService, EncryptionService, OAuthConnectorRegistry, ExternalTaskSourceRegistry],
 })
 export class ConnectorsModule {}

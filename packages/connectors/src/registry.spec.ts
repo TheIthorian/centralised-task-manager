@@ -1,13 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { ConnectorRegistry } from './registry.js';
-import type { TaskConnector } from './types.js';
+import { OAuthConnectorRegistry, ExternalTaskSourceRegistry } from './registry.js';
+import type { OAuthConnector, ExternalTaskSource } from './types.js';
 
-function makeStubConnector(source: string): TaskConnector {
+function makeStubOAuth(source: string): OAuthConnector {
     return {
         source,
         getAuthUrl: () => '',
         exchangeCode: async () => ({ accessToken: '', refreshToken: '', expiresAt: new Date() }),
         refreshToken: async (t) => t,
+    };
+}
+
+function makeStubSource(source: string): ExternalTaskSource {
+    return {
+        source,
         fetchTasks: async () => [],
         createTask: async () => ({
             sourceId: '',
@@ -15,7 +21,10 @@ function makeStubConnector(source: string): TaskConnector {
             description: null,
             status: 'open',
             priority: null,
-            dueDate: null,
+            due: null,
+            deadline: null,
+            duration: null,
+            parentSourceId: null,
             tags: [],
         }),
         updateTask: async () => ({
@@ -24,7 +33,10 @@ function makeStubConnector(source: string): TaskConnector {
             description: null,
             status: 'open',
             priority: null,
-            dueDate: null,
+            due: null,
+            deadline: null,
+            duration: null,
+            parentSourceId: null,
             tags: [],
         }),
         completeTask: async () => undefined,
@@ -32,30 +44,60 @@ function makeStubConnector(source: string): TaskConnector {
     };
 }
 
-describe('ConnectorRegistry', () => {
+describe('OAuthConnectorRegistry', () => {
     it('registers and retrieves a connector by source', () => {
-        const registry = new ConnectorRegistry();
-        const connector = makeStubConnector('todoist');
+        const registry = new OAuthConnectorRegistry();
+        const connector = makeStubOAuth('todoist');
         registry.register(connector);
         expect(registry.get('todoist')).toBe(connector);
     });
 
     it('throws when getting an unregistered source', () => {
-        const registry = new ConnectorRegistry();
-        expect(() => registry.get('unknown')).toThrow('No connector registered for source: unknown');
+        const registry = new OAuthConnectorRegistry();
+        expect(() => registry.get('unknown')).toThrow('No OAuth connector registered for source: unknown');
     });
 
     it('lists all registered sources', () => {
-        const registry = new ConnectorRegistry();
-        registry.register(makeStubConnector('todoist'));
-        registry.register(makeStubConnector('google_tasks'));
+        const registry = new OAuthConnectorRegistry();
+        registry.register(makeStubOAuth('todoist'));
+        registry.register(makeStubOAuth('google_tasks'));
         expect(registry.list()).toEqual(['todoist', 'google_tasks']);
     });
 
     it('overwrites a connector when registered twice with same source', () => {
-        const registry = new ConnectorRegistry();
-        const first = makeStubConnector('todoist');
-        const second = makeStubConnector('todoist');
+        const registry = new OAuthConnectorRegistry();
+        const first = makeStubOAuth('todoist');
+        const second = makeStubOAuth('todoist');
+        registry.register(first);
+        registry.register(second);
+        expect(registry.get('todoist')).toBe(second);
+    });
+});
+
+describe('ExternalTaskSourceRegistry', () => {
+    it('registers and retrieves a source by name', () => {
+        const registry = new ExternalTaskSourceRegistry();
+        const source = makeStubSource('todoist');
+        registry.register(source);
+        expect(registry.get('todoist')).toBe(source);
+    });
+
+    it('throws when getting an unregistered source', () => {
+        const registry = new ExternalTaskSourceRegistry();
+        expect(() => registry.get('unknown')).toThrow('No task source registered for source: unknown');
+    });
+
+    it('lists all registered sources', () => {
+        const registry = new ExternalTaskSourceRegistry();
+        registry.register(makeStubSource('todoist'));
+        registry.register(makeStubSource('google_tasks'));
+        expect(registry.list()).toEqual(['todoist', 'google_tasks']);
+    });
+
+    it('overwrites a source when registered twice with same name', () => {
+        const registry = new ExternalTaskSourceRegistry();
+        const first = makeStubSource('todoist');
+        const second = makeStubSource('todoist');
         registry.register(first);
         registry.register(second);
         expect(registry.get('todoist')).toBe(second);

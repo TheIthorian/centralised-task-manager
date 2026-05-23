@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ConnectorRegistry } from '@ctm/connectors';
+import { ExternalTaskSourceRegistry } from '@ctm/connectors';
 import { Job } from '../jobs/schemas/job.schema.js';
 import { TASK_SYNC_JOB_MODEL, type TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
@@ -17,7 +17,7 @@ export class SyncService {
         @InjectModel(Job.name) _jobModel: Model<never>,
         @InjectModel(TASK_SYNC_JOB_MODEL) private readonly taskSyncModel: Model<TaskSyncJobDocument>,
         private readonly connectors: ConnectorsService,
-        private readonly registry: ConnectorRegistry,
+        private readonly registry: ExternalTaskSourceRegistry,
         private readonly tasks: TasksService,
         private readonly gateway: SyncGateway,
     ) {}

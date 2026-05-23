@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ConnectorRegistry, type RemoteTask } from '@ctm/connectors';
+import { ExternalTaskSourceRegistry, type RemoteTask } from '@ctm/connectors';
 import { Task, type TaskDocument } from './schemas/task.schema.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
@@ -17,7 +17,7 @@ const LOCAL_SOURCE = 'local';
 export class TasksService {
     constructor(
         @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
-        private readonly registry: ConnectorRegistry,
+        private readonly registry: ExternalTaskSourceRegistry,
         private readonly connectors: ConnectorsService,
     ) {}
 

@@ -39,7 +39,7 @@ describe('NotionConnector', () => {
 
     describe('source', () => {
         it('is "notion"', () => {
-            expect(connector.source).toBe('notion');
+            expect(connector.name).toBe('notion');
         });
     });
 

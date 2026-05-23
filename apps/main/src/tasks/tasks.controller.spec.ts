@@ -4,13 +4,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Types } from 'mongoose';
-import { ConnectorRegistry } from '@ctm/connectors';
-import type { TaskConnector, OAuthTokens, RemoteTask, CreateTaskDto, UpdateTaskDto } from '@ctm/connectors';
+import { ExternalTaskSourceRegistry } from '@ctm/connectors';
+import type { ExternalTaskSource, OAuthTokens, RemoteTask, CreateTaskDto, UpdateTaskDto } from '@ctm/connectors';
 import { AppModule } from '../app.module.js';
 import { EncryptionService } from '../connectors/encryption.service.js';
 
-// Stub connector that returns predictable RemoteTask values with unique sourceIds
-class StubConnector implements TaskConnector {
+class StubTaskSource implements ExternalTaskSource {
     readonly source = 'stub';
     private counter = 0;
 
@@ -27,18 +26,6 @@ class StubConnector implements TaskConnector {
             parentSourceId: null,
             tags: [],
         };
-    }
-
-    getAuthUrl(_userId: string): string {
-        return 'https://stub.example.com/auth';
-    }
-
-    async exchangeCode(_code: string): Promise<OAuthTokens> {
-        return { accessToken: 'tok', refreshToken: '', expiresAt: new Date() };
-    }
-
-    async refreshToken(tokens: OAuthTokens): Promise<OAuthTokens> {
-        return tokens;
     }
 
     async fetchTasks(_tokens: OAuthTokens): Promise<RemoteTask[]> {
@@ -64,13 +51,13 @@ describe('TasksModule', () => {
     const email = `tasks+${Date.now()}@example.com`;
 
     beforeAll(async () => {
-        const stubConnector = new StubConnector();
+        const stubSource = new StubTaskSource();
         const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-            .overrideProvider(ConnectorRegistry)
+            .overrideProvider(ExternalTaskSourceRegistry)
             .useFactory({
                 factory: () => {
-                    const registry = new ConnectorRegistry();
-                    registry.register(stubConnector);
+                    const registry = new ExternalTaskSourceRegistry();
+                    registry.register(stubSource);
                     return registry;
                 },
             })

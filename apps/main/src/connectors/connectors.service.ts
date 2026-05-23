@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model, Types } from 'mongoose';
-import { ConnectorRegistry } from '@ctm/connectors';
+import { OAuthConnectorRegistry } from '@ctm/connectors';
 import type { OAuthTokens } from '@ctm/connectors';
 import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
 import { EncryptionService } from './encryption.service.js';
@@ -13,7 +13,7 @@ type OAuthStatePayload = { sub: string };
 export class ConnectorsService {
     constructor(
         @InjectModel(ConnectorConfig.name) private readonly configModel: Model<ConnectorConfigDocument>,
-        private readonly registry: ConnectorRegistry,
+        private readonly registry: OAuthConnectorRegistry,
         private readonly encryption: EncryptionService,
         private readonly jwt: JwtService,
     ) {}

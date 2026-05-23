@@ -18,7 +18,7 @@ import {
 import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { ConnectorRegistry, NotionConnector } from '@ctm/connectors';
+import { ExternalTaskSourceRegistry, NotionTaskSource } from '@ctm/connectors';
 import type { ConnectionDetailsSchema } from '@ctm/connectors';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
@@ -36,7 +36,7 @@ export class ConnectorsController {
 
     constructor(
         private readonly connectors: ConnectorsService,
-        private readonly registry: ConnectorRegistry,
+        private readonly registry: ExternalTaskSourceRegistry,
         private readonly config: ConfigService,
     ) {}
 
@@ -112,7 +112,7 @@ export class ConnectorsController {
         @Request() req: AuthRequest,
     ): Promise<{ id: string; name: string }[]> {
         const tokens = await this.connectors.getDecryptedTokens({ userId: req.user.sub, source: 'notion' });
-        const connector = this.registry.get('notion') as NotionConnector;
+        const connector = this.registry.get('notion') as NotionTaskSource;
 
         return connector.listDatabases(tokens);
     }
