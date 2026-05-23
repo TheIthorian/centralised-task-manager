@@ -21,7 +21,10 @@ class StubConnector implements TaskConnector {
             description: null,
             status: 'open',
             priority: 2,
-            dueDate: null,
+            due: null,
+            deadline: null,
+            duration: null,
+            parentSourceId: null,
             tags: [],
         };
     }
