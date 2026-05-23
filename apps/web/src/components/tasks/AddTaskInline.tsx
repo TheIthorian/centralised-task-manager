@@ -25,7 +25,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
             priority,
             source: 'local',
             description: description.trim() || undefined,
-            dueDate: dueDate || undefined,
+            due: dueDate ? { date: dueDate } : undefined,
         });
 
         setTitle('');
