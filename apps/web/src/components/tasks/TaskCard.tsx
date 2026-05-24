@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { Badge, Checkbox } from '../ui/index.js';
 import type { Duration, TaskDto } from '@ctm/api-client';
-import { getSourceLabel } from '../../lib/source-labels.js';
+import { SourceBadge } from './SourceBadge.js';
 
 type TaskCardProps = {
     task: TaskDto;
@@ -22,8 +22,6 @@ const priorityVariant = {
 
 /** A single task row card in neobrutalist style. */
 export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.Element {
-    const sourceLabel = getSourceLabel(task.source);
-
     return (
         <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none flex items-center gap-3 px-3 py-2.5">
             <Checkbox
@@ -67,7 +65,7 @@ export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.E
                         📍
                     </span>
                 )}
-                <Badge variant="source">{sourceLabel}</Badge>
+                <SourceBadge source={task.source} />
                 {task.priority && (
                     <Badge variant={priorityVariant[task.priority as 1 | 2 | 3 | 4]}>P{task.priority}</Badge>
                 )}

@@ -1,6 +1,7 @@
 import { ConnectorType } from '@ctm/api-client';
 import type { ConnectorStatusDto, TaskSyncJobDto } from '@ctm/api-client';
 import { Button } from '../ui/index.js';
+import { getSourceLabel, getSourceFaviconUrl } from '../../lib/source-labels.js';
 
 type SourceCardProps = {
     connector: ConnectorStatusDto;
@@ -32,6 +33,8 @@ export function SourceCard({
     isPending,
 }: SourceCardProps): React.JSX.Element {
     const { source, connected, lastSynced, connectorType, setupRequired } = connector;
+    const favicon = getSourceFaviconUrl(source);
+    const sourceLabel = getSourceLabel(source);
     const isTaskSync = connectorType === ConnectorType.TaskSync;
     const isSyncing = syncJob?.status === 'queued' || syncJob?.status === 'running';
     const syncFailed = syncJob?.status === 'failed';
@@ -40,7 +43,10 @@ export function SourceCard({
         <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide">{source}</p>
+                    <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide flex items-center gap-1.5">
+                        {favicon && <img src={favicon} alt="" width={14} height={14} className="inline-block" />}
+                        {sourceLabel}
+                    </p>
                     {connected && lastSynced && !isSyncing && (
                         <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 mt-0.5">
                             Last synced: {new Date(lastSynced).toLocaleDateString()}
