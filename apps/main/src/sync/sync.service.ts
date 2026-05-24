@@ -78,7 +78,7 @@ export class SyncService {
 
             if (job.status === 'cancelled') return;
 
-            const tokens = await this.connectors.getDecryptedTokens({ userId, source });
+            const tokens = await this.connectors.ensureFreshTokens({ userId, source });
             const settings = await this.connectors.getSettings({ userId, source });
             const connector = this.registry.get(source as unknown as TaskConnectorName);
             const remoteTasks = await connector.fetchTasks(tokens, settings);
