@@ -1,14 +1,8 @@
 import { HttpClient, type Logger } from '@ctm/http-client';
+import { ValidationError } from '@ctm/errors';
 
 import { TaskConnectorName } from '../types.js';
-import type {
-    ConnectionDetailsSchema,
-    CreateTaskDto,
-    ExternalTaskSource,
-    OAuthTokens,
-    RemoteTask,
-    UpdateTaskDto,
-} from '../types.js';
+import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
 import type {
     NotionBlock,
     NotionBlocksResponse,
@@ -45,7 +39,7 @@ export class NotionTaskSource implements ExternalTaskSource {
     /** Fetch all tasks from the user's chosen Notion database. Paginates automatically. */
     async fetchTasks(tokens: OAuthTokens, connectionDetails?: { databaseId: string }): Promise<RemoteTask[]> {
         const databaseId = String(connectionDetails?.['databaseId'] ?? '');
-        if (!databaseId) throw new Error('NotionTaskSource: connectionDetails.databaseId is required');
+        if (!databaseId) throw new ValidationError('NotionTaskSource: connectionDetails.databaseId is required');
         const headers = this.notionHeaders(tokens);
         const tasks: RemoteTask[] = [];
         let cursor: string | null = null;
@@ -76,7 +70,7 @@ export class NotionTaskSource implements ExternalTaskSource {
         connectionDetails?: Record<string, unknown>,
     ): Promise<RemoteTask> {
         const databaseId = String(connectionDetails?.['databaseId'] ?? '');
-        if (!databaseId) throw new Error('NotionTaskSource: connectionDetails.databaseId is required');
+        if (!databaseId) throw new ValidationError('NotionTaskSource: connectionDetails.databaseId is required');
         const properties: Record<string, unknown> = {
             Name: { title: [{ text: { content: task.title } }] },
         };
