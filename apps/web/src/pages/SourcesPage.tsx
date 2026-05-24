@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { io, type Socket } from 'socket.io-client';
 import { ConnectorType } from '@ctm/api-client';
-import type { ConnectorStatusDto, TaskSyncJobDto } from '@ctm/api-client';
+import type { ConnectorStatusDto, ConnectorHealthDto, TaskSyncJobDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { readTokens } from '../auth/auth-storage.js';
@@ -28,6 +28,19 @@ export function SourcesPage(): React.JSX.Element {
         queryKey: ['connectors'],
         queryFn: () => api.listConnectors(),
     });
+
+    const {
+        data: healthResults = [],
+        isLoading: isHealthLoading,
+    } = useQuery({
+        queryKey: ['connectors', 'health'],
+        queryFn: () => api.getConnectorHealth(),
+        enabled: connectors.some((c) => c.connected),
+    });
+
+    const healthBySource = new Map<string, ConnectorHealthDto>(
+        healthResults.map((h: ConnectorHealthDto) => [h.source, h]),
+    );
 
     // WebSocket connection — opens once, cleans up on unmount
     useEffect(() => {
@@ -192,6 +205,8 @@ export function SourcesPage(): React.JSX.Element {
                                     onConfigure={(source) => setSetupSource(source)}
                                     syncJob={syncJobs.get(connector.source)}
                                     isPending={isPending}
+                                    health={healthBySource.get(connector.source)}
+                                    isHealthLoading={isHealthLoading}
                                 />
                             ))}
                     </div>
