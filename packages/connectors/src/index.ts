@@ -8,6 +8,7 @@ export type {
     ExternalTaskSource,
     ConnectionField,
     ConnectionDetailsSchema,
+    HealthCheckResult,
 } from './types.js';
 export { OAuthConnectorRegistry, ExternalTaskSourceRegistry } from './registry.js';
 export { TodoistOAuthConnector } from './todoist/todoist.oauth.js';
