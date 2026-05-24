@@ -62,14 +62,14 @@ export function GroupedTaskList({ tasks, onToggle, onEdit }: GroupedTaskListProp
     }
 
     return (
-        <div className="flex flex-col">
-            {SECTIONS.map(({ key, label, chipClass }, idx) => {
+        <div className="flex flex-col gap-5">
+            {SECTIONS.map(({ key, label, chipClass }) => {
                 const sectionTasks = buckets[key];
 
                 if (sectionTasks.length === 0) return null;
 
                 return (
-                    <div key={key} className={idx > 0 ? 'mt-5' : ''}>
+                    <div key={key}>
                         <div
                             className={`inline-flex items-center gap-2 mb-2 border-2 px-2.5 py-0.5 font-black text-[11px] uppercase tracking-wide ${chipClass}`}
                         >
