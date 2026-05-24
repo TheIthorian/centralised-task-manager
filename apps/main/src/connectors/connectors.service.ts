@@ -120,6 +120,42 @@ export class ConnectorsService {
         };
     }
 
+    /**
+     * Returns decrypted tokens for a user+source, refreshing them first if they
+     * expire within 5 minutes. Persists updated tokens to the database on refresh.
+     */
+    async ensureFreshTokens({ userId, source }: { userId: string; source: ConnectorName }): Promise<OAuthTokens> {
+        const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
+
+        if (!config) throw new NotFoundException(`Not connected to ${source}`);
+
+        const tokens: OAuthTokens = {
+            accessToken: this.encryption.decrypt(config.accessToken),
+            refreshToken: this.encryption.decrypt(config.refreshToken),
+            expiresAt: config.tokenExpiresAt,
+        };
+
+        const msUntilExpiry = config.tokenExpiresAt.getTime() - Date.now();
+
+        if (msUntilExpiry > 5 * 60 * 1000) {
+            return tokens;
+        }
+
+        const connector = this.registry.get(source);
+        const fresh = await connector.refreshToken(tokens);
+
+        await this.configModel.findOneAndUpdate(
+            { userId: new Types.ObjectId(userId), source },
+            {
+                accessToken: this.encryption.encrypt(fresh.accessToken),
+                refreshToken: this.encryption.encrypt(fresh.refreshToken),
+                tokenExpiresAt: fresh.expiresAt,
+            },
+        );
+
+        return fresh;
+    }
+
     /** Get the stored settings for a user+source connector. Returns empty object if not found. */
     async getSettings({ userId, source }: { userId: string; source: ConnectorName }): Promise<Record<string, unknown>> {
         const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
