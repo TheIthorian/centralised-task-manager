@@ -1,5 +1,5 @@
 import { ConnectorType } from '@ctm/api-client';
-import type { ConnectorStatusDto, TaskSyncJobDto } from '@ctm/api-client';
+import type { ConnectorStatusDto, ConnectorHealthDto, TaskSyncJobDto } from '@ctm/api-client';
 import { Button } from '../ui/index.js';
 import { getSourceLabel, getSourceFaviconUrl } from '../../lib/source-labels.js';
 
@@ -13,6 +13,8 @@ type SourceCardProps = {
     onConfigure?: (source: string) => void;
     syncJob?: TaskSyncJobDto;
     isPending: boolean;
+    health?: ConnectorHealthDto;
+    isHealthLoading?: boolean;
 };
 
 const STAGE_LABEL: Record<string, string> = {
@@ -31,6 +33,8 @@ export function SourceCard({
     onConfigure,
     syncJob,
     isPending,
+    health,
+    isHealthLoading = false,
 }: SourceCardProps): React.JSX.Element {
     const { source, connected, lastSynced, connectorType, setupRequired } = connector;
     const favicon = getSourceFaviconUrl(source);
@@ -38,6 +42,7 @@ export function SourceCard({
     const isTaskSync = connectorType === ConnectorType.TaskSync;
     const isSyncing = syncJob?.status === 'queued' || syncJob?.status === 'running';
     const syncFailed = syncJob?.status === 'failed';
+    const isUnhealthy = health !== undefined && !health.healthy;
 
     return (
         <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex flex-col gap-3">
@@ -76,7 +81,17 @@ export function SourceCard({
                             Test
                         </Button>
                     )}
-                    {connected && isTaskSync && !isSyncing && (
+                    {connected && isTaskSync && !isSyncing && isHealthLoading && (
+                        <Button variant="secondary" disabled>
+                            Checking…
+                        </Button>
+                    )}
+                    {connected && isTaskSync && !isSyncing && !isHealthLoading && isUnhealthy && (
+                        <Button onClick={() => onConnect(source)} disabled={isPending}>
+                            Reconnect
+                        </Button>
+                    )}
+                    {connected && isTaskSync && !isSyncing && !isHealthLoading && !isUnhealthy && (
                         <Button
                             variant="secondary"
                             onClick={() => onSync(source)}
@@ -109,6 +124,12 @@ export function SourceCard({
             {connected && setupRequired && (
                 <p className="text-xs font-bold text-nb-red">
                     Setup incomplete — click Configure to finish connecting.
+                </p>
+            )}
+
+            {connected && isUnhealthy && (
+                <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                    Connection issue — reconnect to restore sync.
                 </p>
             )}
 
