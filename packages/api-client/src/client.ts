@@ -245,8 +245,9 @@ export class CtmApiClient {
             case 'done':
                 return { status: 'done' };
             case 'today':
+                return { filter: 'today' };
             case 'upcoming':
-                return { status: 'open' };
+                return { filter: 'upcoming' };
             case 'all':
             default:
                 return {};

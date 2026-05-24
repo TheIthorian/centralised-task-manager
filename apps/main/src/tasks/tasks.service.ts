@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ConnectorName, ExternalTaskSourceRegistry, TaskConnectorName, type RemoteTask } from '@ctm/connectors';
+import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
 import { Task, type TaskDocument } from './schemas/task.schema.js';
-import { ConnectorsService } from '../connectors/connectors.service.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
 import type { UpdateTaskDto } from './dto/update-task.dto.js';
 import type { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
@@ -17,13 +16,38 @@ const LOCAL_SOURCE = 'local';
 export class TasksService {
     constructor(
         @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
-        private readonly registry: ExternalTaskSourceRegistry,
-        private readonly connectors: ConnectorsService,
     ) {}
 
     /** List tasks for a user with optional filters. */
     async list(userId: string, query: ListTasksQueryDto): Promise<TaskDocument[]> {
         const filter: Record<string, unknown> = { userId: new Types.ObjectId(userId) };
+
+        if (query.filter) {
+            const todayStart = new Date();
+
+            todayStart.setHours(0, 0, 0, 0);
+
+            const tomorrowStart = new Date(todayStart);
+
+            tomorrowStart.setDate(todayStart.getDate() + 1);
+
+            switch (query.filter) {
+                case 'today':
+                    filter['status'] = 'open';
+                    filter['due.date'] = { $gte: todayStart, $lt: tomorrowStart };
+                    break;
+                case 'upcoming':
+                    filter['status'] = 'open';
+                    filter['due.date'] = { $gte: tomorrowStart };
+                    break;
+                case 'done':
+                    filter['status'] = 'done';
+                    break;
+                case 'all':
+                    filter['status'] = { $ne: 'done' };
+                    break;
+            }
+        }
 
         if (query.status) filter['status'] = query.status;
 
@@ -66,51 +90,20 @@ export class TasksService {
 
         const { due, deadlineDate } = this.parseDueFields(dto);
 
-        if (dto.source === LOCAL_SOURCE) {
-            return this.taskModel.create({
-                userId: new Types.ObjectId(userId),
-                source: LOCAL_SOURCE,
-                sourceId: new Types.ObjectId().toHexString(),
-                title: dto.title,
-                description: dto.description,
-                status: 'open',
-                priority: (dto.priority ?? 3) as 1 | 2 | 3 | 4,
-                tags: [],
-                locations: dto.locations ?? [],
-                due: due ?? null,
-                deadlineDate: deadlineDate ?? null,
-                duration: dto.duration ?? null,
-                parentId: dto.parentId ? new Types.ObjectId(dto.parentId) : null,
-                syncedAt: new Date(),
-            });
-        }
-
-        const source = dto.source as TaskConnectorName;
-        const tokens = await this.connectors.getDecryptedTokens({ userId, source: source as string as ConnectorName });
-        const connector = this.registry.get(source);
-        const remote = await connector.createTask(tokens, {
-            title: dto.title,
-            description: dto.description,
-            due: due
-                ? { date: due.date, timezone: due.timezone ?? undefined, recurrence: due.recurrence ?? undefined }
-                : undefined,
-            deadlineDate,
-            duration: dto.duration,
-            priority: dto.priority,
-        });
-
+        // Outbound sync (CTM → external source) is disabled; all creates are local-only.
         return this.taskModel.create({
             userId: new Types.ObjectId(userId),
-            source: dto.source,
-            sourceId: remote.sourceId,
-            title: remote.title,
-            description: remote.description,
-            status: remote.status,
-            priority: remote.priority as 1 | 2 | 3 | 4 | null,
-            tags: remote.tags,
-            due: remote.due ?? null,
-            deadlineDate: remote.deadline ?? null,
-            duration: remote.duration ?? null,
+            source: dto.source === LOCAL_SOURCE ? LOCAL_SOURCE : dto.source,
+            sourceId: new Types.ObjectId().toHexString(),
+            title: dto.title,
+            description: dto.description,
+            status: 'open',
+            priority: (dto.priority ?? 3) as 1 | 2 | 3 | 4,
+            tags: [],
+            locations: dto.locations ?? [],
+            due: due ?? null,
+            deadlineDate: deadlineDate ?? null,
+            duration: dto.duration ?? null,
             parentId: dto.parentId ? new Types.ObjectId(dto.parentId) : null,
             syncedAt: new Date(),
         });
@@ -127,52 +120,22 @@ export class TasksService {
         userId: string;
         dto: UpdateTaskDto;
     }): Promise<TaskDocument> {
-        const task = await this.findOne({ taskId, userId });
+        await this.findOne({ taskId, userId });
 
         const { due, deadlineDate } = this.parseDueFields(dto);
 
-        if (task.source === LOCAL_SOURCE) {
-            return this.taskModel.findByIdAndUpdate(
-                taskId,
-                {
-                    ...(dto.title !== undefined && { title: dto.title }),
-                    ...(dto.description !== undefined && { description: dto.description }),
-                    ...(dto.priority !== undefined && { priority: dto.priority }),
-                    ...(due !== undefined && { due }),
-                    ...(deadlineDate !== undefined && { deadlineDate }),
-                    ...(dto.duration !== undefined && { duration: dto.duration }),
-                    ...(dto.tags !== undefined && { tags: dto.tags }),
-                    ...(dto.locations !== undefined && { locations: dto.locations }),
-                },
-                { new: true },
-            ) as Promise<TaskDocument>;
-        }
-
-        const taskSource = task.source as unknown as TaskConnectorName;
-        const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source as unknown as ConnectorName });
-        const connector = this.registry.get(taskSource);
-        const remote = await connector.updateTask(tokens, task.sourceId, {
-            title: dto.title,
-            description: dto.description,
-            due: due
-                ? { date: due.date, timezone: due.timezone ?? undefined, recurrence: due.recurrence ?? undefined }
-                : undefined,
-            deadlineDate,
-            duration: dto.duration,
-            priority: dto.priority,
-        });
-
+        // Outbound sync (CTM → external source) is disabled; all updates are local-only.
         return this.taskModel.findByIdAndUpdate(
             taskId,
             {
-                title: remote.title,
-                description: remote.description,
-                priority: remote.priority,
-                due: remote.due ?? null,
-                deadlineDate: remote.deadline ?? null,
-                duration: remote.duration ?? null,
-                tags: dto.tags ?? task.tags,
-                locations: dto.locations ?? task.locations,
+                ...(dto.title !== undefined && { title: dto.title }),
+                ...(dto.description !== undefined && { description: dto.description }),
+                ...(dto.priority !== undefined && { priority: dto.priority }),
+                ...(due !== undefined && { due }),
+                ...(deadlineDate !== undefined && { deadlineDate }),
+                ...(dto.duration !== undefined && { duration: dto.duration }),
+                ...(dto.tags !== undefined && { tags: dto.tags }),
+                ...(dto.locations !== undefined && { locations: dto.locations }),
             },
             { new: true },
         ) as Promise<TaskDocument>;
@@ -192,19 +155,13 @@ export class TasksService {
         userId: string;
         dto: SetTaskStatusDto;
     }): Promise<TaskDocument> {
-        const task = await this.findOne({ taskId, userId });
+        await this.findOne({ taskId, userId });
 
-        if (dto.status === 'done' && task.source !== LOCAL_SOURCE) {
-            const taskSource = task.source as unknown as TaskConnectorName;
-            const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source as unknown as ConnectorName });
-            const connector = this.registry.get(taskSource);
-            await connector.completeTask(tokens, task.sourceId);
-            // Note: there is no uncompleteTask connector method; 'open' is local-only.
-        }
+        // Outbound sync (CTM → external source) is disabled; status changes are local-only.
 
         return this.taskModel.findByIdAndUpdate(
             taskId,
-            { status: dto.status, syncedAt: new Date() },
+            { status: dto.status },
             { new: true },
         ) as Promise<TaskDocument>;
     }
@@ -212,15 +169,9 @@ export class TasksService {
     /** Delete a task via write-through.
      *  When source is 'local', skip the connector and delete directly from CTM. */
     async remove({ taskId, userId }: { taskId: string; userId: string }): Promise<void> {
-        const task = await this.findOne({ taskId, userId });
+        await this.findOne({ taskId, userId });
 
-        if (task.source !== LOCAL_SOURCE) {
-            const taskSource = task.source as unknown as TaskConnectorName;
-            const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source as unknown as ConnectorName });
-            const connector = this.registry.get(taskSource);
-            await connector.deleteTask(tokens, task.sourceId);
-        }
-
+        // Outbound sync (CTM → external source) is disabled; deletes are local-only.
         await this.taskModel.deleteOne({ _id: taskId });
     }
 
@@ -255,7 +206,7 @@ export class TasksService {
     }
 
     /** Pull-sync: upsert remote tasks into CTM. CTM-local changes win — any task where
-     *  updatedAt > syncedAt is skipped. Existing tasks are fetched in a single query and
+     *  updatedAt > createdAt (i.e. edited in CTM) is skipped. Existing tasks are fetched in a single query and
      *  updates are applied via bulkWrite to avoid N+1 DB calls. Uses timestamps: false so
      *  that Mongoose does not bump updatedAt during sync writes, preserving the user-edit signal. */
     async upsertFromRemote({
@@ -326,6 +277,8 @@ export class TasksService {
                 deadlineDate: remote.deadline ?? null,
                 duration: remote.duration ?? null,
                 parentId,
+                createdAt: now,
+                updatedAt: now,
                 syncedAt: now,
             };
         };
@@ -353,7 +306,8 @@ export class TasksService {
                 continue;
             }
 
-            const hasLocalChanges = existing.updatedAt !== undefined && existing.updatedAt > existing.syncedAt;
+            const referenceTime = existing.createdAt ?? existing.syncedAt;
+            const hasLocalChanges = existing.updatedAt !== undefined && referenceTime !== undefined && existing.updatedAt > referenceTime;
 
             if (hasLocalChanges) {
                 skipped++;

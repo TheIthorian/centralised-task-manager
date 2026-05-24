@@ -3,6 +3,12 @@ import { IsOptional, IsString, IsIn, IsBoolean, MaxLength } from 'class-validato
 import { Transform, Type } from 'class-transformer';
 
 export class ListTasksQueryDto {
+    /** UI-level preset filter — maps to date/status constraints in the service. */
+    @ApiPropertyOptional({ enum: ['all', 'today', 'upcoming', 'done'] })
+    @IsOptional()
+    @IsIn(['all', 'today', 'upcoming', 'done'])
+    filter?: 'all' | 'today' | 'upcoming' | 'done';
+
     @ApiPropertyOptional({ enum: ['open', 'done', 'archived'] })
     @IsOptional()
     @IsIn(['open', 'done', 'archived'])
