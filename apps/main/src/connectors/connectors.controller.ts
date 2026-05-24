@@ -22,6 +22,7 @@ import Ajv from 'ajv';
 import type { NotionTaskSource } from '@ctm/connectors';
 import type {
     ConnectorAuthUrlDto,
+    ConnectorHealthDto,
     ConnectorStatusDto,
     NotionDatabaseDto,
     OkDto,
@@ -87,7 +88,7 @@ export class ConnectorsController {
     @ApiOperation({ summary: 'Health-check connected task-sync connectors' })
     @Get('health')
     @UseGuards(CombinedAuthGuard)
-    async checkHealth(@Request() req: AuthRequest): Promise<{ source: string; healthy: boolean; error?: string }[]> {
+    async checkHealth(@Request() req: AuthRequest): Promise<ConnectorHealthDto[]> {
         const configs = await this.connectors.listConfigs(req.user.sub);
         const taskSyncConfigs = configs.filter((c) => {
             const connector = this.oAuthConnectorRegistry.get(c.source as ConnectorName);

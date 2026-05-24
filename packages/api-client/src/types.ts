@@ -133,6 +133,13 @@ export type ConnectorStatusDto = {
     setupRequired: boolean;
 };
 
+/** Health-check result for a single connected task-sync connector. */
+export type ConnectorHealthDto = {
+    source: string;
+    healthy: boolean;
+    error?: string;
+};
+
 /** Status snapshot of a background task-sync job. */
 export type TaskSyncJobDto = {
     id: string;

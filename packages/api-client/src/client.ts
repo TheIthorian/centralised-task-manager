@@ -1,5 +1,6 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
 import type {
+    ConnectorHealthDto,
     ConnectorStatusDto,
     DiscordStatusDto,
     MarkAllReadResultDto,
@@ -140,6 +141,11 @@ export class CtmApiClient {
     /** List all connector statuses for the current user. */
     async listConnectors(): Promise<ConnectorStatusDto[]> {
         return this.request<ConnectorStatusDto[]>({ method: 'GET', path: '/connectors' });
+    }
+
+    /** Health-check all connected task-sync connectors for the current user. */
+    async getConnectorHealth(): Promise<ConnectorHealthDto[]> {
+        return this.request<ConnectorHealthDto[]>({ method: 'GET', path: '/connectors/health' });
     }
 
     /** Get the OAuth authorisation URL for a connector source. */
