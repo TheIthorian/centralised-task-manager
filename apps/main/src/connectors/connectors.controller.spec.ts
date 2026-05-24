@@ -79,6 +79,17 @@ describe('ConnectorsModule', () => {
 
         expect(res.statusCode).toBe(404);
     });
+
+    it('GET /connectors/health returns [] when no connectors are connected', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/connectors/health',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body)).toEqual([]);
+    });
 });
 
 // ─── Auth guards and user isolation ──────────────────────────────────────────

@@ -17,7 +17,7 @@ import {
 import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { ConnectorName, TaskConnectorName, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
+import { ConnectorName, TaskConnectorName, ConnectorType, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
 import Ajv from 'ajv';
 import type { NotionTaskSource } from '@ctm/connectors';
 import type {
@@ -79,6 +79,34 @@ export class ConnectorsController {
                 connectionSchema: connector.connectionDetailsSchema,
                 setupRequired,
             };
+        });
+    }
+
+    /** Health-check all connected task-sync connectors for the current user. */
+    @ApiBearerAuth('jwt')
+    @ApiOperation({ summary: 'Health-check connected task-sync connectors' })
+    @Get('health')
+    @UseGuards(CombinedAuthGuard)
+    async checkHealth(@Request() req: AuthRequest): Promise<{ source: string; healthy: boolean; error?: string }[]> {
+        const configs = await this.connectors.listConfigs(req.user.sub);
+        const taskSyncConfigs = configs.filter((c) => {
+            const connector = this.oAuthConnectorRegistry.get(c.source as ConnectorName);
+            return connector.connectorType === ConnectorType.TaskSync;
+        });
+
+        const results = await Promise.allSettled(
+            taskSyncConfigs.map(async (config) => {
+                const source = config.source as ConnectorName;
+                const tokens = await this.connectors.ensureFreshTokens({ userId: req.user.sub, source });
+                const taskSource = this.externalTaskSourceRegistry.get(config.source as unknown as TaskConnectorName);
+                return { source: config.source, ...(await taskSource.healthCheck(tokens)) };
+            }),
+        );
+
+        return results.map((result, i) => {
+            if (result.status === 'fulfilled') return result.value;
+            const message = result.reason instanceof Error ? result.reason.message : 'Unknown error';
+            return { source: taskSyncConfigs[i]!.source, healthy: false, error: message };
         });
     }
 
