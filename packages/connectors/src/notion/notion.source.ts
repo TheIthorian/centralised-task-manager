@@ -2,7 +2,7 @@ import { HttpClient, type Logger } from '@ctm/http-client';
 import { ValidationError } from '@ctm/errors';
 
 import { TaskConnectorName } from '../types.js';
-import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
+import type { CreateTaskDto, ExternalTaskSource, HealthCheckResult, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
 import type {
     NotionBlock,
     NotionBlocksResponse,
@@ -34,6 +34,19 @@ export class NotionTaskSource implements ExternalTaskSource {
 
     constructor(config: NotionTaskSourceConfig) {
         this.http = new HttpClient({ baseUrl: 'https://api.notion.com', logger: config.logger });
+    }
+
+    /** Probe the Notion API to verify the connection is healthy. */
+    async healthCheck(tokens: OAuthTokens): Promise<HealthCheckResult> {
+        try {
+            await this.http.get<unknown>('/v1/users/me', {
+                Authorization: `Bearer ${tokens.accessToken}`,
+                'Notion-Version': NOTION_VERSION,
+            });
+            return { healthy: true };
+        } catch (err) {
+            return { healthy: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
     }
 
     /** Fetch all tasks from the user's chosen Notion database. Paginates automatically. */
