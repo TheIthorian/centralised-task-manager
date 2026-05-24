@@ -91,6 +91,7 @@ export class ConnectorsController {
     async checkHealth(@Request() req: AuthRequest): Promise<ConnectorHealthDto[]> {
         const configs = await this.connectors.listConfigs(req.user.sub);
         const taskSyncConfigs = configs.filter((c) => {
+            if (!c.enabled) return false;
             const connector = this.oAuthConnectorRegistry.get(c.source as ConnectorName);
             return connector.connectorType === ConnectorType.TaskSync;
         });
