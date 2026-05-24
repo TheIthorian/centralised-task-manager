@@ -86,10 +86,6 @@ describe('NotionTaskSource', () => {
         expect(source.name).toBe('notion');
     });
 
-    it('has connectionDetailsSchema with databaseId remote_select', () => {
-        expect(source.connectionDetailsSchema?.['databaseId']).toMatchObject({ type: 'remote_select' });
-    });
-
     describe('fetchTasks', () => {
         it('throws when connectionDetails.databaseId is absent', async () => {
             await expect(source.fetchTasks(tokens)).rejects.toThrow('databaseId is required');

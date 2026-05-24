@@ -1,63 +1,55 @@
-import { Test } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { MongooseModule } from '@nestjs/mongoose';
+import { type Model, Types } from 'mongoose';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
 import { ApiTokenService } from './api-token.service.js';
-import { ApiToken } from './schemas/api-token.schema.js';
+import { ApiToken, ApiTokenSchema } from './schemas/api-token.schema.js';
 
 describe('ApiTokenService', () => {
+    let module: TestingModule;
     let service: ApiTokenService;
-    let mockModel: {
-        create: ReturnType<typeof vi.fn>;
-        find: ReturnType<typeof vi.fn>;
-        deleteOne: ReturnType<typeof vi.fn>;
-        findOneAndUpdate: ReturnType<typeof vi.fn>;
-    };
+    const userId = new Types.ObjectId().toHexString();
 
-    beforeEach(async () => {
-        mockModel = {
-            create: vi.fn(),
-            find: vi.fn(),
-            deleteOne: vi.fn(),
-            findOneAndUpdate: vi.fn(),
-        };
-        const module = await Test.createTestingModule({
-            providers: [ApiTokenService, { provide: getModelToken(ApiToken.name), useValue: mockModel }],
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            imports: [
+                MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
+                MongooseModule.forFeature([{ name: ApiToken.name, schema: ApiTokenSchema }]),
+            ],
+            providers: [ApiTokenService],
         }).compile();
 
         service = module.get(ApiTokenService);
     });
 
+    afterAll(async () => {
+        await module.close();
+    });
+
     it('create returns a ctm_ prefixed raw token', async () => {
-        mockModel.create.mockResolvedValue({
-            _id: '507f1f77bcf86cd799439011',
-            label: 'my token',
-            userId: '507f1f77bcf86cd799439011',
-        });
-        const { rawToken, record } = await service.create({ userId: '507f1f77bcf86cd799439011', label: 'my token' });
+        const { rawToken, record } = await service.create({ userId, label: 'my token' });
 
         expect(rawToken).toMatch(/^ctm_[0-9a-f]{64}$/);
         expect(record.label).toBe('my token');
     });
 
     it('validate returns userId for valid token', async () => {
-        mockModel.findOneAndUpdate.mockResolvedValue({ userId: 'user-id-123' });
-        const result = await service.validate('ctm_abc');
+        const { rawToken } = await service.create({ userId, label: 'validate test' });
+        const result = await service.validate(rawToken);
 
-        expect(result).toBe('user-id-123');
+        expect(result).toBe(userId);
     });
 
     it('validate returns null for unknown token', async () => {
-        mockModel.findOneAndUpdate.mockResolvedValue(null);
-        const result = await service.validate('ctm_bad');
+        const result = await service.validate('ctm_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 
         expect(result).toBeNull();
     });
 
     it('revoke throws NotFoundException when token not found', async () => {
-        mockModel.deleteOne.mockResolvedValue({ deletedCount: 0 });
         await expect(
-            service.revoke({ tokenId: '507f1f77bcf86cd799439011', userId: '507f1f77bcf86cd799439011' }),
+            service.revoke({ tokenId: new Types.ObjectId().toHexString(), userId }),
         ).rejects.toThrow(NotFoundException);
     });
 });

@@ -112,12 +112,34 @@ Docusaurus site. **This directory is for compiled/generated user-facing document
 ### Testing
 
 - **Co-locate test files** — place `*.spec.ts` files next to the source file they test. The vitest config picks up `src/**/*.spec.ts`; `tsconfig.build.json` excludes them from the production build.
-- **Integration tests use the real DB** — prefer hitting a real MongoDB instance over mocking. Test databases are configured in `vitest.setup.ts` per app.
+- **Integration tests use the real DB** — always use a real MongoDB instance; never mock the database layer. `apps/main/vitest.setup.ts` loads `apps/main/.env.test` and connects Mongoose before tests run; `MONGODB_URI` is available in `process.env` for all test suites.
+- **DB URI from env** — read `process.env['MONGODB_URI']` (set by `vitest.setup.ts` from `.env.test`); do not hardcode connection strings per suite.
 - **No cleanup after tests** — tests leave data in the DB. Use unique identifiers (e.g. `Date.now()`) to avoid collisions across runs.
 
 ### Auth
 
 App auth uses `@nestjs/passport` + `passport-local` (login) + `passport-jwt` (protected routes). Long-lived API tokens (for CLI and MCP) are issued via `POST /auth/tokens` and stored hashed in MongoDB.
+
+### Request / Response Types
+
+All controller request and response types must be defined in `packages/api-client/src/types.ts` and exported from its `index.ts`. Never define inline response shapes in controllers.
+
+**Response types** — controller methods declare their return type using the api-client type:
+
+```ts
+import type { TaskDto } from '@ctm/api-client';
+async findOne(...): Promise<TaskDto> { ... }
+```
+
+**Request DTOs** — NestJS DTO classes live in `apps/main/src/**/dto/*.ts` and must `implements` the corresponding api-client type (aliased to avoid name clash):
+
+```ts
+import type { CreateTaskDto as ICreateTaskDto } from '@ctm/api-client';
+export class CreateTaskDto implements ICreateTaskDto { ... }
+```
+
+- Nested sub-DTOs (`DueDateDto`, `DurationDto`, etc.) implement the api-client type where shapes match exactly; omit `implements` only when optionality semantics differ between wire (nullable) and input (optional).
+- When adding a new endpoint, define the response type in `api-client` first, then implement in the controller.
 
 ### Client Boundaries
 

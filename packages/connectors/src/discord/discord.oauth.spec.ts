@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpClient } from '@ctm/http-client';
 import type { OAuthTokens } from '../types.js';
 import { DiscordOAuthConnector } from './discord.oauth.js';
 
@@ -65,7 +64,11 @@ describe('DiscordOAuthConnector', () => {
             const result = await connector.exchangeCode('code-abc');
             const after = Date.now();
 
-            const [path, body, headers] = mockHttp.post.mock.calls[0] as [string, URLSearchParams, Record<string, string>];
+            const [path, body, headers] = mockHttp.post.mock.calls[0] as [
+                string,
+                URLSearchParams,
+                Record<string, string>,
+            ];
             expect(path).toBe('/oauth2/token');
             expect(headers['Content-Type']).toBe('application/x-www-form-urlencoded');
             expect(body.get('grant_type')).toBe('authorization_code');

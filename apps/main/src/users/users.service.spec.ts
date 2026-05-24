@@ -1,86 +1,62 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Test } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { MongooseModule } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service.js';
-import { User } from './schemas/user.schema.js';
-import { ConnectorConfig } from '../connectors/schemas/connector-config.schema.js';
-import { Task } from '../tasks/schemas/task.schema.js';
+import { User, UserSchema } from './schemas/user.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
+import { Task, TaskSchema } from '../tasks/schemas/task.schema.js';
 
 describe('UsersService — notification preferences', () => {
+    let module: TestingModule;
     let service: UsersService;
-    let mockFindById: ReturnType<typeof vi.fn>;
-    let mockFindByIdAndUpdate: ReturnType<typeof vi.fn>;
 
-    beforeEach(async () => {
-        mockFindById = vi.fn();
-        mockFindByIdAndUpdate = vi.fn();
-
-        const module = await Test.createTestingModule({
-            providers: [
-                UsersService,
-                {
-                    provide: getModelToken(User.name),
-                    useValue: {
-                        findById: mockFindById,
-                        findByIdAndUpdate: mockFindByIdAndUpdate,
-                        findOne: vi.fn(),
-                        findByIdAndDelete: vi.fn(),
-                        create: vi.fn(),
-                    },
-                },
-                { provide: getModelToken(ConnectorConfig.name), useValue: { deleteMany: vi.fn() } },
-                { provide: getModelToken(Task.name), useValue: { deleteMany: vi.fn() } },
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            imports: [
+                MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
+                MongooseModule.forFeature([
+                    { name: User.name, schema: UserSchema },
+                    { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
+                    { name: Task.name, schema: TaskSchema },
+                ]),
             ],
+            providers: [UsersService],
         }).compile();
 
         service = module.get(UsersService);
     });
 
-    it('getNotificationPreferences returns prefs for existing user', async () => {
-        const prefs = { connectorReconnect: { inApp: true, discord: false, email: false } };
-        const mockSelect = vi.fn().mockResolvedValue({ notificationPreferences: prefs });
-        mockFindById.mockReturnValue({ select: mockSelect });
+    afterAll(async () => {
+        await module.close();
+    });
 
-        const result = await service.getNotificationPreferences('u1');
-        expect(result).toEqual(prefs);
+    it('getNotificationPreferences returns prefs for existing user', async () => {
+        const user = await service.create({ email: `prefs-get-${Date.now()}@test.com`, password: 'pw' });
+        const result = await service.getNotificationPreferences(String(user._id));
+
+        expect(result).toMatchObject({ connectorReconnect: expect.any(Object) });
     });
 
     it('getNotificationPreferences returns null when user not found', async () => {
-        const mockSelect = vi.fn().mockResolvedValue(null);
-        mockFindById.mockReturnValue({ select: mockSelect });
+        const result = await service.getNotificationPreferences('000000000000000000000000');
 
-        const result = await service.getNotificationPreferences('missing');
         expect(result).toBeNull();
     });
 
     it('updateNotificationPreferences patches specified trigger channels via $set', async () => {
-        const existing = { notificationPreferences: { dailySummary: { inApp: true, discord: false, email: false } } };
-        const mockSelectForFind = vi.fn().mockResolvedValue(existing);
-        mockFindById.mockReturnValue({ select: mockSelectForFind });
-
-        const updated = { notificationPreferences: { dailySummary: { inApp: false, discord: true, email: false } } };
-        const mockSelectForUpdate = vi.fn().mockResolvedValue(updated);
-        mockFindByIdAndUpdate.mockReturnValue({ select: mockSelectForUpdate });
-
+        const user = await service.create({ email: `prefs-update-${Date.now()}@test.com`, password: 'pw' });
         const result = await service.updateNotificationPreferences({
-            userId: 'u1',
+            userId: String(user._id),
             prefs: { dailySummary: { discord: true, inApp: false } },
         });
-        expect(result).toEqual(updated.notificationPreferences);
-        expect(mockFindByIdAndUpdate).toHaveBeenCalledWith(
-            'u1',
-            expect.objectContaining({ $set: expect.any(Object) }),
-            { new: true },
-        );
+
+        expect(result?.dailySummary).toMatchObject({ discord: true, inApp: false });
     });
 
     it('updateNotificationPreferences throws NotFoundException when user not found', async () => {
-        const mockSelectForFind = vi.fn().mockResolvedValue(null);
-        mockFindById.mockReturnValue({ select: mockSelectForFind });
-
         await expect(
-            service.updateNotificationPreferences({ userId: 'missing', prefs: {} }),
+            service.updateNotificationPreferences({ userId: '000000000000000000000000', prefs: {} }),
         ).rejects.toBeInstanceOf(NotFoundException);
     });
 });

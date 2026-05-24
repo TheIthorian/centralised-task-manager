@@ -92,13 +92,18 @@ describe('TasksModule', () => {
         const userId = JSON.parse(meRes.body).id;
         const encryptionService = moduleRef.get(EncryptionService);
 
-        await ConnectorConfigModel.create({
+        await ConnectorConfigModel.collection.insertOne({
             userId: new Types.ObjectId(userId),
             source: 'stub',
             accessToken: encryptionService.encrypt('stub-access-token'),
             refreshToken: encryptionService.encrypt(''),
             tokenExpiresAt: new Date(Date.now() + 3600000),
+            settings: {},
+            lastSyncedAt: null,
+            lastError: null,
             enabled: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         });
     });
 

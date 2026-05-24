@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { User, type UserDocument } from '../users/schemas/user.schema.js';
 import { InAppChannel } from './channels/in-app.channel.js';
 import { EmailChannel } from './channels/email.channel.js';
-import { DiscordChannel } from './channels/discord.channel.js';
+import { DiscordChannel, DiscordAuthExpiredError } from './channels/discord.channel.js';
 import type { SendNotificationDto, NotificationType } from './dto/send-notification.dto.js';
 
 type TriggerKey = 'connectorReconnect' | 'dailySummary' | 'reminder' | 'upcomingDeadline';
@@ -67,17 +67,39 @@ export class NotificationsService {
         if (!user) return;
 
         const key = TRIGGER_KEY_MAP[dto.type];
-        const channelPrefs: ChannelPrefs = user.notificationPreferences?.[key] ?? DEFAULT_PREFS;
+        const prefs = user.notificationPreferences?.[key];
+        const channelPrefs: ChannelPrefs = {
+            [Channel.InApp]: prefs?.inApp ?? DEFAULT_PREFS[Channel.InApp],
+            [Channel.Discord]: prefs?.discord ?? DEFAULT_PREFS[Channel.Discord],
+            [Channel.Email]: prefs?.email ?? DEFAULT_PREFS[Channel.Email],
+        };
 
-        Object.entries(channelPrefs)
-            .filter(([_, enabled]) => enabled)
-            .map(([channel, _]) => this.safeRun(channel, () => this[channel as Channel].send(dto)));
+        await Promise.all(
+            (Object.entries(channelPrefs) as [Channel, boolean][])
+                .filter(([_, enabled]) => enabled)
+                .map(([channel]) => this.safeRun(channel, dto)),
+        );
     }
 
-    private async safeRun(channel: string, fn: () => Promise<void>): Promise<void> {
+    private async safeRun(channel: Channel, dto: SendNotificationDto): Promise<void> {
         try {
-            await fn();
+            await this[channel].send(dto);
         } catch (err) {
+            if (err instanceof DiscordAuthExpiredError) {
+                try {
+                    await this.inApp.send({
+                        ...dto,
+                        type: 'connector_reconnect',
+                        title: 'Reconnect Discord',
+                        body: 'Your Discord connection has expired. Please reconnect.',
+                    });
+                } catch {
+                    // ignore
+                }
+
+                return;
+            }
+
             this.logger.warn(`Channel ${channel} failed: ${err instanceof Error ? err.message : String(err)}`);
         }
     }

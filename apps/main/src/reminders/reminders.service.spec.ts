@@ -1,70 +1,106 @@
-import { Test } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
+import { type Model, Types } from 'mongoose';
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
 import { RemindersService } from './reminders.service.js';
-import { Task } from '../tasks/schemas/task.schema.js';
-import { ConnectorConfig } from '../connectors/schemas/connector-config.schema.js';
+import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 
 describe('RemindersService', () => {
+    let module: TestingModule;
     let service: RemindersService;
-    let mockTaskFind: ReturnType<typeof vi.fn>;
-    let mockConnectorFind: ReturnType<typeof vi.fn>;
-    let mockNotificationsSend: ReturnType<typeof vi.fn>;
+    let taskModel: Model<TaskDocument>;
+    const userId = new Types.ObjectId();
 
-    beforeEach(async () => {
-        const mockTaskSelect = vi.fn().mockResolvedValue([]);
-        mockTaskFind = vi.fn().mockReturnValue({ select: mockTaskSelect });
-
-        const mockConnectorSelect = vi.fn().mockResolvedValue([]);
-        mockConnectorFind = vi.fn().mockReturnValue({ select: mockConnectorSelect });
-
-        mockNotificationsSend = vi.fn().mockResolvedValue(undefined);
-
-        const module = await Test.createTestingModule({
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            imports: [
+                MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
+                MongooseModule.forFeature([
+                    { name: Task.name, schema: TaskSchema },
+                    { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
+                ]),
+            ],
             providers: [
                 RemindersService,
-                { provide: getModelToken(Task.name), useValue: { find: mockTaskFind } },
-                { provide: getModelToken(ConnectorConfig.name), useValue: { find: mockConnectorFind } },
-                { provide: NotificationsService, useValue: { send: mockNotificationsSend } },
+                { provide: NotificationsService, useValue: { send: vi.fn().mockResolvedValue(undefined) } },
             ],
         }).compile();
 
         service = module.get(RemindersService);
+        taskModel = module.get<Model<TaskDocument>>(getModelToken(Task.name));
+    });
+
+    afterAll(async () => {
+        await module.close();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('getSurfacedTaskIds queries with daily on non-Monday', async () => {
         const tuesday = new Date('2026-05-19');
         vi.setSystemTime(tuesday);
 
-        const mockSelect = vi.fn().mockResolvedValue([{ _id: 'task-1' }, { _id: 'task-2' }]);
-        mockTaskFind.mockReturnValue({ select: mockSelect });
+        const now = Date.now();
+        const dailyTask = await taskModel.create({
+            userId,
+            title: `Daily task ${now}`,
+            source: 'local',
+            sourceId: `daily-${now}`,
+            syncedAt: new Date(),
+            status: 'open',
+            fuzzyDeadline: { type: 'this_week', remindEvery: 'daily' },
+        });
+        await taskModel.create({
+            userId,
+            title: `Weekly task ${now}`,
+            source: 'local',
+            sourceId: `weekly-${now}`,
+            syncedAt: new Date(),
+            status: 'open',
+            fuzzyDeadline: { type: 'this_week', remindEvery: 'weekly' },
+        });
 
-        const ids = await service.getSurfacedTaskIds('507f1f77bcf86cd799439011');
-        expect(ids).toEqual(['task-1', 'task-2']);
+        const ids = await service.getSurfacedTaskIds(String(userId));
 
-        const findCall = mockTaskFind.mock.calls[0][0] as Record<string, unknown>;
-        const remindEvery = findCall['fuzzyDeadline.remindEvery'] as { $in: string[] };
-        expect(remindEvery.$in).toEqual(['daily']);
-        expect(remindEvery.$in).not.toContain('weekly');
+        expect(ids).toContain(String(dailyTask._id));
+        // weekly task for this userId should not appear on non-Monday
+        const weeklySourceId = `weekly-${now}`;
+        const weeklyDoc = await taskModel.findOne({ userId, sourceId: weeklySourceId });
+        expect(ids).not.toContain(String(weeklyDoc?._id));
     });
 
     it('getSurfacedTaskIds includes weekly tasks on Monday', async () => {
         const monday = new Date('2026-05-18');
         vi.setSystemTime(monday);
 
-        const mockSelect = vi.fn().mockResolvedValue([]);
-        mockTaskFind.mockReturnValue({ select: mockSelect });
+        const mondayUserId = new Types.ObjectId();
+        const now = Date.now();
+        const dailyTask = await taskModel.create({
+            userId: mondayUserId,
+            title: `Daily monday ${now}`,
+            source: 'local',
+            sourceId: `daily-mon-${now}`,
+            syncedAt: new Date(),
+            status: 'open',
+            fuzzyDeadline: { type: 'this_week', remindEvery: 'daily' },
+        });
+        const weeklyTask = await taskModel.create({
+            userId: mondayUserId,
+            title: `Weekly monday ${now}`,
+            source: 'local',
+            sourceId: `weekly-mon-${now}`,
+            syncedAt: new Date(),
+            status: 'open',
+            fuzzyDeadline: { type: 'this_week', remindEvery: 'weekly' },
+        });
 
-        await service.getSurfacedTaskIds('507f1f77bcf86cd799439011');
+        const ids = await service.getSurfacedTaskIds(String(mondayUserId));
 
-        const findCall = mockTaskFind.mock.calls[0][0] as Record<string, unknown>;
-        const remindEvery = findCall['fuzzyDeadline.remindEvery'] as { $in: string[] };
-        expect(remindEvery.$in).toContain('weekly');
-        expect(remindEvery.$in).toContain('daily');
-    });
-
-    afterEach(() => {
-        vi.useRealTimers();
+        expect(ids).toContain(String(dailyTask._id));
+        expect(ids).toContain(String(weeklyTask._id));
     });
 });

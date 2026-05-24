@@ -54,7 +54,7 @@ describe('OAuthConnectorRegistry', () => {
 
     it('throws when getting an unregistered source', () => {
         const registry = new OAuthConnectorRegistry();
-        expect(() => registry.get('unknown')).toThrow('No OAuth connector registered for source: unknown');
+        expect(() => registry.get('unknown')).toThrow('connector:unknown not found');
     });
 
     it('lists all registered sources', () => {
@@ -84,7 +84,7 @@ describe('ExternalTaskSourceRegistry', () => {
 
     it('throws when getting an unregistered source', () => {
         const registry = new ExternalTaskSourceRegistry();
-        expect(() => registry.get('unknown')).toThrow('No task source registered for source: unknown');
+        expect(() => registry.get('unknown')).toThrow('task-source:unknown not found');
     });
 
     it('lists all registered sources', () => {

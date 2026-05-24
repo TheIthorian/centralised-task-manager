@@ -1,61 +1,35 @@
-import { Test } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { getModelToken } from '@nestjs/mongoose';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { AppModule } from '../app.module.js';
 import { AuthService } from './auth.service.js';
-import { UsersService } from '../users/users.service.js';
-import { RefreshToken } from './schemas/refresh-token.schema.js';
 
 describe('AuthService', () => {
+    let module: TestingModule;
     let service: AuthService;
-    let usersService: { create: ReturnType<typeof vi.fn>; findByEmail: ReturnType<typeof vi.fn> };
-    let jwtService: { sign: ReturnType<typeof vi.fn> };
-    let configService: { get: ReturnType<typeof vi.fn> };
-    let refreshTokenModel: {
-        create: ReturnType<typeof vi.fn>;
-        findOneAndDelete: ReturnType<typeof vi.fn>;
-        deleteMany: ReturnType<typeof vi.fn>;
-    };
 
-    beforeEach(async () => {
-        usersService = { create: vi.fn(), findByEmail: vi.fn() };
-        jwtService = { sign: vi.fn().mockReturnValue('signed-token') };
-        configService = { get: vi.fn().mockReturnValue(30) };
-        refreshTokenModel = {
-            create: vi.fn().mockResolvedValue({}),
-            findOneAndDelete: vi.fn(),
-            deleteMany: vi.fn(),
-        };
-
-        const module = await Test.createTestingModule({
-            providers: [
-                AuthService,
-                { provide: UsersService, useValue: usersService },
-                { provide: JwtService, useValue: jwtService },
-                { provide: ConfigService, useValue: configService },
-                { provide: getModelToken(RefreshToken.name), useValue: refreshTokenModel },
-            ],
-        }).compile();
-
+    beforeAll(async () => {
+        module = await Test.createTestingModule({ imports: [AppModule] }).compile();
         service = module.get(AuthService);
     });
 
+    afterAll(async () => {
+        await module.close();
+    });
+
     it('register creates user and returns token pair', async () => {
-        usersService.create.mockResolvedValue({ _id: 'uid', email: 'a@b.com' });
+        const email = `auth-svc-${Date.now()}@example.com`;
+        const result = await service.register({ email, password: 'password123' });
 
-        const result = await service.register({ email: 'a@b.com', password: 'password123' });
-
-        expect(result).toHaveProperty('accessToken', 'signed-token');
-        expect(result).toHaveProperty('refreshToken');
+        expect(result).toHaveProperty('accessToken');
         expect(result.refreshToken).toMatch(/^rt_/);
-        expect(result.user).toEqual({ id: 'uid', email: 'a@b.com' });
+        expect(result.user.email).toBe(email);
     });
 
     it('register propagates ConflictException from UsersService', async () => {
-        usersService.create.mockRejectedValue(new ConflictException('Email already registered'));
+        const email = `auth-conflict-${Date.now()}@example.com`;
+        await service.register({ email, password: 'password123' });
 
-        await expect(service.register({ email: 'a@b.com', password: 'pass' })).rejects.toThrow(ConflictException);
+        await expect(service.register({ email, password: 'pass' })).rejects.toThrow(ConflictException);
     });
 });

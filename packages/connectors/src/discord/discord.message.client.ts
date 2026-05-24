@@ -2,6 +2,8 @@ import { HttpClient } from '@ctm/http-client';
 import type { DiscordDmChannelResponse } from './discord.types.js';
 
 export class DiscordMessageClient {
+    readonly name = 'discord';
+
     constructor(private readonly httpClient: HttpClient) {}
 
     /** Send a DM via Discord bot. Opens a DM channel first if dmChannelId is absent. */

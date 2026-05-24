@@ -34,6 +34,12 @@ describe('NotionOAuthConnector', () => {
         mockHttp = (connector as any).http;
     });
 
+    it('has connectionDetailsSchema with databaseId remote_select', () => {
+        expect(connector.connectionDetailsSchema['databaseId']?.inputDefinition).toMatchObject({
+            type: 'remote_select',
+        });
+    });
+
     it('name is "notion"', () => {
         expect(connector.name).toBe('notion');
     });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AppError, NotFoundError, UnauthorizedError, ConflictError, ExternalServiceError } from './index.js';
+import { AppError, NotFoundError, UnauthorizedError, ConflictError, ExternalServiceError, ValidationError, InternalError } from './index.js';
 
 describe('AppError', () => {
     it('sets name, message, code, statusCode', () => {
@@ -48,5 +48,25 @@ describe('ExternalServiceError', () => {
         expect(err.message).toBe('Todoist: rate limited');
         expect(err.statusCode).toBe(502);
         expect(err.code).toBe('EXTERNAL_SERVICE_ERROR');
+    });
+});
+
+describe('ValidationError', () => {
+    it('uses 400 with VALIDATION_ERROR code', () => {
+        const err = new ValidationError('databaseId is required');
+        expect(err.message).toBe('databaseId is required');
+        expect(err.statusCode).toBe(400);
+        expect(err.code).toBe('VALIDATION_ERROR');
+        expect(err).toBeInstanceOf(AppError);
+    });
+});
+
+describe('InternalError', () => {
+    it('uses 500 with INTERNAL_ERROR code', () => {
+        const err = new InternalError('something broke');
+        expect(err.message).toBe('something broke');
+        expect(err.statusCode).toBe(500);
+        expect(err.code).toBe('INTERNAL_ERROR');
+        expect(err).toBeInstanceOf(AppError);
     });
 });
