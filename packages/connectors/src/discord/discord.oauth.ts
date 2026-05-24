@@ -1,5 +1,6 @@
 import { HttpClient, type Logger } from '@ctm/http-client';
-import type { OAuthConnector, OAuthTokens } from '../types.js';
+import { ConnectorName, ConnectorType } from '../types.js';
+import type { ConnectionDetailsSchema, ConnectionSettings, OAuthConnector, OAuthTokens } from '../types.js';
 import type { DiscordTokenResponse, DiscordUserResponse } from './discord.types.js';
 
 /** Configuration required to instantiate a {@link DiscordOAuthConnector}. */
@@ -7,11 +8,14 @@ export type DiscordOAuthConnectorConfig = {
     clientId: string;
     clientSecret: string;
     redirectUri: string;
+    botToken: string;
     logger?: Logger;
 };
 
 export class DiscordOAuthConnector implements OAuthConnector {
-    readonly name = 'discord';
+    readonly name = ConnectorName.Discord;
+    readonly connectorType = ConnectorType.Notification;
+    readonly connectionDetailsSchema: ConnectionDetailsSchema = {};
 
     private readonly http: HttpClient;
 
@@ -79,11 +83,18 @@ export class DiscordOAuthConnector implements OAuthConnector {
         return data.id;
     }
 
+    /** Resolve Discord-specific settings to persist in ConnectorConfig after OAuth. */
+    async resolveConnectionSettings(tokens: OAuthTokens): Promise<ConnectionSettings> {
+        const discordUserId = await this.resolveUserId(tokens);
+
+        return {
+            settings: { discordUserId, botToken: this.config.botToken, dmChannelId: null },
+        };
+    }
+
     private async postToken(params: URLSearchParams): Promise<DiscordTokenResponse> {
-        return await this.http.post<DiscordTokenResponse>(
-            '/oauth2/token',
-            params,
-            { 'Content-Type': 'application/x-www-form-urlencoded' },
-        );
+        return await this.http.post<DiscordTokenResponse>('/oauth2/token', params, {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        });
     }
 }

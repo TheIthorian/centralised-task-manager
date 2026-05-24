@@ -1,3 +1,4 @@
+export { ConnectorName, TaskConnectorName, ConnectorType } from './types.js';
 export type {
     RemoteTask,
     OAuthTokens,

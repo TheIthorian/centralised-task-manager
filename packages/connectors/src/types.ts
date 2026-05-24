@@ -1,3 +1,24 @@
+/** All supported connector names (OAuth participants). */
+export enum ConnectorName {
+    Todoist = 'todoist',
+    GoogleTasks = 'google_tasks',
+    Notion = 'notion',
+    Discord = 'discord',
+}
+
+/** Categorises what a connector is used for. */
+export enum ConnectorType {
+    TaskSync = 'task_sync',
+    Notification = 'notification',
+}
+
+/** Connector names that sync tasks (excludes notification-only connectors like Discord). */
+export enum TaskConnectorName {
+    Todoist = 'todoist',
+    GoogleTasks = 'google_tasks',
+    Notion = 'notion',
+}
+
 /** A task's due date with optional timezone and recurrence rule (RRULE format). */
 export type DueDate = {
     date: Date;
@@ -56,26 +77,39 @@ export type ConnectionField =
     | { type: 'text'; label: string; required?: boolean }
     | { type: 'remote_select'; label: string; required?: boolean; endpoint: string };
 
-export type ConnectionDetailsSchema = Record<string, ConnectionField>;
+export type ConnectionDetailsSchema = Record<
+    string,
+    {
+        inputDefinition: ConnectionField;
+        /** AJV-compatible JSON Schema for validating this field's value. */
+        validationSchema: { type: string; [key: string]: unknown };
+    }
+>;
+
+/** Extra fields to merge into ConnectorConfig after a successful OAuth callback. */
+export type ConnectionSettings = {
+    settings?: Record<string, unknown>;
+};
 
 /** OAuth2 flow contract for connectors that authenticate via OAuth. */
 export type OAuthConnector = {
-    /** Unique identifier for the task source (e.g. `"todoist"`, `"google_tasks"`). */
-    readonly name: string;
+    readonly name: ConnectorName;
+    readonly connectorType: ConnectorType;
+    /** Optional schema describing per-user connection fields (e.g. notion database picker). */
+    readonly connectionDetailsSchema: ConnectionDetailsSchema;
     /** Build the OAuth authorization URL for the given user state value. */
     getAuthUrl(userId: string): string;
     /** Exchange an OAuth authorization code for a token set. */
     exchangeCode(code: string): Promise<OAuthTokens>;
     /** Refresh an expired access token using the stored refresh token. */
     refreshToken(tokens: OAuthTokens): Promise<OAuthTokens>;
+    /** Optionally resolve extra settings to persist after a successful OAuth callback. */
+    resolveConnectionSettings?(tokens: OAuthTokens): Promise<ConnectionSettings>;
 };
 
 /** Task CRUD contract for connectors that read and write remote tasks. */
 export type ExternalTaskSource = {
-    /** Unique identifier for the task source (e.g. `"todoist"`, `"google_tasks"`). */
-    readonly name: string;
-    /** Optional schema describing per-user connection fields (e.g. database picker). */
-    readonly connectionDetailsSchema?: ConnectionDetailsSchema;
+    readonly name: TaskConnectorName;
     /** Fetch all tasks accessible with the given token set. */
     fetchTasks(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<RemoteTask[]>;
     /** Create a new task and return the created representation. */

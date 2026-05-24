@@ -86,11 +86,51 @@ export type SetFuzzyDeadlineDto = {
     remindEvery?: 'daily' | 'weekly';
 };
 
+export enum ConnectorType {
+    TaskSync = 'task_sync',
+    Notification = 'notification',
+}
+
+/** Stored connector config for a connected source. */
+export type ConnectorConfigDto = {
+    id: string;
+    source: string;
+    enabled: boolean;
+    lastSyncedAt?: string;
+    lastError?: string;
+};
+
+/** OAuth redirect URL for initiating a connector auth flow. */
+export type ConnectorAuthUrlDto = {
+    url: string;
+};
+
+/** A Notion database available to the connected integration. */
+export type NotionDatabaseDto = {
+    id: string;
+    name: string;
+};
+
+/** Generic ok/success response. */
+export type OkDto = {
+    ok: boolean;
+};
+
+/** Response after updating a connector config. */
+export type UpdateConnectorResponseDto = {
+    id: string;
+    enabled: boolean;
+};
+
 /** Connection status for a single task source connector. */
 export type ConnectorStatusDto = {
     source: string;
     connected: boolean;
     lastSynced?: string;
+    connectorType: ConnectorType;
+    connectionSchema: Record<string, unknown>;
+    /** True when the connector is connected but required connection details (e.g. databaseId) have not been saved yet. */
+    setupRequired: boolean;
 };
 
 /** Status snapshot of a background task-sync job. */

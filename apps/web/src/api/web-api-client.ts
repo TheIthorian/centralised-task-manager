@@ -161,17 +161,12 @@ export class WebApiClient {
         await this.execute({ request: () => this.apiClient.disconnectDiscord() });
     }
 
-    /** Send a test DM via Discord. */
-    async testDiscordConnection(): Promise<{ sent: boolean }> {
-        return this.execute({ request: () => this.apiClient.testDiscordConnection() });
+    /** Send a test notification via a channel (e.g. 'discord'). */
+    async testNotificationChannel({ channel }: { channel: string }): Promise<{ sent: boolean }> {
+        return this.execute({ request: () => this.apiClient.testNotificationChannel({ channel }) });
     }
 
-    /** Get the connection details schema for a connector (empty object if none). */
-    async getConnectionSchema({ source }: WebConnectorParams): Promise<Record<string, unknown>> {
-        return this.execute({ request: () => this.apiClient.getConnectionSchema({ source }) });
-    }
-
-    /** Save connection details for a connector (e.g. Notion database ID). */
+/** Save connection details for a connector (e.g. Notion database ID). */
     async setConnectionDetails({ source, details }: { source: string; details: Record<string, unknown> }): Promise<void> {
         await this.execute({ request: () => this.apiClient.setConnectionDetails({ source, details }) });
     }

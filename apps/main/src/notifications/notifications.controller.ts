@@ -1,6 +1,7 @@
 import {
     Controller,
     Get,
+    Post,
     Patch,
     Param,
     Body,
@@ -15,13 +16,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { UsersService } from '../users/users.service.js';
+import { Channel, NotificationsService } from './notifications.service.js';
 import { Notification, type NotificationDocument } from './schemas/notification.schema.js';
 import type { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 
-interface AuthRequest {
-    user: JwtPayload;
-}
+type AuthRequest = { user: JwtPayload };
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -29,8 +29,22 @@ interface AuthRequest {
 export class NotificationsController {
     constructor(
         private readonly usersService: UsersService,
+        private readonly notificationsService: NotificationsService,
         @InjectModel(Notification.name) private readonly notificationModel: Model<NotificationDocument>,
     ) {}
+
+    // ── Channels ───────────────────────────────────────────────────────────────
+
+    /** Send a test notification to the specified channel to verify it is working. */
+    @ApiBearerAuth('jwt')
+    @ApiOperation({ summary: 'Test a notification channel' })
+    @Post('channels/:channel/test')
+    async testNotificationChannel(
+        @Request() req: AuthRequest,
+        @Param('channel') channel: Channel,
+    ): Promise<{ sent: boolean }> {
+        return this.notificationsService.testChannel({ userId: req.user.sub, channel });
+    }
 
     // ── Inbox ──────────────────────────────────────────────────────────────────
 

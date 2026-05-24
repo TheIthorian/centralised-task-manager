@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ExternalTaskSourceRegistry } from '@ctm/connectors';
+import { ConnectorName, TaskConnectorName, ExternalTaskSourceRegistry } from '@ctm/connectors';
 import { Job } from '../jobs/schemas/job.schema.js';
 import { TASK_SYNC_JOB_MODEL, type TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
@@ -23,7 +23,7 @@ export class SyncService {
     ) {}
 
     /** Create a TaskSyncJob and start async execution. Returns the new job document. */
-    async createJob({ userId, source }: { userId: string; source: string }): Promise<TaskSyncJobDocument> {
+    async createJob({ userId, source }: { userId: string; source: ConnectorName }): Promise<TaskSyncJobDocument> {
         const job = await this.taskSyncModel.create({
             userId: new Types.ObjectId(userId),
             source,
@@ -65,7 +65,7 @@ export class SyncService {
         // If updated is null, job was already terminal — no-op is intentional
     }
 
-    private async runSync(jobId: string, userId: string, source: string): Promise<void> {
+    private async runSync(jobId: string, userId: string, source: ConnectorName): Promise<void> {
         const update = async (patch: Partial<TaskSyncJobDocument>): Promise<TaskSyncJobDocument | null> =>
             this.taskSyncModel.findByIdAndUpdate(jobId, patch, { new: true });
 
@@ -80,7 +80,7 @@ export class SyncService {
 
             const tokens = await this.connectors.getDecryptedTokens({ userId, source });
             const settings = await this.connectors.getSettings({ userId, source });
-            const connector = this.registry.get(source);
+            const connector = this.registry.get(source as unknown as TaskConnectorName);
             const remoteTasks = await connector.fetchTasks(tokens, settings);
 
             job = await update({ stage: 'upserting' });
@@ -89,7 +89,7 @@ export class SyncService {
 
             this.gateway.emitProgress(userId, job);
 
-            const { synced, skipped } = await this.tasks.upsertFromRemote({ userId, source, remoteTasks });
+            const { synced, skipped } = await this.tasks.upsertFromRemote({ userId, source: source as unknown as TaskConnectorName, remoteTasks });
 
             // Re-fetch to check for cancellation that arrived during upsertFromRemote
             job = await this.taskSyncModel.findById(jobId);

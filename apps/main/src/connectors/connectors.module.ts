@@ -10,27 +10,23 @@ import {
     GoogleTasksTaskSource,
     NotionOAuthConnector,
     NotionTaskSource,
+    DiscordOAuthConnector,
 } from '@ctm/connectors';
 import { createLogger } from '@ctm/logger';
 import { ConnectorConfig, ConnectorConfigSchema } from './schemas/connector-config.schema.js';
-import { DiscordConnection, DiscordConnectionSchema } from './schemas/discord-connection.schema.js';
 import { ConnectorsService } from './connectors.service.js';
 import { ConnectorsController } from './connectors.controller.js';
-import { DiscordController } from './discord.controller.js';
 import { EncryptionService } from './encryption.service.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([
-            { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
-            { name: DiscordConnection.name, schema: DiscordConnectionSchema },
-        ]),
+        MongooseModule.forFeature([{ name: ConnectorConfig.name, schema: ConnectorConfigSchema }]),
         AuthModule,
         UsersModule,
     ],
-    controllers: [ConnectorsController, DiscordController],
+    controllers: [ConnectorsController],
     providers: [
         ConnectorsService,
         EncryptionService,
@@ -64,6 +60,16 @@ import { UsersModule } from '../users/users.module.js';
                         clientId: config.getOrThrow<string>('NOTION_CLIENT_ID'),
                         clientSecret: config.getOrThrow<string>('NOTION_CLIENT_SECRET'),
                         redirectUri: `${config.getOrThrow<string>('REDIRECT_BASE_URL')}/connectors/oauth/callback/notion`,
+                        logger,
+                    }),
+                );
+
+                registry.register(
+                    new DiscordOAuthConnector({
+                        clientId: config.getOrThrow<string>('DISCORD_CLIENT_ID'),
+                        clientSecret: config.getOrThrow<string>('DISCORD_CLIENT_SECRET'),
+                        botToken: config.getOrThrow<string>('DISCORD_BOT_TOKEN'),
+                        redirectUri: `${config.getOrThrow<string>('REDIRECT_BASE_URL')}/connectors/oauth/callback/discord`,
                         logger,
                     }),
                 );

@@ -73,6 +73,7 @@ Defaults: `inApp: true`, `discord: false`, `email: false` for all triggers.
 ## API Endpoints
 
 ### In-app inbox
+
 ```
 GET    /notifications              # paginated inbox (query: page, limit, unreadOnly)
 PATCH  /notifications/:id/read     # mark single notification read
@@ -80,6 +81,7 @@ PATCH  /notifications/read-all     # mark all read for user
 ```
 
 ### Discord OAuth
+
 ```
 GET    /notifications/discord/connect    # redirects to Discord OAuth consent
 GET    /notifications/discord/callback   # exchanges code, stores token, redirects to web
@@ -87,6 +89,7 @@ DELETE /notifications/discord            # disconnect (removes DiscordConnection
 ```
 
 ### Preferences
+
 ```
 GET  /users/me/notification-preferences
 PUT  /users/me/notification-preferences
@@ -97,6 +100,7 @@ PUT  /users/me/notification-preferences
 Scopes: `bot` + `dm_channels` (or `identify` + `guilds` depending on bot setup — DM via `POST /users/@me/channels` requires a shared server or friend request workaround; use webhook-to-DM approach via bot token).
 
 After callback:
+
 1. Exchange code for access token
 2. Fetch Discord user ID via `GET /users/@me`
 3. Open DM channel: `POST /channels` with `recipient_id`
@@ -105,9 +109,10 @@ After callback:
 ## Channel Adapter Behaviour
 
 Each adapter implements:
+
 ```ts
 interface NotificationChannel {
-  send(userId: string, payload: NotificationPayload): Promise<void>;
+    send(userId: string, payload: NotificationPayload): Promise<void>;
 }
 ```
 

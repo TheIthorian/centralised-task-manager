@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ExternalTaskSourceRegistry, type RemoteTask } from '@ctm/connectors';
+import { ConnectorName, ExternalTaskSourceRegistry, TaskConnectorName, type RemoteTask } from '@ctm/connectors';
 import { Task, type TaskDocument } from './schemas/task.schema.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
@@ -59,10 +59,7 @@ export class TasksService {
      *  When source is 'local', skip the connector and store the task directly in CTM. */
     async create({ userId, dto }: { userId: string; dto: CreateTaskDto }): Promise<TaskDocument> {
         if (dto.parentId) {
-            const parent = await this.taskModel.findOne({
-                _id: dto.parentId,
-                userId: new Types.ObjectId(userId),
-            });
+            const parent = await this.taskModel.findOne({ _id: dto.parentId, userId: new Types.ObjectId(userId) });
 
             if (!parent) throw new BadRequestException('Parent task not found');
         }
@@ -88,12 +85,15 @@ export class TasksService {
             });
         }
 
-        const tokens = await this.connectors.getDecryptedTokens({ userId, source: dto.source });
-        const connector = this.registry.get(dto.source);
+        const source = dto.source as TaskConnectorName;
+        const tokens = await this.connectors.getDecryptedTokens({ userId, source: source as string as ConnectorName });
+        const connector = this.registry.get(source);
         const remote = await connector.createTask(tokens, {
             title: dto.title,
             description: dto.description,
-            due: due ? { date: due.date, timezone: due.timezone ?? undefined, recurrence: due.recurrence ?? undefined } : undefined,
+            due: due
+                ? { date: due.date, timezone: due.timezone ?? undefined, recurrence: due.recurrence ?? undefined }
+                : undefined,
             deadlineDate,
             duration: dto.duration,
             priority: dto.priority,
@@ -148,12 +148,15 @@ export class TasksService {
             ) as Promise<TaskDocument>;
         }
 
-        const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
-        const connector = this.registry.get(task.source);
+        const taskSource = task.source as unknown as TaskConnectorName;
+        const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source as unknown as ConnectorName });
+        const connector = this.registry.get(taskSource);
         const remote = await connector.updateTask(tokens, task.sourceId, {
             title: dto.title,
             description: dto.description,
-            due: due ? { date: due.date, timezone: due.timezone ?? undefined, recurrence: due.recurrence ?? undefined } : undefined,
+            due: due
+                ? { date: due.date, timezone: due.timezone ?? undefined, recurrence: due.recurrence ?? undefined }
+                : undefined,
             deadlineDate,
             duration: dto.duration,
             priority: dto.priority,
@@ -192,8 +195,9 @@ export class TasksService {
         const task = await this.findOne({ taskId, userId });
 
         if (dto.status === 'done' && task.source !== LOCAL_SOURCE) {
-            const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
-            const connector = this.registry.get(task.source);
+            const taskSource = task.source as unknown as TaskConnectorName;
+            const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source as unknown as ConnectorName });
+            const connector = this.registry.get(taskSource);
             await connector.completeTask(tokens, task.sourceId);
             // Note: there is no uncompleteTask connector method; 'open' is local-only.
         }
@@ -211,8 +215,9 @@ export class TasksService {
         const task = await this.findOne({ taskId, userId });
 
         if (task.source !== LOCAL_SOURCE) {
-            const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source });
-            const connector = this.registry.get(task.source);
+            const taskSource = task.source as unknown as TaskConnectorName;
+            const tokens = await this.connectors.getDecryptedTokens({ userId, source: task.source as unknown as ConnectorName });
+            const connector = this.registry.get(taskSource);
             await connector.deleteTask(tokens, task.sourceId);
         }
 
@@ -259,7 +264,7 @@ export class TasksService {
         remoteTasks,
     }: {
         userId: string;
-        source: string;
+        source: TaskConnectorName;
         remoteTasks: RemoteTask[];
     }): Promise<{ synced: number; skipped: number }> {
         if (remoteTasks.length === 0) return { synced: 0, skipped: 0 };
@@ -367,19 +372,28 @@ export class TasksService {
 
         if (ops.length > 0) {
             // Cast needed: Mongoose typings don't expose the `timestamps` bulkWrite option
-            await this.taskModel.bulkWrite(ops, { timestamps: false } as Parameters<typeof this.taskModel.bulkWrite>[1]);
+            await this.taskModel.bulkWrite(ops, { timestamps: false } as Parameters<
+                typeof this.taskModel.bulkWrite
+            >[1]);
         }
 
         return { synced, skipped };
     }
 
-    private parseDueFields(dto: { due?: { date: string; timezone?: string; recurrence?: string }; deadlineDate?: string }): {
+    private parseDueFields(dto: {
+        due?: { date: string; timezone?: string; recurrence?: string };
+        deadlineDate?: string;
+    }): {
         due: { date: Date; timezone: string | null; recurrence: string | null } | undefined;
         deadlineDate: Date | undefined;
     } {
         return {
             due: dto.due
-                ? { date: new Date(dto.due.date), timezone: dto.due.timezone ?? null, recurrence: dto.due.recurrence ?? null }
+                ? {
+                      date: new Date(dto.due.date),
+                      timezone: dto.due.timezone ?? null,
+                      recurrence: dto.due.recurrence ?? null,
+                  }
                 : undefined,
             deadlineDate: dto.deadlineDate ? new Date(dto.deadlineDate) : undefined,
         };

@@ -3,7 +3,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DiscordMessageClient } from '@ctm/connectors';
 import { HttpClient } from '@ctm/http-client';
 import { Notification, NotificationSchema } from './schemas/notification.schema.js';
-import { DiscordConnection, DiscordConnectionSchema } from '../connectors/schemas/discord-connection.schema.js';
 import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
 import { User, UserSchema } from '../users/schemas/user.schema.js';
 import { InAppChannel } from './channels/in-app.channel.js';
@@ -17,7 +16,6 @@ import { UsersModule } from '../users/users.module.js';
     imports: [
         MongooseModule.forFeature([
             { name: Notification.name, schema: NotificationSchema },
-            { name: DiscordConnection.name, schema: DiscordConnectionSchema },
             { name: User.name, schema: UserSchema },
             { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
         ]),

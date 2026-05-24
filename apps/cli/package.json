@@ -8,8 +8,6 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "node --watch -r ./register.cjs src/main.ts",
-    "start": "node dist/main.js",
     "test": "vitest run",
     "lint": "oxlint src",
     "format": "oxfmt --no-error-on-unmatched-pattern --config ../../.oxfmtrc.json src '**/*.md'"

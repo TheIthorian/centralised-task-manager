@@ -1,5 +1,6 @@
 import { HttpClient, type Logger } from '@ctm/http-client';
 
+import { TaskConnectorName } from '../types.js';
 import type {
     ConnectionDetailsSchema,
     CreateTaskDto,
@@ -31,17 +32,9 @@ const PRIORITY_MAP: Record<string, number> = {
     low: 1,
 };
 
+/** Manage tasks that live in Notion */
 export class NotionTaskSource implements ExternalTaskSource {
-    readonly name = 'notion';
-
-    readonly connectionDetailsSchema: ConnectionDetailsSchema = {
-        databaseId: {
-            type: 'remote_select',
-            label: 'Task Database',
-            required: true,
-            endpoint: '/connectors/notion/databases',
-        },
-    };
+    readonly name = TaskConnectorName.Notion;
 
     private readonly http: HttpClient;
 
@@ -50,7 +43,7 @@ export class NotionTaskSource implements ExternalTaskSource {
     }
 
     /** Fetch all tasks from the user's chosen Notion database. Paginates automatically. */
-    async fetchTasks(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<RemoteTask[]> {
+    async fetchTasks(tokens: OAuthTokens, connectionDetails?: { databaseId: string }): Promise<RemoteTask[]> {
         const databaseId = String(connectionDetails?.['databaseId'] ?? '');
         if (!databaseId) throw new Error('NotionTaskSource: connectionDetails.databaseId is required');
         const headers = this.notionHeaders(tokens);

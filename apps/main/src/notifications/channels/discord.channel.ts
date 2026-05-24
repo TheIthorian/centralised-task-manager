@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-    ConnectorConfig,
-    type ConnectorConfigDocument,
-    type TypedConnectorConfig,
-} from '../../connectors/schemas/connector-config.schema.js';
+import { ConnectorConfig } from '../../connectors/schemas/connector-config.schema.js';
+import { DiscordConnectorConfig } from '../../connectors/schemas/types.js';
 import type { SendNotificationDto } from '../dto/send-notification.dto.js';
-import { DiscordMessageClient } from '@ctm/connectors';
+import { ConnectorName, DiscordMessageClient } from '@ctm/connectors';
 
 /** Thrown when the Discord connection/bot token is expired or unauthorized. */
 export class DiscordAuthExpiredError extends Error {
@@ -20,19 +17,17 @@ export class DiscordAuthExpiredError extends Error {
 @Injectable()
 export class DiscordChannel {
     constructor(
-        @InjectModel(ConnectorConfig.name) private readonly model: Model<ConnectorConfigDocument>,
+        @InjectModel(ConnectorConfig.name) private readonly model: Model<ConnectorConfig<DiscordConnectorConfig>>,
         private readonly discordMessageClient: DiscordMessageClient,
     ) {}
 
     /** Send a DM via Discord bot. No-op if the user has no discord ConnectorConfig. */
     async send({ userId, title, body }: SendNotificationDto): Promise<void> {
-        const config = await this.model.findOne({ userId: new Types.ObjectId(userId), source: 'discord' });
+        const config = await this.model.findOne({ userId: new Types.ObjectId(userId), source: ConnectorName.Discord });
 
         if (!config) return;
 
-        const typed = config as unknown as TypedConnectorConfig & { source: 'discord' };
-        const { discordUserId } = typed.settings;
-        const { botToken, dmChannelId } = typed.internalSettings;
+        const { discordUserId, botToken, dmChannelId } = config.settings;
         let channelId = dmChannelId;
 
         try {
@@ -42,10 +37,7 @@ export class DiscordChannel {
                     discordUserId,
                 });
 
-                await this.model.findByIdAndUpdate(
-                    config._id,
-                    { 'internalSettings.dmChannelId': openedChannelId },
-                );
+                await this.model.findByIdAndUpdate(config._id, { 'settings.dmChannelId': openedChannelId });
 
                 channelId = openedChannelId;
             }

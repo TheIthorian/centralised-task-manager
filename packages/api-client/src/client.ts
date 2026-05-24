@@ -17,7 +17,6 @@ import type {
     CreateTaskParams,
     DeleteTaskParams,
     DisconnectConnectorParams,
-    GetConnectionSchemaParams,
     GetConnectorAuthUrlParams,
     GetSyncJobParams,
     ListNotificationsParams,
@@ -133,7 +132,7 @@ export class CtmApiClient {
 
     /** List all connector statuses for the current user. */
     async listConnectors(): Promise<ConnectorStatusDto[]> {
-        return this.request<ConnectorStatusDto[]>({ method: 'GET', path: '/connectors/status' });
+        return this.request<ConnectorStatusDto[]>({ method: 'GET', path: '/connectors' });
     }
 
     /** Get the OAuth authorisation URL for a connector source. */
@@ -163,12 +162,7 @@ export class CtmApiClient {
         await this.request<void>({ method: 'DELETE', path: `/connectors/${source}/sync/${jobId}` });
     }
 
-    /** Get the connection details schema for a connector (empty object if none). */
-    async getConnectionSchema({ source }: GetConnectionSchemaParams): Promise<Record<string, unknown>> {
-        return this.request<Record<string, unknown>>({ method: 'GET', path: `/connectors/${source}/connection-schema` });
-    }
-
-    /** Save connection details for a connector (e.g. Notion database ID). */
+/** Save connection details for a connector (e.g. Notion database ID). */
     async setConnectionDetails({ source, details }: SetConnectionDetailsParams): Promise<void> {
         await this.request<void>({ method: 'POST', path: `/connectors/${source}/connection-details`, body: details });
     }
@@ -238,9 +232,9 @@ export class CtmApiClient {
         await this.request<void>({ method: 'DELETE', path: '/connectors/discord' });
     }
 
-    /** Send a test DM via Discord. */
-    async testDiscordConnection(): Promise<{ sent: boolean }> {
-        return this.request<{ sent: boolean }>({ method: 'POST', path: '/connectors/discord/test' });
+    /** Send a test notification via a channel (e.g. 'discord'). */
+    async testNotificationChannel({ channel }: { channel: string }): Promise<{ sent: boolean }> {
+        return this.request<{ sent: boolean }>({ method: 'POST', path: `/notifications/channels/${channel}/test` });
     }
 
     private filterToParams(filter: TaskFilter): Record<string, string> {

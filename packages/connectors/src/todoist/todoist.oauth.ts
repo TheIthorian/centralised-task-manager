@@ -1,6 +1,7 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 
-import type { OAuthConnector, OAuthTokens } from '../types.js';
+import { ConnectorName, ConnectorType } from '../types.js';
+import type { ConnectionDetailsSchema, OAuthConnector, OAuthTokens } from '../types.js';
 import type { TodoistTokenResponse } from './todoist.types.js';
 
 /** Configuration required to instantiate a {@link TodoistOAuthConnector}. */
@@ -12,7 +13,9 @@ export type TodoistOAuthConnectorConfig = {
 };
 
 export class TodoistOAuthConnector implements OAuthConnector {
-    readonly name = 'todoist';
+    readonly name = ConnectorName.Todoist;
+    readonly connectorType = ConnectorType.TaskSync;
+    readonly connectionDetailsSchema: ConnectionDetailsSchema = {};
 
     private readonly http: HttpClient;
 

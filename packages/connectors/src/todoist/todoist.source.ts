@@ -1,5 +1,6 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 
+import { TaskConnectorName } from '../types.js';
 import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
 import type { TodoistTask, TodoistTasksResponse } from './todoist.types.js';
 import { todoistStringToRrule, rruleToTodoistString } from './todoist-recurrence.js';
@@ -9,8 +10,9 @@ export type TodoistTaskSourceConfig = {
     logger?: Logger;
 };
 
+/** Manage tasks that live in Todoist */
 export class TodoistTaskSource implements ExternalTaskSource {
-    readonly name = 'todoist';
+    readonly name = TaskConnectorName.Todoist;
 
     private readonly http: HttpClient;
 
@@ -52,11 +54,9 @@ export class TodoistTaskSource implements ExternalTaskSource {
             body['duration_unit'] = task.duration.unit;
         }
 
-        const created = await this.http.post<TodoistTask>(
-            '/tasks',
-            body,
-            { Authorization: `Bearer ${tokens.accessToken}` },
-        );
+        const created = await this.http.post<TodoistTask>('/tasks', body, {
+            Authorization: `Bearer ${tokens.accessToken}`,
+        });
 
         return this.toRemoteTask(created);
     }
@@ -91,11 +91,9 @@ export class TodoistTaskSource implements ExternalTaskSource {
         }
 
         // Todoist REST v2 uses POST (not PATCH) for task updates
-        const updated = await this.http.post<TodoistTask>(
-            `/tasks/${sourceId}`,
-            body,
-            { Authorization: `Bearer ${tokens.accessToken}` },
-        );
+        const updated = await this.http.post<TodoistTask>(`/tasks/${sourceId}`, body, {
+            Authorization: `Bearer ${tokens.accessToken}`,
+        });
 
         return this.toRemoteTask(updated);
     }
@@ -113,12 +111,10 @@ export class TodoistTaskSource implements ExternalTaskSource {
     private toRemoteTask(task: TodoistTask): RemoteTask {
         const due = task.due
             ? {
-                date: new Date(task.due.date),
-                timezone: task.due.timezone,
-                recurrence: task.due.is_recurring
-                    ? todoistStringToRrule(task.due.string, this.config.logger)
-                    : null,
-            }
+                  date: new Date(task.due.date),
+                  timezone: task.due.timezone,
+                  recurrence: task.due.is_recurring ? todoistStringToRrule(task.due.string, this.config.logger) : null,
+              }
             : null;
 
         return {

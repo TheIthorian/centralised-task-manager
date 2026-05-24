@@ -2,6 +2,7 @@ export {
     ApiClientError,
     CtmApiClient,
 } from './client.js';
+export { ConnectorType } from './types.js';
 export type {
     ApiClientOptions,
     CancelSyncJobParams,
@@ -34,7 +35,11 @@ export type {
     UpdateTaskDto,
     SetTaskStatusDto,
     SetFuzzyDeadlineDto,
+    ConnectorAuthUrlDto,
     ConnectorStatusDto,
+    NotionDatabaseDto,
+    OkDto,
+    UpdateConnectorResponseDto,
     TaskSyncJobDto,
     UpdateUserDto,
     TokenPair,

@@ -23,8 +23,8 @@ Add `ConnectionField` and `ConnectionDetailsSchema` types:
 
 ```ts
 type ConnectionField =
-  | { type: 'text'; label: string; required?: boolean }
-  | { type: 'remote_select'; label: string; required?: boolean; endpoint: string };
+    | { type: 'text'; label: string; required?: boolean }
+    | { type: 'remote_select'; label: string; required?: boolean; endpoint: string };
 
 export type ConnectionDetailsSchema = Record<string, ConnectionField>;
 ```
@@ -39,8 +39,17 @@ export interface TaskConnector {
     exchangeCode(code: string): Promise<OAuthTokens>;
     refreshToken(tokens: OAuthTokens): Promise<OAuthTokens>;
     fetchTasks(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<RemoteTask[]>;
-    createTask(tokens: OAuthTokens, task: CreateTaskDto, connectionDetails?: Record<string, unknown>): Promise<RemoteTask>;
-    updateTask(tokens: OAuthTokens, sourceId: string, patch: UpdateTaskDto, connectionDetails?: Record<string, unknown>): Promise<RemoteTask>;
+    createTask(
+        tokens: OAuthTokens,
+        task: CreateTaskDto,
+        connectionDetails?: Record<string, unknown>,
+    ): Promise<RemoteTask>;
+    updateTask(
+        tokens: OAuthTokens,
+        sourceId: string,
+        patch: UpdateTaskDto,
+        connectionDetails?: Record<string, unknown>,
+    ): Promise<RemoteTask>;
     completeTask(tokens: OAuthTokens, sourceId: string, connectionDetails?: Record<string, unknown>): Promise<void>;
     deleteTask(tokens: OAuthTokens, sourceId: string, connectionDetails?: Record<string, unknown>): Promise<void>;
 }
@@ -66,28 +75,31 @@ export class NotionConnector implements TaskConnector {
 ```
 
 **OAuth2:**
+
 - Auth URL: `https://api.notion.com/v1/oauth/authorize`
 - Token URL: `https://api.notion.com/v1/oauth/token` (Basic auth: `clientId:clientSecret`)
 - Token response includes `access_token` and `refresh_token` but no `expires_in` — set `expiresAt` to 1 hour from exchange as a conservative default
 - `refreshToken()` — POST to `/v1/oauth/token` with `grant_type: refresh_token`; response may omit `expires_in` so again default to 1 hour
 
 **`listDatabases(tokens)`** (not on the interface, called directly by the backend):
+
 - `POST /v1/search` with `{ filter: { value: 'database', property: 'object' } }`
 - Returns `{ id: string; name: string }[]`
 
 **Convention-based property mapping** (case-insensitive name lookup):
 
-| Notion property | Type | RemoteTask field |
-|---|---|---|
-| Title-type property | `title` | `title` |
-| `Status` | `status` | `status` — value matches `/done/i` → `'done'`, else `'open'` |
-| `Due date` | `date` | `dueDate` |
-| `Priority` | `select` | `priority` — High=3, Medium=2, Low=1, missing/other=null |
-| `Tags` | `multi_select` | `tags` |
+| Notion property     | Type           | RemoteTask field                                             |
+| ------------------- | -------------- | ------------------------------------------------------------ |
+| Title-type property | `title`        | `title`                                                      |
+| `Status`            | `status`       | `status` — value matches `/done/i` → `'done'`, else `'open'` |
+| `Due date`          | `date`         | `dueDate`                                                    |
+| `Priority`          | `select`       | `priority` — High=3, Medium=2, Low=1, missing/other=null     |
+| `Tags`              | `multi_select` | `tags`                                                       |
 
 `sourceId` = Notion page ID.
 
 **Write operations:**
+
 - `createTask` — `POST /v1/pages` with `parent: { database_id: connectionDetails.databaseId }`
 - `updateTask` — `PATCH /v1/pages/{pageId}`
 - `completeTask` — PATCH page, set Status property to `"Done"`
@@ -103,18 +115,20 @@ Register `NotionConnector` using `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, and
 
 ### New endpoints (`connectors.controller.ts`)
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/connectors/:source/connection-schema` | Returns `connector.connectionDetailsSchema` (or `{}` if none) |
+| Method | Path                                     | Description                                                                    |
+| ------ | ---------------------------------------- | ------------------------------------------------------------------------------ |
+| `GET`  | `/connectors/:source/connection-schema`  | Returns `connector.connectionDetailsSchema` (or `{}` if none)                  |
 | `POST` | `/connectors/:source/connection-details` | Validates required fields against schema, stores in `ConnectorConfig.settings` |
-| `GET` | `/connectors/notion/databases` | Calls `NotionConnector.listDatabases(tokens)`, returns `{ id, name }[]` |
+| `GET`  | `/connectors/notion/databases`           | Calls `NotionConnector.listDatabases(tokens)`, returns `{ id, name }[]`        |
 
 ### OAuth callback
 
 After a successful Notion OAuth exchange, redirect to:
+
 - `{WEB_URL}/settings/sources?connected=notion&setup=required`
 
 For connectors without `connectionDetailsSchema`, redirect as before:
+
 - `{WEB_URL}/settings/sources?connected={source}`
 
 ### Sync service (`sync.service.ts`)
@@ -138,8 +152,8 @@ After OAuth callback with `?setup=required`:
 1. Detect `setup=required` query param in the sources settings page
 2. Fetch `GET /connectors/:source/connection-schema`
 3. Render a setup form:
-   - `remote_select` fields call their `endpoint` to populate options
-   - `text` fields render as plain text inputs
+    - `remote_select` fields call their `endpoint` to populate options
+    - `text` fields render as plain text inputs
 4. On submit → `POST /connectors/:source/connection-details`
 5. On success → clear `setup=required`, show connector as connected
 
@@ -148,6 +162,7 @@ After OAuth callback with `?setup=required`:
 ## 4. Testing
 
 **`packages/connectors/src/notion/notion.connector.spec.ts`**
+
 - `fetchTasks` maps all standard properties correctly
 - Missing optional fields (Priority, Tags) → `null` / `[]`
 - Status "Done" (case-insensitive) maps to `'done'`; other values map to `'open'`
@@ -156,6 +171,7 @@ After OAuth callback with `?setup=required`:
 - `listDatabases` returns mapped `{ id, name }[]`
 
 **`apps/main` connector service tests**
+
 - `POST /connectors/:source/connection-details` with missing required field → 400
 - `POST /connectors/:source/connection-details` with valid payload stores in `settings`
 

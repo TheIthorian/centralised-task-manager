@@ -2,8 +2,6 @@ import { HttpClient } from '@ctm/http-client';
 import type { DiscordDmChannelResponse } from './discord.types.js';
 
 export class DiscordMessageClient {
-    readonly name = 'discord';
-
     constructor(private readonly httpClient: HttpClient) {}
 
     /** Send a DM via Discord bot. Opens a DM channel first if dmChannelId is absent. */
@@ -20,11 +18,7 @@ export class DiscordMessageClient {
     }): Promise<void> {
         const content = `**${title}**\n${body}`;
 
-        return await this.httpClient.post(
-            `/channels/${channelId}/messages`,
-            { content },
-            this.botHeaders(botToken),
-        );
+        return await this.httpClient.post(`/channels/${channelId}/messages`, { content }, this.botHeaders(botToken));
     }
 
     /** Open a DM channel with a Discord user and return the channel ID. */

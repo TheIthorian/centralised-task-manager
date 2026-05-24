@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model, Types } from 'mongoose';
-import { OAuthConnectorRegistry } from '@ctm/connectors';
+import { ConnectorName, OAuthConnectorRegistry } from '@ctm/connectors';
 import type { OAuthTokens } from '@ctm/connectors';
 import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
 import { EncryptionService } from './encryption.service.js';
@@ -19,17 +19,17 @@ export class ConnectorsService {
     ) {}
 
     /** List all available connector source names. */
-    listAvailable(): string[] {
+    listAvailable(): ConnectorName[] {
         return this.registry.list();
     }
 
-    /** List the current user's connector configs (tokens excluded). */
+    /** List the current user's connector configs. */
     async listConfigs(userId: string): Promise<ConnectorConfigDocument[]> {
         return this.configModel.find({ userId: new Types.ObjectId(userId) });
     }
 
     /** Get the OAuth authorization URL for a connector source. */
-    async getOAuthUrl({ userId, source }: { userId: string; source: string }): Promise<string> {
+    async getOAuthUrl({ userId, source }: { userId: string; source: ConnectorName }): Promise<string> {
         const connector = this.registry.get(source);
         const state = this.jwt.sign({ sub: userId }, { expiresIn: '15m' });
 
@@ -40,7 +40,6 @@ export class ConnectorsService {
     verifyState(state: string): { userId: string } {
         try {
             const payload = this.jwt.verify<OAuthStatePayload>(state);
-
             return { userId: payload.sub };
         } catch {
             throw new UnauthorizedException('Invalid or expired OAuth state');
@@ -53,15 +52,18 @@ export class ConnectorsService {
         code,
         userId,
     }: {
-        source: string;
+        source: ConnectorName;
         code: string;
         userId: string;
     }): Promise<ConnectorConfigDocument> {
         const connector = this.registry.get(source);
         const tokens = await connector.exchangeCode(code);
+        const extra = (await connector.resolveConnectionSettings?.(tokens)) ?? {};
+
         const doc = await this.configModel.findOneAndUpdate(
             { userId: new Types.ObjectId(userId), source },
             {
+                ...extra,
                 accessToken: this.encryption.encrypt(tokens.accessToken),
                 refreshToken: this.encryption.encrypt(tokens.refreshToken),
                 tokenExpiresAt: tokens.expiresAt,
@@ -98,7 +100,7 @@ export class ConnectorsService {
     }
 
     /** Remove a connector config by source name. */
-    async removeBySource({ source, userId }: { source: string; userId: string }): Promise<void> {
+    async removeBySource({ source, userId }: { source: ConnectorName; userId: string }): Promise<void> {
         const result = await this.configModel.deleteOne({ source, userId: new Types.ObjectId(userId) });
 
         if (result.deletedCount === 0) throw new NotFoundException('Connector config not found');
@@ -112,7 +114,7 @@ export class ConnectorsService {
     }
 
     /** Get decrypted OAuthTokens for a user+source. Throws NotFoundException if not connected. */
-    async getDecryptedTokens({ userId, source }: { userId: string; source: string }): Promise<OAuthTokens> {
+    async getDecryptedTokens({ userId, source }: { userId: string; source: ConnectorName }): Promise<OAuthTokens> {
         const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
 
         if (!config) throw new NotFoundException(`Not connected to ${source}`);
@@ -125,14 +127,14 @@ export class ConnectorsService {
     }
 
     /** Get the stored settings for a user+source connector. Returns empty object if not found. */
-    async getSettings({ userId, source }: { userId: string; source: string }): Promise<Record<string, unknown>> {
+    async getSettings({ userId, source }: { userId: string; source: ConnectorName }): Promise<Record<string, unknown>> {
         const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
 
         return config?.settings ?? {};
     }
 
     /** Get the config document ID for a user+source. Throws NotFoundException if not found. */
-    async getConfigIdBySource({ userId, source }: { userId: string; source: string }): Promise<string> {
+    async getConfigIdBySource({ userId, source }: { userId: string; source: ConnectorName }): Promise<string> {
         const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
 
         if (!config) throw new NotFoundException(`Not connected to ${source}`);
@@ -141,7 +143,7 @@ export class ConnectorsService {
     }
 
     /** Update lastSyncedAt timestamp for a user+source connector config. */
-    async updateLastSyncedAt({ userId, source }: { userId: string; source: string }): Promise<void> {
+    async updateLastSyncedAt({ userId, source }: { userId: string; source: ConnectorName }): Promise<void> {
         await this.configModel.findOneAndUpdate(
             { userId: new Types.ObjectId(userId), source },
             { lastSyncedAt: new Date() },

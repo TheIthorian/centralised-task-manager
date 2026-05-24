@@ -1,6 +1,7 @@
 import { HttpClient, type Logger } from '@ctm/http-client';
 
-import type { OAuthConnector, OAuthTokens } from '../types.js';
+import { ConnectorName, ConnectorType } from '../types.js';
+import type { ConnectionDetailsSchema, OAuthConnector, OAuthTokens } from '../types.js';
 import type { NotionTokenResponse } from './notion.types.js';
 
 /** Configuration required to instantiate a {@link NotionOAuthConnector}. */
@@ -14,7 +15,20 @@ export type NotionOAuthConnectorConfig = {
 const DEFAULT_EXPIRY_SECONDS = 3600;
 
 export class NotionOAuthConnector implements OAuthConnector {
-    readonly name = 'notion';
+    readonly name = ConnectorName.Notion;
+    readonly connectorType = ConnectorType.TaskSync;
+
+    readonly connectionDetailsSchema: ConnectionDetailsSchema = {
+        databaseId: {
+            inputDefinition: {
+                type: 'remote_select',
+                label: 'Task Database',
+                required: true,
+                endpoint: '/connectors/notion/databases',
+            },
+            validationSchema: { type: 'string', minLength: 1 },
+        },
+    };
 
     private readonly http: HttpClient;
 

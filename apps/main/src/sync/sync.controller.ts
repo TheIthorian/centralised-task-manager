@@ -2,6 +2,7 @@ import { Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuards } fr
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import { ConnectorName } from '@ctm/connectors';
 import { SyncService } from './sync.service.js';
 import { type SyncJobDto, toSyncJobDto } from './sync-job.dto.js';
 
@@ -21,7 +22,7 @@ export class SyncController {
     @Post()
     async createJob(
         @Request() req: AuthRequest,
-        @Param('source') source: string,
+        @Param('source') source: ConnectorName,
     ): Promise<SyncJobDto> {
         const job = await this.sync.createJob({ userId: req.user.sub, source });
 

@@ -120,11 +120,6 @@ export type UpdateNotificationPreferencesParams = {
     dto: UpdateNotificationPreferencesDto;
 };
 
-/** Parameters for {@link CtmApiClient.getConnectionSchema}. */
-export type GetConnectionSchemaParams = {
-    source: string;
-};
-
 /** Parameters for {@link CtmApiClient.setConnectionDetails}. */
 export type SetConnectionDetailsParams = {
     source: string;

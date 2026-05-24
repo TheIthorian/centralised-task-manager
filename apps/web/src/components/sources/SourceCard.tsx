@@ -1,3 +1,4 @@
+import { ConnectorType } from '@ctm/api-client';
 import type { ConnectorStatusDto, TaskSyncJobDto } from '@ctm/api-client';
 import { Button } from '../ui/index.js';
 
@@ -7,6 +8,8 @@ type SourceCardProps = {
     onDisconnect: (source: string) => void;
     onSync: (source: string) => void;
     onCancelSync: (source: string, jobId: string) => void;
+    onTest?: (source: string) => void;
+    onConfigure?: (source: string) => void;
     syncJob?: TaskSyncJobDto;
     isPending: boolean;
 };
@@ -23,10 +26,13 @@ export function SourceCard({
     onDisconnect,
     onSync,
     onCancelSync,
+    onTest,
+    onConfigure,
     syncJob,
     isPending,
 }: SourceCardProps): React.JSX.Element {
-    const { source, connected, lastSynced } = connector;
+    const { source, connected, lastSynced, connectorType, setupRequired } = connector;
+    const isTaskSync = connectorType === ConnectorType.TaskSync;
     const isSyncing = syncJob?.status === 'queued' || syncJob?.status === 'running';
     const syncFailed = syncJob?.status === 'failed';
 
@@ -46,7 +52,25 @@ export function SourceCard({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {connected && !isSyncing && (
+                    {connected && setupRequired && onConfigure && (
+                        <Button
+                            variant="secondary"
+                            onClick={() => onConfigure(source)}
+                            disabled={isPending}
+                        >
+                            Configure
+                        </Button>
+                    )}
+                    {connected && !isTaskSync && onTest && (
+                        <Button
+                            variant="secondary"
+                            onClick={() => onTest(source)}
+                            disabled={isPending}
+                        >
+                            Test
+                        </Button>
+                    )}
+                    {connected && isTaskSync && !isSyncing && (
                         <Button
                             variant="secondary"
                             onClick={() => onSync(source)}
@@ -55,7 +79,7 @@ export function SourceCard({
                             Sync
                         </Button>
                     )}
-                    {connected && isSyncing && (
+                    {connected && isTaskSync && isSyncing && (
                         <Button
                             variant="danger"
                             onClick={() => onCancelSync(source, syncJob!.id)}
@@ -75,6 +99,12 @@ export function SourceCard({
                     )}
                 </div>
             </div>
+
+            {connected && setupRequired && (
+                <p className="text-xs font-bold text-nb-red">
+                    Setup incomplete — click Configure to finish connecting.
+                </p>
+            )}
 
             {isSyncing && (
                 <div className="w-full">

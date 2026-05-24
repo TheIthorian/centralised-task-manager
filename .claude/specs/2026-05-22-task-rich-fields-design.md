@@ -13,12 +13,12 @@ Add first-class support for four task features across CTM: parent/child tasks, e
 
 ### Task schema (`apps/main`)
 
-| Field | Type | Notes |
-|---|---|---|
-| `due` | `{ date: Date; timezone: string \| null; recurrence: string \| null } \| null` | Replaces `sourceDueDate`. `recurrence` is an RRULE string (RFC 5545). |
-| `deadlineDate` | `Date \| null` | Hard must-complete-by date. Distinct from `due` and from `fuzzyDeadline`. |
-| `duration` | `{ amount: number; unit: 'minute' \| 'day' } \| null` | Estimated work time. |
-| `parentId` | `Types.ObjectId \| null` | Ref to another CTM `Task._id` belonging to same user. |
+| Field          | Type                                                                           | Notes                                                                     |
+| -------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `due`          | `{ date: Date; timezone: string \| null; recurrence: string \| null } \| null` | Replaces `sourceDueDate`. `recurrence` is an RRULE string (RFC 5545).     |
+| `deadlineDate` | `Date \| null`                                                                 | Hard must-complete-by date. Distinct from `due` and from `fuzzyDeadline`. |
+| `duration`     | `{ amount: number; unit: 'minute' \| 'day' } \| null`                          | Estimated work time.                                                      |
+| `parentId`     | `Types.ObjectId \| null`                                                       | Ref to another CTM `Task._id` belonging to same user.                     |
 
 `sourceDueDate` is removed and replaced by `due`.
 
@@ -67,14 +67,14 @@ CTM stores recurrence as RRULE strings (RFC 5545). Connectors translate to/from 
 
 A `TodoistRecurrenceTranslator` utility in the Todoist connector maps known patterns:
 
-| Todoist string | RRULE |
-|---|---|
-| `"every day"` | `FREQ=DAILY` |
-| `"every monday"` | `FREQ=WEEKLY;BYDAY=MO` |
-| `"every 2 weeks"` | `FREQ=WEEKLY;INTERVAL=2` |
+| Todoist string    | RRULE                              |
+| ----------------- | ---------------------------------- |
+| `"every day"`     | `FREQ=DAILY`                       |
+| `"every monday"`  | `FREQ=WEEKLY;BYDAY=MO`             |
+| `"every 2 weeks"` | `FREQ=WEEKLY;INTERVAL=2`           |
 | `"every workday"` | `FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR` |
-| `"every month"` | `FREQ=MONTHLY` |
-| unknown | `null` + log warning |
+| `"every month"`   | `FREQ=MONTHLY`                     |
+| unknown           | `null` + log warning               |
 
 ### RRULE → Todoist (on write-through)
 
@@ -119,6 +119,7 @@ remote.duration   → task.duration
 ### Creating a child task
 
 `POST /tasks` accepts optional `parentId`. The service validates:
+
 - Parent task exists in DB.
 - Parent belongs to the same user.
 
@@ -134,25 +135,25 @@ If validation fails, reject with `400`. Connector receives no parent info.
 
 ### Todoist
 
-| CTM field | Todoist API field |
-|---|---|
-| `due.date` | `due_date` |
-| `due.recurrence` | `due_string` (translated from RRULE) |
-| `due.timezone` | passed via `due_string` or `due_datetime` |
-| `deadlineDate` | `deadline.date` |
-| `duration` | `duration.amount` + `duration.unit` |
+| CTM field        | Todoist API field                         |
+| ---------------- | ----------------------------------------- |
+| `due.date`       | `due_date`                                |
+| `due.recurrence` | `due_string` (translated from RRULE)      |
+| `due.timezone`   | passed via `due_string` or `due_datetime` |
+| `deadlineDate`   | `deadline.date`                           |
+| `duration`       | `duration.amount` + `duration.unit`       |
 
 `TodoistTask` type: `deadline` and `duration` typed properly (currently stubbed as `null`).
 
 ### Google Tasks
 
-| CTM field | Google Tasks field |
-|---|---|
-| `due.date` | `due` (date only) |
+| CTM field        | Google Tasks field          |
+| ---------------- | --------------------------- |
+| `due.date`       | `due` (date only)           |
 | `due.recurrence` | not supported — drop + warn |
-| `due.timezone` | not supported — drop |
-| `deadlineDate` | not supported — drop + warn |
-| `duration` | not supported — drop + warn |
+| `due.timezone`   | not supported — drop        |
+| `deadlineDate`   | not supported — drop + warn |
+| `duration`       | not supported — drop + warn |
 
 ---
 
@@ -176,6 +177,7 @@ parentId: string | null       // CTM MongoDB ObjectId
 ### TaskCard
 
 Display new fields beneath the title (where space allows):
+
 - **Due date** — from `task.due.date` (replaces `task.dueDate`)
 - **Recurring badge** — small "↻" indicator if `task.due.recurrence` is set
 - **Deadline** — shown in red if `task.deadlineDate` is set
@@ -185,13 +187,13 @@ Display new fields beneath the title (where space allows):
 
 Replace the single `Due Date` input with three new fields:
 
-| Field | Input type | Notes |
-|---|---|---|
-| Due date | `<input type="date">` | Maps to `due.date` |
-| Recurrence | `<select>` with common options + "Custom RRULE" text input | Maps to `due.recurrence` |
-| Deadline | `<input type="date">` | Maps to `deadlineDate` |
-| Duration amount | `<input type="number">` | Maps to `duration.amount` |
-| Duration unit | `<select>` (minutes / days) | Maps to `duration.unit` |
+| Field           | Input type                                                 | Notes                     |
+| --------------- | ---------------------------------------------------------- | ------------------------- |
+| Due date        | `<input type="date">`                                      | Maps to `due.date`        |
+| Recurrence      | `<select>` with common options + "Custom RRULE" text input | Maps to `due.recurrence`  |
+| Deadline        | `<input type="date">`                                      | Maps to `deadlineDate`    |
+| Duration amount | `<input type="number">`                                    | Maps to `duration.amount` |
+| Duration unit   | `<select>` (minutes / days)                                | Maps to `duration.unit`   |
 
 Recurrence select options: None, Daily, Weekly, Every weekday, Monthly, Yearly, Custom. "Custom" reveals a text input for raw RRULE.
 
@@ -210,6 +212,7 @@ In `TaskList`, indent child tasks under their parent (group by `parentId`). If p
 ### `ctm tasks create`
 
 New flags:
+
 - `--due <date>` — ISO date (maps to `due.date`)
 - `--recurrence <rrule>` — RRULE string (maps to `due.recurrence`)
 - `--deadline <date>` — ISO date (maps to `deadlineDate`)
@@ -232,11 +235,12 @@ Table gains `Deadline` and `Duration` columns. `Due` column updated to read from
 ### `create_task` tool
 
 Add to input schema:
+
 ```ts
-due: z.object({ date: z.string(), timezone: z.string().optional(), recurrence: z.string().optional() }).optional()
-deadlineDate: z.string().optional()
-duration: z.object({ amount: z.number(), unit: z.enum(['minute', 'day']) }).optional()
-parentId: z.string().optional()
+due: z.object({ date: z.string(), timezone: z.string().optional(), recurrence: z.string().optional() }).optional();
+deadlineDate: z.string().optional();
+duration: z.object({ amount: z.number(), unit: z.enum(['minute', 'day']) }).optional();
+parentId: z.string().optional();
 ```
 
 ### `update_task` tool

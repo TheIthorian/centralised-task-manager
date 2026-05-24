@@ -6,33 +6,5 @@ services:
     volumes:
       - mongodb_data:/data/db
 
-  main:
-    build:
-      context: .
-      dockerfile: apps/main/Dockerfile
-    ports:
-      - '3000:3000'
-    env_file: apps/main/.env
-    depends_on:
-      - mongodb
-
-  sync:
-    build:
-      context: .
-      dockerfile: apps/sync/Dockerfile
-    env_file: apps/sync/.env
-    depends_on:
-      - mongodb
-
-  mcp:
-    build:
-      context: .
-      dockerfile: apps/mcp/Dockerfile
-    ports:
-      - '3002:3002'
-    env_file: apps/mcp/.env
-    depends_on:
-      - main
-
 volumes:
   mongodb_data:

@@ -1,6 +1,7 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 
-import type { OAuthConnector, OAuthTokens } from '../types.js';
+import { ConnectorName, ConnectorType } from '../types.js';
+import type { ConnectionDetailsSchema, OAuthConnector, OAuthTokens } from '../types.js';
 import type { GoogleTokenResponse } from './google-tasks.types.js';
 
 /** Configuration required to instantiate a {@link GoogleTasksOAuthConnector}. */
@@ -12,7 +13,9 @@ export type GoogleTasksOAuthConnectorConfig = {
 };
 
 export class GoogleTasksOAuthConnector implements OAuthConnector {
-    readonly name = 'google_tasks';
+    readonly name = ConnectorName.GoogleTasks;
+    readonly connectorType = ConnectorType.TaskSync;
+    readonly connectionDetailsSchema: ConnectionDetailsSchema = {};
 
     private readonly http: HttpClient;
 

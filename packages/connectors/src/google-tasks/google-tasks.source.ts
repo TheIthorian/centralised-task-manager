@@ -1,6 +1,7 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 import { ExternalServiceError } from '@ctm/errors';
 
+import { TaskConnectorName } from '../types.js';
 import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
 import type { GoogleTaskList, GoogleTask } from './google-tasks.types.js';
 
@@ -11,7 +12,7 @@ export type GoogleTasksTaskSourceConfig = {
 
 /** ExternalTaskSource implementation for the Google Tasks API. */
 export class GoogleTasksTaskSource implements ExternalTaskSource {
-    readonly name = 'google_tasks';
+    readonly name = TaskConnectorName.GoogleTasks;
 
     private readonly http: HttpClient;
 
