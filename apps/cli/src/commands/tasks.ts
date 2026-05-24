@@ -38,13 +38,14 @@ export function registerTasksCommand(program: Command): void {
                 .choices(['all', 'today', 'upcoming', 'done'])
                 .default('all'),
         )
+        .option('--last-updated-from <date>', 'Only return tasks updated on or after this ISO date')
         .option('--json', 'Output as JSON')
-        .action(async (opts: { filter: 'all' | 'today' | 'upcoming' | 'done'; json?: boolean }) => {
+        .action(async (opts: { filter: 'all' | 'today' | 'upcoming' | 'done'; lastUpdatedFrom?: string; json?: boolean }) => {
             const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
 
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                const result = await client.listTasks({ filter: opts.filter });
+                const result = await client.listTasks({ filter: opts.filter, lastUpdatedFromDate: opts.lastUpdatedFrom });
 
                 if (opts.json) {
                     print(formatJson(result));

@@ -61,6 +61,10 @@ export class TasksService {
             filter['fuzzyDeadline.remindEvery'] = { $in: isMonday ? ['daily', 'weekly'] : ['daily'] };
         }
 
+        if (query.lastUpdatedFromDate) {
+            filter['updatedAt'] = { $gte: new Date(query.lastUpdatedFromDate) };
+        }
+
         const page = query.page ?? 1;
         const limit = query.limit ?? 50;
 

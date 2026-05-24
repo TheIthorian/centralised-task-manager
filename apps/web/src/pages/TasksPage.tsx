@@ -19,6 +19,15 @@ export function TasksPage(): React.JSX.Element {
 
     const qc = useQueryClient();
 
+    const midnightYesterday = (() => {
+        const d = new Date();
+
+        d.setDate(d.getDate() - 1);
+        d.setHours(0, 0, 0, 0);
+
+        return d.toISOString();
+    })();
+
     const {
         data: tasks = [],
         isLoading,
@@ -26,7 +35,10 @@ export function TasksPage(): React.JSX.Element {
         error,
     } = useQuery({
         queryKey: ['tasks', filter],
-        queryFn: () => api.listTasks({ filter }),
+        queryFn: () => api.listTasks({
+            filter,
+            lastUpdatedFromDate: filter === 'done' ? midnightYesterday : undefined,
+        }),
     });
 
     const addMutation = useMutation({

@@ -58,6 +58,8 @@ export type SetFuzzyDeadlineParams = {
 /** Parameters for {@link CtmApiClient.listTasks}. */
 export type ListTasksParams = {
     filter?: TaskFilter;
+    /** ISO date string — only return tasks updated on or after this date. */
+    lastUpdatedFromDate?: string;
 };
 
 /** Parameters for {@link CtmApiClient.getConnectorAuthUrl}. */

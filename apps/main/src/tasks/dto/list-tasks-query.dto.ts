@@ -31,6 +31,12 @@ export class ListTasksQueryDto {
     @IsBoolean()
     surfaced?: boolean;
 
+    /** ISO date string — only return tasks updated on or after this date. */
+    @ApiPropertyOptional({ example: '2026-05-23T00:00:00.000Z' })
+    @IsOptional()
+    @IsString()
+    lastUpdatedFromDate?: string;
+
     @ApiPropertyOptional({ default: 1, example: 1 })
     @IsOptional()
     @Type(() => Number)

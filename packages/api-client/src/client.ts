@@ -94,12 +94,16 @@ export class CtmApiClient {
         return this.request<TokenPair>({ method: 'POST', path: '/auth/refresh', body: { refreshToken: token } });
     }
 
-    /** List tasks, optionally filtered by UI filter. */
-    async listTasks({ filter = 'all' }: ListTasksParams = {}): Promise<TaskDto[]> {
+    /** List tasks, optionally filtered by UI filter and/or update date. */
+    async listTasks({ filter = 'all', lastUpdatedFromDate }: ListTasksParams = {}): Promise<TaskDto[]> {
+        const params = this.filterToParams(filter);
+
+        if (lastUpdatedFromDate) params['lastUpdatedFromDate'] = lastUpdatedFromDate;
+
         return this.request<TaskDto[]>({
             method: 'GET',
             path: '/tasks',
-            params: this.filterToParams(filter),
+            params,
         });
     }
 

@@ -18,12 +18,15 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
     server.registerTool(
         'list_tasks',
         {
-            description: 'List tasks. Optionally filter by status.',
-            inputSchema: { filter: z.enum(['all', 'today', 'upcoming', 'done']).default('all') },
+            description: 'List tasks. Optionally filter by status or restrict to tasks updated on/after a date.',
+            inputSchema: {
+                filter: z.enum(['all', 'today', 'upcoming', 'done']).default('all'),
+                lastUpdatedFromDate: z.string().optional().describe('ISO date string — only return tasks updated on or after this date'),
+            },
             annotations: { readOnlyHint: true },
         },
-        async ({ filter }) => {
-            const tasks = await client.listTasks({ filter });
+        async ({ filter, lastUpdatedFromDate }) => {
+            const tasks = await client.listTasks({ filter, lastUpdatedFromDate });
             return { content: [{ type: 'text' as const, text: JSON.stringify(tasks) }] };
         },
     );
