@@ -17,7 +17,7 @@ type SectionDef = {
 const SECTIONS: SectionDef[] = [
     {
         key: 'overdue',
-        label: '⚠ Overdue',
+        label: '🔥 Overdue',
         chipClass:
             'border-red-600 bg-red-200 shadow-[2px_2px_0px_#dc2626] text-red-700',
     },
