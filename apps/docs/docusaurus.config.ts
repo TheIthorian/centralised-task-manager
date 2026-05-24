@@ -18,6 +18,7 @@ const config: Config = {
         },
     },
     projectName: 'ctm',
+    favicon: 'favicon.svg',
 
     presets: [
         [
