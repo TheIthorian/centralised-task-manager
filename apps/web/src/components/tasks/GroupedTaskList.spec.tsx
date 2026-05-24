@@ -64,4 +64,11 @@ describe('GroupedTaskList', () => {
         // The count "2" appears inside the Today chip
         expect(screen.getByText('2')).toBeInTheDocument();
     });
+
+    it('renders Done section for completed tasks instead of their date bucket', () => {
+        const task = makeTask({ id: '7', completed: true, due: { date: TODAY_DATE, timezone: null, recurrence: null } });
+        render(<GroupedTaskList tasks={[task]} onToggle={vi.fn()} onEdit={vi.fn()} />);
+        expect(screen.getByText(/done/i)).toBeInTheDocument();
+        expect(screen.queryByText(/today/i)).not.toBeInTheDocument();
+    });
 });

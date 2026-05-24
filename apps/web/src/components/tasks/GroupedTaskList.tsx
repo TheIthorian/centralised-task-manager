@@ -45,6 +45,12 @@ const SECTIONS: SectionDef[] = [
         chipClass:
             'border-gray-400 bg-gray-100 shadow-[2px_2px_0px_#9ca3af] text-gray-500 dark:border-white/20 dark:bg-neutral-800 dark:text-white/50 dark:shadow-none',
     },
+    {
+        key: 'done',
+        label: 'Done',
+        chipClass:
+            'border-gray-400 bg-gray-100 shadow-[2px_2px_0px_#9ca3af] text-gray-400 line-through dark:border-white/20 dark:bg-neutral-800 dark:text-white/30 dark:shadow-none',
+    },
 ];
 
 /** Renders tasks grouped into due-date sections with neobrutalist chip headers. */

@@ -87,4 +87,22 @@ describe('bucketTasks', () => {
 		// Smoke test: calling without now arg does not throw
 		expect(() => bucketTasks([])).not.toThrow();
 	});
+
+	it('puts completed tasks in done regardless of due date', () => {
+		const tasks = [
+			makeTask({ id: 'd1', completed: true, due: { date: '2026-05-20', timezone: null, recurrence: null } }),
+			makeTask({ id: 'd2', completed: true }),
+		];
+		const result = bucketTasks(tasks, NOW);
+		expect(result.done).toHaveLength(2);
+		expect(result.today).toHaveLength(0);
+		expect(result.noDate).toHaveLength(0);
+	});
+
+	it('does not put incomplete tasks in done', () => {
+		const task = makeTask({ id: 'o1', due: { date: '2026-05-20', timezone: null, recurrence: null } });
+		const result = bucketTasks([task], NOW);
+		expect(result.done).toHaveLength(0);
+		expect(result.today).toHaveLength(1);
+	});
 });

@@ -6,6 +6,7 @@ export type TaskBuckets = {
 	thisWeek: TaskDto[];
 	upcoming: TaskDto[];
 	noDate: TaskDto[];
+	done: TaskDto[];
 };
 
 /** Parse a YYYY-MM-DD string to a local-timezone Date (midnight). */
@@ -44,8 +45,14 @@ export function bucketTasks(tasks: TaskDto[], now: Date = new Date()): TaskBucke
 	const thisWeek: TaskDto[] = [];
 	const upcoming: TaskDto[] = [];
 	const noDate: TaskDto[] = [];
+	const done: TaskDto[] = [];
 
 	for (const task of tasks) {
+		if (task.completed) {
+			done.push(task);
+			continue;
+		}
+
 		if (!task.due) {
 			noDate.push(task);
 			continue;
@@ -72,5 +79,5 @@ export function bucketTasks(tasks: TaskDto[], now: Date = new Date()): TaskBucke
 	thisWeek.sort(byDate);
 	upcoming.sort(byDate);
 
-	return { overdue, today, thisWeek, upcoming, noDate };
+	return { overdue, today, thisWeek, upcoming, noDate, done };
 }
