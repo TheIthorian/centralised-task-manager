@@ -107,9 +107,17 @@ export type OAuthConnector = {
     resolveConnectionSettings?(tokens: OAuthTokens): Promise<ConnectionSettings>;
 };
 
+/** Result of a connector health probe. */
+export type HealthCheckResult = {
+    healthy: boolean;
+    error?: string;
+};
+
 /** Task CRUD contract for connectors that read and write remote tasks. */
 export type ExternalTaskSource = {
     readonly name: TaskConnectorName;
+    /** Probe the provider API with the given tokens to verify the connection is healthy. */
+    healthCheck(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<HealthCheckResult>;
     /** Fetch all tasks accessible with the given token set. */
     fetchTasks(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<RemoteTask[]>;
     /** Create a new task and return the created representation. */
