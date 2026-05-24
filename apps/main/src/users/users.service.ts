@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -53,7 +53,15 @@ export class UsersService {
 
         if (dto.email) patch.email = dto.email;
 
-        if (dto.password) patch.passwordHash = await bcrypt.hash(dto.password, 12);
+        if (dto.newPassword) {
+            const user = await this.userModel.findById(id).select('passwordHash');
+
+            if (!user || !dto.currentPassword || !(await bcrypt.compare(dto.currentPassword, user.passwordHash))) {
+                throw new UnauthorizedException('Current password is incorrect');
+            }
+
+            patch.passwordHash = await bcrypt.hash(dto.newPassword, 12);
+        }
 
         const user = await this.userModel.findByIdAndUpdate(id, patch, { new: true });
 

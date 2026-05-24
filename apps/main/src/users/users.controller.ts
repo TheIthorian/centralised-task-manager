@@ -6,6 +6,7 @@ import { ApiTokenService } from '../auth/api-token.service.js';
 import { UsersService } from './users.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import type { UserDto } from '@ctm/api-client';
 
 interface AuthRequest {
     user: JwtPayload;
@@ -23,7 +24,7 @@ export class UsersController {
     /** Get the current user's profile. */
     @ApiOperation({ summary: 'Get current user' })
     @Get('me')
-    async me(@Request() req: AuthRequest): Promise<{ id: string; email: string }> {
+    async me(@Request() req: AuthRequest): Promise<UserDto> {
         const user = await this.users.findById(req.user.sub);
 
         if (!user) throw new NotFoundException('User not found');
@@ -34,7 +35,7 @@ export class UsersController {
     /** Update the current user's email or password. */
     @ApiOperation({ summary: 'Update current user' })
     @Patch('me')
-    async update(@Request() req: AuthRequest, @Body() dto: UpdateUserDto): Promise<{ id: string; email: string }> {
+    async update(@Request() req: AuthRequest, @Body() dto: UpdateUserDto): Promise<UserDto> {
         const user = await this.users.update({ id: req.user.sub, dto });
 
         return { id: String(user._id), email: user.email };

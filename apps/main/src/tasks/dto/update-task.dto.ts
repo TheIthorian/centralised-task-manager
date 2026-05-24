@@ -4,8 +4,13 @@ import {
     IsArray, MaxLength, IsUrl, ValidateNested, IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import type {
+    LocationDto as ILocationDto,
+    Duration,
+    UpdateTaskDto as IUpdateTaskDto,
+} from '@ctm/api-client';
 
-export class LocationDto {
+export class LocationDto implements ILocationDto {
     @ApiPropertyOptional({ example: 'Eiffel Tower', maxLength: 200 })
     @IsString()
     @MaxLength(200)
@@ -34,7 +39,7 @@ export class DueDateDto {
     recurrence?: string;
 }
 
-export class DurationDto {
+export class DurationDto implements Duration {
     @ApiProperty({ example: 90 })
     @IsInt()
     @Min(1)
@@ -45,7 +50,7 @@ export class DurationDto {
     unit!: 'minute' | 'day';
 }
 
-export class UpdateTaskDto {
+export class UpdateTaskDto implements IUpdateTaskDto {
     @ApiPropertyOptional({ example: 'Updated title', maxLength: 200 })
     @IsOptional()
     @IsString()
@@ -80,7 +85,7 @@ export class UpdateTaskDto {
     @IsInt()
     @Min(1)
     @Max(4)
-    priority?: number;
+    priority?: 1 | 2 | 3 | 4;
 
     @ApiPropertyOptional({ type: [String], example: ['work', 'urgent'], maxLength: 50 })
     @IsOptional()

@@ -24,11 +24,13 @@ export type {
     UpdateMeParams,
     UpdateNotificationPreferencesParams,
     UpdateTaskParams,
+    SetConnectionDetailsParams,
 } from './client.types.js';
 export type {
     UserDto,
     TaskDto,
     LocationDto,
+    DueDate,
     Duration,
     FuzzyDeadlineInfo,
     CreateTaskDto,
@@ -51,4 +53,9 @@ export type {
     UpdateChannelPrefsDto,
     UpdateNotificationPreferencesDto,
     DiscordStatusDto,
+    ApiTokenDto,
+    CreatedApiTokenDto,
+    TestChannelResultDto,
+    MarkReadResultDto,
+    MarkAllReadResultDto,
 } from './types.js';

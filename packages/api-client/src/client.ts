@@ -2,11 +2,14 @@ import axios, { AxiosError, type AxiosInstance } from 'axios';
 import type {
     ConnectorStatusDto,
     DiscordStatusDto,
+    MarkAllReadResultDto,
+    MarkReadResultDto,
     NotificationDto,
     NotificationPreferencesDto,
     TaskDto,
     TaskFilter,
     TaskSyncJobDto,
+    TestChannelResultDto,
     TokenPair,
     UserDto,
 } from './types.js';
@@ -197,13 +200,13 @@ export class CtmApiClient {
     }
 
     /** Mark a single notification as read. */
-    async markNotificationRead({ id }: MarkNotificationReadParams): Promise<{ id: string; read: boolean }> {
-        return this.request<{ id: string; read: boolean }>({ method: 'PATCH', path: `/notifications/${id}/read` });
+    async markNotificationRead({ id }: MarkNotificationReadParams): Promise<MarkReadResultDto> {
+        return this.request<MarkReadResultDto>({ method: 'PATCH', path: `/notifications/${id}/read` });
     }
 
     /** Mark all notifications as read. */
-    async markAllNotificationsRead(): Promise<{ updated: number }> {
-        return this.request<{ updated: number }>({ method: 'PATCH', path: '/notifications/read-all' });
+    async markAllNotificationsRead(): Promise<MarkAllReadResultDto> {
+        return this.request<MarkAllReadResultDto>({ method: 'PATCH', path: '/notifications/read-all' });
     }
 
     /** Get notification preferences for the current user. */
@@ -233,8 +236,8 @@ export class CtmApiClient {
     }
 
     /** Send a test notification via a channel (e.g. 'discord'). */
-    async testNotificationChannel({ channel }: { channel: string }): Promise<{ sent: boolean }> {
-        return this.request<{ sent: boolean }>({ method: 'POST', path: `/notifications/channels/${channel}/test` });
+    async testNotificationChannel({ channel }: { channel: string }): Promise<TestChannelResultDto> {
+        return this.request<TestChannelResultDto>({ method: 'POST', path: `/notifications/channels/${channel}/test` });
     }
 
     private filterToParams(filter: TaskFilter): Record<string, string> {

@@ -3,8 +3,9 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { ConnectorName } from '@ctm/connectors';
+import type { TaskSyncJobDto } from '@ctm/api-client';
 import { SyncService } from './sync.service.js';
-import { type SyncJobDto, toSyncJobDto } from './sync-job.dto.js';
+import { toSyncJobDto } from './sync-job.dto.js';
 
 type AuthRequest = {
     user: JwtPayload;
@@ -23,7 +24,7 @@ export class SyncController {
     async createJob(
         @Request() req: AuthRequest,
         @Param('source') source: ConnectorName,
-    ): Promise<SyncJobDto> {
+    ): Promise<TaskSyncJobDto> {
         const job = await this.sync.createJob({ userId: req.user.sub, source });
 
         return toSyncJobDto(job);
@@ -35,7 +36,7 @@ export class SyncController {
     async getJob(
         @Request() req: AuthRequest,
         @Param('jobId') jobId: string,
-    ): Promise<SyncJobDto> {
+    ): Promise<TaskSyncJobDto> {
         const job = await this.sync.getJob({ userId: req.user.sub, jobId });
 
         return toSyncJobDto(job);

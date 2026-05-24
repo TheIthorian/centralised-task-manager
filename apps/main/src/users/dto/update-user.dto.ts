@@ -1,6 +1,7 @@
 import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import type { UpdateUserDto as IUpdateUserDto } from '@ctm/api-client';
 
-export class UpdateUserDto {
+export class UpdateUserDto implements IUpdateUserDto {
     @IsOptional()
     @IsEmail()
     @MaxLength(320)
@@ -10,5 +11,11 @@ export class UpdateUserDto {
     @IsString()
     @MinLength(8)
     @MaxLength(255)
-    password?: string;
+    currentPassword?: string;
+
+    @IsOptional()
+    @IsString()
+    @MinLength(8)
+    @MaxLength(255)
+    newPassword?: string;
 }

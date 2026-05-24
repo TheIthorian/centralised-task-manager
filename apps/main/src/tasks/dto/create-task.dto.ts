@@ -5,8 +5,9 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LocationDto, DueDateDto, DurationDto } from './update-task.dto.js';
+import type { CreateTaskDto as ICreateTaskDto } from '@ctm/api-client';
 
-export class CreateTaskDto {
+export class CreateTaskDto implements ICreateTaskDto {
     @ApiProperty({ example: 'Write quarterly report', maxLength: 200 })
     @IsString()
     @IsNotEmpty()
@@ -41,7 +42,7 @@ export class CreateTaskDto {
     @IsInt()
     @Min(1)
     @Max(4)
-    priority?: number;
+    priority?: 1 | 2 | 3 | 4;
 
     @ApiPropertyOptional({ type: [LocationDto], description: 'Locations with Google Maps links' })
     @IsOptional()

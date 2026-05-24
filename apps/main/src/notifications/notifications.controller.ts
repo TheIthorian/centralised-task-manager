@@ -20,6 +20,13 @@ import { Channel, NotificationsService } from './notifications.service.js';
 import { Notification, type NotificationDocument } from './schemas/notification.schema.js';
 import type { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import type {
+    MarkAllReadResultDto,
+    MarkReadResultDto,
+    NotificationDto,
+    NotificationPreferencesDto,
+    TestChannelResultDto,
+} from '@ctm/api-client';
 
 type AuthRequest = { user: JwtPayload };
 
@@ -42,7 +49,7 @@ export class NotificationsController {
     async testNotificationChannel(
         @Request() req: AuthRequest,
         @Param('channel') channel: Channel,
-    ): Promise<{ sent: boolean }> {
+    ): Promise<TestChannelResultDto> {
         return this.notificationsService.testChannel({ userId: req.user.sub, channel });
     }
 
@@ -57,7 +64,7 @@ export class NotificationsController {
         @Query('page') page = 1,
         @Query('limit') limit = 20,
         @Query('unreadOnly') unreadOnly = false,
-    ): Promise<unknown[]> {
+    ): Promise<NotificationDto[]> {
         const filter: Record<string, unknown> = { userId: new Types.ObjectId(req.user.sub) };
 
         if (unreadOnly) filter['read'] = false;
@@ -75,7 +82,7 @@ export class NotificationsController {
             title: d.title,
             body: d.body,
             read: d.read,
-            createdAt: d.createdAt,
+            createdAt: d.createdAt?.toISOString() ?? new Date(0).toISOString(),
         }));
     }
 
@@ -83,7 +90,7 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Mark a notification as read' })
     @Patch(':id/read')
-    async markRead(@Request() req: AuthRequest, @Param('id') id: string): Promise<{ id: string; read: boolean }> {
+    async markRead(@Request() req: AuthRequest, @Param('id') id: string): Promise<MarkReadResultDto> {
         const doc = await this.notificationModel.findOneAndUpdate(
             { _id: id, userId: new Types.ObjectId(req.user.sub) },
             { read: true },
@@ -100,7 +107,7 @@ export class NotificationsController {
     @ApiOperation({ summary: 'Mark all notifications as read' })
     @Patch('read-all')
     @HttpCode(200)
-    async markAllRead(@Request() req: AuthRequest): Promise<{ updated: number }> {
+    async markAllRead(@Request() req: AuthRequest): Promise<MarkAllReadResultDto> {
         const result = await this.notificationModel.updateMany(
             { userId: new Types.ObjectId(req.user.sub), read: false },
             { read: true },
@@ -115,15 +122,19 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Get notification preferences' })
     @Get('preferences')
-    async getPreferences(@Request() req: AuthRequest): Promise<unknown> {
-        return this.usersService.getNotificationPreferences(req.user.sub);
+    async getPreferences(@Request() req: AuthRequest): Promise<NotificationPreferencesDto> {
+        const prefs = await this.usersService.getNotificationPreferences(req.user.sub);
+
+        if (!prefs) throw new NotFoundException('User not found');
+
+        return prefs as NotificationPreferencesDto;
     }
 
     /** Update notification preferences (partial — only sent fields are changed). */
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Update notification preferences' })
     @Patch('preferences')
-    async updatePreferences(@Request() req: AuthRequest, @Body() dto: UpdatePreferencesDto): Promise<unknown> {
+    async updatePreferences(@Request() req: AuthRequest, @Body() dto: UpdatePreferencesDto): Promise<NotificationPreferencesDto> {
         return this.usersService.updateNotificationPreferences({ userId: req.user.sub, prefs: dto });
     }
 }

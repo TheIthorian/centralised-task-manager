@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthService, type TokenPair } from './auth.service.js';
+import { AuthService } from './auth.service.js';
+import type { TokenPair, ApiTokenDto, CreatedApiTokenDto } from '@ctm/api-client';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { CreateTokenDto } from './dto/create-token.dto.js';
@@ -19,7 +20,6 @@ interface JwtRequest {
     user: JwtPayload;
 }
 
-type TokenResponse = TokenPair & { user: { id: string; email: string } };
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -33,7 +33,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Register a new account' })
     @ApiResponse({ status: 201, description: 'Token pair + user info' })
     @Post('register')
-    async register(@Body() dto: RegisterDto): Promise<TokenResponse> {
+    async register(@Body() dto: RegisterDto): Promise<TokenPair> {
         return this.auth.register({ email: dto.email, password: dto.password, name: dto.name });
     }
 
@@ -43,7 +43,7 @@ export class AuthController {
     @Post('login')
     @HttpCode(200)
     @UseGuards(AuthGuard('local'))
-    async login(@Request() req: AuthRequest): Promise<TokenResponse> {
+    async login(@Request() req: AuthRequest): Promise<TokenPair> {
         return this.auth.issueTokens(req.user);
     }
 
@@ -52,7 +52,7 @@ export class AuthController {
     @ApiResponse({ status: 200, description: 'New token pair + user info' })
     @Post('refresh')
     @HttpCode(200)
-    async refresh(@Body() dto: RefreshDto): Promise<TokenResponse> {
+    async refresh(@Body() dto: RefreshDto): Promise<TokenPair> {
         return this.auth.refreshTokens(dto.refreshToken);
     }
 
@@ -67,7 +67,7 @@ export class AuthController {
     async createToken(
         @Request() req: JwtRequest,
         @Body() dto: CreateTokenDto,
-    ): Promise<{ token: string; id: string; label: string }> {
+    ): Promise<CreatedApiTokenDto> {
         const { rawToken, record } = await this.apiTokens.create({ userId: req.user.sub, label: dto.label });
 
         return { token: rawToken, id: String(record._id), label: record.label };
@@ -78,10 +78,10 @@ export class AuthController {
     @ApiOperation({ summary: 'List API tokens for the authenticated user' })
     @Get('tokens')
     @UseGuards(CombinedAuthGuard)
-    async listTokens(@Request() req: JwtRequest): Promise<{ id: string; label: string; lastUsedAt: Date | null }[]> {
+    async listTokens(@Request() req: JwtRequest): Promise<ApiTokenDto[]> {
         const tokens = await this.apiTokens.list(req.user.sub);
 
-        return tokens.map((t) => ({ id: String(t._id), label: t.label, lastUsedAt: t.lastUsedAt }));
+        return tokens.map((t) => ({ id: String(t._id), label: t.label, lastUsedAt: t.lastUsedAt?.toISOString() ?? null }));
     }
 
     /** Revoke an API token by id. */

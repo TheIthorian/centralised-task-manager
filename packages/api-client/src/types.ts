@@ -211,3 +211,33 @@ export type DiscordStatusDto = {
     connected: boolean;
     discordUserId?: string;
 };
+
+/** A long-lived API token record (raw token value not included). */
+export type ApiTokenDto = {
+    id: string;
+    label: string;
+    lastUsedAt: string | null;
+};
+
+/** Response after creating a long-lived API token. Raw token shown once. */
+export type CreatedApiTokenDto = {
+    id: string;
+    label: string;
+    token: string;
+};
+
+/** Result of sending a test notification to a channel. */
+export type TestChannelResultDto = {
+    sent: boolean;
+};
+
+/** Result of marking a single notification as read. */
+export type MarkReadResultDto = {
+    id: string;
+    read: boolean;
+};
+
+/** Result of marking all notifications as read. */
+export type MarkAllReadResultDto = {
+    updated: number;
+};

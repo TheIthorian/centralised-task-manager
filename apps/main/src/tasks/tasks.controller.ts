@@ -7,31 +7,12 @@ import { UpdateTaskDto } from './dto/update-task.dto.js';
 import { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
 import { SetTaskStatusDto } from './dto/set-task-status.dto.js';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
-import type { TaskDocument, FuzzyDeadlineType, RemindEvery } from './schemas/task.schema.js';
+import type { TaskDocument } from './schemas/task.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import type { TaskDto } from '@ctm/api-client';
 
 type AuthRequest = {
     user: JwtPayload;
-};
-
-/** Wire-format representation of a task returned by the API. */
-type TaskResponse = {
-    id: string;
-    source: string;
-    sourceId: string;
-    title: string;
-    description: string | null;
-    completed: boolean;
-    priority: number | null;
-    tags: string[];
-    locations: { name: string; googleMapsUrl: string }[];
-    due: { date: string; timezone: string | null; recurrence: string | null } | null;
-    deadlineDate: string | null;
-    duration: { amount: number; unit: 'minute' | 'day' } | null;
-    parentId: string | null;
-    fuzzyDeadline: { type: FuzzyDeadlineType; remindEvery: RemindEvery | null } | null;
-    createdAt: string;
-    updatedAt: string;
 };
 
 @ApiTags('Tasks')
@@ -42,7 +23,7 @@ export class TasksController {
     constructor(private readonly tasks: TasksService) {}
 
     /** Map a TaskDocument to the API wire format. */
-    private toResponse(t: TaskDocument): TaskResponse {
+    private toResponse(t: TaskDocument): TaskDto {
         return {
             id: String(t._id),
             source: t.source,
@@ -50,7 +31,7 @@ export class TasksController {
             title: t.title,
             description: t.description,
             completed: t.status === 'done',
-            priority: t.priority,
+            priority: t.priority as 1 | 2 | 3 | 4 | null,
             tags: t.tags,
             locations: t.locations,
             due: t.due
@@ -70,7 +51,7 @@ export class TasksController {
     /** List tasks with optional filters. */
     @ApiOperation({ summary: 'List tasks' })
     @Get()
-    async list(@Request() req: AuthRequest, @Query() query: ListTasksQueryDto): Promise<TaskResponse[]> {
+    async list(@Request() req: AuthRequest, @Query() query: ListTasksQueryDto): Promise<TaskDto[]> {
         const tasks = await this.tasks.list(req.user.sub, query);
         return tasks.map((t) => this.toResponse(t));
     }
@@ -79,7 +60,7 @@ export class TasksController {
     @ApiOperation({ summary: 'Get a task by id' })
     @ApiResponse({ status: 404, description: 'Task not found' })
     @Get(':id')
-    async findOne(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskResponse> {
+    async findOne(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskDto> {
         const t = await this.tasks.findOne({ taskId: id, userId: req.user.sub });
         return this.toResponse(t);
     }
@@ -87,7 +68,7 @@ export class TasksController {
     /** Create a task (write-through to source). */
     @ApiOperation({ summary: 'Create a task' })
     @Post()
-    async create(@Request() req: AuthRequest, @Body() dto: CreateTaskDto): Promise<TaskResponse> {
+    async create(@Request() req: AuthRequest, @Body() dto: CreateTaskDto): Promise<TaskDto> {
         const t = await this.tasks.create({ userId: req.user.sub, dto });
         return this.toResponse(t);
     }
@@ -95,7 +76,7 @@ export class TasksController {
     /** Update a task (write-through to source). */
     @ApiOperation({ summary: 'Update a task' })
     @Patch(':id')
-    async update(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: UpdateTaskDto): Promise<TaskResponse> {
+    async update(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: UpdateTaskDto): Promise<TaskDto> {
         const t = await this.tasks.update({ taskId: id, userId: req.user.sub, dto });
         return this.toResponse(t);
     }
@@ -103,7 +84,7 @@ export class TasksController {
     /** Set task status (complete or uncomplete). */
     @ApiOperation({ summary: 'Set task status to open or done' })
     @Put(':id/status')
-    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: SetTaskStatusDto): Promise<TaskResponse> {
+    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: SetTaskStatusDto): Promise<TaskDto> {
         const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, dto });
         return this.toResponse(t);
     }
@@ -115,7 +96,7 @@ export class TasksController {
         @Request() req: AuthRequest,
         @Param('id') id: string,
         @Body() dto: SetFuzzyDeadlineDto,
-    ): Promise<TaskResponse> {
+    ): Promise<TaskDto> {
         const t = await this.tasks.setFuzzyDeadline({ taskId: id, userId: req.user.sub, dto });
         return this.toResponse(t);
     }
@@ -123,7 +104,7 @@ export class TasksController {
     /** Remove the fuzzy deadline from a task. */
     @ApiOperation({ summary: 'Remove a fuzzy deadline' })
     @Delete(':id/fuzzy-deadline')
-    async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskResponse> {
+    async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskDto> {
         const t = await this.tasks.removeFuzzyDeadline({ taskId: id, userId: req.user.sub });
         return this.toResponse(t);
     }
