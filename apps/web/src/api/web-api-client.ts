@@ -1,6 +1,7 @@
 import {
     ApiClientError,
     CtmApiClient,
+    type ConnectorHealthDto,
     type ConnectorStatusDto,
     type DiscordStatusDto,
     type TaskDto,
@@ -104,6 +105,11 @@ export class WebApiClient {
     /** List connector statuses for the current user. */
     async listConnectors(): Promise<ConnectorStatusDto[]> {
         return this.execute({ request: () => this.apiClient.listConnectors() });
+    }
+
+    /** Health-check all connected task-sync connectors for the current user. */
+    async getConnectorHealth(): Promise<ConnectorHealthDto[]> {
+        return this.execute({ request: () => this.apiClient.getConnectorHealth() });
     }
 
     /** Get the OAuth URL for a connector. */
