@@ -38,3 +38,17 @@ export class ExternalServiceError extends AppError {
         super(`${service}: ${message}`, 'EXTERNAL_SERVICE_ERROR', 502);
     }
 }
+
+/** Thrown when input or configuration fails validation (HTTP 400). */
+export class ValidationError extends AppError {
+    constructor(message: string) {
+        super(message, 'VALIDATION_ERROR', 400);
+    }
+}
+
+/** Thrown when an unexpected internal error occurs (HTTP 500). */
+export class InternalError extends AppError {
+    constructor(message: string) {
+        super(message, 'INTERNAL_ERROR', 500);
+    }
+}

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { InternalError } from '@ctm/errors';
 
 /** Credentials and API base URL persisted to ~/.config/ctm/config.json. */
 export type CliConfig = {
@@ -44,7 +45,7 @@ export function writeConfig(config: CliConfig): void {
         fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
         fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
     } catch (err: unknown) {
-        throw new Error(
+        throw new InternalError(
             `Failed to write CLI config to ${CONFIG_PATH}: ${err instanceof Error ? err.message : String(err)}`,
         );
     }

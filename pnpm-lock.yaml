@@ -26,6 +26,9 @@ importers:
       '@ctm/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@ctm/errors':
+        specifier: workspace:*
+        version: link:../../packages/errors
       '@inquirer/prompts':
         specifier: 7.10.1
         version: 7.10.1(@types/node@17.0.45)

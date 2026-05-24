@@ -161,9 +161,6 @@ export class OAuthController {
     @Get('userinfo')
     @UseGuards(CombinedAuthGuard)
     async userinfo(@Request() req: { user: JwtPayload }): Promise<object> {
-        return {
-            sub: req.user.sub,
-            email: req.user.email,
-        };
+        return { sub: req.user.sub, email: req.user.email };
     }
 }

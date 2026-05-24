@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { InternalError } from '@ctm/errors';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model, Types } from 'mongoose';
@@ -73,7 +74,7 @@ export class ConnectorsService {
             { upsert: true, new: true },
         );
 
-        if (!doc) throw new Error('Upsert failed unexpectedly');
+        if (!doc) throw new InternalError('Upsert failed unexpectedly');
 
         return doc;
     }
@@ -102,13 +103,6 @@ export class ConnectorsService {
     /** Remove a connector config by source name. */
     async removeBySource({ source, userId }: { source: ConnectorName; userId: string }): Promise<void> {
         const result = await this.configModel.deleteOne({ source, userId: new Types.ObjectId(userId) });
-
-        if (result.deletedCount === 0) throw new NotFoundException('Connector config not found');
-    }
-
-    /** Remove a connector config and all synced tasks for that user+source. */
-    async remove({ configId, userId }: { configId: string; userId: string }): Promise<void> {
-        const result = await this.configModel.deleteOne({ _id: configId, userId: new Types.ObjectId(userId) });
 
         if (result.deletedCount === 0) throw new NotFoundException('Connector config not found');
     }
