@@ -1,7 +1,7 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 
 import { TaskConnectorName } from '../types.js';
-import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
+import type { CreateTaskDto, ExternalTaskSource, HealthCheckResult, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
 import type { TodoistTask, TodoistTasksResponse } from './todoist.types.js';
 import { todoistStringToRrule, rruleToTodoistString } from './todoist-recurrence.js';
 
@@ -18,6 +18,16 @@ export class TodoistTaskSource implements ExternalTaskSource {
 
     constructor(private readonly config: TodoistTaskSourceConfig) {
         this.http = new HttpClient({ baseUrl: 'https://api.todoist.com/api/v1', logger: config.logger });
+    }
+
+    /** Probe the Todoist API to verify the connection is healthy. */
+    async healthCheck(tokens: OAuthTokens): Promise<HealthCheckResult> {
+        try {
+            await this.http.get<unknown>('/tasks', { Authorization: `Bearer ${tokens.accessToken}` });
+            return { healthy: true };
+        } catch (err) {
+            return { healthy: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
     }
 
     /** Fetch all open tasks from the authenticated user's Todoist account. */

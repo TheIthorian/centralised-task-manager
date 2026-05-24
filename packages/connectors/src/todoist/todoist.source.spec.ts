@@ -315,4 +315,26 @@ describe('TodoistTaskSource', () => {
             await expect(source.fetchTasks(tokens)).rejects.toThrow(TypeError);
         });
     });
+
+    describe('healthCheck', () => {
+        it('returns { healthy: true } when the API responds successfully', async () => {
+            mockHttp.get.mockResolvedValue({ results: [] });
+
+            const result = await source.healthCheck(tokens);
+
+            expect(mockHttp.get).toHaveBeenCalledWith('/tasks', {
+                Authorization: `Bearer ${tokens.accessToken}`,
+            });
+            expect(result).toEqual({ healthy: true });
+        });
+
+        it('returns { healthy: false, error } when the API throws', async () => {
+            mockHttp.get.mockRejectedValue(new Error('Unauthorized'));
+
+            const result = await source.healthCheck(tokens);
+
+            expect(result.healthy).toBe(false);
+            expect(result.error).toBe('Unauthorized');
+        });
+    });
 });
