@@ -2,7 +2,7 @@ import { type Logger, HttpClient } from '@ctm/http-client';
 import { ExternalServiceError } from '@ctm/errors';
 
 import { TaskConnectorName } from '../types.js';
-import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
+import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, UpdateTaskDto, HealthCheckResult } from '../types.js';
 import type { GoogleTaskList, GoogleTask } from './google-tasks.types.js';
 
 /** Configuration required to instantiate a {@link GoogleTasksTaskSource}. */
@@ -18,6 +18,16 @@ export class GoogleTasksTaskSource implements ExternalTaskSource {
 
     constructor(config: GoogleTasksTaskSourceConfig) {
         this.http = new HttpClient({ baseUrl: 'https://tasks.googleapis.com/tasks/v1', logger: config.logger });
+    }
+
+    /** Probe the Google Tasks API to verify the connection is healthy. */
+    async healthCheck(tokens: OAuthTokens): Promise<HealthCheckResult> {
+        try {
+            await this.http.get<unknown>('/users/@me/lists', { Authorization: `Bearer ${tokens.accessToken}` });
+            return { healthy: true };
+        } catch (err) {
+            return { healthy: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
     }
 
     /** Fetch all tasks across all task lists. */
