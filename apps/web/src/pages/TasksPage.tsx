@@ -6,6 +6,7 @@ import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { TaskFilters } from '../components/tasks/TaskFilters.js';
 import { TaskList } from '../components/tasks/TaskList.js';
+import { GroupedTaskList } from '../components/tasks/GroupedTaskList.js';
 import { AddTaskInline } from '../components/tasks/AddTaskInline.js';
 import { TaskModal } from '../components/tasks/TaskModal.js';
 
@@ -122,13 +123,23 @@ export function TasksPage(): React.JSX.Element {
                 )}
 
                 {!isLoading && !isError && (
-                    <TaskList
-                        tasks={tasks}
-                        onToggle={(id, completed) => {
-                            statusMutation.mutate({ id, completed });
-                        }}
-                        onEdit={setEditTask}
-                    />
+                    filter === 'all' ? (
+                        <GroupedTaskList
+                            tasks={tasks}
+                            onToggle={(id, completed) => {
+                                statusMutation.mutate({ id, completed });
+                            }}
+                            onEdit={setEditTask}
+                        />
+                    ) : (
+                        <TaskList
+                            tasks={tasks}
+                            onToggle={(id, completed) => {
+                                statusMutation.mutate({ id, completed });
+                            }}
+                            onEdit={setEditTask}
+                        />
+                    )
                 )}
             </div>
 
