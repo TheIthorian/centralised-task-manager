@@ -9,9 +9,9 @@ export type TaskBuckets = {
 	done: TaskDto[];
 };
 
-/** Parse a YYYY-MM-DD string to a local-timezone Date (midnight). */
+/** Parse an ISO date string (YYYY-MM-DD or full ISO-8601) to a local-timezone Date at midnight. */
 function parseDateOnly(iso: string): Date {
-	const [year, month, day] = iso.split('-').map(Number);
+	const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
 
 	return new Date(year, (month as number) - 1, day as number);
 }

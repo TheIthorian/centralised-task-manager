@@ -83,6 +83,13 @@ describe('bucketTasks', () => {
 		expect(result.overdue[1].id).toBe('b');
 	});
 
+	it('handles full ISO-8601 date strings from the API', () => {
+		const task = makeTask({ id: 'iso', due: { date: '2026-05-19T00:00:00.000Z', timezone: null, recurrence: null } });
+		const result = bucketTasks([task], NOW);
+		expect(result.overdue).toHaveLength(1);
+		expect(result.upcoming).toHaveLength(0);
+	});
+
 	it('defaults now to the current date', () => {
 		// Smoke test: calling without now arg does not throw
 		expect(() => bucketTasks([])).not.toThrow();
