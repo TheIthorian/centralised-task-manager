@@ -4,6 +4,8 @@ import {
     type ConnectorHealthDto,
     type ConnectorStatusDto,
     type DiscordStatusDto,
+    type OkDto,
+    type ReminderDto,
     type TaskDto,
     type TaskSyncJobDto,
     type TokenPair,
@@ -11,6 +13,7 @@ import {
 } from '@ctm/api-client';
 import type { StoredAuthTokens } from '../auth/auth-storage.js';
 import type {
+    WebAddReminderParams,
     WebApiClientOptions,
     WebApiError,
     WebCancelSyncJobParams,
@@ -22,6 +25,7 @@ import type {
     WebLoginParams,
     WebRegisterParams,
     WebRemoveFuzzyDeadlineParams,
+    WebRemoveReminderParams,
     WebSetFuzzyDeadlineParams,
     WebSetTaskStatusParams,
     WebSyncConnectorParams,
@@ -95,6 +99,16 @@ export class WebApiClient {
     /** Remove the fuzzy deadline from a task. */
     async removeFuzzyDeadline({ id }: WebRemoveFuzzyDeadlineParams): Promise<TaskDto> {
         return this.execute({ request: () => this.apiClient.removeFuzzyDeadline({ id }) });
+    }
+
+    /** Add a reminder datetime to a task. */
+    async addReminder({ id, dto }: WebAddReminderParams): Promise<ReminderDto> {
+        return this.execute({ request: () => this.apiClient.addReminder({ id, dto }) });
+    }
+
+    /** Remove a reminder from a task by its array index. */
+    async removeReminder({ id, index }: WebRemoveReminderParams): Promise<OkDto> {
+        return this.execute({ request: () => this.apiClient.removeReminder({ id, index }) });
     }
 
     /** Delete a task for the current user. */

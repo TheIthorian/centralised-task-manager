@@ -85,3 +85,13 @@ export type WebCancelSyncJobParams = {
     source: string;
     jobId: string;
 };
+
+export type WebAddReminderParams = {
+    id: string;
+    dto: { remindAt: string };
+};
+
+export type WebRemoveReminderParams = {
+    id: string;
+    index: number;
+};
