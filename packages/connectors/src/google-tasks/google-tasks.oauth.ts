@@ -1,5 +1,7 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 
+import { OAuthError } from '@ctm/errors';
+
 import { ConnectorName, ConnectorType } from '../types.js';
 import type { ConnectionDetailsSchema, OAuthConnector, OAuthTokens } from '../types.js';
 import type { GoogleTokenResponse } from './google-tasks.types.js';
@@ -31,6 +33,7 @@ export class GoogleTasksOAuthConnector implements OAuthConnector {
             response_type: 'code',
             scope: 'https://www.googleapis.com/auth/tasks',
             access_type: 'offline',
+            prompt: 'consent',
             state: userId,
         });
 
@@ -47,9 +50,13 @@ export class GoogleTasksOAuthConnector implements OAuthConnector {
             grant_type: 'authorization_code',
         });
 
+        if (!response.refresh_token) {
+            throw new OAuthError('Google did not return a refresh token — ensure prompt=consent is set in the auth URL');
+        }
+
         return {
             accessToken: response.access_token,
-            refreshToken: response.refresh_token ?? '',
+            refreshToken: response.refresh_token,
             expiresAt: new Date(Date.now() + response.expires_in * 1000),
         };
     }

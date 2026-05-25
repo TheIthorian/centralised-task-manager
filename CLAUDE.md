@@ -147,6 +147,11 @@ export class CreateTaskDto implements ICreateTaskDto { ... }
 - UI-specific API behavior lives in `apps/web`, including auth token persistence, refresh handling, redirect-on-unauthenticated flows, and surfacing structured errors to the user.
 - API clients should be class-based; pass access/refresh tokens into the client constructor instead of relying on shared mutable singleton state.
 
+### Error Handling
+
+- **Always use typed errors from `packages/errors`** — never `throw new Error(...)`. Use the appropriate subclass or create a new one
+- Import from `@ctm/errors`.
+
 ### Git — Conventional Commits
 
 All commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/):

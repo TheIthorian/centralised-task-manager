@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AppError, NotFoundError, UnauthorizedError, ConflictError, ExternalServiceError, ValidationError, InternalError } from './index.js';
+import { AppError, NotFoundError, UnauthorizedError, ConflictError, ExternalServiceError, ValidationError, InternalError, OAuthError } from './index.js';
 
 describe('AppError', () => {
     it('sets name, message, code, statusCode', () => {
@@ -57,6 +57,16 @@ describe('ValidationError', () => {
         expect(err.message).toBe('databaseId is required');
         expect(err.statusCode).toBe(400);
         expect(err.code).toBe('VALIDATION_ERROR');
+        expect(err).toBeInstanceOf(AppError);
+    });
+});
+
+describe('OAuthError', () => {
+    it('uses 502 with OAUTH_ERROR code', () => {
+        const err = new OAuthError('token revoked');
+        expect(err.message).toBe('token revoked');
+        expect(err.statusCode).toBe(502);
+        expect(err.code).toBe('OAUTH_ERROR');
         expect(err).toBeInstanceOf(AppError);
     });
 });
