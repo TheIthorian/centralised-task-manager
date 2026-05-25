@@ -1,4 +1,5 @@
 import type {
+    AddReminderDto,
     CreateTaskDto,
     SetFuzzyDeadlineDto,
     SetTaskStatusDto,
@@ -135,4 +136,16 @@ export type ApiClientErrorOptions = {
     method: string;
     path: string;
     responseBody?: unknown;
+};
+
+/** Parameters for {@link CtmApiClient.addReminder}. */
+export type AddReminderParams = {
+    id: string;
+    dto: AddReminderDto;
+};
+
+/** Parameters for {@link CtmApiClient.removeReminder}. */
+export type RemoveReminderParams = {
+    id: string;
+    index: number;
 };

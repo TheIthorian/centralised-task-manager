@@ -17,6 +17,12 @@ export type FuzzyDeadlineInfo = {
     remindEvery: 'daily' | 'weekly' | null;
 };
 
+/** A single point-in-time reminder attached to a task. */
+export type ReminderDto = {
+    remindAt: string;        // ISO datetime
+    firedAt: string | null;  // set once the notification has been sent
+};
+
 /** Authenticated user representation. */
 export type UserDto = {
     id: string;
@@ -41,6 +47,8 @@ export type TaskDto = {
     duration?: Duration | null;
     parentId?: string | null;
     fuzzyDeadline?: FuzzyDeadlineInfo | null;
+    reminders: ReminderDto[];
+    dueDateNotifiedAt: string | null;
     completed: boolean;
     source: string;
     sourceId: string;
@@ -84,6 +92,11 @@ export type SetTaskStatusDto = {
 export type SetFuzzyDeadlineDto = {
     type: 'this_week' | 'this_month' | 'someday';
     remindEvery?: 'daily' | 'weekly';
+};
+
+/** Body for adding a reminder to a task. */
+export type AddReminderDto = {
+    remindAt: string; // ISO datetime
 };
 
 export enum ConnectorType {
