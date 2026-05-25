@@ -25,6 +25,80 @@ export class RemindersService {
         ]);
     }
 
+    /** Run every 5 minutes. Fire point-in-time reminders and due-date notifications. */
+    @Cron('*/5 * * * *')
+    async runPointInTimeReminders(): Promise<void> {
+        const now = new Date();
+        const windowStart = new Date(now.getTime() - 5 * 60 * 1000);
+
+        await Promise.all([
+            this.fireManualReminders({ now, windowStart }),
+            this.fireDueDateReminders({ now, windowStart }),
+        ]);
+    }
+
+    private async fireManualReminders({ now, windowStart }: { now: Date; windowStart: Date }): Promise<void> {
+        const tasks = await this.taskModel
+            .find({
+                'reminders': {
+                    $elemMatch: {
+                        remindAt: { $gte: windowStart, $lte: now },
+                        firedAt: null,
+                    },
+                },
+            })
+            .select('userId title reminders');
+
+        this.logger.log(`Point-in-time reminders: ${tasks.length} tasks with pending reminders`);
+
+        for (const task of tasks) {
+            for (let i = 0; i < task.reminders.length; i++) {
+                const reminder = task.reminders[i]!;
+
+                if (reminder.firedAt !== null) continue;
+                if (reminder.remindAt < windowStart || reminder.remindAt > now) continue;
+
+                await this.notifications.send({
+                    userId: String(task.userId),
+                    type: 'reminder',
+                    title: 'Reminder',
+                    body: task.title,
+                });
+
+                await this.taskModel.updateOne(
+                    { _id: task._id, [`reminders.${i}.firedAt`]: null },
+                    { $set: { [`reminders.${i}.firedAt`]: new Date() } },
+                );
+            }
+        }
+    }
+
+    private async fireDueDateReminders({ now, windowStart }: { now: Date; windowStart: Date }): Promise<void> {
+        const tasks = await this.taskModel
+            .find({
+                'due.date': { $gte: windowStart, $lte: now },
+                dueDateNotifiedAt: null,
+                status: { $ne: 'done' },
+            })
+            .select('userId title due');
+
+        this.logger.log(`Due-date reminders: ${tasks.length} tasks due`);
+
+        for (const task of tasks) {
+            await this.notifications.send({
+                userId: String(task.userId),
+                type: 'reminder',
+                title: `${task.title} is due`,
+                body: '',
+            });
+
+            await this.taskModel.updateOne(
+                { _id: task._id, dueDateNotifiedAt: null },
+                { $set: { dueDateNotifiedAt: new Date() } },
+            );
+        }
+    }
+
     /** Return task IDs that should be surfaced today for a given user. */
     async getSurfacedTaskIds(userId: string): Promise<string[]> {
         const today = new Date();
