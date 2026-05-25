@@ -9,7 +9,8 @@ import { SetTaskStatusDto } from './dto/set-task-status.dto.js';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 import type { TaskDocument } from './schemas/task.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
-import type { TaskDto } from '@ctm/api-client';
+import { AddReminderDto } from './dto/add-reminder.dto.js';
+import type { TaskDto, ReminderDto, OkDto } from '@ctm/api-client';
 
 type AuthRequest = {
     user: JwtPayload;
@@ -43,6 +44,11 @@ export class TasksController {
             fuzzyDeadline: t.fuzzyDeadline
                 ? { type: t.fuzzyDeadline.type, remindEvery: t.fuzzyDeadline.remindEvery }
                 : null,
+            reminders: t.reminders.map((r) => ({
+                remindAt: r.remindAt.toISOString(),
+                firedAt: r.firedAt ? r.firedAt.toISOString() : null,
+            })),
+            dueDateNotifiedAt: t.dueDateNotifiedAt ? t.dueDateNotifiedAt.toISOString() : null,
             createdAt: t.createdAt ? t.createdAt.toISOString() : t.syncedAt.toISOString(),
             updatedAt: t.updatedAt ? t.updatedAt.toISOString() : t.syncedAt.toISOString(),
         };
@@ -107,6 +113,30 @@ export class TasksController {
     async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskDto> {
         const t = await this.tasks.removeFuzzyDeadline({ taskId: id, userId: req.user.sub });
         return this.toResponse(t);
+    }
+
+    /** Add a reminder datetime to a task. */
+    @ApiOperation({ summary: 'Add a reminder to a task' })
+    @Post(':id/reminders')
+    async addReminder(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Body() dto: AddReminderDto,
+    ): Promise<ReminderDto> {
+        return this.tasks.addReminder({ taskId: id, userId: req.user.sub, dto });
+    }
+
+    /** Remove a reminder from a task by index. */
+    @ApiOperation({ summary: 'Remove a reminder from a task' })
+    @ApiResponse({ status: 200 })
+    @Delete(':id/reminders/:index')
+    async removeReminder(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Param('index') index: string,
+    ): Promise<OkDto> {
+        await this.tasks.removeReminder({ taskId: id, userId: req.user.sub, index: Number(index) });
+        return { ok: true };
     }
 
     /** Delete a task (write-through to source). */
