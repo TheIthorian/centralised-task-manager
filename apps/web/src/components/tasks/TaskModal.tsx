@@ -1,8 +1,9 @@
 import { useState, useEffect, type FormEvent } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { getErrorMessage } from '../../api/error-message.js';
 import { useToast } from '../../toast/ToastContext.js';
 import { Modal, Button, Input } from '../ui/index.js';
-import type { FuzzyDeadlineInfo, LocationDto, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
+import type { CtmApiClient, FuzzyDeadlineInfo, LocationDto, ReminderDto, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
 
 type TaskModalProps = {
     task: TaskDto | null;
@@ -11,6 +12,7 @@ type TaskModalProps = {
     onSave: (id: string, dto: UpdateTaskDto) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
     onSetFuzzyDeadline: (id: string, dto: SetFuzzyDeadlineDto) => Promise<void>;
+    api: CtmApiClient;
     isSaving?: boolean;
     isDeleting?: boolean;
     isSettingFuzzy?: boolean;
@@ -31,6 +33,7 @@ export function TaskModal({
     onSave,
     onDelete,
     onSetFuzzyDeadline,
+    api,
     isSaving = false,
     isDeleting = false,
     isSettingFuzzy = false,
@@ -53,13 +56,15 @@ export function TaskModal({
     const [locations, setLocations] = useState<LocationDto[]>([]);
     const [newLocName, setNewLocName] = useState('');
     const [newLocUrl, setNewLocUrl] = useState('');
+    const [reminders, setReminders] = useState<{ remindAt: string; firedAt: string | null }[]>([]);
+    const [newRemindAt, setNewRemindAt] = useState('');
 
     useEffect(() => {
         if (task) {
             setTitle(task.title);
             setDescription(task.description ?? '');
             setPriority((task.priority ?? 2) as 1 | 2 | 3 | 4);
-            setDueDate(task.due?.date ? task.due.date.slice(0, 10) : '');
+            setDueDate(task.due?.date ? task.due.date.slice(0, 16) : '');
             setDueRecurrence(task.due?.recurrence ?? '');
             setDeadlineDate(task.deadlineDate ? task.deadlineDate.slice(0, 10) : '');
             setDurationAmount(task.duration ? String(task.duration.amount) : '');
@@ -71,10 +76,27 @@ export function TaskModal({
             setLocations(task.locations ?? []);
             setNewLocName('');
             setNewLocUrl('');
+            setReminders(task.reminders ?? []);
+            setNewRemindAt('');
         }
     }, [task]);
 
     if (!task) return null;
+
+    const addReminderMutation = useMutation({
+        mutationFn: (remindAt: string) => api.addReminder({ id: task.id, dto: { remindAt } }),
+        onSuccess: (added: ReminderDto) => {
+            setReminders((prev) => [...prev, added]);
+            setNewRemindAt('');
+        },
+    });
+
+    const removeReminderMutation = useMutation({
+        mutationFn: (index: number) => api.removeReminder({ id: task.id, index }),
+        onSuccess: (_data: unknown, index: number) => {
+            setReminders((prev) => prev.filter((_, i) => i !== index));
+        },
+    });
 
     const handleSave = async (e: FormEvent): Promise<void> => {
         e.preventDefault();
@@ -166,7 +188,7 @@ export function TaskModal({
                     <div className="grid grid-cols-2 gap-3">
                         <Input
                             label="Due Date"
-                            type="date"
+                            type="datetime-local"
                             value={dueDate}
                             onChange={(e) => setDueDate(e.target.value)}
                         />
@@ -220,6 +242,51 @@ export function TaskModal({
                                     <option value="day">day</option>
                                 </select>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Reminders */}
+                    <div className="flex flex-col gap-2">
+                        <label className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white">
+                            Reminders
+                        </label>
+                        {reminders.length > 0 && (
+                            <ul className="flex flex-col gap-1">
+                                {reminders.map((r, i) => (
+                                    <li key={i} className="flex items-center justify-between gap-2">
+                                        <span
+                                            className={`text-xs font-bold ${r.firedAt ? 'text-nb-grey line-through' : 'text-nb-black dark:text-white'}`}
+                                        >
+                                            {new Date(r.remindAt).toLocaleString()}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeReminderMutation.mutate(i)}
+                                            disabled={busy}
+                                            className="text-xs font-black text-red-500 hover:text-red-700 disabled:opacity-40"
+                                        >
+                                            ×
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <div className="flex gap-2">
+                            <input
+                                type="datetime-local"
+                                value={newRemindAt}
+                                onChange={(e) => setNewRemindAt(e.target.value)}
+                                disabled={busy}
+                                className="border-2 border-nb-black dark:border-white/20 font-bold text-xs px-2 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white flex-1"
+                            />
+                            <button
+                                type="button"
+                                disabled={!newRemindAt || busy}
+                                onClick={() => addReminderMutation.mutate(new Date(newRemindAt).toISOString())}
+                                className="border-2 border-nb-black dark:border-white/20 font-black text-xs px-3 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white disabled:opacity-40"
+                            >
+                                Add
+                            </button>
                         </div>
                     </div>
 
