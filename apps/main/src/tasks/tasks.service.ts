@@ -338,6 +338,56 @@ export class TasksService {
         return { synced, skipped };
     }
 
+    /** Append a reminder to a task. Returns the new ReminderDto. */
+    async addReminder({
+        taskId,
+        userId,
+        dto,
+    }: {
+        taskId: string;
+        userId: string;
+        dto: { remindAt: string };
+    }): Promise<{ remindAt: string; firedAt: string | null }> {
+        const task = await this.taskModel.findOneAndUpdate(
+            { _id: taskId, userId: new Types.ObjectId(userId) },
+            { $push: { reminders: { remindAt: new Date(dto.remindAt), firedAt: null } } },
+            { new: true },
+        );
+
+        if (!task) throw new NotFoundException('Task not found');
+
+        const added = task.reminders[task.reminders.length - 1]!;
+
+        return {
+            remindAt: added.remindAt.toISOString(),
+            firedAt: added.firedAt ? added.firedAt.toISOString() : null,
+        };
+    }
+
+    /** Remove a reminder from a task by its array index. */
+    async removeReminder({
+        taskId,
+        userId,
+        index,
+    }: {
+        taskId: string;
+        userId: string;
+        index: number;
+    }): Promise<void> {
+        const task = await this.findOne({ taskId, userId });
+
+        if (index < 0 || index >= task.reminders.length) {
+            throw new BadRequestException('Reminder index out of range');
+        }
+
+        task.reminders.splice(index, 1);
+
+        await this.taskModel.updateOne(
+            { _id: taskId },
+            { $set: { reminders: task.reminders } },
+        );
+    }
+
     private parseDueFields(dto: {
         due?: { date: string; timezone?: string; recurrence?: string };
         deadlineDate?: string;
