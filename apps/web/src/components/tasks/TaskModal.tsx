@@ -2,8 +2,9 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { getErrorMessage } from '../../api/error-message.js';
 import { useToast } from '../../toast/ToastContext.js';
+import { useAuth } from '../../auth/AuthContext.js';
 import { Modal, Button, Input } from '../ui/index.js';
-import type { CtmApiClient, FuzzyDeadlineInfo, LocationDto, ReminderDto, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
+import type { FuzzyDeadlineInfo, LocationDto, ReminderDto, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
 
 type TaskModalProps = {
     task: TaskDto | null;
@@ -12,7 +13,6 @@ type TaskModalProps = {
     onSave: (id: string, dto: UpdateTaskDto) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
     onSetFuzzyDeadline: (id: string, dto: SetFuzzyDeadlineDto) => Promise<void>;
-    api: CtmApiClient;
     isSaving?: boolean;
     isDeleting?: boolean;
     isSettingFuzzy?: boolean;
@@ -33,13 +33,13 @@ export function TaskModal({
     onSave,
     onDelete,
     onSetFuzzyDeadline,
-    api,
     isSaving = false,
     isDeleting = false,
     isSettingFuzzy = false,
     isRemovingFuzzy = false,
 }: TaskModalProps): React.JSX.Element | null {
     const { showToast } = useToast();
+    const { api } = useAuth();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<1 | 2 | 3 | 4>(2);
@@ -81,10 +81,12 @@ export function TaskModal({
         }
     }, [task]);
 
-    if (!task) return null;
-
     const addReminderMutation = useMutation({
-        mutationFn: (remindAt: string) => api.addReminder({ id: task.id, dto: { remindAt } }),
+        mutationFn: (remindAt: string) => {
+            if (!task) return Promise.reject(new Error('No task'));
+
+            return api.addReminder({ id: task.id, dto: { remindAt } });
+        },
         onSuccess: (added: ReminderDto) => {
             setReminders((prev) => [...prev, added]);
             setNewRemindAt('');
@@ -92,11 +94,17 @@ export function TaskModal({
     });
 
     const removeReminderMutation = useMutation({
-        mutationFn: (index: number) => api.removeReminder({ id: task.id, index }),
+        mutationFn: (index: number) => {
+            if (!task) return Promise.reject(new Error('No task'));
+
+            return api.removeReminder({ id: task.id, index });
+        },
         onSuccess: (_data: unknown, index: number) => {
             setReminders((prev) => prev.filter((_, i) => i !== index));
         },
     });
+
+    if (!task) return null;
 
     const handleSave = async (e: FormEvent): Promise<void> => {
         e.preventDefault();
