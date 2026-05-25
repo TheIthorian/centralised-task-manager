@@ -4,6 +4,9 @@ import {
     type ConnectorHealthDto,
     type ConnectorStatusDto,
     type DiscordStatusDto,
+    type MarkAllReadResultDto,
+    type MarkReadResultDto,
+    type NotificationDto,
     type OkDto,
     type ReminderDto,
     type TaskDto,
@@ -184,6 +187,21 @@ export class WebApiClient {
     /** Send a test notification via a channel (e.g. 'discord'). */
     async testNotificationChannel({ channel }: { channel: string }): Promise<{ sent: boolean }> {
         return this.execute({ request: () => this.apiClient.testNotificationChannel({ channel }) });
+    }
+
+    /** List in-app notifications for the current user. */
+    async listNotifications({ unreadOnly = false }: { unreadOnly?: boolean } = {}): Promise<NotificationDto[]> {
+        return this.execute({ request: () => this.apiClient.listNotifications({ unreadOnly }) });
+    }
+
+    /** Mark a single notification as read. */
+    async markNotificationRead({ id }: { id: string }): Promise<MarkReadResultDto> {
+        return this.execute({ request: () => this.apiClient.markNotificationRead({ id }) });
+    }
+
+    /** Mark all notifications as read. */
+    async markAllNotificationsRead(): Promise<MarkAllReadResultDto> {
+        return this.execute({ request: () => this.apiClient.markAllNotificationsRead() });
     }
 
 /** Save connection details for a connector (e.g. Notion database ID). */
