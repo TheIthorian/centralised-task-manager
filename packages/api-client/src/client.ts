@@ -7,6 +7,8 @@ import type {
     MarkReadResultDto,
     NotificationDto,
     NotificationPreferencesDto,
+    OkDto,
+    ReminderDto,
     TaskDto,
     TaskFilter,
     TaskSyncJobDto,
@@ -15,6 +17,7 @@ import type {
     UserDto,
 } from './types.js';
 import type {
+    AddReminderParams,
     ApiClientErrorOptions,
     ApiClientOptions,
     CancelSyncJobParams,
@@ -30,6 +33,7 @@ import type {
     RefreshParams,
     RegisterParams,
     RemoveFuzzyDeadlineParams,
+    RemoveReminderParams,
     SetConnectionDetailsParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
@@ -136,6 +140,16 @@ export class CtmApiClient {
     /** Remove the fuzzy deadline from a task. */
     async removeFuzzyDeadline({ id }: RemoveFuzzyDeadlineParams): Promise<TaskDto> {
         return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/fuzzy-deadline` });
+    }
+
+    /** Add a reminder datetime to a task. */
+    async addReminder({ id, dto }: AddReminderParams): Promise<ReminderDto> {
+        return this.request<ReminderDto>({ method: 'POST', path: `/tasks/${id}/reminders`, body: dto });
+    }
+
+    /** Remove a reminder from a task by its index in the reminders array. */
+    async removeReminder({ id, index }: RemoveReminderParams): Promise<OkDto> {
+        return this.request<OkDto>({ method: 'DELETE', path: `/tasks/${id}/reminders/${index}` });
     }
 
     /** List all connector statuses for the current user. */
