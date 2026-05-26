@@ -138,6 +138,11 @@ export type ApiClientErrorOptions = {
     responseBody?: unknown;
 };
 
+/** Parameters for {@link CtmApiClient.getTask}. */
+export type GetTaskParams = {
+    id: string;
+};
+
 /** Parameters for {@link CtmApiClient.addReminder}. */
 export type AddReminderParams = {
     id: string;

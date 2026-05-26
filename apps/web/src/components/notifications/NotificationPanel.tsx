@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../../auth/AuthContext.js';
 import type { NotificationDto } from '@ctm/api-client';
 
@@ -14,10 +15,24 @@ const TYPE_ICON: Record<NotificationDto['type'], string> = {
     daily_summary: '📋',
 };
 
+/** Resolve the URL to navigate to when a notification is clicked. */
+function resolveUrl(n: NotificationDto): string | null {
+    const { data } = n;
+
+    if (data.type === 'reminder' && data.taskId) return `/tasks?taskId=${data.taskId}`;
+    if (data.type === 'reminder') return '/tasks';
+    if (data.type === 'upcoming_deadline') return '/tasks?filter=upcoming';
+    if (data.type === 'connector_reconnect') return '/settings/sources';
+    if (data.type === 'daily_summary') return '/tasks';
+
+    return null;
+}
+
 /** Slide-in panel showing in-app notifications with mark-read actions. */
 export function NotificationPanel({ open, onClose }: Props): React.JSX.Element | null {
     const { api } = useAuth();
     const qc = useQueryClient();
+    const navigate = useNavigate();
 
     const { data: notifications = [], isLoading } = useQuery({
         queryKey: ['notifications'],
@@ -47,6 +62,17 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
     if (!open) return null;
 
     const unread = notifications.filter((n) => !n.read);
+
+    const handleClick = (n: NotificationDto): void => {
+        if (!n.read) markReadMutation.mutate(n.id);
+
+        const url = resolveUrl(n);
+
+        if (url) {
+            onClose();
+            void navigate(url);
+        }
+    };
 
     return (
         <>
@@ -105,9 +131,7 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
                         <button
                             key={n.id}
                             type="button"
-                            onClick={() => {
-                                if (!n.read) markReadMutation.mutate(n.id);
-                            }}
+                            onClick={() => handleClick(n)}
                             className={`w-full text-left px-4 py-3 border-b border-nb-black/5 dark:border-white/5 flex gap-3 items-start transition-colors hover:bg-nb-black/5 dark:hover:bg-white/5 ${
                                 n.read ? 'opacity-50' : ''
                             }`}

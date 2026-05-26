@@ -186,10 +186,18 @@ export type TaskFilter = 'all' | 'today' | 'upcoming' | 'done';
 /** Discriminated union of notification event types. */
 export type NotificationType = 'connector_reconnect' | 'daily_summary' | 'reminder' | 'upcoming_deadline';
 
+/** Type-safe payload carried by each notification type. */
+export type NotificationData =
+    | { type: 'reminder'; taskId?: string }
+    | { type: 'upcoming_deadline' }
+    | { type: 'connector_reconnect'; source?: string }
+    | { type: 'daily_summary' };
+
 /** A single in-app notification. */
 export type NotificationDto = {
     id: string;
     type: NotificationType;
+    data: NotificationData;
     title: string;
     body: string;
     read: boolean;

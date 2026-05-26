@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
@@ -10,14 +10,42 @@ import { GroupedTaskList } from '../components/tasks/GroupedTaskList.js';
 import { AddTaskInline } from '../components/tasks/AddTaskInline.js';
 import { TaskModal } from '../components/tasks/TaskModal.js';
 
-/** Main task management page. Filter is stored in the URL (?filter=today). */
+/** Main task management page. Filter is stored in the URL (?filter=today). Opening a specific task is via ?taskId=<id>. */
 export function TasksPage(): React.JSX.Element {
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
+    const taskIdParam = searchParams.get('taskId');
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
     const { api } = useAuth();
 
     const qc = useQueryClient();
+
+    // Open the task modal when ?taskId= is present (e.g. navigated from a notification).
+    useEffect(() => {
+        if (!taskIdParam) return;
+
+        api.getTask({ id: taskIdParam })
+            .then((task) => {
+                setEditTask(task);
+                setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+
+                    next.delete('taskId');
+
+                    return next;
+                }, { replace: true });
+            })
+            .catch(() => {
+                setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+
+                    next.delete('taskId');
+
+                    return next;
+                }, { replace: true });
+            });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [taskIdParam]);
 
     const midnightYesterday = (() => {
         const d = new Date();

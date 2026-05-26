@@ -79,7 +79,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
             </div>
             <Input
                 label="Due date (optional)"
-                type="date"
+                type="datetime-local"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
             />

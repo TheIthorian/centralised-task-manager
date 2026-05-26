@@ -6,6 +6,7 @@ export { ConnectorType } from './types.js';
 export type {
     ApiClientOptions,
     AddReminderParams,
+    GetTaskParams,
     CancelSyncJobParams,
     CreateTaskParams,
     DeleteTaskParams,
@@ -52,6 +53,7 @@ export type {
     TokenPair,
     TaskFilter,
     NotificationType,
+    NotificationData,
     NotificationDto,
     ChannelPrefsDto,
     NotificationPreferencesDto,

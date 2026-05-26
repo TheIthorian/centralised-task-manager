@@ -69,16 +69,17 @@ export class NotificationsController {
 
         if (unreadOnly) filter['read'] = false;
 
-        const docs = await this.notificationModel
+        const notifications = await this.notificationModel
             .find(filter)
-            .select('type title body read createdAt')
+            .select('type data title body read createdAt')
             .skip((Number(page) - 1) * Number(limit))
             .limit(Number(limit))
             .sort({ createdAt: -1 });
 
-        return docs.map((d) => ({
+        return notifications.map((d) => ({
             id: String(d._id),
             type: d.type,
+            data: d.data ?? { type: d.type },
             title: d.title,
             body: d.body,
             read: d.read,
@@ -134,7 +135,10 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Update notification preferences' })
     @Patch('preferences')
-    async updatePreferences(@Request() req: AuthRequest, @Body() dto: UpdatePreferencesDto): Promise<NotificationPreferencesDto> {
+    async updatePreferences(
+        @Request() req: AuthRequest,
+        @Body() dto: UpdatePreferencesDto,
+    ): Promise<NotificationPreferencesDto> {
         return this.usersService.updateNotificationPreferences({ userId: req.user.sub, prefs: dto });
     }
 }

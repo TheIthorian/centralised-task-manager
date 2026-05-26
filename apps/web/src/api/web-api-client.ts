@@ -74,6 +74,11 @@ export class WebApiClient {
         });
     }
 
+    /** Get a single task by ID. */
+    async getTask({ id }: { id: string }): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.getTask({ id }) });
+    }
+
     /** List tasks for the current user. */
     async listTasks({ filter }: WebListTasksParams = {}): Promise<TaskDto[]> {
         return this.execute({ request: () => this.apiClient.listTasks({ filter }) });

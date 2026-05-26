@@ -18,6 +18,7 @@ import type {
 } from './types.js';
 import type {
     AddReminderParams,
+    GetTaskParams,
     ApiClientErrorOptions,
     ApiClientOptions,
     CancelSyncJobParams,
@@ -110,6 +111,11 @@ export class CtmApiClient {
             path: '/tasks',
             params,
         });
+    }
+
+    /** Get a single task by ID. */
+    async getTask({ id }: GetTaskParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'GET', path: `/tasks/${id}` });
     }
 
     /** Create a new task. */

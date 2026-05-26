@@ -61,6 +61,7 @@ export class RemindersService {
                 await this.notifications.send({
                     userId: String(task.userId),
                     type: 'reminder',
+                    data: { type: 'reminder', taskId: String(task._id) },
                     title: 'Reminder',
                     body: task.title,
                 });
@@ -88,6 +89,7 @@ export class RemindersService {
             await this.notifications.send({
                 userId: String(task.userId),
                 type: 'reminder',
+                data: { type: 'reminder', taskId: String(task._id) },
                 title: `${task.title} is due`,
                 body: '',
             });
@@ -135,6 +137,7 @@ export class RemindersService {
             await this.notifications.send({
                 userId,
                 type: 'reminder',
+                data: { type: 'reminder' },
                 title: `You have ${userTasks.length} task${userTasks.length === 1 ? '' : 's'} due for attention`,
                 body: taskList,
             });
@@ -156,6 +159,7 @@ export class RemindersService {
             await this.notifications.send({
                 userId,
                 type: 'upcoming_deadline',
+                data: { type: 'upcoming_deadline' },
                 title: `${userTasks.length} task${userTasks.length === 1 ? '' : 's'} due this week`,
                 body: taskList,
             });
@@ -177,6 +181,7 @@ export class RemindersService {
             await this.notifications.send({
                 userId,
                 type: 'connector_reconnect',
+                data: { type: 'connector_reconnect', source: configs[0]?.source },
                 title: `${configs.length} connector${configs.length === 1 ? '' : 's'} need reconnecting`,
                 body: sourceList,
             });
