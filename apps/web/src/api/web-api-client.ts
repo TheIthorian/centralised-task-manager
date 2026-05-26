@@ -7,7 +7,9 @@ import {
     type MarkAllReadResultDto,
     type MarkReadResultDto,
     type NotificationDto,
+    type NotificationPreferencesDto,
     type OkDto,
+    type UpdateNotificationPreferencesDto,
     type ReminderDto,
     type TaskDto,
     type TaskSyncJobDto,
@@ -192,6 +194,16 @@ export class WebApiClient {
     /** Send a test notification via a channel (e.g. 'discord'). */
     async testNotificationChannel({ channel }: { channel: string }): Promise<{ sent: boolean }> {
         return this.execute({ request: () => this.apiClient.testNotificationChannel({ channel }) });
+    }
+
+    /** Get notification preferences for the current user. */
+    async getNotificationPreferences(): Promise<NotificationPreferencesDto> {
+        return this.execute({ request: () => this.apiClient.getNotificationPreferences() });
+    }
+
+    /** Update notification preferences for the current user. */
+    async updateNotificationPreferences({ dto }: { dto: UpdateNotificationPreferencesDto }): Promise<NotificationPreferencesDto> {
+        return this.execute({ request: () => this.apiClient.updateNotificationPreferences({ dto }) });
     }
 
     /** List in-app notifications for the current user. */
