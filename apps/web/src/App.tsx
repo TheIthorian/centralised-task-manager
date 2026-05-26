@@ -14,6 +14,7 @@ import { NotFoundPage } from './pages/NotFoundPage.js';
 import { CalendarPage } from './pages/CalendarPage.js';
 import { TimelinePage } from './pages/TimelinePage.js';
 import { ErrorPage } from './pages/ErrorPage.js';
+import { NotificationsPage } from './pages/NotificationsPage.js';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
                     { index: true, element: <Navigate to="/settings/sources" replace /> },
                     { path: 'sources', element: <SourcesPage /> },
                     { path: 'profile', element: <ProfilePage /> },
+                    { path: 'notifications', element: <NotificationsPage /> },
                 ],
             },
         ],
