@@ -80,8 +80,8 @@ export class WebApiClient {
     }
 
     /** List tasks for the current user. */
-    async listTasks({ filter }: WebListTasksParams = {}): Promise<TaskDto[]> {
-        return this.execute({ request: () => this.apiClient.listTasks({ filter }) });
+    async listTasks({ filter, lastUpdatedFromDate }: WebListTasksParams = {}): Promise<TaskDto[]> {
+        return this.execute({ request: () => this.apiClient.listTasks({ filter, lastUpdatedFromDate }) });
     }
 
     /** Create a task for the current user. */
@@ -217,6 +217,16 @@ export class WebApiClient {
     /** List Notion databases accessible via the user's Notion integration. */
     async listNotionDatabases(): Promise<{ id: string; name: string }[]> {
         return this.execute({ request: () => this.apiClient.listNotionDatabases() });
+    }
+
+    /** Return the current access token (used for WebSocket authentication). */
+    getAccessToken(): string | null {
+        return this.accessToken;
+    }
+
+    /** Return the API base URL (used for WebSocket connection). */
+    getBaseUrl(): string {
+        return this.baseUrl;
     }
 
     private createApiClient(): CtmApiClient {

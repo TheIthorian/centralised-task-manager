@@ -1,11 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, type UserDocument } from '../users/schemas/user.schema.js';
+import { Notification, type NotificationDocument } from './schemas/notification.schema.js';
 import { InAppChannel } from './channels/in-app.channel.js';
 import { EmailChannel } from './channels/email.channel.js';
 import { DiscordChannel, DiscordAuthExpiredError } from './channels/discord.channel.js';
 import type { SendNotificationDto, NotificationType } from './dto/send-notification.dto.js';
+import type { MarkAllReadResultDto, MarkReadResultDto, NotificationDto } from '@ctm/api-client';
 
 type TriggerKey = 'connectorReconnect' | 'dailySummary' | 'reminder' | 'upcomingDeadline';
 
@@ -40,10 +42,70 @@ export class NotificationsService {
 
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+        @InjectModel(Notification.name) private readonly notificationModel: Model<NotificationDocument>,
         private readonly inApp: InAppChannel,
         private readonly email: EmailChannel,
         private readonly discord: DiscordChannel,
     ) {}
+
+    // ── Inbox ──────────────────────────────────────────────────────────────────
+
+    /** List in-app notifications for the given user, newest first. */
+    async list({
+        userId,
+        page = 1,
+        limit = 20,
+        unreadOnly = false,
+    }: {
+        userId: string;
+        page?: number;
+        limit?: number;
+        unreadOnly?: boolean;
+    }): Promise<NotificationDto[]> {
+        const filter: Record<string, unknown> = { userId: new Types.ObjectId(userId) };
+
+        if (unreadOnly) filter['read'] = false;
+
+        const docs = await this.notificationModel
+            .find(filter)
+            .select('type data title body read createdAt')
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
+        return docs.map((d) => ({
+            id: String(d._id),
+            type: d.type,
+            data: d.data ?? { type: d.type },
+            title: d.title,
+            body: d.body,
+            read: d.read,
+            createdAt: d.createdAt?.toISOString() ?? new Date(0).toISOString(),
+        }));
+    }
+
+    /** Mark a single notification as read and return its updated state. */
+    async markRead({ userId, id }: { userId: string; id: string }): Promise<MarkReadResultDto> {
+        const doc = await this.notificationModel.findOneAndUpdate(
+            { _id: id, userId: new Types.ObjectId(userId) },
+            { read: true },
+            { new: true },
+        );
+
+        if (!doc) throw new NotFoundException('Notification not found');
+
+        return { id: String(doc._id), read: doc.read };
+    }
+
+    /** Mark all notifications for the given user as read. */
+    async markAllRead({ userId }: { userId: string }): Promise<MarkAllReadResultDto> {
+        const result = await this.notificationModel.updateMany(
+            { userId: new Types.ObjectId(userId), read: false },
+            { read: true },
+        );
+
+        return { updated: result.modifiedCount };
+    }
 
     /** Send a test notification directly to the specified channel, bypassing user preferences. */
     async testChannel({ userId, channel }: { userId: string; channel: Channel }): Promise<{ sent: boolean }> {
@@ -52,6 +114,7 @@ export class NotificationsService {
         const dto: SendNotificationDto = {
             userId,
             type: 'reminder',
+            data: { type: 'reminder' },
             title: 'Test notification',
             body: message,
         };

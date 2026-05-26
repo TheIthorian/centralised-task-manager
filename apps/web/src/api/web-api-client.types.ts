@@ -35,6 +35,7 @@ export type WebRegisterParams = {
 
 export type WebListTasksParams = {
     filter?: TaskFilter;
+    lastUpdatedFromDate?: string;
 };
 
 export type WebCreateTaskParams = {

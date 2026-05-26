@@ -6,6 +6,7 @@ import { NotificationsController } from './notifications.controller.js';
 import { NotificationsService } from './notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { Notification, NotificationSchema, type NotificationDocument } from './schemas/notification.schema.js';
+import { ListNotificationsQueryDto } from './dto/list-notifications-query.dto.js';
 
 const userId = new Types.ObjectId().toHexString();
 const authReq = { user: { sub: userId, email: 'a@b.com' } };
@@ -14,12 +15,29 @@ describe('NotificationsController', () => {
     let module: TestingModule;
     let controller: NotificationsController;
     let notificationModel: Model<NotificationDocument>;
+
+    let mockNotificationsService: {
+        testChannel: ReturnType<typeof vi.fn>;
+        send: ReturnType<typeof vi.fn>;
+        list: ReturnType<typeof vi.fn>;
+        markRead: ReturnType<typeof vi.fn>;
+        markAllRead: ReturnType<typeof vi.fn>;
+    };
+
     let mockUsersService: {
         getNotificationPreferences: ReturnType<typeof vi.fn>;
         updateNotificationPreferences: ReturnType<typeof vi.fn>;
     };
 
     beforeAll(async () => {
+        mockNotificationsService = {
+            testChannel: vi.fn().mockResolvedValue({ sent: true }),
+            send: vi.fn().mockResolvedValue(undefined),
+            list: vi.fn().mockResolvedValue([]),
+            markRead: vi.fn().mockResolvedValue({ id: 'x', read: true }),
+            markAllRead: vi.fn().mockResolvedValue({ updated: 0 }),
+        };
+
         mockUsersService = {
             getNotificationPreferences: vi.fn().mockResolvedValue(null),
             updateNotificationPreferences: vi.fn().mockResolvedValue(null),
@@ -33,7 +51,7 @@ describe('NotificationsController', () => {
             controllers: [NotificationsController],
             providers: [
                 { provide: UsersService, useValue: mockUsersService },
-                { provide: NotificationsService, useValue: { testChannel: vi.fn(), send: vi.fn() } },
+                { provide: NotificationsService, useValue: mockNotificationsService },
             ],
         }).compile();
 
@@ -45,52 +63,49 @@ describe('NotificationsController', () => {
         await module.close();
     });
 
-    it('list returns mapped notifications for the user', async () => {
-        const uid = new Types.ObjectId(userId);
-        await notificationModel.create({
-            userId: uid,
+    it('list delegates to NotificationsService', async () => {
+        const fakeNotification = {
+            id: new Types.ObjectId().toHexString(),
             type: 'reminder',
+            data: { type: 'reminder' },
             title: 'T',
             body: 'B',
             read: false,
+            createdAt: new Date().toISOString(),
+        };
+
+        mockNotificationsService.list.mockResolvedValueOnce([fakeNotification]);
+
+        const query = Object.assign(new ListNotificationsQueryDto(), { page: 1, limit: 20, unreadOnly: false });
+        const result = await controller.list(authReq as never, query);
+
+        expect(mockNotificationsService.list).toHaveBeenCalledWith({
+            userId,
+            page: 1,
+            limit: 20,
+            unreadOnly: false,
         });
-
-        const result = await controller.list(authReq as never, 1, 20, false);
-
-        expect(result.length).toBeGreaterThanOrEqual(1);
+        expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({ type: 'reminder', read: false });
     });
 
-    it('markRead updates the notification', async () => {
-        const doc = await notificationModel.create({
-            userId: new Types.ObjectId(userId),
-            type: 'reminder',
-            title: 'Mark me',
-            body: 'B',
-            read: false,
-        });
+    it('markRead delegates to NotificationsService', async () => {
+        const docId = new Types.ObjectId().toHexString();
+        mockNotificationsService.markRead.mockResolvedValueOnce({ id: docId, read: true });
 
-        await controller.markRead(authReq as never, String(doc._id));
+        const result = await controller.markRead(authReq as never, docId);
 
-        const updated = await notificationModel.findById(doc._id);
-
-        expect(updated?.read).toBe(true);
+        expect(mockNotificationsService.markRead).toHaveBeenCalledWith({ userId, id: docId });
+        expect(result).toMatchObject({ id: docId, read: true });
     });
 
-    it('markAllRead sets all unread notifications as read', async () => {
-        const otherUserId = new Types.ObjectId().toHexString();
-        const otherReq = { user: { sub: otherUserId, email: 'other@b.com' } };
-        const uid = new Types.ObjectId(otherUserId);
-        await notificationModel.create([
-            { userId: uid, type: 'reminder', title: 'T1', body: 'B', read: false },
-            { userId: uid, type: 'daily_summary', title: 'T2', body: 'B', read: false },
-        ]);
+    it('markAllRead delegates to NotificationsService', async () => {
+        mockNotificationsService.markAllRead.mockResolvedValueOnce({ updated: 3 });
 
-        const result = await controller.markAllRead(otherReq as never);
+        const result = await controller.markAllRead(authReq as never);
 
-        expect(result.updated).toBeGreaterThanOrEqual(2);
-        const remaining = await notificationModel.find({ userId: uid, read: false });
-        expect(remaining).toHaveLength(0);
+        expect(mockNotificationsService.markAllRead).toHaveBeenCalledWith({ userId });
+        expect(result).toMatchObject({ updated: 3 });
     });
 
     it('getPreferences delegates to UsersService', async () => {
@@ -105,5 +120,10 @@ describe('NotificationsController', () => {
         const result = await controller.updatePreferences(authReq as never, { dailySummary: { discord: true } });
 
         expect(result).toMatchObject({ dailySummary: { discord: true } });
+    });
+
+    // Verify the model is accessible (keeps the MongooseModule import meaningful)
+    it('notification model is available in test module', () => {
+        expect(notificationModel).toBeDefined();
     });
 });

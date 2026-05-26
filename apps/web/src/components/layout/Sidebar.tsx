@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext.js';
 import { useTheme } from '../../theme/ThemeContext.js';
 import { Button } from '../ui/index.js';
 import { NotificationPanel } from '../notifications/NotificationPanel.js';
+import { useNotificationSocket } from '../../hooks/useNotificationSocket.js';
 import clsx from 'clsx';
 
 const navItems = [
@@ -21,10 +22,11 @@ export function Sidebar(): React.JSX.Element {
     const { pathname } = useLocation();
     const [panelOpen, setPanelOpen] = useState(false);
 
+    useNotificationSocket(api);
+
     const { data: notifications = [] } = useQuery({
         queryKey: ['notifications'],
         queryFn: () => api.listNotifications(),
-        refetchInterval: 60_000,
     });
 
     const unreadCount = notifications.filter((n) => !n.read).length;

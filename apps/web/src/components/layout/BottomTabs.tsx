@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthContext.js';
 import { NotificationPanel } from '../notifications/NotificationPanel.js';
+import { useNotificationSocket } from '../../hooks/useNotificationSocket.js';
 import clsx from 'clsx';
 
 const tabs = [
@@ -18,10 +19,11 @@ export function BottomTabs(): React.JSX.Element {
     const { api } = useAuth();
     const [panelOpen, setPanelOpen] = useState(false);
 
+    useNotificationSocket(api);
+
     const { data: notifications = [] } = useQuery({
         queryKey: ['notifications'],
         queryFn: () => api.listNotifications(),
-        refetchInterval: 60_000,
     });
 
     const unreadCount = notifications.filter((n) => !n.read).length;
