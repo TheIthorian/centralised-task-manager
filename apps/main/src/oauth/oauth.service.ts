@@ -111,7 +111,7 @@ export class OAuthService {
         const expiresInDays = this.config.get<number>('REFRESH_TOKEN_EXPIRES_DAYS', 30);
         const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-        await this.refreshTokenModel.create({ tokenHash, userId, expiresAt, clientId });
+        await this.refreshTokenModel.create({ tokenHash, userId, expiresAt, scopes, clientId });
 
         return {
             access_token: accessToken,
