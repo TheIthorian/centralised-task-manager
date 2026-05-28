@@ -1,6 +1,7 @@
 import {
     ApiClientError,
     CtmApiClient,
+    type AuthorizedAppDto,
     type ConnectorHealthDto,
     type ConnectorStatusDto,
     type DiscordStatusDto,
@@ -229,6 +230,16 @@ export class WebApiClient {
     /** List Notion databases accessible via the user's Notion integration. */
     async listNotionDatabases(): Promise<{ id: string; name: string }[]> {
         return this.execute({ request: () => this.apiClient.listNotionDatabases() });
+    }
+
+    /** List OAuth apps the current user has authorized. */
+    async getAuthorizedApps(): Promise<AuthorizedAppDto[]> {
+        return this.execute({ request: () => this.apiClient.getAuthorizedApps() });
+    }
+
+    /** Revoke access for an authorized OAuth app. */
+    async revokeAuthorizedApp({ clientId }: { clientId: string }): Promise<void> {
+        await this.execute({ request: () => this.apiClient.revokeAuthorizedApp({ clientId }) });
     }
 
     /** Return the current access token (used for WebSocket authentication). */
