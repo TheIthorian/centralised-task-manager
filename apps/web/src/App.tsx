@@ -6,6 +6,7 @@ import { AppShell } from './components/layout/AppShell.js';
 import { ToastProvider } from './toast/ToastContext.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { RegisterPage } from './pages/RegisterPage.js';
+import { OAuthConsentPage } from './pages/OAuthConsentPage.js';
 import { TasksPage } from './pages/TasksPage.js';
 import { SettingsLayout } from './pages/SettingsLayout.js';
 import { SourcesPage } from './pages/SourcesPage.js';
@@ -28,6 +29,7 @@ const queryClient = new QueryClient({
 const router = createBrowserRouter([
     { path: '/login', element: <LoginPage /> },
     { path: '/register', element: <RegisterPage /> },
+    { path: '/oauth/consent', element: <OAuthConsentPage /> },
     {
         path: '/',
         element: (
