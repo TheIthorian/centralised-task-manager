@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
 import { createHash, randomBytes } from 'crypto';
+import { SCOPE_REGISTRY, filterScopes, groupScopesByResource } from './scopes.js';
 
 function makeCodeVerifier(): string {
     return randomBytes(32).toString('base64url');
@@ -174,5 +175,32 @@ describe('OAuth endpoints', () => {
     it('GET /oauth/userinfo returns 401 without token', async () => {
         const res = await app.inject({ method: 'GET', url: '/oauth/userinfo' });
         expect(res.statusCode).toBe(401);
+    });
+
+    describe('scope registry', () => {
+        it('openid is required', () => {
+            expect(SCOPE_REGISTRY['openid'].required).toBe(true);
+        });
+
+        it('filterScopes keeps only known scopes and always includes openid', () => {
+            expect(filterScopes(['tasks:read', 'unknown:scope'])).toEqual(['openid', 'tasks:read']);
+        });
+
+        it('filterScopes includes openid even when not in requested list', () => {
+            expect(filterScopes(['tasks:read'])).toEqual(['openid', 'tasks:read']);
+        });
+
+        it('groupScopesByResource groups by prefix', () => {
+            const groups = groupScopesByResource(['tasks:read', 'tasks:write', 'notifications:read']);
+            expect(groups).toEqual({
+                tasks: [
+                    { scope: 'tasks:read', label: 'Read tasks', required: false },
+                    { scope: 'tasks:write', label: 'Create & manage tasks', required: false },
+                ],
+                notifications: [
+                    { scope: 'notifications:read', label: 'Read notifications', required: false },
+                ],
+            });
+        });
     });
 });
