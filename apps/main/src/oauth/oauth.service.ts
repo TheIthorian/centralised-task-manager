@@ -86,11 +86,26 @@ export class OAuthService {
 
         if (!user) throw new UnauthorizedException('User not found');
 
-        return this.issueTokens({ userId: String(user._id), email: user.email, scopes: authCode.scopes, clientId: authCode.clientId });
+        return this.issueTokens({
+            userId: String(user._id),
+            email: user.email,
+            scopes: authCode.scopes,
+            clientId: authCode.clientId,
+        });
     }
 
     /** Issue access_token + id_token + refresh_token for a user. */
-    async issueTokens({ userId, email, scopes, clientId }: { userId: string; email: string; scopes: string[]; clientId?: string }): Promise<TokenResponse> {
+    async issueTokens({
+        userId,
+        email,
+        scopes,
+        clientId,
+    }: {
+        userId: string;
+        email: string;
+        scopes: string[];
+        clientId?: string;
+    }): Promise<TokenResponse> {
         const issuer = this.config.get<string>('REDIRECT_BASE_URL') ?? 'http://localhost:3000';
         const expiresIn = 3600;
 

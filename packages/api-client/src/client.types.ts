@@ -154,3 +154,8 @@ export type RemoveReminderParams = {
     id: string;
     index: number;
 };
+
+/** Parameters for {@link CtmApiClient.revokeAuthorizedApp}. */
+export type RevokeAuthorizedAppParams = {
+    clientId: string;
+};

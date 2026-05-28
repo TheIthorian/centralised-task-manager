@@ -11,11 +11,12 @@ import { TasksPage } from './pages/TasksPage.js';
 import { SettingsLayout } from './pages/SettingsLayout.js';
 import { SourcesPage } from './pages/SourcesPage.js';
 import { ProfilePage } from './pages/ProfilePage.js';
+import { NotificationsPage } from './pages/NotificationsPage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
 import { CalendarPage } from './pages/CalendarPage.js';
 import { TimelinePage } from './pages/TimelinePage.js';
 import { ErrorPage } from './pages/ErrorPage.js';
-import { NotificationsPage } from './pages/NotificationsPage.js';
+import { AuthorizedAppsPage } from './pages/AuthorizedAppsPage.js';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -51,6 +52,7 @@ const router = createBrowserRouter([
                     { path: 'sources', element: <SourcesPage /> },
                     { path: 'profile', element: <ProfilePage /> },
                     { path: 'notifications', element: <NotificationsPage /> },
+                    { path: 'authorized-apps', element: <AuthorizedAppsPage /> },
                 ],
             },
         ],

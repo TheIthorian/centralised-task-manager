@@ -15,6 +15,7 @@ import { OAuthClient, OAuthClientSchema } from './schemas/oauth-client.schema.js
 import { ApiTokenService } from './api-token.service.js';
 import { OAuthClientService } from './oauth-client.service.js';
 import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
+import { AuthorizedAppsService } from './authorized-apps.service.js';
 
 @Module({
     imports: [
@@ -38,7 +39,7 @@ import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
         ]),
     ],
     controllers: [AuthController, WellKnownController],
-    providers: [AuthService, LocalStrategy, JwtStrategy, ApiTokenService, OAuthClientService, CombinedAuthGuard],
-    exports: [AuthService, JwtModule, ApiTokenService, OAuthClientService, CombinedAuthGuard],
+    providers: [AuthService, LocalStrategy, JwtStrategy, ApiTokenService, OAuthClientService, CombinedAuthGuard, AuthorizedAppsService],
+    exports: [AuthService, JwtModule, ApiTokenService, OAuthClientService, CombinedAuthGuard, AuthorizedAppsService],
 })
 export class AuthModule {}

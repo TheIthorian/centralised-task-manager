@@ -15,8 +15,13 @@ export class RefreshToken {
     @Prop({ type: String })
     clientId?: string;
 
+    @Prop({ type: [String], default: [] })
+    scopes!: string[];
+
     @Prop({ type: Date, required: true })
     expiresAt!: Date;
+
+    createdAt!: Date;
 }
 
 export const RefreshTokenSchema = SchemaFactory.createForClass(RefreshToken);

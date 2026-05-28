@@ -1,5 +1,6 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
 import type {
+    AuthorizedAppDto,
     ConnectorHealthDto,
     ConnectorStatusDto,
     DiscordStatusDto,
@@ -35,6 +36,7 @@ import type {
     RegisterParams,
     RemoveFuzzyDeadlineParams,
     RemoveReminderParams,
+    RevokeAuthorizedAppParams,
     SetConnectionDetailsParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
@@ -268,6 +270,16 @@ export class CtmApiClient {
     /** Send a test notification via a channel (e.g. 'discord'). */
     async testNotificationChannel({ channel }: { channel: string }): Promise<TestChannelResultDto> {
         return this.request<TestChannelResultDto>({ method: 'POST', path: `/notifications/channels/${channel}/test` });
+    }
+
+    /** List OAuth apps the current user has authorized. */
+    async getAuthorizedApps(): Promise<AuthorizedAppDto[]> {
+        return this.request<AuthorizedAppDto[]>({ method: 'GET', path: '/auth/me/authorized-apps' });
+    }
+
+    /** Revoke access for an authorized OAuth app. */
+    async revokeAuthorizedApp({ clientId }: RevokeAuthorizedAppParams): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: `/auth/me/authorized-apps/${clientId}` });
     }
 
     private filterToParams(filter: TaskFilter): Record<string, string> {
