@@ -9,6 +9,7 @@ import { CreateTokenDto } from './dto/create-token.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
 import { ApiTokenService } from './api-token.service.js';
+import { AuthorizedAppsService, type AuthorizedAppDto } from './authorized-apps.service.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 
@@ -27,6 +28,7 @@ export class AuthController {
     constructor(
         private readonly auth: AuthService,
         private readonly apiTokens: ApiTokenService,
+        private readonly authorizedApps: AuthorizedAppsService,
     ) {}
 
     /** Register a new account. Returns token pair + user. */
@@ -93,5 +95,28 @@ export class AuthController {
     @UseGuards(CombinedAuthGuard)
     async revokeToken(@Request() req: JwtRequest, @Param('id') id: string): Promise<void> {
         await this.apiTokens.revoke({ tokenId: id, userId: req.user.sub });
+    }
+
+    /** List OAuth clients the current user has authorized. */
+    @ApiBearerAuth('jwt')
+    @ApiOperation({ summary: 'List authorized OAuth apps for the current user' })
+    @Get('me/authorized-apps')
+    @UseGuards(JwtAuthGuard)
+    async listAuthorizedApps(@Request() req: JwtRequest): Promise<AuthorizedAppDto[]> {
+        return this.authorizedApps.getAuthorizedApps(req.user.sub);
+    }
+
+    /** Revoke access for an authorized OAuth app. */
+    @ApiBearerAuth('jwt')
+    @ApiOperation({ summary: 'Revoke an authorized OAuth app' })
+    @ApiResponse({ status: 204 })
+    @Delete('me/authorized-apps/:clientId')
+    @HttpCode(204)
+    @UseGuards(JwtAuthGuard)
+    async revokeAuthorizedApp(
+        @Request() req: JwtRequest,
+        @Param('clientId') clientId: string,
+    ): Promise<void> {
+        await this.authorizedApps.revokeAuthorizedApp({ userId: req.user.sub, clientId });
     }
 }
