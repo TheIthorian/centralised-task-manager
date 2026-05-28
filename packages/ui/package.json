@@ -1,0 +1,19 @@
+{
+  "name": "@ctm/ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "clsx": ">=2"
+  },
+  "devDependencies": {
+    "@ctm/tsconfig": "workspace:*",
+    "react": "19.2.6",
+    "clsx": "2.1.1",
+    "typescript": "6.0.3"
+  }
+}
