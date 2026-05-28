@@ -60,6 +60,14 @@ export function OAuthConsentPage(): React.JSX.Element {
 
     const scopeGroups = buildScopeGroups(requestedScopes);
 
+    const RESOURCE_LABELS: Record<string, string> = {
+        tasks: 'Tasks',
+        connectors: 'Connectors',
+        notifications: 'Notifications',
+        'notification-config': 'Notification Config',
+        profile: 'Profile',
+    };
+
     const toggleScope = (scope: string): void => {
         setSelected((prev) => {
             const next = new Set(prev);
@@ -149,7 +157,7 @@ export function OAuthConsentPage(): React.JSX.Element {
                             className={idx < arr.length - 1 ? 'px-3 py-2.5 border-b border-[#e8e0b0]' : 'px-3 py-2.5'}
                         >
                             <p className="text-[10px] font-black uppercase tracking-widest text-nb-black mb-2">
-                                {resource.charAt(0).toUpperCase() + resource.slice(1)}
+                                {RESOURCE_LABELS[resource] ?? resource.charAt(0).toUpperCase() + resource.slice(1)}
                             </p>
                             <div className="flex gap-2 flex-wrap">
                                 {entries.map((entry) => {
