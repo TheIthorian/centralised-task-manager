@@ -8,11 +8,15 @@
   },
   "peerDependencies": {
     "react": ">=19",
+    "react-dom": ">=19",
     "clsx": ">=2"
   },
   "devDependencies": {
     "@ctm/tsconfig": "workspace:*",
+    "@types/react": "19.2.15",
+    "@types/react-dom": "19.2.3",
     "react": "19.2.6",
+    "react-dom": "19.2.6",
     "clsx": "2.1.1",
     "typescript": "6.0.3"
   }
