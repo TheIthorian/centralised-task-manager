@@ -27,6 +27,9 @@ export class OAuthClient {
     @Prop({ type: [String], default: ['openid', 'email', 'profile'] })
     scopes!: string[];
 
+    @Prop({ type: Boolean, default: true })
+    isDynamic!: boolean;
+
     @Prop({ type: Date, default: () => new Date() })
     issuedAt!: Date;
 }
