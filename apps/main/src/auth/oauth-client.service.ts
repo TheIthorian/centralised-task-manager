@@ -27,6 +27,42 @@ export type RegisterClientOutput = {
     issued_at: string;
 };
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', '[::1]', 'localhost']);
+
+/**
+ * Returns true if requestedUri is permitted by the registered list.
+ * For loopback hosts (127.0.0.1, ::1, localhost) the port is ignored per RFC 8252 §7.3.
+ * All other URIs require an exact match.
+ */
+export function isRedirectUriPermitted(registeredUris: string[], requestedUri: string): boolean {
+    let requested: URL;
+
+    try {
+        requested = new URL(requestedUri);
+    } catch {
+        return false;
+    }
+
+    const isLoopback = LOOPBACK_HOSTS.has(requested.hostname);
+
+    return registeredUris.some((registered) => {
+        let reg: URL;
+
+        try {
+            reg = new URL(registered);
+        } catch {
+            return false;
+        }
+
+        if (reg.protocol !== requested.protocol) return false;
+        if (reg.hostname !== requested.hostname) return false;
+
+        if (!isLoopback && reg.port !== requested.port) return false;
+
+        return true;
+    });
+}
+
 @Injectable()
 export class OAuthClientService {
     constructor(@InjectModel(OAuthClient.name) private readonly model: Model<OAuthClientDocument>) {}
@@ -60,6 +96,11 @@ export class OAuthClientService {
             scopes: doc.scopes,
             issued_at: doc.issuedAt.toISOString(),
         };
+    }
+
+    /** Find a registered client by its client_id. */
+    async findByClientId(clientId: string): Promise<OAuthClientDocument | null> {
+        return this.model.findOne({ clientId });
     }
 
     private generateClientId(): string {

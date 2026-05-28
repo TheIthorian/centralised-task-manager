@@ -12,6 +12,9 @@ export class RefreshToken {
     @Prop({ type: String, required: true, index: true })
     userId!: string;
 
+    @Prop({ type: String })
+    clientId?: string;
+
     @Prop({ type: Date, required: true })
     expiresAt!: Date;
 }

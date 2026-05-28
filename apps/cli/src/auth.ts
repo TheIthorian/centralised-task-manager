@@ -8,6 +8,7 @@ export type CliConfig = {
     accessToken: string;
     refreshToken: string;
     baseUrl: string;
+    clientId?: string;
 };
 
 const CONFIG_PATH = path.join(os.homedir(), '.config', 'ctm', 'config.json');

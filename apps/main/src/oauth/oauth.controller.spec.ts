@@ -51,7 +51,7 @@ describe('OAuth endpoints', () => {
         expect(location).toContain(encodeURIComponent('tasks:read'));
     });
 
-    it('POST /oauth/authorize redirects with code on valid credentials', async () => {
+    it('POST /oauth/authorize redirects with code for authenticated user', async () => {
         const verifier = makeCodeVerifier();
         const challenge = makeCodeChallenge(verifier);
         const redirectUri = 'http://localhost:4000/cb';
@@ -59,13 +59,24 @@ describe('OAuth endpoints', () => {
         const res = await app.inject({
             method: 'POST',
             url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid&state=xyz`,
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+            headers: { authorization: `Bearer ${jwt}` },
         });
         expect(res.statusCode).toBe(302);
         const location = res.headers['location'] as string;
         expect(location).toContain('code=');
         expect(location).toContain('state=xyz');
+    });
+
+    it('POST /oauth/authorize returns 401 without token', async () => {
+        const verifier = makeCodeVerifier();
+        const challenge = makeCodeChallenge(verifier);
+        const redirectUri = 'http://localhost:4000/cb';
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+        });
+        expect(res.statusCode).toBe(401);
     });
 
     it('POST /oauth/token exchanges code for tokens including refresh_token', async () => {
@@ -76,8 +87,7 @@ describe('OAuth endpoints', () => {
         const authorizeRes = await app.inject({
             method: 'POST',
             url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+            headers: { authorization: `Bearer ${jwt}` },
         });
         const location = authorizeRes.headers['location'] as string;
         const code = new URL(location).searchParams.get('code')!;
@@ -103,8 +113,7 @@ describe('OAuth endpoints', () => {
         const authorizeRes = await app.inject({
             method: 'POST',
             url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+            headers: { authorization: `Bearer ${jwt}` },
         });
         const code = new URL(authorizeRes.headers['location'] as string).searchParams.get('code')!;
 
@@ -144,8 +153,7 @@ describe('OAuth endpoints', () => {
         const authorizeRes = await app.inject({
             method: 'POST',
             url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+            headers: { authorization: `Bearer ${jwt}` },
         });
         const location = authorizeRes.headers['location'] as string;
         const code = new URL(location).searchParams.get('code')!;
@@ -187,9 +195,9 @@ describe('OAuth endpoints', () => {
 
         const authorizeRes = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&client_id=mcp&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read tasks:write')}`,
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&selected_scopes=tasks%3Aread`,
+            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read tasks:write')}`,
+            headers: { authorization: `Bearer ${jwt}` },
+            payload: { selected_scopes: 'tasks:read' },
         });
         expect(authorizeRes.statusCode).toBe(302);
         const location = authorizeRes.headers['location'] as string;
@@ -218,9 +226,9 @@ describe('OAuth endpoints', () => {
 
         const authorizeRes = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&client_id=mcp&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read')}`,
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&selected_scopes=tasks%3Aread%20tasks%3Awrite`,
+            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read')}`,
+            headers: { authorization: `Bearer ${jwt}` },
+            payload: { selected_scopes: 'tasks:read tasks:write' },
         });
         expect(authorizeRes.statusCode).toBe(302);
         const location = authorizeRes.headers['location'] as string;
@@ -239,6 +247,66 @@ describe('OAuth endpoints', () => {
         expect(tokenRes.statusCode).toBe(200);
         const token = JSON.parse(tokenRes.body) as { scope: string };
         expect(token.scope).not.toContain('tasks:write');
+    });
+
+    describe('client registration + loopback redirect', () => {
+        it('registers a client and allows loopback redirect_uri with any port', async () => {
+            const regRes = await app.inject({
+                method: 'POST',
+                url: '/.well-known/oauth-client',
+                payload: {
+                    client_name: 'CTM CLI Test',
+                    redirect_uris: ['http://127.0.0.1'],
+                },
+            });
+            expect(regRes.statusCode).toBe(201);
+            const client = JSON.parse(regRes.body) as { client_id: string };
+            expect(client.client_id).toBeTruthy();
+
+            const verifier = makeCodeVerifier();
+            const challenge = makeCodeChallenge(verifier);
+            const redirectUri = 'http://127.0.0.1:54321/callback';
+
+            const authorizeRes = await app.inject({
+                method: 'POST',
+                url: `/oauth/authorize?response_type=code&client_id=${client.client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+            expect(authorizeRes.statusCode).toBe(302);
+            const code = new URL(authorizeRes.headers['location'] as string).searchParams.get('code')!;
+
+            const tokenRes = await app.inject({
+                method: 'POST',
+                url: '/oauth/token',
+                payload: { grant_type: 'authorization_code', code, redirect_uri: redirectUri, code_verifier: verifier },
+            });
+            expect(tokenRes.statusCode).toBe(200);
+            const tokens = JSON.parse(tokenRes.body);
+            expect(tokens).toHaveProperty('access_token');
+            expect(tokens).toHaveProperty('refresh_token');
+        });
+
+        it('rejects authorize when client_id is provided but redirect_uri is not permitted', async () => {
+            const regRes = await app.inject({
+                method: 'POST',
+                url: '/.well-known/oauth-client',
+                payload: {
+                    client_name: 'CTM CLI Test Strict',
+                    redirect_uris: ['http://127.0.0.1'],
+                },
+            });
+            const client = JSON.parse(regRes.body) as { client_id: string };
+
+            const verifier = makeCodeVerifier();
+            const challenge = makeCodeChallenge(verifier);
+
+            const authorizeRes = await app.inject({
+                method: 'POST',
+                url: `/oauth/authorize?response_type=code&client_id=${client.client_id}&redirect_uri=${encodeURIComponent('https://evil.com/steal')}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+            expect(authorizeRes.statusCode).toBe(400);
+        });
     });
 
     describe('scope registry', () => {

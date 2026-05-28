@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, useSearchParams, Link } from 'react-router';
 import { useAuth } from '../auth/AuthContext.js';
 import { getErrorMessage } from '../api/error-message.js';
 import { Button, Input } from '@ctm/ui';
@@ -8,6 +8,8 @@ import { Button, Input } from '@ctm/ui';
 export function LoginPage(): React.JSX.Element {
     const { login } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const returnTo = searchParams.get('return') ?? '/tasks';
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -20,7 +22,7 @@ export function LoginPage(): React.JSX.Element {
 
         try {
             await login(email, password);
-            await navigate('/tasks');
+            await navigate(returnTo);
         } catch (error) {
             setError(getErrorMessage(error, 'Invalid email or password.'));
         } finally {
