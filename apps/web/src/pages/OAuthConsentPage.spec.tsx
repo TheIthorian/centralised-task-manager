@@ -74,9 +74,9 @@ describe('OAuthConsentPage', () => {
 
     it('redirects browser on successful authorisation', async () => {
         const mockFetch = vi.fn().mockResolvedValue({
-            status: 302,
-            ok: false,
-            headers: { get: (h: string) => (h === 'location' ? 'http://localhost:4000/cb?code=abc123' : null) },
+            status: 200,
+            ok: true,
+            json: () => Promise.resolve({ location: 'http://localhost:4000/cb?code=abc123' }),
         });
         vi.stubGlobal('fetch', mockFetch);
         const assignSpy = vi.fn();
