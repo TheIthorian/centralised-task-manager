@@ -16,6 +16,7 @@ import type { FastifyReply } from 'fastify';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { OAuthService } from './oauth.service.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import { filterScopes } from './scopes.js';
 
 interface AuthorizeQuery {
     client_id?: string;
@@ -80,12 +81,16 @@ export class OAuthController {
     @HttpCode(302)
     async authorizePost(
         @Query() query: AuthorizeQuery,
-        @Body() body: { email: string; password: string },
+        @Body() body: { email: string; password: string; selected_scopes?: string },
         @Res() res: FastifyReply,
     ): Promise<void> {
         const { id } = await this.oauth.validatePassword({ email: body.email, password: body.password });
 
-        const scopes = (query.scope ?? 'openid').split(' ');
+        const requestedScopes = (query.scope ?? 'openid').split(/\s+/);
+        const selectedScopes = body.selected_scopes
+            ? body.selected_scopes.split(/\s+/)
+            : requestedScopes;
+        const scopes = filterScopes(selectedScopes.filter((s) => requestedScopes.includes(s)));
         const code = await this.oauth.createAuthCode({
             userId: id,
             redirectUri: query.redirect_uri,
