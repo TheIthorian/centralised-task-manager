@@ -2,14 +2,14 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuard
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
-import type { TokenPair, ApiTokenDto, CreatedApiTokenDto } from '@ctm/api-client';
+import type { TokenPair, ApiTokenDto, CreatedApiTokenDto, AuthorizedAppDto } from '@ctm/api-client';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { CreateTokenDto } from './dto/create-token.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
 import { ApiTokenService } from './api-token.service.js';
-import { AuthorizedAppsService, type AuthorizedAppDto } from './authorized-apps.service.js';
+import { AuthorizedAppsService } from './authorized-apps.service.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 
@@ -20,7 +20,6 @@ interface AuthRequest {
 interface JwtRequest {
     user: JwtPayload;
 }
-
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -66,10 +65,7 @@ export class AuthController {
     })
     @Post('tokens')
     @UseGuards(JwtAuthGuard)
-    async createToken(
-        @Request() req: JwtRequest,
-        @Body() dto: CreateTokenDto,
-    ): Promise<CreatedApiTokenDto> {
+    async createToken(@Request() req: JwtRequest, @Body() dto: CreateTokenDto): Promise<CreatedApiTokenDto> {
         const { rawToken, record } = await this.apiTokens.create({ userId: req.user.sub, label: dto.label });
 
         return { token: rawToken, id: String(record._id), label: record.label };
@@ -83,7 +79,11 @@ export class AuthController {
     async listTokens(@Request() req: JwtRequest): Promise<ApiTokenDto[]> {
         const tokens = await this.apiTokens.list(req.user.sub);
 
-        return tokens.map((t) => ({ id: String(t._id), label: t.label, lastUsedAt: t.lastUsedAt?.toISOString() ?? null }));
+        return tokens.map((t) => ({
+            id: String(t._id),
+            label: t.label,
+            lastUsedAt: t.lastUsedAt?.toISOString() ?? null,
+        }));
     }
 
     /** Revoke an API token by id. */
@@ -113,10 +113,7 @@ export class AuthController {
     @Delete('me/authorized-apps/:clientId')
     @HttpCode(204)
     @UseGuards(JwtAuthGuard)
-    async revokeAuthorizedApp(
-        @Request() req: JwtRequest,
-        @Param('clientId') clientId: string,
-    ): Promise<void> {
+    async revokeAuthorizedApp(@Request() req: JwtRequest, @Param('clientId') clientId: string): Promise<void> {
         await this.authorizedApps.revokeAuthorizedApp({ userId: req.user.sub, clientId });
     }
 }
