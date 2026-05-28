@@ -1,16 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import type { AuthorizedAppDto } from '@ctm/api-client';
 import { RefreshToken, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
 import { OAuthClient, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
-
-/** Metadata for an OAuth client a user has authorized. No token data included. */
-export type AuthorizedAppDto = {
-    clientId: string;
-    clientName: string;
-    scopes: string[];
-    authorizedAt: string;
-};
 
 @Injectable()
 export class AuthorizedAppsService {

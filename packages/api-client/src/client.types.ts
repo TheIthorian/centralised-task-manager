@@ -136,3 +136,8 @@ export type ApiClientErrorOptions = {
     path: string;
     responseBody?: unknown;
 };
+
+/** Parameters for {@link CtmApiClient.revokeAuthorizedApp}. */
+export type RevokeAuthorizedAppParams = {
+    clientId: string;
+};

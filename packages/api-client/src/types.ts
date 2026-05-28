@@ -248,3 +248,11 @@ export type MarkReadResultDto = {
 export type MarkAllReadResultDto = {
     updated: number;
 };
+
+/** An OAuth client that a user has authorized. No token data included. */
+export type AuthorizedAppDto = {
+    clientId: string;
+    clientName: string;
+    scopes: string[];
+    authorizedAt: string;
+};

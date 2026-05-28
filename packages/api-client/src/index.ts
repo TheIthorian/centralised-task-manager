@@ -18,6 +18,7 @@ export type {
     RefreshParams,
     RegisterParams,
     RemoveFuzzyDeadlineParams,
+    RevokeAuthorizedAppParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
     SyncConnectorParams,
@@ -27,6 +28,7 @@ export type {
     SetConnectionDetailsParams,
 } from './client.types.js';
 export type {
+    AuthorizedAppDto,
     UserDto,
     TaskDto,
     LocationDto,
