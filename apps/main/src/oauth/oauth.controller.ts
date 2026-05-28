@@ -10,6 +10,7 @@ import {
     UseGuards,
     Request,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
@@ -37,7 +38,10 @@ interface TokenBody {
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
 export class OAuthController {
-    constructor(private readonly oauth: OAuthService) {}
+    constructor(
+        private readonly oauth: OAuthService,
+        private readonly config: ConfigService,
+    ) {}
 
     /**
      * Authorization endpoint — shows login form or issues auth code.
@@ -54,42 +58,18 @@ export class OAuthController {
             throw new BadRequestException('PKCE code_challenge is required');
         }
 
-        const params = new URLSearchParams({
+        const webUrl = this.config.get<string>('WEB_URL') ?? 'http://localhost:5173';
+
+        const consentParams = new URLSearchParams({
+            response_type: query.response_type,
             redirect_uri: query.redirect_uri,
             code_challenge: query.code_challenge,
+            code_challenge_method: query.code_challenge_method ?? 'S256',
             scope: query.scope ?? 'openid',
             state: query.state ?? '',
         });
 
-        const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign in — CTM</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 400px; margin: 80px auto; padding: 0 16px; }
-    h1 { font-size: 1.4rem; margin-bottom: 1.5rem; }
-    label { display: block; margin-bottom: 4px; font-size: 0.875rem; font-weight: 500; }
-    input { width: 100%; padding: 8px 10px; margin-bottom: 16px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
-    button { width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
-    button:hover { background: #1d4ed8; }
-    .error { color: #dc2626; font-size: 0.875rem; margin-bottom: 12px; }
-  </style>
-</head>
-<body>
-  <h1>Sign in to CTM</h1>
-  <form method="POST" action="/oauth/authorize?${params.toString()}">
-    <label for="email">Email</label>
-    <input id="email" type="email" name="email" required autocomplete="email">
-    <label for="password">Password</label>
-    <input id="password" type="password" name="password" required autocomplete="current-password">
-    <button type="submit">Sign in</button>
-  </form>
-</body>
-</html>`;
-
-        res.type('text/html').send(html);
+        res.redirect(`${webUrl}/oauth/consent?${consentParams.toString()}`, 302);
     }
 
     /**

@@ -36,16 +36,19 @@ describe('OAuth endpoints', () => {
         await app.close();
     });
 
-    it('GET /oauth/authorize returns HTML login form', async () => {
+    it('GET /oauth/authorize redirects to /oauth/consent with params', async () => {
         const verifier = makeCodeVerifier();
         const challenge = makeCodeChallenge(verifier);
         const res = await app.inject({
             method: 'GET',
-            url: `/oauth/authorize?response_type=code&redirect_uri=http://localhost:4000/cb&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            url: `/oauth/authorize?response_type=code&redirect_uri=http://localhost:4000/cb&code_challenge=${challenge}&code_challenge_method=S256&scope=tasks:read`,
         });
-        expect(res.statusCode).toBe(200);
-        expect(res.headers['content-type']).toMatch(/text\/html/);
-        expect(res.body).toContain('<form');
+        expect(res.statusCode).toBe(302);
+        const location = res.headers['location'] as string;
+        expect(location).toMatch(/\/oauth\/consent/);
+        expect(location).toContain('code_challenge=');
+        expect(location).toContain('redirect_uri=');
+        expect(location).toContain(encodeURIComponent('tasks:read'));
     });
 
     it('POST /oauth/authorize redirects with code on valid credentials', async () => {
