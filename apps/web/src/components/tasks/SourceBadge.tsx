@@ -1,4 +1,4 @@
-import { Badge } from '../ui/index.js';
+import { Badge } from '@ctm/ui';
 import { getSourceLabel, getSourceFaviconUrl } from '../../lib/source-labels.js';
 
 type SourceBadgeProps = {

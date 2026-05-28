@@ -373,6 +373,9 @@ importers:
       '@ctm/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@ctm/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@tanstack/react-query':
         specifier: 5.100.11
         version: 5.100.11(react@19.2.6)
@@ -564,6 +567,30 @@ importers:
         version: 4.1.7(@types/node@17.0.45)(jsdom@29.1.1)(vite@8.0.13(@types/node@17.0.45)(esbuild@0.28.0)(jiti@2.7.0)(sass@1.99.0)(terser@5.47.1)(tsx@4.22.3)(yaml@2.9.0))
 
   packages/tsconfig: {}
+
+  packages/ui:
+    devDependencies:
+      '@ctm/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/react':
+        specifier: 19.2.15
+        version: 19.2.15
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.15)
+      clsx:
+        specifier: 2.1.1
+        version: 2.1.1
+      react:
+        specifier: 19.2.6
+        version: 19.2.6
+      react-dom:
+        specifier: 19.2.6
+        version: 19.2.6(react@19.2.6)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
 
 packages:
 

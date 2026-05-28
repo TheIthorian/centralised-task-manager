@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthContext.js';
-import { Button } from '../ui/index.js';
+import { Button } from '@ctm/ui';
 
 type NotionSetupModalProps = {
     source: string;

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Button, Input } from '../ui/index.js';
+import { Button, Input } from '@ctm/ui';
 import type { CreateTaskDto } from '@ctm/api-client';
 
 type AddTaskInlineProps = {

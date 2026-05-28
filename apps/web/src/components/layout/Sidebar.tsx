@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthContext.js';
 import { useTheme } from '../../theme/ThemeContext.js';
-import { Button } from '../ui/index.js';
+import { Button } from '@ctm/ui';
 import { NotificationPanel } from '../notifications/NotificationPanel.js';
 import { useNotificationSocket } from '../../hooks/useNotificationSocket.js';
 import clsx from 'clsx';

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../auth/AuthContext.js';
 import { getErrorMessage } from '../api/error-message.js';
-import { Button, Input } from '../components/ui/index.js';
+import { Button, Input } from '@ctm/ui';
 
 /** Full-page registration form. Auto-logs in on success. */
 export function RegisterPage(): React.JSX.Element {

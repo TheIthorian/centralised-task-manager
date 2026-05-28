@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import type { NotificationPreferencesDto, UpdateNotificationPreferencesDto, ChannelPrefsDto } from '@ctm/api-client';
 import { useAuth } from '../auth/AuthContext.js';
 import { useToast } from '../toast/ToastContext.js';
-import { Checkbox } from '../components/ui/index.js';
+import { Checkbox } from '@ctm/ui';
 
 type NotificationKey = keyof NotificationPreferencesDto;
 type ChannelKey = keyof ChannelPrefsDto;

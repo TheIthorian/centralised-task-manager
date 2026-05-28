@@ -1,6 +1,6 @@
 import { ConnectorType } from '@ctm/api-client';
 import type { ConnectorStatusDto, ConnectorHealthDto, TaskSyncJobDto } from '@ctm/api-client';
-import { Button } from '../ui/index.js';
+import { Button } from '@ctm/ui';
 import { getSourceLabel, getSourceFaviconUrl } from '../../lib/source-labels.js';
 
 type SourceCardProps = {

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { Badge, Checkbox } from '../ui/index.js';
+import { Badge, Checkbox } from '@ctm/ui';
 import type { Duration, TaskDto } from '@ctm/api-client';
 import { SourceBadge } from './SourceBadge.js';
 

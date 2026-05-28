@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { getErrorMessage } from '../../api/error-message.js';
 import { useToast } from '../../toast/ToastContext.js';
 import { useAuth } from '../../auth/AuthContext.js';
-import { Modal, Button, Input } from '../ui/index.js';
+import { Modal, Button, Input } from '@ctm/ui';
 import type { FuzzyDeadlineInfo, LocationDto, ReminderDto, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
 
 type TaskModalProps = {

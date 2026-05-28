@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import type { UpdateUserDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
-import { Button, Input } from '../components/ui/index.js';
+import { Button, Input } from '@ctm/ui';
 
 /** Settings sub-page: user profile, password change, and account deletion. */
 export function ProfilePage(): React.JSX.Element {

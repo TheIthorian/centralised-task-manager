@@ -1,5 +1,5 @@
 import type { DiscordStatusDto } from '@ctm/api-client';
-import { Button } from '../ui/index.js';
+import { Button } from '@ctm/ui';
 
 type DiscordCardProps = {
     status: DiscordStatusDto;
