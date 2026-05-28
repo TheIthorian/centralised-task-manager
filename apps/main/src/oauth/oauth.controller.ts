@@ -5,6 +5,7 @@ import {
     Query,
     Body,
     Res,
+    Headers,
     HttpCode,
     BadRequestException,
     UseGuards,
@@ -14,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { OAuthClientService, isRedirectUriPermitted } from '../auth/oauth-client.service.js';
 import { OAuthService } from './oauth.service.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { filterScopes } from './scopes.js';
@@ -42,6 +44,7 @@ export class OAuthController {
     constructor(
         private readonly oauth: OAuthService,
         private readonly config: ConfigService,
+        private readonly oauthClient: OAuthClientService,
     ) {}
 
     /**
@@ -74,17 +77,29 @@ export class OAuthController {
     }
 
     /**
-     * Authorization endpoint (form POST) — validates credentials and redirects with code.
+     * Authorization endpoint (POST) — issues auth code for the authenticated user.
+     * Requires a valid Bearer token in the Authorization header.
      */
     @ApiExcludeEndpoint()
     @Post('authorize')
     @HttpCode(302)
+    @UseGuards(CombinedAuthGuard)
     async authorizePost(
         @Query() query: AuthorizeQuery,
-        @Body() body: { email: string; password: string; selected_scopes?: string },
+        @Body() body: { selected_scopes?: string } = {},
+        @Request() req: { user: JwtPayload },
         @Res() res: FastifyReply,
+        @Headers('accept') accept: string = '',
     ): Promise<void> {
-        const { id } = await this.oauth.validatePassword({ email: body.email, password: body.password });
+        if (query.client_id) {
+            const client = await this.oauthClient.findByClientId(query.client_id);
+
+            if (!client) throw new BadRequestException('Unknown client_id');
+
+            if (!isRedirectUriPermitted(client.redirectUris, query.redirect_uri)) {
+                throw new BadRequestException('redirect_uri not permitted for this client');
+            }
+        }
 
         const requestedScopes = (query.scope ?? 'openid').split(/\s+/);
         const selectedScopes = body.selected_scopes
@@ -92,16 +107,23 @@ export class OAuthController {
             : requestedScopes;
         const scopes = filterScopes(selectedScopes.filter((s) => requestedScopes.includes(s)));
         const code = await this.oauth.createAuthCode({
-            userId: id,
+            userId: req.user.sub,
             redirectUri: query.redirect_uri,
             codeChallenge: query.code_challenge,
             scopes,
+            clientId: query.client_id,
         });
 
         const redirectUrl = new URL(query.redirect_uri);
         redirectUrl.searchParams.set('code', code);
 
         if (query.state) redirectUrl.searchParams.set('state', query.state);
+
+        if (accept.includes('application/json')) {
+            await res.status(200).send({ location: redirectUrl.toString() });
+
+            return;
+        }
 
         res.redirect(redirectUrl.toString());
     }
