@@ -14,7 +14,7 @@ const mockPrefs = {
 
 const mockApi = {
     getNotificationPreferences: vi.fn(),
-    getDiscordStatus: vi.fn(),
+    listConnectors: vi.fn(),
     updateNotificationPreferences: vi.fn(),
 };
 
@@ -41,7 +41,7 @@ describe('NotificationsPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockApi.getNotificationPreferences.mockResolvedValue(mockPrefs);
-        mockApi.getDiscordStatus.mockResolvedValue({ connected: false });
+        mockApi.listConnectors.mockResolvedValue([{ source: 'discord', connected: false }]);
     });
 
     it('renders all notification type rows', async () => {
