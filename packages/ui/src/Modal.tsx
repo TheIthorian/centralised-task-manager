@@ -2,12 +2,12 @@ import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 
-interface ModalProps {
+type ModalProps = {
     open: boolean;
     onClose: () => void;
     title?: string;
     children: React.ReactNode;
-}
+};
 
 /**
  * Portal-based modal. On mobile slides up from the bottom; on desktop is centred.

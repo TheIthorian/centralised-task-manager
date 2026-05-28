@@ -117,9 +117,11 @@ export function OAuthConsentPage(): React.JSX.Element {
                     window.location.assign(location);
                     return;
                 }
+            } else if (res.status === 401) {
+                setError('Invalid email or password.');
+            } else {
+                setError('Something went wrong. Please try again.');
             }
-
-            setError('Invalid email or password.');
         } catch {
             setError('Something went wrong. Please try again.');
         } finally {

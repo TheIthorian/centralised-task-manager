@@ -1,11 +1,11 @@
 import clsx from 'clsx';
 
-interface CheckboxProps {
+type CheckboxProps = {
     checked: boolean;
     onChange: (checked: boolean) => void;
     label?: string;
     disabled?: boolean;
-}
+};
 
 /** Square neobrutalist checkbox. */
 export function Checkbox({ checked, onChange, label, disabled }: CheckboxProps): React.JSX.Element {

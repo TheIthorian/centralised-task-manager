@@ -59,7 +59,7 @@ export class OAuthController {
             throw new BadRequestException('PKCE code_challenge is required');
         }
 
-        const webUrl = this.config.get<string>('WEB_URL') ?? 'http://localhost:5173';
+        const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173');
 
         const consentParams = new URLSearchParams({
             response_type: query.response_type,

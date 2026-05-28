@@ -211,6 +211,36 @@ describe('OAuth endpoints', () => {
         expect(token.scope).not.toContain('tasks:write');
     });
 
+    it('ignores selected scopes not in the original request', async () => {
+        const verifier = makeCodeVerifier();
+        const challenge = makeCodeChallenge(verifier);
+        const redirectUri = 'http://localhost:3001/callback';
+
+        const authorizeRes = await app.inject({
+            method: 'POST',
+            url: `/oauth/authorize?response_type=code&client_id=mcp&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read')}`,
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            payload: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&selected_scopes=tasks%3Aread%20tasks%3Awrite`,
+        });
+        expect(authorizeRes.statusCode).toBe(302);
+        const location = authorizeRes.headers['location'] as string;
+        const code = new URL(location).searchParams.get('code')!;
+
+        const tokenRes = await app.inject({
+            method: 'POST',
+            url: '/oauth/token',
+            payload: {
+                grant_type: 'authorization_code',
+                code,
+                redirect_uri: redirectUri,
+                code_verifier: verifier,
+            },
+        });
+        expect(tokenRes.statusCode).toBe(200);
+        const token = JSON.parse(tokenRes.body) as { scope: string };
+        expect(token.scope).not.toContain('tasks:write');
+    });
+
     describe('scope registry', () => {
         it('openid is required', () => {
             expect(SCOPE_REGISTRY['openid'].required).toBe(true);

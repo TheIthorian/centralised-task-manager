@@ -3,9 +3,9 @@ import clsx from 'clsx';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: ButtonVariant;
-}
+};
 
 /** Neobrutalist button. Shifts on hover to simulate a press. */
 export function Button({ variant = 'primary', className, children, ...props }: ButtonProps): React.JSX.Element {
