@@ -1,12 +1,12 @@
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import type { NotificationPreferencesDto, UpdateNotificationPreferencesDto } from '@ctm/api-client';
+import type { NotificationPreferencesDto, UpdateNotificationPreferencesDto, ChannelPrefsDto } from '@ctm/api-client';
 import { useAuth } from '../auth/AuthContext.js';
 import { useToast } from '../toast/ToastContext.js';
 import { Checkbox } from '../components/ui/index.js';
 
 type NotificationKey = keyof NotificationPreferencesDto;
-type ChannelKey = 'inApp' | 'discord' | 'email';
+type ChannelKey = keyof ChannelPrefsDto;
 
 const ROWS: { key: NotificationKey; label: string }[] = [
     { key: 'connectorReconnect', label: 'Connector Reconnect' },
@@ -72,6 +72,9 @@ export function NotificationsPage(): React.JSX.Element {
             );
 
             return { previous };
+        },
+        onSuccess: (serverPrefs) => {
+            qc.setQueryData(['notification-preferences'], serverPrefs);
         },
         onError: (_err, _dto, context) => {
             if (context?.previous) {

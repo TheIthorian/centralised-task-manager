@@ -115,5 +115,8 @@ describe('NotificationsPage', () => {
                 description: 'Failed to save preferences',
             });
         });
+
+        // Optimistic update should have been reverted
+        expect(reminderInAppCheckbox).toHaveAttribute('aria-checked', 'false');
     });
 });
