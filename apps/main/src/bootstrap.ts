@@ -27,7 +27,7 @@ export async function createApp(): Promise<NestFastifyApplication> {
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await app.register(multipart as any);
+    await app.register(multipart as any, { limits: { fileSize: 60 * 1024 * 1024 } });
 
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
     app.enableCors(buildCorsOptions(process.env));

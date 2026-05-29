@@ -9,7 +9,6 @@ import { ExportService } from './export.service.js';
 import { ImportService } from './import.service.js';
 import { DataPortabilityController } from './data-portability.controller.js';
 import { AuthModule } from '../auth/auth.module.js';
-import { UsersModule } from '../users/users.module.js';
 
 @Module({
     imports: [
@@ -21,7 +20,6 @@ import { UsersModule } from '../users/users.module.js';
         ]),
         FilesModule,
         AuthModule,
-        UsersModule,
     ],
     controllers: [DataPortabilityController],
     providers: [ExportService, ImportService],

@@ -71,7 +71,16 @@ export class DataPortabilityController {
         for await (const part of parts) {
             if (part.type === 'file') {
                 const buf = await part.toBuffer();
-                const envelope = JSON.parse(buf.toString('utf-8')) as ExportEnvelopeDto;
+                let envelope: ExportEnvelopeDto;
+                try {
+                    envelope = JSON.parse(buf.toString('utf-8')) as ExportEnvelopeDto;
+                } catch {
+                    throw new ValidationError(`Invalid JSON in uploaded file: ${part.filename ?? 'unknown'}`);
+                }
+
+                if (!isValidEnvelope(envelope)) {
+                    throw new ValidationError('Uploaded file is not a valid export envelope');
+                }
 
                 envelopes.push(envelope);
             } else if (part.fieldname === 'onConflict') {
@@ -85,4 +94,17 @@ export class DataPortabilityController {
 
         return this.importService.import({ userId: req.user.sub, envelopes, onConflict });
     }
+}
+
+function isValidEnvelope(value: unknown): value is ExportEnvelopeDto {
+    if (typeof value !== 'object' || value === null) return false;
+    const v = value as Record<string, unknown>;
+    return (
+        typeof v['version'] === 'string' &&
+        typeof v['exportId'] === 'string' &&
+        typeof v['part'] === 'number' &&
+        typeof v['totalParts'] === 'number' &&
+        Array.isArray(v['tasks']) &&
+        Array.isArray(v['notifications'])
+    );
 }
