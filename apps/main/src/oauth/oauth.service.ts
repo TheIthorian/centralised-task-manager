@@ -151,7 +151,7 @@ export class OAuthService {
 
         if (!user) throw new UnauthorizedException('User not found');
 
-        return this.issueTokens({ userId: record.userId, email: user.email, scopes: ['openid', 'email', 'profile'] });
+        return this.issueTokens({ userId: record.userId, email: user.email, scopes: record.scopes, clientId: record.clientId });
     }
 
     /** Validate a password and return user info (for the login form submission). */
