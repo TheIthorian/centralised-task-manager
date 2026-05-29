@@ -1,4 +1,5 @@
 import { TaskCard } from './TaskCard.js';
+import { ScrollSentinel } from './ScrollSentinel.js';
 import type { TaskDto } from '@ctm/api-client';
 
 interface TaskListProps {
@@ -6,10 +7,21 @@ interface TaskListProps {
     highlightedTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    hasNextPage?: boolean;
+    isFetchingNextPage?: boolean;
+    fetchNextPage?: () => void;
 }
 
-/** Renders a vertical list of task cards, or an empty state. */
-export function TaskList({ tasks, highlightedTaskId, onToggle, onEdit }: TaskListProps): React.JSX.Element {
+/** Renders a vertical list of task cards with optional infinite scroll. */
+export function TaskList({
+    tasks,
+    highlightedTaskId,
+    onToggle,
+    onEdit,
+    hasNextPage = false,
+    isFetchingNextPage = false,
+    fetchNextPage,
+}: TaskListProps): React.JSX.Element {
     if (tasks.length === 0) {
         return (
             <div className="bg-nb-yellow border-2 border-nb-black shadow-[3px_3px_0px_#111] p-6 text-center">
@@ -30,6 +42,14 @@ export function TaskList({ tasks, highlightedTaskId, onToggle, onEdit }: TaskLis
                     onEdit={onEdit}
                 />
             ))}
+
+            {fetchNextPage && (
+                <ScrollSentinel
+                    onVisible={fetchNextPage}
+                    disabled={!hasNextPage || isFetchingNextPage}
+                    isLoading={isFetchingNextPage}
+                />
+            )}
         </div>
     );
 }
