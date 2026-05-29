@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import type { CtmApiClient, TaskDto } from '@ctm/api-client';
+import type { TaskDto } from '@ctm/api-client';
+import type { WebApiClient } from '../api/web-api-client.js';
 
 const PAGE_SIZE = 20;
 
@@ -56,7 +57,7 @@ function toBucketResult(
 }
 
 /** Runs 5 independent paginated queries — one per date bucket in the grouped 'all' view. */
-export function useGroupedTaskQueries({ api, enabled = true }: { api: CtmApiClient; enabled?: boolean }): GroupedQueryResults {
+export function useGroupedTaskQueries({ api, enabled = true }: { api: WebApiClient; enabled?: boolean }): GroupedQueryResults {
     const today = todayMidnight().toISOString();
     const tomorrow = tomorrowMidnight().toISOString();
     const nextMonday = nextWeekMondayMidnight().toISOString();

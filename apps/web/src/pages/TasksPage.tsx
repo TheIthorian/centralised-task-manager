@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
@@ -9,6 +9,9 @@ import { TaskList } from '../components/tasks/TaskList.js';
 import { GroupedTaskList } from '../components/tasks/GroupedTaskList.js';
 import { AddTaskInline } from '../components/tasks/AddTaskInline.js';
 import { TaskModal } from '../components/tasks/TaskModal.js';
+import { useGroupedTaskQueries } from '../hooks/useGroupedTaskQueries.js';
+
+const PAGE_SIZE = 20;
 
 /** Main task management page. Filter is stored in the URL (?filter=today). Opening a specific task is via ?taskId=<id>. */
 export function TasksPage(): React.JSX.Element {
@@ -18,9 +21,15 @@ export function TasksPage(): React.JSX.Element {
     const highlightTaskIdParam = searchParams.get('highlightTaskId');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
+    const [doneTasks, setDoneTasks] = useState<TaskDto[]>([]);
     const { api } = useAuth();
 
     const qc = useQueryClient();
+
+    // Reset done tasks when filter changes away from 'all'
+    useEffect(() => {
+        if (filter !== 'all') setDoneTasks([]);
+    }, [filter]);
 
     // Highlight task when ?highlightTaskId= is present (e.g. navigated from a notification).
     useEffect(() => {
@@ -93,24 +102,42 @@ export function TasksPage(): React.JSX.Element {
         return d.toISOString();
     })();
 
-    const {
-        data: tasks = [],
-        isLoading,
-        isError,
-        error,
-    } = useQuery({
+    // Flat list infinite query (today / upcoming / done).
+    const flatQuery = useInfiniteQuery<TaskDto[]>({
         queryKey: ['tasks', filter],
-        queryFn: () =>
+        queryFn: ({ pageParam }) =>
             api.listTasks({
                 filter,
+                page: pageParam as number,
+                limit: PAGE_SIZE,
                 lastUpdatedFromDate: filter === 'done' ? midnightYesterday : undefined,
             }),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, pages) =>
+            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+        enabled: filter !== 'all',
     });
+
+    const flatTasks = flatQuery.data?.pages.flat() ?? [];
+    const flatIsLoading = flatQuery.isLoading;
+    const flatIsError = flatQuery.isError;
+
+    // Per-bucket grouped queries (all filter only).
+    const groupedResults = useGroupedTaskQueries({ api, enabled: filter === 'all' });
 
     const addMutation = useMutation({
         mutationFn: (dto: CreateTaskDto) => api.createTask({ dto }),
         onSuccess: (created) => {
-            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) => [created, ...prev]);
+            if (filter === 'all') {
+                // Invalidate the relevant bucket so it refetches
+                qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
+            } else {
+                qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', filter], (prev) => {
+                    if (!prev) return prev;
+
+                    return { ...prev, pages: [[created, ...(prev.pages[0] ?? [])], ...prev.pages.slice(1)] };
+                });
+            }
         },
     });
 
@@ -118,53 +145,123 @@ export function TasksPage(): React.JSX.Element {
         mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
             api.setTaskStatus({ id, dto: { status: completed ? 'done' : 'open' } }),
         onMutate: async ({ id, completed }) => {
-            await qc.cancelQueries({ queryKey: ['tasks', filter] });
-            const prev = qc.getQueryData<TaskDto[]>(['tasks', filter]);
+            if (filter === 'all') {
+                // Optimistically move to done section
+                const allBuckets = ['overdue', 'today', 'thisWeek', 'upcoming', 'noDate'] as const;
 
-            qc.setQueryData<TaskDto[]>(['tasks', filter], (old = []) =>
-                old.map((t) => (t.id === id ? { ...t, completed } : t)),
-            );
+                let movedTask: TaskDto | undefined;
+
+                for (const bucket of allBuckets) {
+                    qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', 'grouped', bucket], (prev) => {
+                        if (!prev) return prev;
+
+                        const updated = prev.pages.map((page) => {
+                            const found = page.find((t) => t.id === id);
+
+                            if (found) movedTask = { ...found, completed };
+
+                            return page.filter((t) => t.id !== id);
+                        });
+
+                        return { ...prev, pages: updated };
+                    });
+                }
+
+                if (completed && movedTask) {
+                    setDoneTasks((prev) => [movedTask!, ...prev]);
+                } else if (!completed) {
+                    setDoneTasks((prev) => prev.filter((t) => t.id !== id));
+                    qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
+                }
+
+                return { movedTask };
+            }
+
+            await qc.cancelQueries({ queryKey: ['tasks', filter] });
+            const prev = qc.getQueryData<{ pages: TaskDto[][] }>(['tasks', filter]);
+
+            qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', filter], (old) => {
+                if (!old) return old;
+
+                return {
+                    ...old,
+                    pages: old.pages.map((page) =>
+                        page.map((t) => (t.id === id ? { ...t, completed } : t)),
+                    ),
+                };
+            });
 
             return { prev };
         },
         onError: (_err, _vars, ctx) => {
-            if (ctx?.prev) qc.setQueryData(['tasks', filter], ctx.prev);
+            if (filter !== 'all' && ctx?.prev) {
+                qc.setQueryData(['tasks', filter], ctx.prev);
+            }
         },
     });
 
     const saveMutation = useMutation({
         mutationFn: ({ id, dto }: { id: string; dto: UpdateTaskDto }) => api.updateTask({ id, dto }),
-        onSuccess: (updated) => {
-            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
-                prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
-            );
+        onSuccess: () => {
+            if (filter === 'all') {
+                qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
+            } else {
+                qc.invalidateQueries({ queryKey: ['tasks', filter] });
+            }
         },
     });
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => api.deleteTask({ id }),
         onSuccess: (_data, id) => {
-            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) => prev.filter((t) => t.id !== id));
+            if (filter === 'all') {
+                qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
+                setDoneTasks((prev) => prev.filter((t) => t.id !== id));
+            } else {
+                qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', filter], (prev) => {
+                    if (!prev) return prev;
+
+                    return { ...prev, pages: prev.pages.map((page) => page.filter((t) => t.id !== id)) };
+                });
+            }
         },
     });
 
     const setFuzzyMutation = useMutation({
         mutationFn: ({ id, dto }: { id: string; dto: SetFuzzyDeadlineDto }) => api.setFuzzyDeadline({ id, dto }),
-        onSuccess: (updated) => {
-            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
-                prev.map((t) => (t.id === updated.id ? { ...t, fuzzyDeadline: updated.fuzzyDeadline } : t)),
-            );
+        onSuccess: () => {
+            if (filter === 'all') {
+                qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
+            } else {
+                qc.invalidateQueries({ queryKey: ['tasks', filter] });
+            }
         },
     });
 
     const removeFuzzyMutation = useMutation({
         mutationFn: (id: string) => api.removeFuzzyDeadline({ id }),
-        onSuccess: (updated) => {
-            qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
-                prev.map((t) => (t.id === updated.id ? { ...t, fuzzyDeadline: null } : t)),
-            );
+        onSuccess: () => {
+            if (filter === 'all') {
+                qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
+            } else {
+                qc.invalidateQueries({ queryKey: ['tasks', filter] });
+            }
         },
     });
+
+    const handleToggle = useCallback(
+        (id: string, completed: boolean) => {
+            statusMutation.mutate({ id, completed });
+        },
+        [statusMutation],
+    );
+
+    const totalLoaded = filter === 'all'
+        ? Object.values(groupedResults).reduce((sum, r) => sum + r.tasks.length, 0) + doneTasks.length
+        : flatTasks.length;
+
+    const isLoading = filter === 'all' ? false : flatIsLoading;
+    const isError = filter === 'all' ? false : flatIsError;
 
     return (
         <div className="p-4 md:p-6 max-w-2xl">
@@ -175,7 +272,7 @@ export function TasksPage(): React.JSX.Element {
                     </h1>
                     {!isLoading && (
                         <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm">
-                            {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+                            {totalLoaded} task{totalLoaded !== 1 ? 's' : ''} loaded
                         </p>
                     )}
                 </div>
@@ -200,7 +297,7 @@ export function TasksPage(): React.JSX.Element {
                 {isError && (
                     <div className="border-2 border-nb-red bg-nb-red/10 p-3">
                         <p className="text-nb-red font-bold text-sm">
-                            {getErrorMessage(error, 'Failed to load tasks. Is the API running?')}
+                            {getErrorMessage(flatQuery.error, 'Failed to load tasks. Is the API running?')}
                         </p>
                     </div>
                 )}
@@ -209,21 +306,21 @@ export function TasksPage(): React.JSX.Element {
                     !isError &&
                     (filter === 'all' ? (
                         <GroupedTaskList
-                            tasks={tasks}
+                            groupedResults={groupedResults}
+                            doneTasks={doneTasks}
                             highlightedTaskId={highlightedTaskId}
-                            onToggle={(id, completed) => {
-                                statusMutation.mutate({ id, completed });
-                            }}
+                            onToggle={handleToggle}
                             onEdit={setEditTask}
                         />
                     ) : (
                         <TaskList
-                            tasks={tasks}
+                            tasks={flatTasks}
                             highlightedTaskId={highlightedTaskId}
-                            onToggle={(id, completed) => {
-                                statusMutation.mutate({ id, completed });
-                            }}
+                            onToggle={handleToggle}
                             onEdit={setEditTask}
+                            hasNextPage={flatQuery.hasNextPage}
+                            isFetchingNextPage={flatQuery.isFetchingNextPage}
+                            fetchNextPage={flatQuery.fetchNextPage}
                         />
                     ))}
             </div>

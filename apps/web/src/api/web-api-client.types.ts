@@ -1,8 +1,8 @@
 import type {
     CreateTaskDto,
+    ListTasksParams,
     SetFuzzyDeadlineDto,
     SetTaskStatusDto,
-    TaskFilter,
     UpdateTaskDto,
     UpdateUserDto,
 } from '@ctm/api-client';
@@ -40,10 +40,7 @@ export type WebRegisterParams = {
     password: string;
 };
 
-export type WebListTasksParams = {
-    filter?: TaskFilter;
-    lastUpdatedFromDate?: string;
-};
+export type WebListTasksParams = ListTasksParams;
 
 export type WebCreateTaskParams = {
     dto: CreateTaskDto;

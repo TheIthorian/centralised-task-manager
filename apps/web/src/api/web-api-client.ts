@@ -84,8 +84,8 @@ export class WebApiClient {
     }
 
     /** List tasks for the current user. */
-    async listTasks({ filter, lastUpdatedFromDate }: WebListTasksParams = {}): Promise<TaskDto[]> {
-        return this.execute({ request: () => this.apiClient.listTasks({ filter, lastUpdatedFromDate }) });
+    async listTasks(params: WebListTasksParams = {}): Promise<TaskDto[]> {
+        return this.execute({ request: () => this.apiClient.listTasks(params) });
     }
 
     /** Create a task for the current user. */
