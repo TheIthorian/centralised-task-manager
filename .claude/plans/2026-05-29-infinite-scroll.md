@@ -12,24 +12,25 @@
 
 ## File Map
 
-| File | Status | Purpose |
-|---|---|---|
-| `apps/main/src/tasks/dto/list-tasks-query.dto.ts` | Modify | Add `dueBefore`, `dueAfter`, `noDate` |
-| `apps/main/src/tasks/tasks.service.ts` | Modify | Apply new query params in `list()` |
-| `apps/main/src/tasks/tasks.controller.spec.ts` | Modify | Integration tests for new params |
-| `packages/api-client/src/client.types.ts` | Modify | Add fields to `ListTasksParams` |
-| `packages/api-client/src/client.ts` | Modify | Update `listTasks()` |
-| `apps/web/src/components/tasks/ScrollSentinel.tsx` | Create | IntersectionObserver scroll trigger |
-| `apps/web/src/components/tasks/TaskList.tsx` | Modify | Add pagination props + sentinel |
-| `apps/web/src/hooks/useGroupedTaskQueries.ts` | Create | 5 per-bucket `useInfiniteQuery` calls |
-| `apps/web/src/components/tasks/GroupedTaskList.tsx` | Modify | Add paginated mode |
-| `apps/web/src/pages/TasksPage.tsx` | Modify | Wire up infinite queries throughout |
+| File                                                | Status | Purpose                               |
+| --------------------------------------------------- | ------ | ------------------------------------- |
+| `apps/main/src/tasks/dto/list-tasks-query.dto.ts`   | Modify | Add `dueBefore`, `dueAfter`, `noDate` |
+| `apps/main/src/tasks/tasks.service.ts`              | Modify | Apply new query params in `list()`    |
+| `apps/main/src/tasks/tasks.controller.spec.ts`      | Modify | Integration tests for new params      |
+| `packages/api-client/src/client.types.ts`           | Modify | Add fields to `ListTasksParams`       |
+| `packages/api-client/src/client.ts`                 | Modify | Update `listTasks()`                  |
+| `apps/web/src/components/tasks/ScrollSentinel.tsx`  | Create | IntersectionObserver scroll trigger   |
+| `apps/web/src/components/tasks/TaskList.tsx`        | Modify | Add pagination props + sentinel       |
+| `apps/web/src/hooks/useGroupedTaskQueries.ts`       | Create | 5 per-bucket `useInfiniteQuery` calls |
+| `apps/web/src/components/tasks/GroupedTaskList.tsx` | Modify | Add paginated mode                    |
+| `apps/web/src/pages/TasksPage.tsx`                  | Modify | Wire up infinite queries throughout   |
 
 ---
 
 ## Task 1: Backend — Add `dueBefore`, `dueAfter`, `noDate` query params
 
 **Files:**
+
 - Modify: `apps/main/src/tasks/dto/list-tasks-query.dto.ts`
 - Modify: `apps/main/src/tasks/tasks.service.ts`
 
@@ -97,21 +98,21 @@ The full file after the edit should end with:
 In `apps/main/src/tasks/tasks.service.ts`, immediately after the `if (query.lastUpdatedFromDate)` block (around line 65) and before the `const page = ...` line, add:
 
 ```ts
-        if (query.dueBefore) {
-            const existing = (filter['due.date'] as Record<string, unknown>) ?? {};
+if (query.dueBefore) {
+    const existing = (filter['due.date'] as Record<string, unknown>) ?? {};
 
-            filter['due.date'] = { ...existing, $lt: new Date(query.dueBefore) };
-        }
+    filter['due.date'] = { ...existing, $lt: new Date(query.dueBefore) };
+}
 
-        if (query.dueAfter) {
-            const existing = (filter['due.date'] as Record<string, unknown>) ?? {};
+if (query.dueAfter) {
+    const existing = (filter['due.date'] as Record<string, unknown>) ?? {};
 
-            filter['due.date'] = { ...existing, $gte: new Date(query.dueAfter) };
-        }
+    filter['due.date'] = { ...existing, $gte: new Date(query.dueAfter) };
+}
 
-        if (query.noDate) {
-            filter['due'] = null;
-        }
+if (query.noDate) {
+    filter['due'] = null;
+}
 ```
 
 - [ ] **Step 3: Run existing tests to make sure nothing is broken**
@@ -134,6 +135,7 @@ git commit -m "feat(main): add dueBefore, dueAfter, noDate query params to task 
 ## Task 2: Backend — Integration tests for new params
 
 **Files:**
+
 - Modify: `apps/main/src/tasks/tasks.controller.spec.ts`
 
 - [ ] **Step 1: Add integration tests for new query params**
@@ -141,137 +143,149 @@ git commit -m "feat(main): add dueBefore, dueAfter, noDate query params to task 
 Add the following `it` blocks inside the existing `describe('TasksModule', ...)` block in `apps/main/src/tasks/tasks.controller.spec.ts`, after the last existing test:
 
 ```ts
-    it('GET /tasks?noDate=true returns only tasks without a due date', async () => {
-        const title = `nodate-task-${Date.now()}`;
+it('GET /tasks?noDate=true returns only tasks without a due date', async () => {
+    const title = `nodate-task-${Date.now()}`;
 
+    await app.inject({
+        method: 'POST',
+        url: '/tasks',
+        payload: { title, source: 'local' },
+        headers: { authorization: `Bearer ${jwt}` },
+    });
+
+    const res = await app.inject({
+        method: 'GET',
+        url: '/tasks?noDate=true&status=open',
+        headers: { authorization: `Bearer ${jwt}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+
+    const tasks = JSON.parse(res.body) as Array<{ title: string; due: unknown }>;
+
+    expect(tasks.some((t) => t.title === title)).toBe(true);
+    expect(tasks.every((t) => t.due === null)).toBe(true);
+});
+
+it('GET /tasks?dueBefore= returns only tasks with due.date before that date', async () => {
+    const pastTitle = `past-task-${Date.now()}`;
+    const futureTitle = `future-task-${Date.now()}`;
+    const yesterday = new Date();
+
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
+    const nextYear = new Date();
+
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+    await app.inject({
+        method: 'POST',
+        url: '/tasks',
+        payload: {
+            title: pastTitle,
+            source: 'local',
+            due: { date: yesterday.toISOString(), timezone: null, recurrence: null },
+        },
+        headers: { authorization: `Bearer ${jwt}` },
+    });
+
+    await app.inject({
+        method: 'POST',
+        url: '/tasks',
+        payload: {
+            title: futureTitle,
+            source: 'local',
+            due: { date: nextYear.toISOString(), timezone: null, recurrence: null },
+        },
+        headers: { authorization: `Bearer ${jwt}` },
+    });
+
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    const res = await app.inject({
+        method: 'GET',
+        url: `/tasks?dueBefore=${encodeURIComponent(today.toISOString())}&status=open`,
+        headers: { authorization: `Bearer ${jwt}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+
+    const tasks = JSON.parse(res.body) as Array<{ title: string }>;
+
+    expect(tasks.some((t) => t.title === pastTitle)).toBe(true);
+    expect(tasks.some((t) => t.title === futureTitle)).toBe(false);
+});
+
+it('GET /tasks?dueAfter= returns only tasks with due.date on or after that date', async () => {
+    const futureTitle = `future-after-${Date.now()}`;
+    const nextYear = new Date();
+
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+    await app.inject({
+        method: 'POST',
+        url: '/tasks',
+        payload: {
+            title: futureTitle,
+            source: 'local',
+            due: { date: nextYear.toISOString(), timezone: null, recurrence: null },
+        },
+        headers: { authorization: `Bearer ${jwt}` },
+    });
+
+    const tomorrow = new Date();
+
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const res = await app.inject({
+        method: 'GET',
+        url: `/tasks?dueAfter=${encodeURIComponent(tomorrow.toISOString())}&status=open`,
+        headers: { authorization: `Bearer ${jwt}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+
+    const tasks = JSON.parse(res.body) as Array<{ title: string }>;
+
+    expect(tasks.some((t) => t.title === futureTitle)).toBe(true);
+});
+
+it('GET /tasks?page=1&limit=2 paginates correctly', async () => {
+    // Create 3 tasks
+    for (let i = 0; i < 3; i++) {
         await app.inject({
             method: 'POST',
             url: '/tasks',
-            payload: { title, source: 'local' },
+            payload: { title: `page-task-${Date.now()}-${i}`, source: 'local' },
             headers: { authorization: `Bearer ${jwt}` },
         });
+    }
 
-        const res = await app.inject({
-            method: 'GET',
-            url: '/tasks?noDate=true&status=open',
-            headers: { authorization: `Bearer ${jwt}` },
-        });
-
-        expect(res.statusCode).toBe(200);
-
-        const tasks = JSON.parse(res.body) as Array<{ title: string; due: unknown }>;
-
-        expect(tasks.some((t) => t.title === title)).toBe(true);
-        expect(tasks.every((t) => t.due === null)).toBe(true);
+    const page1 = await app.inject({
+        method: 'GET',
+        url: '/tasks?page=1&limit=2&noDate=true&status=open',
+        headers: { authorization: `Bearer ${jwt}` },
+    });
+    const page2 = await app.inject({
+        method: 'GET',
+        url: '/tasks?page=2&limit=2&noDate=true&status=open',
+        headers: { authorization: `Bearer ${jwt}` },
     });
 
-    it('GET /tasks?dueBefore= returns only tasks with due.date before that date', async () => {
-        const pastTitle = `past-task-${Date.now()}`;
-        const futureTitle = `future-task-${Date.now()}`;
-        const yesterday = new Date();
+    expect(page1.statusCode).toBe(200);
+    expect(page2.statusCode).toBe(200);
 
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0);
+    const p1 = JSON.parse(page1.body) as unknown[];
+    const p2 = JSON.parse(page2.body) as unknown[];
 
-        const nextYear = new Date();
-
-        nextYear.setFullYear(nextYear.getFullYear() + 1);
-
-        await app.inject({
-            method: 'POST',
-            url: '/tasks',
-            payload: { title: pastTitle, source: 'local', due: { date: yesterday.toISOString(), timezone: null, recurrence: null } },
-            headers: { authorization: `Bearer ${jwt}` },
-        });
-
-        await app.inject({
-            method: 'POST',
-            url: '/tasks',
-            payload: { title: futureTitle, source: 'local', due: { date: nextYear.toISOString(), timezone: null, recurrence: null } },
-            headers: { authorization: `Bearer ${jwt}` },
-        });
-
-        const today = new Date();
-
-        today.setHours(0, 0, 0, 0);
-
-        const res = await app.inject({
-            method: 'GET',
-            url: `/tasks?dueBefore=${encodeURIComponent(today.toISOString())}&status=open`,
-            headers: { authorization: `Bearer ${jwt}` },
-        });
-
-        expect(res.statusCode).toBe(200);
-
-        const tasks = JSON.parse(res.body) as Array<{ title: string }>;
-
-        expect(tasks.some((t) => t.title === pastTitle)).toBe(true);
-        expect(tasks.some((t) => t.title === futureTitle)).toBe(false);
-    });
-
-    it('GET /tasks?dueAfter= returns only tasks with due.date on or after that date', async () => {
-        const futureTitle = `future-after-${Date.now()}`;
-        const nextYear = new Date();
-
-        nextYear.setFullYear(nextYear.getFullYear() + 1);
-
-        await app.inject({
-            method: 'POST',
-            url: '/tasks',
-            payload: { title: futureTitle, source: 'local', due: { date: nextYear.toISOString(), timezone: null, recurrence: null } },
-            headers: { authorization: `Bearer ${jwt}` },
-        });
-
-        const tomorrow = new Date();
-
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-
-        const res = await app.inject({
-            method: 'GET',
-            url: `/tasks?dueAfter=${encodeURIComponent(tomorrow.toISOString())}&status=open`,
-            headers: { authorization: `Bearer ${jwt}` },
-        });
-
-        expect(res.statusCode).toBe(200);
-
-        const tasks = JSON.parse(res.body) as Array<{ title: string }>;
-
-        expect(tasks.some((t) => t.title === futureTitle)).toBe(true);
-    });
-
-    it('GET /tasks?page=1&limit=2 paginates correctly', async () => {
-        // Create 3 tasks
-        for (let i = 0; i < 3; i++) {
-            await app.inject({
-                method: 'POST',
-                url: '/tasks',
-                payload: { title: `page-task-${Date.now()}-${i}`, source: 'local' },
-                headers: { authorization: `Bearer ${jwt}` },
-            });
-        }
-
-        const page1 = await app.inject({
-            method: 'GET',
-            url: '/tasks?page=1&limit=2&noDate=true&status=open',
-            headers: { authorization: `Bearer ${jwt}` },
-        });
-        const page2 = await app.inject({
-            method: 'GET',
-            url: '/tasks?page=2&limit=2&noDate=true&status=open',
-            headers: { authorization: `Bearer ${jwt}` },
-        });
-
-        expect(page1.statusCode).toBe(200);
-        expect(page2.statusCode).toBe(200);
-
-        const p1 = JSON.parse(page1.body) as unknown[];
-        const p2 = JSON.parse(page2.body) as unknown[];
-
-        expect(p1.length).toBe(2);
-        // page2 has at least 1 task (we created 3 no-date tasks)
-        expect(p2.length).toBeGreaterThanOrEqual(1);
-    });
+    expect(p1.length).toBe(2);
+    // page2 has at least 1 task (we created 3 no-date tasks)
+    expect(p2.length).toBeGreaterThanOrEqual(1);
+});
 ```
 
 - [ ] **Step 2: Run tests**
@@ -294,6 +308,7 @@ git commit -m "test(main): add integration tests for dueBefore, dueAfter, noDate
 ## Task 3: API Client — Add pagination params to `ListTasksParams`
 
 **Files:**
+
 - Modify: `packages/api-client/src/client.types.ts`
 - Modify: `packages/api-client/src/client.ts`
 
@@ -381,6 +396,7 @@ git commit -m "feat(api-client): add page, limit, status, dueBefore, dueAfter, n
 ## Task 4: Web — `ScrollSentinel` component
 
 **Files:**
+
 - Create: `apps/web/src/components/tasks/ScrollSentinel.tsx`
 
 - [ ] **Step 1: Create `ScrollSentinel.tsx`**
@@ -446,6 +462,7 @@ git commit -m "feat(web): add ScrollSentinel component with IntersectionObserver
 ## Task 5: Web — Update `TaskList` for infinite scroll
 
 **Files:**
+
 - Modify: `apps/web/src/components/tasks/TaskList.tsx`
 
 - [ ] **Step 1: Replace `TaskList.tsx`**
@@ -528,6 +545,7 @@ git commit -m "feat(web): add infinite scroll props and ScrollSentinel to TaskLi
 ## Task 6: Web — `useGroupedTaskQueries` hook
 
 **Files:**
+
 - Create: `apps/web/src/hooks/useGroupedTaskQueries.ts`
 
 The hook runs 5 independent `useInfiniteQuery` calls. Date boundaries are calculated in local time (matching `bucketTasks` logic).
@@ -579,21 +597,27 @@ function nextWeekMondayMidnight(): Date {
     return new Date(today.getFullYear(), today.getMonth(), today.getDate() + daysUntilNextMonday);
 }
 
-function toBucketResult(
-    query: ReturnType<typeof useInfiniteQuery<TaskDto[]>>,
-): BucketQueryResult {
+function toBucketResult(query: ReturnType<typeof useInfiniteQuery<TaskDto[]>>): BucketQueryResult {
     return {
         tasks: query.data?.pages.flat() ?? [],
         isLoading: query.isLoading,
         hasNextPage: query.hasNextPage,
         isFetchingNextPage: query.isFetchingNextPage,
         // Wrap to discard the Promise — callers only need the side effect.
-        fetchNextPage: () => { void query.fetchNextPage(); },
+        fetchNextPage: () => {
+            void query.fetchNextPage();
+        },
     };
 }
 
 /** Runs 5 independent paginated queries — one per date bucket in the grouped 'all' view. */
-export function useGroupedTaskQueries({ api, enabled = true }: { api: CtmApiClient; enabled?: boolean }): GroupedQueryResults {
+export function useGroupedTaskQueries({
+    api,
+    enabled = true,
+}: {
+    api: CtmApiClient;
+    enabled?: boolean;
+}): GroupedQueryResults {
     const today = todayMidnight().toISOString();
     const tomorrow = tomorrowMidnight().toISOString();
     const nextMonday = nextWeekMondayMidnight().toISOString();
@@ -603,18 +627,15 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: CtmApiClie
         queryFn: ({ pageParam }) =>
             api.listTasks({ status: 'open', dueBefore: today, page: pageParam as number, limit: PAGE_SIZE }),
         initialPageParam: 1,
-        getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+        getNextPageParam: (lastPage, pages) => (lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined),
         enabled,
     });
 
     const todayQ = useInfiniteQuery<TaskDto[]>({
         queryKey: ['tasks', 'grouped', 'today'],
-        queryFn: ({ pageParam }) =>
-            api.listTasks({ filter: 'today', page: pageParam as number, limit: PAGE_SIZE }),
+        queryFn: ({ pageParam }) => api.listTasks({ filter: 'today', page: pageParam as number, limit: PAGE_SIZE }),
         initialPageParam: 1,
-        getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+        getNextPageParam: (lastPage, pages) => (lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined),
         enabled,
     });
 
@@ -629,8 +650,7 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: CtmApiClie
                 limit: PAGE_SIZE,
             }),
         initialPageParam: 1,
-        getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+        getNextPageParam: (lastPage, pages) => (lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined),
         enabled,
     });
 
@@ -639,8 +659,7 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: CtmApiClie
         queryFn: ({ pageParam }) =>
             api.listTasks({ status: 'open', dueAfter: nextMonday, page: pageParam as number, limit: PAGE_SIZE }),
         initialPageParam: 1,
-        getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+        getNextPageParam: (lastPage, pages) => (lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined),
         enabled,
     });
 
@@ -649,8 +668,7 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: CtmApiClie
         queryFn: ({ pageParam }) =>
             api.listTasks({ status: 'open', noDate: true, page: pageParam as number, limit: PAGE_SIZE }),
         initialPageParam: 1,
-        getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+        getNextPageParam: (lastPage, pages) => (lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined),
         enabled,
     });
 
@@ -684,6 +702,7 @@ git commit -m "feat(web): add useGroupedTaskQueries hook for per-bucket infinite
 ## Task 7: Web — Update `GroupedTaskList` for paginated mode
 
 **Files:**
+
 - Modify: `apps/web/src/components/tasks/GroupedTaskList.tsx`
 
 - [ ] **Step 1: Replace `GroupedTaskList.tsx`**
@@ -833,9 +852,7 @@ export function GroupedTaskList({
     if (groupedResults) {
         const anyLoading = Object.values(groupedResults).some((r) => r.isLoading);
         const allEmpty =
-            !anyLoading &&
-            Object.values(groupedResults).every((r) => r.tasks.length === 0) &&
-            doneTasks.length === 0;
+            !anyLoading && Object.values(groupedResults).every((r) => r.tasks.length === 0) && doneTasks.length === 0;
 
         if (allEmpty) {
             return (
@@ -942,6 +959,7 @@ git commit -m "feat(web): update GroupedTaskList to support paginated mode with 
 ## Task 8: Web — Wire `TasksPage` with infinite queries
 
 **Files:**
+
 - Modify: `apps/web/src/pages/TasksPage.tsx`
 
 This task replaces the single `useQuery` call with `useInfiniteQuery` for flat filters and `useGroupedTaskQueries` for the grouped 'all' filter. It also tracks done tasks in local state for the 'all' view.
@@ -1064,8 +1082,7 @@ export function TasksPage(): React.JSX.Element {
                 lastUpdatedFromDate: filter === 'done' ? midnightYesterday : undefined,
             }),
         initialPageParam: 1,
-        getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+        getNextPageParam: (lastPage, pages) => (lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined),
         enabled: filter !== 'all',
     });
 
@@ -1136,9 +1153,7 @@ export function TasksPage(): React.JSX.Element {
 
                 return {
                     ...old,
-                    pages: old.pages.map((page) =>
-                        page.map((t) => (t.id === id ? { ...t, completed } : t)),
-                    ),
+                    pages: old.pages.map((page) => page.map((t) => (t.id === id ? { ...t, completed } : t))),
                 };
             });
 
@@ -1207,9 +1222,10 @@ export function TasksPage(): React.JSX.Element {
         [statusMutation],
     );
 
-    const totalLoaded = filter === 'all'
-        ? Object.values(groupedResults).reduce((sum, r) => sum + r.tasks.length, 0) + doneTasks.length
-        : flatTasks.length;
+    const totalLoaded =
+        filter === 'all'
+            ? Object.values(groupedResults).reduce((sum, r) => sum + r.tasks.length, 0) + doneTasks.length
+            : flatTasks.length;
 
     const isLoading = filter === 'all' ? false : flatIsLoading;
     const isError = filter === 'all' ? false : flatIsError;

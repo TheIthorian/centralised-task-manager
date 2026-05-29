@@ -240,14 +240,22 @@ describe('TasksModule', () => {
         await app.inject({
             method: 'POST',
             url: '/tasks',
-            payload: { title: pastTitle, source: 'local', due: { date: yesterday.toISOString(), timezone: null, recurrence: null } },
+            payload: {
+                title: pastTitle,
+                source: 'local',
+                due: { date: yesterday.toISOString(), timezone: null, recurrence: null },
+            },
             headers: { authorization: `Bearer ${jwt}` },
         });
 
         await app.inject({
             method: 'POST',
             url: '/tasks',
-            payload: { title: futureTitle, source: 'local', due: { date: nextYear.toISOString(), timezone: null, recurrence: null } },
+            payload: {
+                title: futureTitle,
+                source: 'local',
+                due: { date: nextYear.toISOString(), timezone: null, recurrence: null },
+            },
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -278,7 +286,11 @@ describe('TasksModule', () => {
         await app.inject({
             method: 'POST',
             url: '/tasks',
-            payload: { title: futureTitle, source: 'local', due: { date: nextYear.toISOString(), timezone: null, recurrence: null } },
+            payload: {
+                title: futureTitle,
+                source: 'local',
+                due: { date: nextYear.toISOString(), timezone: null, recurrence: null },
+            },
             headers: { authorization: `Bearer ${jwt}` },
         });
 

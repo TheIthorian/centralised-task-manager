@@ -10,6 +10,7 @@ The task list currently fetches at most one page (default 50) of tasks per filte
 ## Scope
 
 Add infinite scroll (scroll-triggered fetch) to all task list views:
+
 - Flat list filters: **today**, **upcoming**, **done**
 - Grouped **all** view: per-bucket independent pagination
 
@@ -23,11 +24,11 @@ Page size: **20 tasks per page**.
 
 ### `ListTasksQueryDto` additions
 
-| Param | Type | Description |
-|---|---|---|
+| Param       | Type           | Description                             |
+| ----------- | -------------- | --------------------------------------- |
 | `dueBefore` | `string` (ISO) | Only tasks where `due.date < dueBefore` |
-| `dueAfter` | `string` (ISO) | Only tasks where `due.date >= dueAfter` |
-| `noDate` | `boolean` | Only tasks with no `due.date` field |
+| `dueAfter`  | `string` (ISO) | Only tasks where `due.date >= dueAfter` |
+| `noDate`    | `boolean`      | Only tasks with no `due.date` field     |
 
 These work orthogonally to the existing `filter`, `status`, `page`, `limit` params.
 
@@ -103,13 +104,13 @@ Render a "Loading more…" indicator while `isFetchingNextPage` is true. Render 
 
 Runs 5 independent `useInfiniteQuery` calls. Each query maps to a bucket:
 
-| Bucket | API params |
-|---|---|
-| overdue | `status=open, dueBefore=todayStart` |
-| today | `filter=today` |
+| Bucket   | API params                                                        |
+| -------- | ----------------------------------------------------------------- |
+| overdue  | `status=open, dueBefore=todayStart`                               |
+| today    | `filter=today`                                                    |
 | thisWeek | `status=open, dueAfter=tomorrowStart, dueBefore=endOfWeekPlusOne` |
-| upcoming | `status=open, dueAfter=endOfWeekPlusOne` |
-| noDate | `status=open, noDate=true` |
+| upcoming | `status=open, dueAfter=endOfWeekPlusOne`                          |
+| noDate   | `status=open, noDate=true`                                        |
 
 Date boundaries are calculated in **local time** (matching `bucketTasks` logic) and converted to ISO strings before being passed to the API.
 
@@ -117,10 +118,10 @@ Returns per-bucket shape:
 
 ```ts
 type BucketQueryResult = {
-  tasks: TaskDto[];
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  fetchNextPage: () => void;
+    tasks: TaskDto[];
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    fetchNextPage: () => void;
 };
 
 type GroupedQueryResults = Record<'overdue' | 'today' | 'thisWeek' | 'upcoming' | 'noDate', BucketQueryResult>;
