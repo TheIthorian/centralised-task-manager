@@ -1,0 +1,214 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
+import { type Model, Types } from 'mongoose';
+import { ImportService } from './import.service.js';
+import { User, UserSchema, type UserDocument } from '../users/schemas/user.schema.js';
+import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
+import { Notification, NotificationSchema, type NotificationDocument } from '../notifications/schemas/notification.schema.js';
+import type { ExportEnvelopeDto, ExportTaskDto, NotificationDto } from '@ctm/api-client';
+
+function makeEnvelope(overrides: Partial<ExportEnvelopeDto> = {}): ExportEnvelopeDto {
+    return {
+        version: '1',
+        exportedAt: new Date().toISOString(),
+        exportId: 'test-export-id',
+        part: 1,
+        totalParts: 1,
+        tasks: [],
+        notifications: [],
+        ...overrides,
+    };
+}
+
+function makeTask(overrides: Partial<ExportTaskDto> = {}): ExportTaskDto {
+    return {
+        id: new Types.ObjectId().toHexString(),
+        source: 'local',
+        sourceId: `task-${Date.now()}`,
+        title: 'Test Task',
+        description: null,
+        status: 'open',
+        priority: null,
+        tags: [],
+        due: null,
+        deadlineDate: null,
+        duration: null,
+        fuzzyDeadline: null,
+        reminders: [],
+        dueDateNotifiedAt: null,
+        locations: [],
+        syncedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...overrides,
+    };
+}
+
+function makeNotification(overrides: Partial<NotificationDto> = {}): NotificationDto {
+    return {
+        id: new Types.ObjectId().toHexString(),
+        type: 'reminder',
+        title: 'Test Notification',
+        body: 'Body text',
+        data: null,
+        read: false,
+        createdAt: new Date().toISOString(),
+        ...overrides,
+    };
+}
+
+describe('ImportService', () => {
+    let module: TestingModule;
+    let service: ImportService;
+    let userModel: Model<UserDocument>;
+    let taskModel: Model<TaskDocument>;
+    let notificationModel: Model<NotificationDocument>;
+
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            imports: [
+                MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
+                MongooseModule.forFeature([
+                    { name: User.name, schema: UserSchema },
+                    { name: Task.name, schema: TaskSchema },
+                    { name: Notification.name, schema: NotificationSchema },
+                ]),
+            ],
+            providers: [ImportService],
+        }).compile();
+
+        service = module.get(ImportService);
+        userModel = module.get<Model<UserDocument>>(getModelToken(User.name));
+        taskModel = module.get<Model<TaskDocument>>(getModelToken(Task.name));
+        notificationModel = module.get<Model<NotificationDocument>>(getModelToken(Notification.name));
+    });
+
+    afterAll(() => module.close());
+
+    it('rejects unknown version', async () => {
+        const envelope = makeEnvelope({ version: '99' as '1' });
+        await expect(
+            service.import({ userId: new Types.ObjectId().toHexString(), envelopes: [envelope], onConflict: 'ignore' }),
+        ).rejects.toThrow('Unsupported export version');
+    });
+
+    it('imports new tasks and returns correct summary', async () => {
+        const ts = Date.now();
+        const user = await userModel.create({ email: `import-new-${ts}@test.com`, passwordHash: 'x', name: 'New' });
+
+        const result = await service.import({
+            userId: String(user._id),
+            envelopes: [makeEnvelope({ tasks: [makeTask({ sourceId: `new-task-${ts}` })] })],
+            onConflict: 'ignore',
+        });
+
+        expect(result.imported.tasks).toBe(1);
+        expect(result.skipped.tasks).toBe(0);
+
+        const saved = await taskModel.findOne({ userId: user._id, sourceId: `new-task-${ts}` });
+        expect(saved?.title).toBe('Test Task');
+    });
+
+    it('onConflict=ignore skips existing tasks', async () => {
+        const ts = Date.now();
+        const user = await userModel.create({ email: `import-ignore-${ts}@test.com`, passwordHash: 'x', name: 'Orig' });
+        await taskModel.create({ userId: user._id, source: 'local', sourceId: `t-${ts}`, title: 'Original', status: 'open', syncedAt: new Date() });
+
+        const result = await service.import({
+            userId: String(user._id),
+            envelopes: [makeEnvelope({ tasks: [makeTask({ sourceId: `t-${ts}`, title: 'Updated' })] })],
+            onConflict: 'ignore',
+        });
+
+        expect(result.skipped.tasks).toBe(1);
+        expect(result.imported.tasks).toBe(0);
+
+        const task = await taskModel.findOne({ userId: user._id, source: 'local', sourceId: `t-${ts}` });
+        expect(task?.title).toBe('Original');
+    });
+
+    it('onConflict=replace overwrites existing tasks', async () => {
+        const ts = Date.now();
+        const user = await userModel.create({ email: `import-replace-${ts}@test.com`, passwordHash: 'x', name: 'R' });
+        await taskModel.create({ userId: user._id, source: 'local', sourceId: `r-${ts}`, title: 'Old', status: 'open', syncedAt: new Date() });
+
+        const result = await service.import({
+            userId: String(user._id),
+            envelopes: [makeEnvelope({ tasks: [makeTask({ sourceId: `r-${ts}`, title: 'New Title' })] })],
+            onConflict: 'replace',
+        });
+
+        expect(result.imported.tasks).toBe(1);
+
+        const task = await taskModel.findOne({ userId: user._id, source: 'local', sourceId: `r-${ts}` });
+        expect(task?.title).toBe('New Title');
+    });
+
+    it('imports notifications and deduplicates by _id with ignore', async () => {
+        const ts = Date.now();
+        const user = await userModel.create({ email: `import-notif-${ts}@test.com`, passwordHash: 'x', name: 'N' });
+        const notifId = new Types.ObjectId();
+        await notificationModel.create({ _id: notifId, userId: user._id, type: 'reminder', title: 'Old', body: 'B' });
+
+        const result = await service.import({
+            userId: String(user._id),
+            envelopes: [makeEnvelope({ notifications: [makeNotification({ id: notifId.toHexString(), title: 'New' })] })],
+            onConflict: 'ignore',
+        });
+
+        expect(result.skipped.notifications).toBe(1);
+        const n = await notificationModel.findById(notifId);
+        expect(n?.title).toBe('Old');
+    });
+
+    it('onConflict=replace updates profile name and notificationPreferences', async () => {
+        const ts = Date.now();
+        const user = await userModel.create({ email: `import-profile-${ts}@test.com`, passwordHash: 'x', name: 'Old Name' });
+
+        await service.import({
+            userId: String(user._id),
+            envelopes: [makeEnvelope({
+                profile: {
+                    email: user.email,
+                    name: 'New Name',
+                    notificationPreferences: {
+                        connectorReconnect: { inApp: false, discord: false, email: false },
+                        dailySummary: { inApp: false, discord: false, email: false },
+                        reminder: { inApp: false, discord: false, email: false },
+                        upcomingDeadline: { inApp: false, discord: false, email: false },
+                    },
+                },
+            })],
+            onConflict: 'replace',
+        });
+
+        const updated = await userModel.findById(user._id);
+        expect(updated?.name).toBe('New Name');
+    });
+
+    it('onConflict=ignore skips profile update', async () => {
+        const ts = Date.now();
+        const user = await userModel.create({ email: `import-profile-ignore-${ts}@test.com`, passwordHash: 'x', name: 'Keep' });
+
+        await service.import({
+            userId: String(user._id),
+            envelopes: [makeEnvelope({
+                profile: {
+                    email: user.email,
+                    name: 'Changed',
+                    notificationPreferences: {
+                        connectorReconnect: { inApp: false, discord: false, email: false },
+                        dailySummary: { inApp: false, discord: false, email: false },
+                        reminder: { inApp: false, discord: false, email: false },
+                        upcomingDeadline: { inApp: false, discord: false, email: false },
+                    },
+                },
+            })],
+            onConflict: 'ignore',
+        });
+
+        const updated = await userModel.findById(user._id);
+        expect(updated?.name).toBe('Keep');
+    });
+});
