@@ -62,6 +62,18 @@ export type ListTasksParams = {
     filter?: TaskFilter;
     /** ISO date string — only return tasks updated on or after this date. */
     lastUpdatedFromDate?: string;
+    /** Page number (1-based). */
+    page?: number;
+    /** Number of tasks per page. */
+    limit?: number;
+    /** Filter by status directly (alternative to `filter` preset). */
+    status?: 'open' | 'done' | 'archived';
+    /** ISO date string — only tasks where due.date < dueBefore. Must not be combined with the `filter` preset. */
+    dueBefore?: string;
+    /** ISO date string — only tasks where due.date >= dueAfter. Must not be combined with the `filter` preset. */
+    dueAfter?: string;
+    /** When true, only return tasks with no due date. */
+    noDate?: boolean;
 };
 
 /** Parameters for {@link CtmApiClient.getConnectorAuthUrl}. */

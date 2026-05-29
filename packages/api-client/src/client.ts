@@ -103,10 +103,31 @@ export class CtmApiClient {
     }
 
     /** List tasks, optionally filtered by UI filter and/or update date. */
-    async listTasks({ filter = 'all', lastUpdatedFromDate }: ListTasksParams = {}): Promise<TaskDto[]> {
-        const params = this.filterToParams(filter);
+    async listTasks({
+        filter,
+        lastUpdatedFromDate,
+        page,
+        limit,
+        status,
+        dueBefore,
+        dueAfter,
+        noDate,
+    }: ListTasksParams = {}): Promise<TaskDto[]> {
+        const params: Record<string, string> = filter ? this.filterToParams(filter) : {};
+
+        if (status) params['status'] = status;
 
         if (lastUpdatedFromDate) params['lastUpdatedFromDate'] = lastUpdatedFromDate;
+
+        if (page !== undefined) params['page'] = String(page);
+
+        if (limit !== undefined) params['limit'] = String(limit);
+
+        if (dueBefore) params['dueBefore'] = dueBefore;
+
+        if (dueAfter) params['dueAfter'] = dueAfter;
+
+        if (noDate !== undefined) params['noDate'] = String(noDate);
 
         return this.request<TaskDto[]>({
             method: 'GET',
