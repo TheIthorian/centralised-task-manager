@@ -292,7 +292,7 @@ export class CtmApiClient {
                 return { filter: 'upcoming' };
             case 'all':
             default:
-                return {};
+                return { filter: 'all' };
         }
     }
 
