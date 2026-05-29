@@ -14,6 +14,34 @@
     --shadow-nb-lg: 5px 5px 0px var(--color-nb-black);
 }
 
+@keyframes wobble {
+    0%, 100% { transform: rotate(0deg) translateX(0); }
+    15%       { transform: rotate(-1.5deg) translateX(-3px); }
+    30%       { transform: rotate(1.5deg) translateX(3px); }
+    45%       { transform: rotate(-1deg) translateX(-2px); }
+    60%       { transform: rotate(1deg) translateX(2px); }
+    75%       { transform: rotate(-0.5deg) translateX(-1px); }
+}
+
+@keyframes marching-ants {
+    to { background-position: 8px 0, -8px 100%, 0 -8px, 100% 8px; }
+}
+
+@keyframes dash-march {
+    to { stroke-dashoffset: -16; }
+}
+
+@keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(17, 17, 17, 0.9), 3px 3px 0 #111; }
+    70%  { box-shadow: 0 0 0 8px rgba(17, 17, 17, 0), 3px 3px 0 #111; }
+    100% { box-shadow: 0 0 0 0 rgba(17, 17, 17, 0), 3px 3px 0 #111; }
+}
+
+@keyframes neon-pulse {
+    0%, 100% { box-shadow: 0 0 6px 2px #00ffe7, 0 0 20px 4px #00ffe780, 3px 3px 0 #111; }
+    50%       { box-shadow: 0 0 12px 4px #00ffe7, 0 0 40px 10px #00ffe780, 3px 3px 0 #111; }
+}
+
 * {
     box-sizing: border-box;
 }

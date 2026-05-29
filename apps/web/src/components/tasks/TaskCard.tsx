@@ -1,10 +1,12 @@
 import clsx from 'clsx';
+import { useEffect, useRef } from 'react';
 import { Badge, Checkbox } from '@ctm/ui';
 import type { Duration, TaskDto } from '@ctm/api-client';
 import { SourceBadge } from './SourceBadge.js';
 
 type TaskCardProps = {
     task: TaskDto;
+    highlighted?: boolean;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
 };
@@ -21,9 +23,50 @@ const priorityVariant = {
 } as const;
 
 /** A single task row card in neobrutalist style. */
-export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.Element {
+export function TaskCard({ task, highlighted = false, onToggle, onEdit }: TaskCardProps): React.JSX.Element {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!highlighted) return;
+
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [highlighted]);
+
     return (
-        <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none flex items-center gap-3 px-3 py-2.5">
+        <div
+            ref={ref}
+            className={clsx(
+                'relative flex items-center gap-3 px-3 py-2.5 shadow-[3px_3px_0px_#111] dark:shadow-none',
+                highlighted
+                    ? 'bg-white dark:bg-neutral-900 border-2 border-transparent'
+                    : 'bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20',
+            )}
+        >
+            {highlighted && (
+                <svg
+                    aria-hidden="true"
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        overflow: 'visible',
+                        pointerEvents: 'none',
+                    }}
+                >
+                    <rect
+                        x="1.5"
+                        y="1.5"
+                        width="calc(100% - 3px)"
+                        height="calc(100% - 3px)"
+                        fill="none"
+                        stroke="#111"
+                        strokeWidth="3"
+                        strokeDasharray="10 5"
+                        className="motion-safe:animate-[dash-march_0.4s_linear_infinite]"
+                    />
+                </svg>
+            )}
             <Checkbox
                 checked={task.completed}
                 onChange={(checked) => onToggle(task.id, checked)}
@@ -52,9 +95,7 @@ export function TaskCard({ task, onToggle, onEdit }: TaskCardProps): React.JSX.E
                         </span>
                     )}
                     {task.duration && (
-                        <span className="text-nb-grey text-xs font-bold">
-                            ⏱ {formatDuration(task.duration)}
-                        </span>
+                        <span className="text-nb-grey text-xs font-bold">⏱ {formatDuration(task.duration)}</span>
                     )}
                 </span>
             </button>

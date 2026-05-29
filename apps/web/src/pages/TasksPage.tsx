@@ -15,10 +15,38 @@ export function TasksPage(): React.JSX.Element {
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
     const taskIdParam = searchParams.get('taskId');
+    const highlightTaskIdParam = searchParams.get('highlightTaskId');
+    const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
     const { api } = useAuth();
 
     const qc = useQueryClient();
+
+    // Highlight task when ?highlightTaskId= is present (e.g. navigated from a notification).
+    useEffect(() => {
+        if (!highlightTaskIdParam) return;
+
+        setHighlightedTaskId(highlightTaskIdParam);
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+
+            next.delete('highlightTaskId');
+
+            return next;
+        }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [highlightTaskIdParam]);
+
+    // Clear highlight when user clicks anywhere.
+    useEffect(() => {
+        if (!highlightedTaskId) return;
+
+        const handler = (): void => setHighlightedTaskId(null);
+
+        document.addEventListener('click', handler, { once: true });
+
+        return () => document.removeEventListener('click', handler);
+    }, [highlightedTaskId]);
 
     // Open the task modal when ?taskId= is present (e.g. navigated from a notification).
     useEffect(() => {
@@ -166,6 +194,7 @@ export function TasksPage(): React.JSX.Element {
                     filter === 'all' ? (
                         <GroupedTaskList
                             tasks={tasks}
+                            highlightedTaskId={highlightedTaskId}
                             onToggle={(id, completed) => {
                                 statusMutation.mutate({ id, completed });
                             }}
@@ -174,6 +203,7 @@ export function TasksPage(): React.JSX.Element {
                     ) : (
                         <TaskList
                             tasks={tasks}
+                            highlightedTaskId={highlightedTaskId}
                             onToggle={(id, completed) => {
                                 statusMutation.mutate({ id, completed });
                             }}

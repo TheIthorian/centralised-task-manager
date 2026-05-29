@@ -4,6 +4,7 @@ import { bucketTasks, type TaskBuckets } from '../../lib/bucket-tasks.js';
 
 type GroupedTaskListProps = {
     tasks: TaskDto[];
+    highlightedTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
 };
@@ -18,14 +19,12 @@ const SECTIONS: SectionDef[] = [
     {
         key: 'overdue',
         label: '🔥 Overdue',
-        chipClass:
-            'border-red-600 bg-red-200 shadow-[2px_2px_0px_#dc2626] text-red-700',
+        chipClass: 'border-red-600 bg-red-200 shadow-[2px_2px_0px_#dc2626] text-red-700',
     },
     {
         key: 'today',
         label: 'Today',
-        chipClass:
-            'border-blue-700 bg-blue-200 shadow-[2px_2px_0px_#1d4ed8] text-blue-800',
+        chipClass: 'border-blue-700 bg-blue-200 shadow-[2px_2px_0px_#1d4ed8] text-blue-800',
     },
     {
         key: 'thisWeek',
@@ -54,7 +53,12 @@ const SECTIONS: SectionDef[] = [
 ];
 
 /** Renders tasks grouped into due-date sections with neobrutalist chip headers. */
-export function GroupedTaskList({ tasks, onToggle, onEdit }: GroupedTaskListProps): React.JSX.Element {
+export function GroupedTaskList({
+    tasks,
+    highlightedTaskId,
+    onToggle,
+    onEdit,
+}: GroupedTaskListProps): React.JSX.Element {
     const buckets = bucketTasks(tasks);
     const isEmpty = Object.values(buckets).every((arr) => arr.length === 0);
 
@@ -85,7 +89,13 @@ export function GroupedTaskList({ tasks, onToggle, onEdit }: GroupedTaskListProp
 
                         <div className="flex flex-col gap-2">
                             {sectionTasks.map((task) => (
-                                <TaskCard key={task.id} task={task} onToggle={onToggle} onEdit={onEdit} />
+                                <TaskCard
+                                    key={task.id}
+                                    task={task}
+                                    highlighted={task.id === highlightedTaskId}
+                                    onToggle={onToggle}
+                                    onEdit={onEdit}
+                                />
                             ))}
                         </div>
                     </div>

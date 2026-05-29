@@ -19,7 +19,7 @@ const TYPE_ICON: Record<NotificationDto['type'], string> = {
 function resolveUrl(n: NotificationDto): string | null {
     const { data } = n;
 
-    if (data.type === 'reminder' && data.taskId) return `/tasks?taskId=${data.taskId}`;
+    if (data.type === 'reminder' && data.taskId) return `/tasks?highlightTaskId=${data.taskId}`;
     if (data.type === 'reminder') return '/tasks';
     if (data.type === 'upcoming_deadline') return '/tasks?filter=upcoming';
     if (data.type === 'connector_reconnect') return '/settings/sources';
@@ -77,10 +77,7 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
     return (
         <>
             {/* Backdrop */}
-            <div
-                className="fixed inset-0 z-40"
-                onClick={onClose}
-            />
+            <div className="fixed inset-0 z-40" onClick={onClose} />
 
             {/* Panel */}
             <div className="fixed top-0 right-0 h-full w-80 max-w-full bg-white dark:bg-neutral-900 border-l-4 border-nb-black dark:border-white/20 z-50 flex flex-col shadow-2xl">
@@ -136,13 +133,9 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
                                 n.read ? 'opacity-50' : ''
                             }`}
                         >
-                            <span className="text-base leading-none mt-0.5 flex-shrink-0">
-                                {TYPE_ICON[n.type]}
-                            </span>
+                            <span className="text-base leading-none mt-0.5 flex-shrink-0">{TYPE_ICON[n.type]}</span>
                             <div className="flex-1 min-w-0">
-                                <p className="font-black text-xs text-nb-black dark:text-white truncate">
-                                    {n.title}
-                                </p>
+                                <p className="font-black text-xs text-nb-black dark:text-white truncate">{n.title}</p>
                                 {n.body && (
                                     <p className="text-xs font-bold text-nb-black/60 dark:text-white/60 mt-0.5 line-clamp-2 whitespace-pre-line">
                                         {n.body}
@@ -152,9 +145,7 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
                                     {new Date(n.createdAt).toLocaleString()}
                                 </p>
                             </div>
-                            {!n.read && (
-                                <span className="w-2 h-2 rounded-full bg-nb-yellow flex-shrink-0 mt-1.5" />
-                            )}
+                            {!n.read && <span className="w-2 h-2 rounded-full bg-nb-yellow flex-shrink-0 mt-1.5" />}
                         </button>
                     ))}
                 </div>
