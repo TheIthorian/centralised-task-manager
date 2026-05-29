@@ -284,4 +284,100 @@ export function registerTasksCommand(program: Command): void {
                 }
             },
         );
+
+    tasks
+        .command('get')
+        .description('Get a single task by ID')
+        .argument('<id>', 'Task ID')
+        .option('--json', 'Output as JSON')
+        .action(async (id: string, opts: { json?: boolean }) => {
+            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const task = await client.getTask({ id });
+
+                if (opts.json) {
+                    print(formatJson(task));
+                } else {
+                    print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'], [taskRow(task)]));
+                }
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
+
+    tasks
+        .command('remove-fuzzy-deadline')
+        .description('Remove the fuzzy deadline from a task')
+        .argument('<id>', 'Task ID')
+        .option('--json', 'Output as JSON')
+        .action(async (id: string, opts: { json?: boolean }) => {
+            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const task = await client.removeFuzzyDeadline({ id });
+
+                if (opts.json) {
+                    print(formatJson(task));
+                } else {
+                    print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'], [taskRow(task)]));
+                }
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
+
+    tasks
+        .command('add-reminder')
+        .description('Add a reminder to a task')
+        .argument('<id>', 'Task ID')
+        .requiredOption('--remind-at <datetime>', 'Reminder ISO datetime (e.g. 2026-06-01T09:00:00Z)')
+        .option('--json', 'Output as JSON')
+        .action(async (id: string, opts: { remindAt: string; json?: boolean }) => {
+            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const reminder = await client.addReminder({ id, dto: { remindAt: opts.remindAt } });
+
+                if (opts.json) {
+                    print(formatJson(reminder));
+                } else {
+                    print(formatTable(['Remind At', 'Fired At'], [[reminder.remindAt, reminder.firedAt ?? '-']]));
+                }
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
+
+    tasks
+        .command('remove-reminder')
+        .description('Remove a reminder from a task by its index')
+        .argument('<id>', 'Task ID')
+        .requiredOption('--index <n>', 'Zero-based index of the reminder to remove')
+        .action(async (id: string, opts: { index: string }) => {
+            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+
+            const index = Number(opts.index);
+
+            if (!Number.isInteger(index) || index < 0) {
+                console.error('--index must be a non-negative integer');
+                process.exit(1);
+            }
+
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                await client.removeReminder({ id, index });
+
+                print(`Reminder ${index} removed from task ${id}.`);
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
 }
