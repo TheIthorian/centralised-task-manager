@@ -123,16 +123,26 @@ export class ImportService {
             read: notification.read,
         };
 
-        if (onConflict === 'ignore') {
-            const result = await this.notificationModel.updateOne(filter, { $setOnInsert: fields }, { upsert: true });
+        try {
+            if (onConflict === 'ignore') {
+                const result = await this.notificationModel.updateOne(filter, { $setOnInsert: fields }, { upsert: true });
 
-            return result.upsertedCount > 0;
+                return result.upsertedCount > 0;
+            }
+
+            await this.notificationModel.updateOne(filter, { $set: fields }, { upsert: true });
+
+            return true;
+        } catch (err: unknown) {
+            if (isDuplicateKeyError(err)) return false;
+
+            throw err;
         }
-
-        await this.notificationModel.updateOne(filter, { $set: fields }, { upsert: true });
-
-        return true;
     }
+}
+
+function isDuplicateKeyError(err: unknown): boolean {
+    return typeof err === 'object' && err !== null && 'code' in err && (err as { code: unknown }).code === 11000;
 }
 
 function taskDtoToFields(t: ExportTaskDto, userId: string): Record<string, unknown> {

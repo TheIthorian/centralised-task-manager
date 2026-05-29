@@ -54,7 +54,7 @@ export class DataPortabilityController {
 
         const data = await this.files.readByPath(storedFile.storagePath);
 
-        void reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+        void reply.header('Content-Disposition', `attachment; filename="${storedFile.filename}"`);
         void reply.header('Content-Type', storedFile.contentType);
         void reply.send(data);
     }
@@ -98,13 +98,19 @@ export class DataPortabilityController {
 
 function isValidEnvelope(value: unknown): value is ExportEnvelopeDto {
     if (typeof value !== 'object' || value === null) return false;
+
     const v = value as Record<string, unknown>;
+
     return (
         typeof v['version'] === 'string' &&
         typeof v['exportId'] === 'string' &&
         typeof v['part'] === 'number' &&
         typeof v['totalParts'] === 'number' &&
         Array.isArray(v['tasks']) &&
-        Array.isArray(v['notifications'])
+        (v['tasks'] as unknown[]).every(
+            (t) => typeof t === 'object' && t !== null && typeof (t as Record<string, unknown>)['source'] === 'string' && typeof (t as Record<string, unknown>)['sourceId'] === 'string',
+        ) &&
+        Array.isArray(v['notifications']) &&
+        (v['notifications'] as unknown[]).every((n) => typeof n === 'object' && n !== null)
     );
 }
