@@ -23,7 +23,7 @@
 | `syncConnector` | `source` | `TaskSyncJobDto` |
 | `getSyncJob` | `source`, `jobId` | `TaskSyncJobDto` |
 | `cancelSyncJob` | `source`, `jobId` | `void` |
-| `setConnectionDetails` | `source`, `details: Record<string, unknown>` (JSON) | `void` |
+| `setConnectionDetails` | `source`, `details: ConnectorDetailsDto` (JSON) | `void` |
 | `listNotionDatabases` | — | `{ id, name }[]` |
 
 ### Notifications
@@ -57,7 +57,7 @@ All changes follow existing patterns in `apps/cli/src/commands/`.
 - `ctm connectors sync <source>` — print `TaskSyncJobDto` as JSON or table [ID, Source, Status, Stage, Synced, Skipped]
 - `ctm connectors sync-status <source> <jobId>` — same output as sync
 - `ctm connectors sync-cancel <source> <jobId>` — print confirmation
-- `ctm connectors set-details <source> --details <json>` — parse JSON, print confirmation
+- `ctm connectors set-details <source> --details <json>` — parse JSON string, validate as `ConnectorDetailsDto` (Zod: `z.record(z.string(), z.unknown()).refine(v => !Array.isArray(v))`), print confirmation
 - `ctm connectors notion-databases` — table: [ID, Name]; `--json`
 
 ### notifications.ts — new subcommands
@@ -94,7 +94,7 @@ All changes follow existing patterns in `apps/mcp/src/mcp/tools/`.
 - `sync_connector` — `{ source }` → JSON sync job; `idempotentHint: false`
 - `get_sync_job` — `{ source, jobId }` → JSON sync job; `readOnlyHint: true`
 - `cancel_sync_job` — `{ source, jobId }` → confirmation; `destructiveHint: true, idempotentHint: true`
-- `set_connection_details` — `{ source, details: z.record(z.unknown()) }` → confirmation; `idempotentHint: true`
+- `set_connection_details` — `{ source, details: z.record(z.string(), z.unknown()) }` (Zod validates as plain object) → confirmation; `idempotentHint: true`
 - `list_notion_databases` — `{}` → JSON array; `readOnlyHint: true`
 
 ### notifications.tool.ts — new tools
@@ -110,6 +110,28 @@ All changes follow existing patterns in `apps/mcp/src/mcp/tools/`.
 ### mcp.service.ts
 
 Import `registerAppsTools` and call it alongside existing registrations.
+
+---
+
+## api-client Type Change
+
+Add to `packages/api-client/src/types.ts`:
+```ts
+/** Connector-specific connection details (e.g. Notion database ID). */
+export type ConnectorDetailsDto = Record<string, unknown>;
+```
+
+Update `SetConnectionDetailsParams` in `client.types.ts`:
+```ts
+export type SetConnectionDetailsParams = {
+    source: string;
+    details: ConnectorDetailsDto;
+};
+```
+
+Export `ConnectorDetailsDto` from `packages/api-client/src/index.ts`.
+
+CLI imports and validates with `z.record(z.string(), z.unknown())` before passing to the client.
 
 ---
 
