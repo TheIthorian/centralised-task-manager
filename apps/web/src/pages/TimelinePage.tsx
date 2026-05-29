@@ -107,7 +107,7 @@ export function TimelinePage(): React.JSX.Element {
     const todayOffsetPx = diffDays(rangeStart, today) * DAY_WIDTH_PX;
 
     return (
-        <div className="p-4 md:p-6 flex flex-col" style={{ height: 'calc(100vh - 4rem)' }}>
+        <div className="p-4 md:p-6 flex flex-col" style={{ height: 'calc(100dvh - 4rem)' }}>
             <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-4">Timeline</h1>
 
             {isLoading && (
