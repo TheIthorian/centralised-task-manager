@@ -28,7 +28,7 @@ export function writeTokens({ accessToken, refreshToken }: StoredAuthTokens): vo
     }
 
     if (refreshToken) {
-        Cookies.set(REFRESH_TOKEN_KEY, refreshToken, { sameSite: 'strict' });
+        Cookies.set(REFRESH_TOKEN_KEY, refreshToken, { sameSite: 'strict', expires: 30 });
     } else {
         Cookies.remove(REFRESH_TOKEN_KEY);
     }

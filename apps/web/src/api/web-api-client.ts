@@ -48,6 +48,7 @@ export class WebApiClient {
     private accessToken: string | null;
     private refreshToken: string | null;
     private apiClient: CtmApiClient;
+    private pendingRefresh: Promise<StoredAuthTokens> | null = null;
 
     constructor({ baseUrl, accessToken, refreshToken, onTokens, onUnauthorized, onError }: WebApiClientOptions) {
         this.baseUrl = baseUrl;
@@ -203,7 +204,11 @@ export class WebApiClient {
     }
 
     /** Update notification preferences for the current user. */
-    async updateNotificationPreferences({ dto }: { dto: UpdateNotificationPreferencesDto }): Promise<NotificationPreferencesDto> {
+    async updateNotificationPreferences({
+        dto,
+    }: {
+        dto: UpdateNotificationPreferencesDto;
+    }): Promise<NotificationPreferencesDto> {
         return this.execute({ request: () => this.apiClient.updateNotificationPreferences({ dto }) });
     }
 
@@ -222,8 +227,14 @@ export class WebApiClient {
         return this.execute({ request: () => this.apiClient.markAllNotificationsRead() });
     }
 
-/** Save connection details for a connector (e.g. Notion database ID). */
-    async setConnectionDetails({ source, details }: { source: string; details: Record<string, unknown> }): Promise<void> {
+    /** Save connection details for a connector (e.g. Notion database ID). */
+    async setConnectionDetails({
+        source,
+        details,
+    }: {
+        source: string;
+        details: Record<string, unknown>;
+    }): Promise<void> {
         await this.execute({ request: () => this.apiClient.setConnectionDetails({ source, details }) });
     }
 
@@ -311,16 +322,17 @@ export class WebApiClient {
         }
 
         try {
-            const refreshClient = new CtmApiClient({
-                baseUrl: this.baseUrl,
-                refreshToken: this.refreshToken,
-            });
-            const nextTokens = await refreshClient.refresh();
+            if (!this.pendingRefresh) {
+                const refreshToken = this.refreshToken;
+                this.pendingRefresh = new CtmApiClient({ baseUrl: this.baseUrl, refreshToken })
+                    .refresh()
+                    .then((tokens) => ({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }))
+                    .finally(() => (this.pendingRefresh = null));
+            }
 
-            this.setTokens({
-                accessToken: nextTokens.accessToken,
-                refreshToken: nextTokens.refreshToken,
-            });
+            const nextTokens = await this.pendingRefresh;
+
+            this.setTokens(nextTokens);
 
             return await request();
         } catch (refreshError) {
