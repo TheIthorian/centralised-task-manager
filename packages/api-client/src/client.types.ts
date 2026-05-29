@@ -1,5 +1,6 @@
 import type {
     AddReminderDto,
+    ConnectorDetailsDto,
     CreateTaskDto,
     SetFuzzyDeadlineDto,
     SetTaskStatusDto,
@@ -126,7 +127,7 @@ export type UpdateNotificationPreferencesParams = {
 /** Parameters for {@link CtmApiClient.setConnectionDetails}. */
 export type SetConnectionDetailsParams = {
     source: string;
-    details: Record<string, unknown>;
+    details: ConnectorDetailsDto;
 };
 
 /** Options for constructing an {@link ApiClientError}. */

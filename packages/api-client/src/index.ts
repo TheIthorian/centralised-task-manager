@@ -44,6 +44,7 @@ export type {
     SetFuzzyDeadlineDto,
     AddReminderDto,
     ConnectorAuthUrlDto,
+    ConnectorDetailsDto,
     ConnectorStatusDto,
     ConnectorHealthDto,
     NotionDatabaseDto,

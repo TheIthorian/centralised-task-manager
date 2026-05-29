@@ -129,6 +129,9 @@ export type OkDto = {
     ok: boolean;
 };
 
+/** Connector-specific connection details payload (e.g. Notion database ID). */
+export type ConnectorDetailsDto = Record<string, unknown>;
+
 /** Response after updating a connector config. */
 export type UpdateConnectorResponseDto = {
     id: string;
