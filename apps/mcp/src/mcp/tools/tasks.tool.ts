@@ -122,4 +122,62 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
             return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
         },
     );
+
+    server.registerTool(
+        'get_task',
+        {
+            description: 'Get a single task by ID.',
+            inputSchema: { id: z.string().min(1) },
+            annotations: { readOnlyHint: true },
+        },
+        async ({ id }) => {
+            const task = await client.getTask({ id });
+            return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
+        },
+    );
+
+    server.registerTool(
+        'remove_fuzzy_deadline',
+        {
+            description: 'Remove the fuzzy deadline from a task by ID.',
+            inputSchema: { id: z.string().min(1) },
+            annotations: { destructiveHint: false, idempotentHint: true },
+        },
+        async ({ id }) => {
+            const task = await client.removeFuzzyDeadline({ id });
+            return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
+        },
+    );
+
+    server.registerTool(
+        'add_reminder',
+        {
+            description: 'Add a point-in-time reminder to a task.',
+            inputSchema: {
+                id: z.string().min(1),
+                remindAt: z.string().describe('ISO 8601 datetime when the reminder should fire (e.g. 2026-06-01T09:00:00Z)'),
+            },
+            annotations: { destructiveHint: false, idempotentHint: false },
+        },
+        async ({ id, remindAt }) => {
+            const reminder = await client.addReminder({ id, dto: { remindAt } });
+            return { content: [{ type: 'text' as const, text: JSON.stringify(reminder) }] };
+        },
+    );
+
+    server.registerTool(
+        'remove_reminder',
+        {
+            description: 'Remove a reminder from a task by its zero-based index in the reminders array.',
+            inputSchema: {
+                id: z.string().min(1),
+                index: z.number().int().min(0).describe('Zero-based index of the reminder to remove'),
+            },
+            annotations: { destructiveHint: true, idempotentHint: true },
+        },
+        async ({ id, index }) => {
+            await client.removeReminder({ id, index });
+            return { content: [{ type: 'text' as const, text: `Reminder ${index} removed from task ${id}.` }] };
+        },
+    );
 }

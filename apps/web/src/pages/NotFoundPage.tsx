@@ -5,7 +5,7 @@ export function NotFoundPage(): React.JSX.Element {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="min-h-dvh flex items-center justify-center p-4">
             <div className="flex flex-col items-center gap-6 max-w-sm w-full">
                 {/* Big 404 */}
                 <div className="text-[8rem] font-black leading-none text-nb-black dark:text-white select-none">

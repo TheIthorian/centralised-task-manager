@@ -33,7 +33,7 @@ export function Sidebar(): React.JSX.Element {
 
     return (
         <>
-            <aside className="hidden md:flex flex-col w-36 h-screen sticky top-0 bg-nb-black border-r-4 border-nb-black flex-shrink-0">
+            <aside className="hidden md:flex flex-col w-36 h-dvh sticky top-0 bg-nb-black border-r-4 border-nb-black flex-shrink-0">
                 <div className="p-4 border-b-2 border-white/10">
                     <span className="text-nb-yellow font-black text-lg uppercase tracking-tight">CTM</span>
                 </div>

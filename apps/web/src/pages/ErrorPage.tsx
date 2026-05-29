@@ -11,7 +11,7 @@ export function ErrorPage(): React.JSX.Element {
     const error = useRouteError();
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="min-h-dvh flex items-center justify-center p-4">
             <div className="bg-white dark:bg-neutral-900 border-4 border-nb-black dark:border-white/20 shadow-[6px_6px_0px_#111] dark:shadow-none p-8 text-center max-w-sm w-full">
                 <div className="text-6xl mb-4">⚠</div>
                 <h1 className="text-2xl font-black uppercase text-nb-black dark:text-white mb-2">
