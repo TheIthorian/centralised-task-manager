@@ -111,4 +111,30 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
             return { content: [{ type: 'text' as const, text: 'Discord disconnected.' }] };
         },
     );
+
+    server.registerTool(
+        'get_discord_connect_url',
+        {
+            description: 'Get the Discord OAuth connect URL for linking a Discord account. Return this URL to the user so they can open it.',
+            inputSchema: {},
+            annotations: { readOnlyHint: true },
+        },
+        async () => {
+            const url = await client.getDiscordConnectUrl();
+            return { content: [{ type: 'text' as const, text: url }] };
+        },
+    );
+
+    server.registerTool(
+        'test_notification_channel',
+        {
+            description: 'Send a test notification via a channel to verify it is working (e.g. "discord", "email").',
+            inputSchema: { channel: z.string().min(1) },
+            annotations: { destructiveHint: false, idempotentHint: false },
+        },
+        async ({ channel }) => {
+            const result = await client.testNotificationChannel({ channel });
+            return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+        },
+    );
 }

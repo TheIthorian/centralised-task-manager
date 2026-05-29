@@ -5,6 +5,7 @@ import { CtmApiClient } from '@ctm/api-client';
 import { registerTaskTools } from './tools/tasks.tool.js';
 import { registerConnectorTools } from './tools/connectors.tool.js';
 import { registerNotificationTools } from './tools/notifications.tool.js';
+import { registerAppsTools } from './tools/apps.tool.js';
 
 @Injectable()
 export class McpService {
@@ -22,6 +23,7 @@ export class McpService {
         registerTaskTools(server, client);
         registerConnectorTools(server, client);
         registerNotificationTools(server, client);
+        registerAppsTools(server, client);
 
         return server;
     }
