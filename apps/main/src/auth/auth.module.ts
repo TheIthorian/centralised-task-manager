@@ -39,7 +39,15 @@ import { AuthorizedAppsService } from './authorized-apps.service.js';
         ]),
     ],
     controllers: [AuthController, WellKnownController],
-    providers: [AuthService, LocalStrategy, JwtStrategy, ApiTokenService, OAuthClientService, CombinedAuthGuard, AuthorizedAppsService],
+    providers: [
+        AuthService,
+        LocalStrategy,
+        JwtStrategy,
+        ApiTokenService,
+        OAuthClientService,
+        CombinedAuthGuard,
+        AuthorizedAppsService,
+    ],
     exports: [AuthService, JwtModule, ApiTokenService, OAuthClientService, CombinedAuthGuard, AuthorizedAppsService],
 })
 export class AuthModule {}
