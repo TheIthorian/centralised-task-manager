@@ -65,4 +65,12 @@ export type {
     TestChannelResultDto,
     MarkReadResultDto,
     MarkAllReadResultDto,
+    StoredFileDto,
+    ExportResponseDto,
+    ExportProfileDto,
+    ExportTaskDto,
+    ExportEnvelopeDto,
+    ImportRequestDto,
+    ImportSummaryDto,
+    ImportResponseDto,
 } from './types.js';
