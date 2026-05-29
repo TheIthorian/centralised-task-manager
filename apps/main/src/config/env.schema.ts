@@ -19,4 +19,5 @@ export const envSchema = Joi.object({
     DISCORD_CLIENT_ID: Joi.string().allow('').default(''),
     DISCORD_CLIENT_SECRET: Joi.string().allow('').default(''),
     DISCORD_BOT_TOKEN: Joi.string().allow('').default(''),
+    EXPORT_DIR: Joi.string().default('./exports'),
 });
