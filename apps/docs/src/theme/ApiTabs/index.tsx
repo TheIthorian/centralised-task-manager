@@ -6,16 +6,18 @@ import React from 'react';
 import OriginalApiTabs from '@theme-original/ApiTabs';
 import { TabsProvider, useTabsContextValue } from '@docusaurus/theme-common/internal';
 
-export default function ApiTabs({ children, ...props }: React.ComponentProps<typeof OriginalApiTabs>): JSX.Element {
+export default function ApiTabs({ children, ...props }: React.ComponentProps<typeof OriginalApiTabs>): React.ReactElement {
     const values = React.useMemo(
         () =>
             React.Children.toArray(children)
                 .filter(React.isValidElement)
-                .map((child) => ({
-                    value: (child as React.ReactElement).props.value as string,
-                    label: ((child as React.ReactElement).props.label ??
-                        (child as React.ReactElement).props.value) as string,
-                })),
+                .map((child) => {
+                    const p = (child as React.ReactElement<Record<string, unknown>>).props;
+                    return {
+                        value: p['value'] as string,
+                        label: (p['label'] ?? p['value']) as string,
+                    };
+                }),
         [children],
     );
 

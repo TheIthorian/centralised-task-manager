@@ -9,16 +9,18 @@ import { TabsProvider, useTabsContextValue } from '@docusaurus/theme-common/inte
 export default function DiscriminatorTabs({
     children,
     ...props
-}: React.ComponentProps<typeof OriginalDiscriminatorTabs>): JSX.Element {
+}: React.ComponentProps<typeof OriginalDiscriminatorTabs>): React.ReactElement {
     const values = React.useMemo(
         () =>
             React.Children.toArray(children)
                 .filter(React.isValidElement)
-                .map((child) => ({
-                    value: (child as React.ReactElement).props.value as string,
-                    label: ((child as React.ReactElement).props.label ??
-                        (child as React.ReactElement).props.value) as string,
-                })),
+                .map((child) => {
+                    const p = (child as React.ReactElement<Record<string, unknown>>).props;
+                    return {
+                        value: p['value'] as string,
+                        label: (p['label'] ?? p['value']) as string,
+                    };
+                }),
         [children],
     );
 
