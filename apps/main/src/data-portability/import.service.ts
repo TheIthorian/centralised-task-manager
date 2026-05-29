@@ -91,11 +91,15 @@ export class ImportService {
         onConflict: OnConflict;
     }): Promise<boolean> {
         const filter = { userId: new Types.ObjectId(userId), source: task.source, sourceId: task.sourceId };
-        const exists = await this.taskModel.exists(filter);
+        const fields = taskDtoToFields(task, userId);
 
-        if (exists && onConflict === 'ignore') return false;
+        if (onConflict === 'ignore') {
+            const result = await this.taskModel.updateOne(filter, { $setOnInsert: fields }, { upsert: true });
 
-        await this.taskModel.updateOne(filter, { $set: taskDtoToFields(task, userId) }, { upsert: true });
+            return result.upsertedCount > 0;
+        }
+
+        await this.taskModel.updateOne(filter, { $set: fields }, { upsert: true });
 
         return true;
     }
@@ -110,24 +114,22 @@ export class ImportService {
         onConflict: OnConflict;
     }): Promise<boolean> {
         const filter = { _id: new Types.ObjectId(notification.id), userId: new Types.ObjectId(userId) };
-        const exists = await this.notificationModel.exists(filter);
+        const fields = {
+            userId: new Types.ObjectId(userId),
+            type: notification.type,
+            title: notification.title,
+            body: notification.body,
+            data: notification.data,
+            read: notification.read,
+        };
 
-        if (exists && onConflict === 'ignore') return false;
+        if (onConflict === 'ignore') {
+            const result = await this.notificationModel.updateOne(filter, { $setOnInsert: fields }, { upsert: true });
 
-        await this.notificationModel.updateOne(
-            filter,
-            {
-                $set: {
-                    userId: new Types.ObjectId(userId),
-                    type: notification.type,
-                    title: notification.title,
-                    body: notification.body,
-                    data: notification.data,
-                    read: notification.read,
-                },
-            },
-            { upsert: true },
-        );
+            return result.upsertedCount > 0;
+        }
+
+        await this.notificationModel.updateOne(filter, { $set: fields }, { upsert: true });
 
         return true;
     }

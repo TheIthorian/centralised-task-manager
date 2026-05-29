@@ -200,7 +200,7 @@ export type NotificationData =
 export type NotificationDto = {
     id: string;
     type: NotificationType;
-    data: NotificationData;
+    data: NotificationData | null;
     title: string;
     body: string;
     read: boolean;
