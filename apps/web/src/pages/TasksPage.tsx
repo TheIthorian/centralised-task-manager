@@ -93,15 +93,6 @@ export function TasksPage(): React.JSX.Element {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [taskIdParam]);
 
-    const midnightYesterday = (() => {
-        const d = new Date();
-
-        d.setDate(d.getDate() - 1);
-        d.setHours(0, 0, 0, 0);
-
-        return d.toISOString();
-    })();
-
     // Flat list infinite query (today / upcoming / done).
     const flatQuery = useInfiniteQuery<TaskDto[]>({
         queryKey: ['tasks', filter],
@@ -110,7 +101,6 @@ export function TasksPage(): React.JSX.Element {
                 filter,
                 page: pageParam as number,
                 limit: PAGE_SIZE,
-                lastUpdatedFromDate: filter === 'done' ? midnightYesterday : undefined,
             }),
         initialPageParam: 1,
         getNextPageParam: (lastPage, pages) =>
