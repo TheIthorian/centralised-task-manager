@@ -13,7 +13,8 @@ export default function CodeTabs({ children, ...props }: React.ComponentProps<ty
                 .filter(React.isValidElement)
                 .map((child) => ({
                     value: (child as React.ReactElement).props.value as string,
-                    label: ((child as React.ReactElement).props.label ?? (child as React.ReactElement).props.value) as string,
+                    label: ((child as React.ReactElement).props.label ??
+                        (child as React.ReactElement).props.value) as string,
                 })),
         [children],
     );

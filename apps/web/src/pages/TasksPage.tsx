@@ -27,14 +27,17 @@ export function TasksPage(): React.JSX.Element {
         if (!highlightTaskIdParam) return;
 
         setHighlightedTaskId(highlightTaskIdParam);
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
 
-            next.delete('highlightTaskId');
+                next.delete('highlightTaskId');
 
-            return next;
-        }, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+                return next;
+            },
+            { replace: true },
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [highlightTaskIdParam]);
 
     // Clear highlight when user clicks anywhere.
@@ -55,24 +58,30 @@ export function TasksPage(): React.JSX.Element {
         api.getTask({ id: taskIdParam })
             .then((task) => {
                 setEditTask(task);
-                setSearchParams((prev) => {
-                    const next = new URLSearchParams(prev);
+                setSearchParams(
+                    (prev) => {
+                        const next = new URLSearchParams(prev);
 
-                    next.delete('taskId');
+                        next.delete('taskId');
 
-                    return next;
-                }, { replace: true });
+                        return next;
+                    },
+                    { replace: true },
+                );
             })
             .catch(() => {
-                setSearchParams((prev) => {
-                    const next = new URLSearchParams(prev);
+                setSearchParams(
+                    (prev) => {
+                        const next = new URLSearchParams(prev);
 
-                    next.delete('taskId');
+                        next.delete('taskId');
 
-                    return next;
-                }, { replace: true });
+                        return next;
+                    },
+                    { replace: true },
+                );
             });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [taskIdParam]);
 
     const midnightYesterday = (() => {
@@ -91,10 +100,11 @@ export function TasksPage(): React.JSX.Element {
         error,
     } = useQuery({
         queryKey: ['tasks', filter],
-        queryFn: () => api.listTasks({
-            filter,
-            lastUpdatedFromDate: filter === 'done' ? midnightYesterday : undefined,
-        }),
+        queryFn: () =>
+            api.listTasks({
+                filter,
+                lastUpdatedFromDate: filter === 'done' ? midnightYesterday : undefined,
+            }),
     });
 
     const addMutation = useMutation({
@@ -139,8 +149,7 @@ export function TasksPage(): React.JSX.Element {
     });
 
     const setFuzzyMutation = useMutation({
-        mutationFn: ({ id, dto }: { id: string; dto: SetFuzzyDeadlineDto }) =>
-            api.setFuzzyDeadline({ id, dto }),
+        mutationFn: ({ id, dto }: { id: string; dto: SetFuzzyDeadlineDto }) => api.setFuzzyDeadline({ id, dto }),
         onSuccess: (updated) => {
             qc.setQueryData<TaskDto[]>(['tasks', filter], (prev = []) =>
                 prev.map((t) => (t.id === updated.id ? { ...t, fuzzyDeadline: updated.fuzzyDeadline } : t)),
@@ -161,7 +170,9 @@ export function TasksPage(): React.JSX.Element {
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">My Tasks</h1>
+                    <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">
+                        My Tasks
+                    </h1>
                     {!isLoading && (
                         <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm">
                             {tasks.length} task{tasks.length !== 1 ? 's' : ''}
@@ -180,7 +191,11 @@ export function TasksPage(): React.JSX.Element {
                     isPending={addMutation.isPending}
                 />
 
-                {isLoading && <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">Loading…</p>}
+                {isLoading && (
+                    <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">
+                        Loading…
+                    </p>
+                )}
 
                 {isError && (
                     <div className="border-2 border-nb-red bg-nb-red/10 p-3">
@@ -190,8 +205,9 @@ export function TasksPage(): React.JSX.Element {
                     </div>
                 )}
 
-                {!isLoading && !isError && (
-                    filter === 'all' ? (
+                {!isLoading &&
+                    !isError &&
+                    (filter === 'all' ? (
                         <GroupedTaskList
                             tasks={tasks}
                             highlightedTaskId={highlightedTaskId}
@@ -209,8 +225,7 @@ export function TasksPage(): React.JSX.Element {
                             }}
                             onEdit={setEditTask}
                         />
-                    )
-                )}
+                    ))}
             </div>
 
             <TaskModal

@@ -19,8 +19,8 @@ export type FuzzyDeadlineInfo = {
 
 /** A single point-in-time reminder attached to a task. */
 export type ReminderDto = {
-    remindAt: string;        // ISO datetime
-    firedAt: string | null;  // set once the notification has been sent
+    remindAt: string; // ISO datetime
+    firedAt: string | null; // set once the notification has been sent
 };
 
 /** Authenticated user representation. */

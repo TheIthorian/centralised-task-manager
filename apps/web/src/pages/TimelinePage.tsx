@@ -108,10 +108,14 @@ export function TimelinePage(): React.JSX.Element {
 
     return (
         <div className="p-4 md:p-6 flex flex-col" style={{ height: 'calc(100dvh - 4rem)' }}>
-            <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-4">Timeline</h1>
+            <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-4">
+                Timeline
+            </h1>
 
             {isLoading && (
-                <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">Loading…</p>
+                <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">
+                    Loading…
+                </p>
             )}
 
             {!isLoading && (
@@ -129,7 +133,9 @@ export function TimelinePage(): React.JSX.Element {
                             >
                                 <span
                                     className={`font-bold text-xs truncate ${
-                                        task.completed ? 'line-through text-nb-black/40 dark:text-white/30' : 'text-nb-black dark:text-white'
+                                        task.completed
+                                            ? 'line-through text-nb-black/40 dark:text-white/30'
+                                            : 'text-nb-black dark:text-white'
                                     }`}
                                 >
                                     {task.title}
@@ -166,9 +172,7 @@ export function TimelinePage(): React.JSX.Element {
                             {/* Task rows */}
                             {tasks.map((task) => {
                                 const taskStart = startOfDay(new Date(task.createdAt));
-                                const taskEnd = task.due?.date
-                                    ? startOfDay(new Date(task.due.date))
-                                    : taskStart;
+                                const taskEnd = task.due?.date ? startOfDay(new Date(task.due.date)) : taskStart;
                                 const leftPx = diffDays(rangeStart, taskStart) * DAY_WIDTH_PX;
                                 const widthDays = Math.max(diffDays(taskStart, taskEnd), 1);
                                 const widthPx = widthDays * DAY_WIDTH_PX;
@@ -210,9 +214,15 @@ export function TimelinePage(): React.JSX.Element {
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}
-                onSave={async (id, dto) => { await saveMutation.mutateAsync({ id, dto }); }}
-                onDelete={async (id) => { await deleteMutation.mutateAsync(id); }}
-                onSetFuzzyDeadline={async (id, dto) => { await setFuzzyMutation.mutateAsync({ id, dto }); }}
+                onSave={async (id, dto) => {
+                    await saveMutation.mutateAsync({ id, dto });
+                }}
+                onDelete={async (id) => {
+                    await deleteMutation.mutateAsync(id);
+                }}
+                onSetFuzzyDeadline={async (id, dto) => {
+                    await setFuzzyMutation.mutateAsync({ id, dto });
+                }}
                 isSaving={saveMutation.isPending}
                 isDeleting={deleteMutation.isPending}
                 isSettingFuzzy={setFuzzyMutation.isPending}

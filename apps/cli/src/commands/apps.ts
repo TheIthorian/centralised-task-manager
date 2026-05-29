@@ -15,8 +15,7 @@ export function registerAppsCommand(program: Command): void {
         .option('--token <token>', 'API token (overrides stored credentials)')
         .option('--base-url <url>', 'API base URL');
 
-    apps
-        .command('list')
+    apps.command('list')
         .description('List authorized OAuth applications')
         .option('--json', 'Output as JSON')
         .action(async (opts: { json?: boolean }) => {
@@ -37,8 +36,7 @@ export function registerAppsCommand(program: Command): void {
             }
         });
 
-    apps
-        .command('revoke')
+    apps.command('revoke')
         .description('Revoke access for an authorized OAuth application')
         .argument('<clientId>', 'OAuth client ID to revoke')
         .action(async (clientId: string) => {

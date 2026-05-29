@@ -31,12 +31,7 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
     const mockRegistry = { get: vi.fn().mockReturnValue(mockConnector) };
     const mockJwt = { sign: vi.fn(), verify: vi.fn() };
 
-    const service = new ConnectorsService(
-        mockModel as any,
-        mockRegistry as any,
-        mockEncryption as any,
-        mockJwt as any,
-    );
+    const service = new ConnectorsService(mockModel as any, mockRegistry as any, mockEncryption as any, mockJwt as any);
 
     return { service, mockModel, mockConnector, mockEncryption };
 }

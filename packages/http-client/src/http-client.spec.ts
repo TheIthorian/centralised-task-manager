@@ -103,7 +103,9 @@ describe('HttpClient', () => {
             responseHandler: (res: unknown) => unknown;
             responseErrorHandler: (err: unknown) => Promise<never>;
         } {
-            const instance = vi.mocked(axios.create).mock.results.at(-1)?.value as ReturnType<typeof makeMockAxiosInstance>;
+            const instance = vi.mocked(axios.create).mock.results.at(-1)?.value as ReturnType<
+                typeof makeMockAxiosInstance
+            >;
             const requestUseCalls = vi.mocked(instance.interceptors.request.use).mock.calls;
             const responseUseCalls = vi.mocked(instance.interceptors.response.use).mock.calls;
 
@@ -242,7 +244,9 @@ describe('HttpClient', () => {
         it('does not attach interceptors when no logger provided', () => {
             new HttpClient({ baseUrl: BASE_URL });
 
-            const instance = vi.mocked(axios.create).mock.results.at(-1)?.value as ReturnType<typeof makeMockAxiosInstance>;
+            const instance = vi.mocked(axios.create).mock.results.at(-1)?.value as ReturnType<
+                typeof makeMockAxiosInstance
+            >;
 
             expect(vi.mocked(instance.interceptors.request.use)).not.toHaveBeenCalled();
             expect(vi.mocked(instance.interceptors.response.use)).not.toHaveBeenCalled();

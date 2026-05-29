@@ -43,7 +43,9 @@ export function Modal({ open, onClose, title, children }: ModalProps): React.JSX
             >
                 {title && (
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-black uppercase tracking-tight text-nb-black dark:text-white">{title}</h2>
+                        <h2 className="text-xl font-black uppercase tracking-tight text-nb-black dark:text-white">
+                            {title}
+                        </h2>
                         <button
                             onClick={onClose}
                             className="font-black text-nb-black dark:text-white hover:text-nb-red text-lg leading-none"

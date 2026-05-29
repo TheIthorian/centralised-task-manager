@@ -1,8 +1,4 @@
-export type NotificationType =
-    | 'connector_reconnect'
-    | 'daily_summary'
-    | 'reminder'
-    | 'upcoming_deadline';
+export type NotificationType = 'connector_reconnect' | 'daily_summary' | 'reminder' | 'upcoming_deadline';
 
 export type NotificationData =
     | { type: 'reminder'; taskId?: string }

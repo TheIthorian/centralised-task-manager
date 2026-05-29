@@ -115,7 +115,8 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
     server.registerTool(
         'get_discord_connect_url',
         {
-            description: 'Get the Discord OAuth connect URL for linking a Discord account. Return this URL to the user so they can open it.',
+            description:
+                'Get the Discord OAuth connect URL for linking a Discord account. Return this URL to the user so they can open it.',
             inputSchema: {},
             annotations: { readOnlyHint: true },
         },

@@ -1,7 +1,7 @@
 {
-  "extends": "@ctm/tsconfig/react.json",
-  "compilerOptions": {
-    "jsx": "preserve"
-  },
-  "include": ["src", ".astro/types.d.ts"]
+    "extends": "@ctm/tsconfig/react.json",
+    "compilerOptions": {
+        "jsx": "preserve"
+    },
+    "include": ["src", ".astro/types.d.ts"]
 }

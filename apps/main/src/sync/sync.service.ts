@@ -89,7 +89,11 @@ export class SyncService {
 
             this.gateway.emitProgress(userId, job);
 
-            const { synced, skipped } = await this.tasks.upsertFromRemote({ userId, source: source as unknown as TaskConnectorName, remoteTasks });
+            const { synced, skipped } = await this.tasks.upsertFromRemote({
+                userId,
+                source: source as unknown as TaskConnectorName,
+                remoteTasks,
+            });
 
             // Re-fetch to check for cancellation that arrived during upsertFromRemote
             job = await this.taskSyncModel.findById(jobId);

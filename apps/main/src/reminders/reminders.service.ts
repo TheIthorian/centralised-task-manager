@@ -19,10 +19,7 @@ export class RemindersService {
     /** Run daily at 09:00. Send reminders, upcoming deadlines, and connector health notifications. */
     @Cron('0 9 * * *')
     async runDailyReminders(): Promise<void> {
-        await Promise.all([
-            this.sendTaskReminders(),
-            this.sendConnectorReconnectAlerts(),
-        ]);
+        await Promise.all([this.sendTaskReminders(), this.sendConnectorReconnectAlerts()]);
     }
 
     /** Run every 5 minutes. Fire point-in-time reminders and due-date notifications. */
@@ -40,7 +37,7 @@ export class RemindersService {
     private async fireManualReminders({ now, windowStart }: { now: Date; windowStart: Date }): Promise<void> {
         const tasks = await this.taskModel
             .find({
-                'reminders': {
+                reminders: {
                     $elemMatch: {
                         remindAt: { $gte: windowStart, $lte: now },
                         firedAt: null,

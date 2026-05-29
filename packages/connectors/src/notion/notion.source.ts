@@ -2,7 +2,14 @@ import { HttpClient, type Logger } from '@ctm/http-client';
 import { ValidationError } from '@ctm/errors';
 
 import { TaskConnectorName } from '../types.js';
-import type { CreateTaskDto, ExternalTaskSource, HealthCheckResult, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
+import type {
+    CreateTaskDto,
+    ExternalTaskSource,
+    HealthCheckResult,
+    OAuthTokens,
+    RemoteTask,
+    UpdateTaskDto,
+} from '../types.js';
 import type {
     NotionBlock,
     NotionBlocksResponse,

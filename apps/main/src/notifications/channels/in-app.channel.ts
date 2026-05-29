@@ -14,7 +14,14 @@ export class InAppChannel {
 
     /** Write a notification to the user's in-app inbox and push it via WebSocket. */
     async send({ userId, type, data, title, body }: SendNotificationDto): Promise<void> {
-        const doc = await this.model.create({ userId: new Types.ObjectId(userId), type, data, title, body, read: false });
+        const doc = await this.model.create({
+            userId: new Types.ObjectId(userId),
+            type,
+            data,
+            title,
+            body,
+            read: false,
+        });
 
         this.gateway.sendNotification({
             userId,

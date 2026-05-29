@@ -118,11 +118,18 @@ describe('OAuth endpoints', () => {
         const code = new URL(authorizeRes.headers['location'] as string).searchParams.get('code')!;
 
         const first = JSON.parse(
-            (await app.inject({
-                method: 'POST',
-                url: '/oauth/token',
-                payload: { grant_type: 'authorization_code', code, redirect_uri: redirectUri, code_verifier: verifier },
-            })).body,
+            (
+                await app.inject({
+                    method: 'POST',
+                    url: '/oauth/token',
+                    payload: {
+                        grant_type: 'authorization_code',
+                        code,
+                        redirect_uri: redirectUri,
+                        code_verifier: verifier,
+                    },
+                })
+            ).body,
         );
 
         const refreshRes = await app.inject({
@@ -329,9 +336,7 @@ describe('OAuth endpoints', () => {
                     { scope: 'tasks:read', label: 'Read tasks', required: false },
                     { scope: 'tasks:write', label: 'Create & manage tasks', required: false },
                 ],
-                notifications: [
-                    { scope: 'notifications:read', label: 'Read notifications', required: false },
-                ],
+                notifications: [{ scope: 'notifications:read', label: 'Read notifications', required: false }],
             });
         });
     });

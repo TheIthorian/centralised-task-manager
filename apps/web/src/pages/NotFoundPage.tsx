@@ -8,9 +8,7 @@ export function NotFoundPage(): React.JSX.Element {
         <div className="min-h-dvh flex items-center justify-center p-4">
             <div className="flex flex-col items-center gap-6 max-w-sm w-full">
                 {/* Big 404 */}
-                <div className="text-[8rem] font-black leading-none text-nb-black dark:text-white select-none">
-                    404
-                </div>
+                <div className="text-[8rem] font-black leading-none text-nb-black dark:text-white select-none">404</div>
 
                 {/* Broken task card illustration */}
                 <div className="w-full border-4 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-900 shadow-[6px_6px_0px_#111] dark:shadow-none p-4">

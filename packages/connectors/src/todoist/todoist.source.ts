@@ -1,7 +1,14 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 
 import { TaskConnectorName } from '../types.js';
-import type { CreateTaskDto, ExternalTaskSource, HealthCheckResult, OAuthTokens, RemoteTask, UpdateTaskDto } from '../types.js';
+import type {
+    CreateTaskDto,
+    ExternalTaskSource,
+    HealthCheckResult,
+    OAuthTokens,
+    RemoteTask,
+    UpdateTaskDto,
+} from '../types.js';
 import type { TodoistTask, TodoistTasksResponse } from './todoist.types.js';
 import { todoistStringToRrule, rruleToTodoistString } from './todoist-recurrence.js';
 

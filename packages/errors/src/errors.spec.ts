@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { AppError, NotFoundError, UnauthorizedError, ConflictError, ExternalServiceError, ValidationError, InternalError, OAuthError } from './index.js';
+import {
+    AppError,
+    NotFoundError,
+    UnauthorizedError,
+    ConflictError,
+    ExternalServiceError,
+    ValidationError,
+    InternalError,
+    OAuthError,
+} from './index.js';
 
 describe('AppError', () => {
     it('sets name, message, code, statusCode', () => {

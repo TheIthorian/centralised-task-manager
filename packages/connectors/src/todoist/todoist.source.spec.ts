@@ -46,7 +46,13 @@ describe('TodoistTaskSource', () => {
                         description: 'From the supermarket',
                         checked: false,
                         priority: 2,
-                        due: { date: '2026-06-01', timezone: 'America/New_York', string: '', lang: 'en', is_recurring: false },
+                        due: {
+                            date: '2026-06-01',
+                            timezone: 'America/New_York',
+                            string: '',
+                            lang: 'en',
+                            is_recurring: false,
+                        },
                         deadline: null,
                         duration: null,
                         parent_id: null,
@@ -86,7 +92,13 @@ describe('TodoistTaskSource', () => {
                         description: '',
                         checked: false,
                         priority: 1,
-                        due: { date: '2026-06-01', timezone: null, string: 'every day', lang: 'en', is_recurring: true },
+                        due: {
+                            date: '2026-06-01',
+                            timezone: null,
+                            string: 'every day',
+                            lang: 'en',
+                            is_recurring: true,
+                        },
                         deadline: null,
                         duration: null,
                         parent_id: null,
@@ -284,9 +296,13 @@ describe('TodoistTaskSource', () => {
 
             await source.completeTask(tokens, 'task-1');
 
-            expect(mockHttp.post).toHaveBeenCalledWith('/tasks/task-1/close', {}, {
-                Authorization: 'Bearer test_access_token',
-            });
+            expect(mockHttp.post).toHaveBeenCalledWith(
+                '/tasks/task-1/close',
+                {},
+                {
+                    Authorization: 'Bearer test_access_token',
+                },
+            );
         });
     });
 
@@ -304,7 +320,9 @@ describe('TodoistTaskSource', () => {
 
     describe('error handling', () => {
         it('propagates ExternalServiceError from HttpClient', async () => {
-            mockHttp.get.mockRejectedValue(new ExternalServiceError('https://api.todoist.com/rest/v2/tasks', 'HTTP 429: rate limited'));
+            mockHttp.get.mockRejectedValue(
+                new ExternalServiceError('https://api.todoist.com/rest/v2/tasks', 'HTTP 429: rate limited'),
+            );
 
             await expect(source.fetchTasks(tokens)).rejects.toThrow(ExternalServiceError);
         });

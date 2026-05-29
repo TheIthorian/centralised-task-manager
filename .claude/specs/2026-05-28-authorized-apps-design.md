@@ -9,9 +9,11 @@ Add an "Authorized Apps" section to Settings where users can see which OAuth cli
 ## Schema Changes
 
 ### `OAuthClient`
+
 Add `isDynamic: boolean` (default `true`). All clients created via `POST /register` are dynamic.
 
 ### `RefreshToken`
+
 - `clientId?: string` — already exists
 - Add `scopes: string[]` (default `[]`) — stores the scopes granted at authorization time
 
@@ -30,26 +32,29 @@ No token values (raw refresh tokens, client secrets) are ever returned to the we
 ### New methods on `OAuthService` (or `AuthService`)
 
 **`getAuthorizedApps(userId: string): Promise<AuthorizedAppDto[]>`**
+
 - Query `RefreshToken` where `userId` matches and `clientId` exists
 - Deduplicate by `clientId`, pick latest `createdAt` for `authorizedAt`
 - Join `OAuthClient` for `clientName`, `isDynamic`, `scopes` (registered scopes as fallback)
 - Return metadata only — no token data
 
 **`revokeAuthorizedApp({ userId, clientId }): Promise<void>`**
+
 - Look up `OAuthClient` by `clientId`
 - If `isDynamic`: delete the `OAuthClient` doc + all `RefreshToken` docs for that `clientId` (across all users)
 - Else: delete only `RefreshToken` docs matching `userId` + `clientId`
 
 ### New endpoints (JWT-protected, `GET /auth/me/*`)
 
-| Method | Path | Response |
-|--------|------|----------|
-| `GET` | `/auth/me/authorized-apps` | `AuthorizedAppDto[]` |
-| `DELETE` | `/auth/me/authorized-apps/:clientId` | `204 No Content` |
+| Method   | Path                                 | Response             |
+| -------- | ------------------------------------ | -------------------- |
+| `GET`    | `/auth/me/authorized-apps`           | `AuthorizedAppDto[]` |
+| `DELETE` | `/auth/me/authorized-apps/:clientId` | `204 No Content`     |
 
 ## API Client (`packages/api-client`)
 
 New type:
+
 ```ts
 type AuthorizedAppDto = {
     clientId: string;
@@ -60,6 +65,7 @@ type AuthorizedAppDto = {
 ```
 
 New methods on `ApiClient`:
+
 - `getAuthorizedApps(): Promise<AuthorizedAppDto[]>`
 - `revokeAuthorizedApp(clientId: string): Promise<void>`
 

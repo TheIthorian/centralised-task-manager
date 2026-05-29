@@ -197,7 +197,7 @@ export class CtmApiClient {
         await this.request<void>({ method: 'DELETE', path: `/connectors/${source}/sync/${jobId}` });
     }
 
-/** Save connection details for a connector (e.g. Notion database ID). */
+    /** Save connection details for a connector (e.g. Notion database ID). */
     async setConnectionDetails({ source, details }: SetConnectionDetailsParams): Promise<void> {
         await this.request<void>({ method: 'POST', path: `/connectors/${source}/connection-details`, body: details });
     }
@@ -223,7 +223,9 @@ export class CtmApiClient {
     }
 
     /** List in-app notifications for the current user. */
-    async listNotifications({ page = 1, limit = 20, unreadOnly = false }: ListNotificationsParams = {}): Promise<NotificationDto[]> {
+    async listNotifications({ page = 1, limit = 20, unreadOnly = false }: ListNotificationsParams = {}): Promise<
+        NotificationDto[]
+    > {
         return this.request<NotificationDto[]>({
             method: 'GET',
             path: '/notifications',
@@ -247,13 +249,22 @@ export class CtmApiClient {
     }
 
     /** Update notification preferences (partial). */
-    async updateNotificationPreferences({ dto }: UpdateNotificationPreferencesParams): Promise<NotificationPreferencesDto> {
-        return this.request<NotificationPreferencesDto>({ method: 'PATCH', path: '/notifications/preferences', body: dto });
+    async updateNotificationPreferences({
+        dto,
+    }: UpdateNotificationPreferencesParams): Promise<NotificationPreferencesDto> {
+        return this.request<NotificationPreferencesDto>({
+            method: 'PATCH',
+            path: '/notifications/preferences',
+            body: dto,
+        });
     }
 
     /** Get the Discord OAuth URL for connecting. */
     async getDiscordConnectUrl(): Promise<string> {
-        const response = await this.request<{ url: string }>({ method: 'GET', path: '/connectors/discord/connect-url' });
+        const response = await this.request<{ url: string }>({
+            method: 'GET',
+            path: '/connectors/discord/connect-url',
+        });
         return response.url;
     }
 

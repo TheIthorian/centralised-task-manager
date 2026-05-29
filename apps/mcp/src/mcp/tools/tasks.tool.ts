@@ -21,7 +21,10 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
             description: 'List tasks. Optionally filter by status or restrict to tasks updated on/after a date.',
             inputSchema: {
                 filter: z.enum(['all', 'today', 'upcoming', 'done']).default('all'),
-                lastUpdatedFromDate: z.string().optional().describe('ISO date string — only return tasks updated on or after this date'),
+                lastUpdatedFromDate: z
+                    .string()
+                    .optional()
+                    .describe('ISO date string — only return tasks updated on or after this date'),
             },
             annotations: { readOnlyHint: true },
         },
@@ -155,7 +158,9 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
             description: 'Add a point-in-time reminder to a task.',
             inputSchema: {
                 id: z.string().min(1),
-                remindAt: z.string().describe('ISO 8601 datetime when the reminder should fire (e.g. 2026-06-01T09:00:00Z)'),
+                remindAt: z
+                    .string()
+                    .describe('ISO 8601 datetime when the reminder should fire (e.g. 2026-06-01T09:00:00Z)'),
             },
             annotations: { destructiveHint: false, idempotentHint: false },
         },

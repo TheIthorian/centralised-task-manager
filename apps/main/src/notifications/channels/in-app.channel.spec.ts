@@ -20,10 +20,7 @@ describe('InAppChannel', () => {
                 MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
                 MongooseModule.forFeature([{ name: Notification.name, schema: NotificationSchema }]),
             ],
-            providers: [
-                InAppChannel,
-                { provide: NotificationsGateway, useValue: mockGateway },
-            ],
+            providers: [InAppChannel, { provide: NotificationsGateway, useValue: mockGateway }],
         }).compile();
 
         channel = module.get(InAppChannel);
@@ -37,7 +34,13 @@ describe('InAppChannel', () => {
     it('creates a notification document with read=false', async () => {
         const userId = new Types.ObjectId().toHexString();
 
-        await channel.send({ userId, type: 'daily_summary', data: { type: 'daily_summary' }, title: 'Test', body: 'Body' });
+        await channel.send({
+            userId,
+            type: 'daily_summary',
+            data: { type: 'daily_summary' },
+            title: 'Test',
+            body: 'Body',
+        });
 
         const doc = await notificationModel.findOne({ userId: new Types.ObjectId(userId), type: 'daily_summary' });
 
@@ -64,7 +67,10 @@ describe('InAppChannel', () => {
         await channel.send({ userId, type: 'reminder', data: { type: 'reminder' }, title: 'T', body: 'B' });
 
         expect(mockGateway.sendNotification).toHaveBeenCalledWith(
-            expect.objectContaining({ userId, notification: expect.objectContaining({ type: 'reminder', read: false }) }),
+            expect.objectContaining({
+                userId,
+                notification: expect.objectContaining({ type: 'reminder', read: false }),
+            }),
         );
     });
 });

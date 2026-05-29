@@ -102,9 +102,7 @@ export class OAuthController {
         }
 
         const requestedScopes = (query.scope ?? 'openid').split(/\s+/);
-        const selectedScopes = body.selected_scopes
-            ? body.selected_scopes.split(/\s+/)
-            : requestedScopes;
+        const selectedScopes = body.selected_scopes ? body.selected_scopes.split(/\s+/) : requestedScopes;
         const scopes = filterScopes(selectedScopes.filter((s) => requestedScopes.includes(s)));
         const code = await this.oauth.createAuthCode({
             userId: req.user.sub,

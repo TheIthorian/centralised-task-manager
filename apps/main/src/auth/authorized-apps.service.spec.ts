@@ -189,8 +189,8 @@ describe('AuthorizedAppsService', () => {
     });
 
     it('revokeAuthorizedApp throws NotFoundException for unknown client', async () => {
-        await expect(
-            service.revokeAuthorizedApp({ userId: 'uid', clientId: 'client_nonexistent' }),
-        ).rejects.toThrow('OAuth client client_nonexistent not found');
+        await expect(service.revokeAuthorizedApp({ userId: 'uid', clientId: 'client_nonexistent' })).rejects.toThrow(
+            'OAuth client client_nonexistent not found',
+        );
     });
 });

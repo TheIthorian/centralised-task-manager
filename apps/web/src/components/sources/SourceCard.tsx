@@ -64,20 +64,12 @@ export function SourceCard({
 
                 <div className="flex items-center gap-2">
                     {connected && setupRequired && onConfigure && (
-                        <Button
-                            variant="secondary"
-                            onClick={() => onConfigure(source)}
-                            disabled={isPending}
-                        >
+                        <Button variant="secondary" onClick={() => onConfigure(source)} disabled={isPending}>
                             Configure
                         </Button>
                     )}
                     {connected && !isTaskSync && onTest && (
-                        <Button
-                            variant="secondary"
-                            onClick={() => onTest(source)}
-                            disabled={isPending}
-                        >
+                        <Button variant="secondary" onClick={() => onTest(source)} disabled={isPending}>
                             Test
                         </Button>
                     )}
@@ -92,20 +84,12 @@ export function SourceCard({
                         </Button>
                     )}
                     {connected && isTaskSync && !isSyncing && !isHealthLoading && !isUnhealthy && (
-                        <Button
-                            variant="secondary"
-                            onClick={() => onSync(source)}
-                            disabled={isPending}
-                        >
+                        <Button variant="secondary" onClick={() => onSync(source)} disabled={isPending}>
                             Sync
                         </Button>
                     )}
                     {connected && isTaskSync && isSyncing && (
-                        <Button
-                            variant="danger"
-                            onClick={() => onCancelSync(source, syncJob!.id)}
-                            disabled={isPending}
-                        >
+                        <Button variant="danger" onClick={() => onCancelSync(source, syncJob!.id)} disabled={isPending}>
                             Cancel
                         </Button>
                     )}
@@ -136,7 +120,7 @@ export function SourceCard({
             {isSyncing && (
                 <div className="w-full">
                     <p className="text-xs font-bold text-nb-black/60 dark:text-white/50 mb-1">
-                        {syncJob?.stage ? STAGE_LABEL[syncJob.stage] ?? 'Working…' : 'Starting…'}
+                        {syncJob?.stage ? (STAGE_LABEL[syncJob.stage] ?? 'Working…') : 'Starting…'}
                     </p>
                     <div className="w-full h-1.5 bg-nb-black/10 dark:bg-white/10 overflow-hidden">
                         <div className="h-full bg-nb-black dark:bg-white animate-pulse w-full" />
@@ -145,9 +129,7 @@ export function SourceCard({
             )}
 
             {syncFailed && (
-                <p className="text-xs font-bold text-nb-red">
-                    Sync failed: {syncJob?.error ?? 'Unknown error'}
-                </p>
+                <p className="text-xs font-bold text-nb-red">Sync failed: {syncJob?.error ?? 'Unknown error'}</p>
             )}
 
             {syncJob?.status === 'done' && (

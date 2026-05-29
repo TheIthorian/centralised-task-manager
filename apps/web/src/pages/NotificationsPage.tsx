@@ -44,32 +44,26 @@ export function NotificationsPage(): React.JSX.Element {
     const discordConnected = connectors?.find((c) => c.source === 'discord')?.connected ?? false;
 
     const mutation = useMutation({
-        mutationFn: (dto: UpdateNotificationPreferencesDto) =>
-            api.updateNotificationPreferences({ dto }),
+        mutationFn: (dto: UpdateNotificationPreferencesDto) => api.updateNotificationPreferences({ dto }),
         onMutate: async (dto) => {
             await qc.cancelQueries({ queryKey: ['notification-preferences'] });
 
-            const previous = qc.getQueryData<NotificationPreferencesDto>([
-                'notification-preferences',
-            ]);
+            const previous = qc.getQueryData<NotificationPreferencesDto>(['notification-preferences']);
 
-            qc.setQueryData<NotificationPreferencesDto>(
-                ['notification-preferences'],
-                (old) => {
-                    if (!old) return old;
+            qc.setQueryData<NotificationPreferencesDto>(['notification-preferences'], (old) => {
+                if (!old) return old;
 
-                    const updated = { ...old };
+                const updated = { ...old };
 
-                    for (const [k, v] of Object.entries(dto)) {
-                        updated[k as NotificationKey] = {
-                            ...old[k as NotificationKey],
-                            ...(v ?? {}),
-                        };
-                    }
+                for (const [k, v] of Object.entries(dto)) {
+                    updated[k as NotificationKey] = {
+                        ...old[k as NotificationKey],
+                        ...(v ?? {}),
+                    };
+                }
 
-                    return updated;
-                },
-            );
+                return updated;
+            });
 
             return { previous };
         },
@@ -100,9 +94,7 @@ export function NotificationsPage(): React.JSX.Element {
     if (isError || !prefs) {
         return (
             <div className="p-4 md:p-6 max-w-2xl">
-                <p className="text-nb-red font-bold text-sm">
-                    Failed to load notification preferences.
-                </p>
+                <p className="text-nb-red font-bold text-sm">Failed to load notification preferences.</p>
             </div>
         );
     }
@@ -132,9 +124,7 @@ export function NotificationsPage(): React.JSX.Element {
                                 >
                                     {key === 'discord' && !discordConnected ? (
                                         <span className="flex flex-col items-center gap-0.5">
-                                            <span className="text-nb-black/40 dark:text-white/30">
-                                                {label}
-                                            </span>
+                                            <span className="text-nb-black/40 dark:text-white/30">{label}</span>
 
                                             <Link
                                                 to="/settings/sources"
@@ -156,18 +146,13 @@ export function NotificationsPage(): React.JSX.Element {
                             <tr
                                 key={key}
                                 className={
-                                    i < ROWS.length - 1
-                                        ? 'border-b border-nb-black/10 dark:border-white/10'
-                                        : ''
+                                    i < ROWS.length - 1 ? 'border-b border-nb-black/10 dark:border-white/10' : ''
                                 }
                             >
-                                <td className="px-4 py-3 font-bold text-sm text-nb-black dark:text-white">
-                                    {label}
-                                </td>
+                                <td className="px-4 py-3 font-bold text-sm text-nb-black dark:text-white">{label}</td>
 
                                 {CHANNELS.map(({ key: channel }) => {
-                                    const isDiscordDisabled =
-                                        channel === 'discord' && !discordConnected;
+                                    const isDiscordDisabled = channel === 'discord' && !discordConnected;
 
                                     return (
                                         <td key={channel} className="px-4 py-3 text-center">
@@ -176,9 +161,7 @@ export function NotificationsPage(): React.JSX.Element {
                                             >
                                                 <Checkbox
                                                     checked={prefs[key][channel]}
-                                                    onChange={(v) =>
-                                                        handleToggle(key, channel, v)
-                                                    }
+                                                    onChange={(v) => handleToggle(key, channel, v)}
                                                     label={`${label} via ${channel}`}
                                                     disabled={isDiscordDisabled}
                                                 />

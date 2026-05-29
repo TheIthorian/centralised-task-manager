@@ -726,7 +726,12 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
 
     it('GET /tasks?status=done returns only done tasks', async () => {
         const id = await createLocal(`ToComplete ${Date.now()}`);
-        await app.inject({ method: 'PUT', url: `/tasks/${id}/status`, payload: { status: 'done' }, headers: { authorization: `Bearer ${jwt}` } });
+        await app.inject({
+            method: 'PUT',
+            url: `/tasks/${id}/status`,
+            payload: { status: 'done' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
 
         const res = await app.inject({
             method: 'GET',

@@ -158,7 +158,7 @@ describe('Connectors — auth guards and user isolation', () => {
         expect(res.statusCode).toBe(401);
     });
 
-    it("both users see all connectors as disconnected", async () => {
+    it('both users see all connectors as disconnected', async () => {
         const resA = await app.inject({
             method: 'GET',
             url: '/connectors',

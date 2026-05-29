@@ -7,7 +7,9 @@ function taskRow(t: TaskDto): string[] {
     const dueStr = t.due ? new Date(t.due.date).toLocaleDateString() + (t.due.recurrence ? ' ↻' : '') : '-';
     const deadlineStr = t.deadlineDate ? new Date(t.deadlineDate).toLocaleDateString() : '-';
     const durationStr = t.duration
-        ? t.duration.unit === 'minute' ? `${t.duration.amount}m` : `${t.duration.amount}d`
+        ? t.duration.unit === 'minute'
+            ? `${t.duration.amount}m`
+            : `${t.duration.amount}d`
         : '-';
 
     return [
@@ -40,23 +42,37 @@ export function registerTasksCommand(program: Command): void {
         )
         .option('--last-updated-from <date>', 'Only return tasks updated on or after this ISO date')
         .option('--json', 'Output as JSON')
-        .action(async (opts: { filter: 'all' | 'today' | 'upcoming' | 'done'; lastUpdatedFrom?: string; json?: boolean }) => {
-            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+        .action(
+            async (opts: {
+                filter: 'all' | 'today' | 'upcoming' | 'done';
+                lastUpdatedFrom?: string;
+                json?: boolean;
+            }) => {
+                const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
 
-            try {
-                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                const result = await client.listTasks({ filter: opts.filter, lastUpdatedFromDate: opts.lastUpdatedFrom });
+                try {
+                    const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                    const result = await client.listTasks({
+                        filter: opts.filter,
+                        lastUpdatedFromDate: opts.lastUpdatedFrom,
+                    });
 
-                if (opts.json) {
-                    print(formatJson(result));
-                } else {
-                    print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'], result.map(taskRow)));
+                    if (opts.json) {
+                        print(formatJson(result));
+                    } else {
+                        print(
+                            formatTable(
+                                ['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'],
+                                result.map(taskRow),
+                            ),
+                        );
+                    }
+                } catch (err: unknown) {
+                    console.error(err instanceof Error ? err.message : String(err));
+                    process.exit(1);
                 }
-            } catch (err: unknown) {
-                console.error(err instanceof Error ? err.message : String(err));
-                process.exit(1);
-            }
-        });
+            },
+        );
 
     tasks
         .command('create')
@@ -113,7 +129,10 @@ export function registerTasksCommand(program: Command): void {
                             due: opts.due ? { date: opts.due, recurrence: opts.recurrence } : undefined,
                             deadlineDate: opts.deadline,
                             duration: opts.duration
-                                ? { amount: Number(opts.duration), unit: (opts.durationUnit ?? 'minute') as 'minute' | 'day' }
+                                ? {
+                                      amount: Number(opts.duration),
+                                      unit: (opts.durationUnit ?? 'minute') as 'minute' | 'day',
+                                  }
                                 : undefined,
                             parentId: opts.parent,
                         },
@@ -189,7 +208,10 @@ export function registerTasksCommand(program: Command): void {
                             due: opts.due ? { date: opts.due, recurrence: opts.recurrence } : undefined,
                             deadlineDate: opts.deadline,
                             duration: opts.duration
-                                ? { amount: Number(opts.duration), unit: (opts.durationUnit ?? 'minute') as 'minute' | 'day' }
+                                ? {
+                                      amount: Number(opts.duration),
+                                      unit: (opts.durationUnit ?? 'minute') as 'minute' | 'day',
+                                  }
                                 : undefined,
                             tags,
                         },
@@ -300,7 +322,12 @@ export function registerTasksCommand(program: Command): void {
                 if (opts.json) {
                     print(formatJson(task));
                 } else {
-                    print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'], [taskRow(task)]));
+                    print(
+                        formatTable(
+                            ['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'],
+                            [taskRow(task)],
+                        ),
+                    );
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -323,7 +350,12 @@ export function registerTasksCommand(program: Command): void {
                 if (opts.json) {
                     print(formatJson(task));
                 } else {
-                    print(formatTable(['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'], [taskRow(task)]));
+                    print(
+                        formatTable(
+                            ['ID', 'Title', 'Priority', 'Due', 'Deadline', 'Duration', 'Status', 'Tags'],
+                            [taskRow(task)],
+                        ),
+                    );
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));

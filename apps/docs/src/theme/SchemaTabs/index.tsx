@@ -13,14 +13,18 @@ import React from 'react';
 import OriginalSchemaTabs from '@theme-original/SchemaTabs';
 import { TabsProvider, useTabsContextValue } from '@docusaurus/theme-common/internal';
 
-export default function SchemaTabs({ children, ...props }: React.ComponentProps<typeof OriginalSchemaTabs>): JSX.Element {
+export default function SchemaTabs({
+    children,
+    ...props
+}: React.ComponentProps<typeof OriginalSchemaTabs>): JSX.Element {
     const values = React.useMemo(
         () =>
             React.Children.toArray(children)
                 .filter(React.isValidElement)
                 .map((child) => ({
                     value: (child as React.ReactElement).props.value as string,
-                    label: ((child as React.ReactElement).props.label ?? (child as React.ReactElement).props.value) as string,
+                    label: ((child as React.ReactElement).props.label ??
+                        (child as React.ReactElement).props.value) as string,
                 })),
         [children],
     );

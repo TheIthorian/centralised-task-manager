@@ -17,7 +17,13 @@ import {
 import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { ConnectorName, TaskConnectorName, ConnectorType, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
+import {
+    ConnectorName,
+    TaskConnectorName,
+    ConnectorType,
+    OAuthConnectorRegistry,
+    ExternalTaskSourceRegistry,
+} from '@ctm/connectors';
 import Ajv from 'ajv';
 import type { NotionTaskSource } from '@ctm/connectors';
 import type {

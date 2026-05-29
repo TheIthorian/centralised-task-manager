@@ -10,7 +10,12 @@ export function AuthorizedAppsPage(): React.JSX.Element {
     const { api } = useAuth();
     const queryClient = useQueryClient();
 
-    const { data: apps = [], isLoading, isError, error } = useQuery({
+    const {
+        data: apps = [],
+        isLoading,
+        isError,
+        error,
+    } = useQuery({
         queryKey: ['authorized-apps'],
         queryFn: () => api.getAuthorizedApps(),
     });

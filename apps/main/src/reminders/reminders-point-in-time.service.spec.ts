@@ -24,10 +24,7 @@ describe('RemindersService – runPointInTimeReminders', () => {
                     { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
                 ]),
             ],
-            providers: [
-                RemindersService,
-                { provide: NotificationsService, useValue: { send: sendMock } },
-            ],
+            providers: [RemindersService, { provide: NotificationsService, useValue: { send: sendMock } }],
         }).compile();
 
         service = module.get(RemindersService);

@@ -64,19 +64,19 @@ Upcoming Deadline  | [ ]   | [ ]           | [ ]
 
 ## Error Handling
 
-| Scenario | Behaviour |
-|---|---|
-| Query error | Inline error message below heading |
-| Mutation error | Revert optimistic toggle; show toast "Failed to save preferences" |
-| Discord not connected | Discord checkboxes disabled; header link to connect |
+| Scenario              | Behaviour                                                         |
+| --------------------- | ----------------------------------------------------------------- |
+| Query error           | Inline error message below heading                                |
+| Mutation error        | Revert optimistic toggle; show toast "Failed to save preferences" |
+| Discord not connected | Discord checkboxes disabled; header link to connect               |
 
 ## Files Changed
 
-| File | Change |
-|---|---|
-| `apps/web/src/pages/NotificationsPage.tsx` | New page component |
-| `apps/web/src/pages/SettingsLayout.tsx` | Add "Notifications" tab |
-| `apps/web/src/App.tsx` | Add `/settings/notifications` route |
+| File                                       | Change                              |
+| ------------------------------------------ | ----------------------------------- |
+| `apps/web/src/pages/NotificationsPage.tsx` | New page component                  |
+| `apps/web/src/pages/SettingsLayout.tsx`    | Add "Notifications" tab             |
+| `apps/web/src/App.tsx`                     | Add `/settings/notifications` route |
 
 ## Out of Scope
 

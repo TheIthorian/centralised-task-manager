@@ -1,7 +1,7 @@
 {
-  "extends": "@ctm/tsconfig/react.json",
-  "compilerOptions": {
-    "noEmit": true
-  },
-  "include": ["src"]
+    "extends": "@ctm/tsconfig/react.json",
+    "compilerOptions": {
+        "noEmit": true
+    },
+    "include": ["src"]
 }

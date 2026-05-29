@@ -1,11 +1,11 @@
 {
-  "extends": "@ctm/tsconfig/nestjs.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"],
-  "ts-node": {
-    "swc": true
-  }
+    "extends": "@ctm/tsconfig/nestjs.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "include": ["src"],
+    "ts-node": {
+        "swc": true
+    }
 }

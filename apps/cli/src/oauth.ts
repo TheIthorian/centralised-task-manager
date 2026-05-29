@@ -31,7 +31,8 @@ export type CallbackServer = {
     waitForCode: () => Promise<string>;
 };
 
-const CLI_SCOPES = 'openid tasks:read tasks:write connectors:read connectors:write notifications:read notification-config:read notification-config:write profile:read';
+const CLI_SCOPES =
+    'openid tasks:read tasks:write connectors:read connectors:write notifications:read notification-config:read notification-config:write profile:read';
 
 type RegisterClientResponse = {
     client_id: string;
@@ -83,7 +84,12 @@ export async function exchangeCodeForTokens({
     const res = await fetch(`${baseUrl}/oauth/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ grant_type: 'authorization_code', code, redirect_uri: redirectUri, code_verifier: codeVerifier }),
+        body: JSON.stringify({
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: redirectUri,
+            code_verifier: codeVerifier,
+        }),
     });
 
     if (!res.ok) throw new Error(`Token exchange failed: ${res.status}`);
@@ -135,10 +141,7 @@ export async function performOAuthLogin({
         waitForCode(),
         new Promise<never>(
             (_, reject) =>
-                (timeoutId = setTimeout(
-                    () => reject(new Error('Authorisation timed out after 5 minutes')),
-                    timeoutMs,
-                )),
+                (timeoutId = setTimeout(() => reject(new Error('Authorisation timed out after 5 minutes')), timeoutMs)),
         ),
     ]).finally(() => {
         clearTimeout(timeoutId);

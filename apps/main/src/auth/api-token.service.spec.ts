@@ -48,8 +48,8 @@ describe('ApiTokenService', () => {
     });
 
     it('revoke throws NotFoundException when token not found', async () => {
-        await expect(
-            service.revoke({ tokenId: new Types.ObjectId().toHexString(), userId }),
-        ).rejects.toThrow(NotFoundException);
+        await expect(service.revoke({ tokenId: new Types.ObjectId().toHexString(), userId })).rejects.toThrow(
+            NotFoundException,
+        );
     });
 });

@@ -22,7 +22,10 @@ const PATTERNS: PatternEntry[] = [
     [/^every week$/i, () => 'FREQ=WEEKLY'],
     [/^every (\d+) weeks?$/i, (m) => `FREQ=WEEKLY;INTERVAL=${m[1]}`],
     [/^every workday$/i, () => 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR'],
-    [/^every (monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i, (m) => `FREQ=WEEKLY;BYDAY=${DAY_TO_BYDAY[m[1].toLowerCase()]}`],
+    [
+        /^every (monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i,
+        (m) => `FREQ=WEEKLY;BYDAY=${DAY_TO_BYDAY[m[1].toLowerCase()]}`,
+    ],
     [/^every month$/i, () => 'FREQ=MONTHLY'],
     [/^every (\d+) months?$/i, (m) => `FREQ=MONTHLY;INTERVAL=${m[1]}`],
     [/^every year$/i, () => 'FREQ=YEARLY'],

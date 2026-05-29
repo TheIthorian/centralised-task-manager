@@ -17,11 +17,11 @@ New `Reminder` subdocument:
 ```ts
 @Schema({ _id: false })
 class Reminder {
-  @Prop({ type: Date, required: true })
-  remindAt: Date          // exact UTC datetime to fire
+    @Prop({ type: Date, required: true })
+    remindAt: Date; // exact UTC datetime to fire
 
-  @Prop({ type: Date, default: null })
-  firedAt: Date | null    // set to now after notification is sent; prevents re-fire
+    @Prop({ type: Date, default: null })
+    firedAt: Date | null; // set to now after notification is sent; prevents re-fire
 }
 ```
 
@@ -58,20 +58,21 @@ dueDateNotifiedAt: string | null
 
 Two new endpoints on `TasksController`:
 
-| Method | Path | Body | Response |
-|--------|------|------|----------|
-| `POST` | `/tasks/:id/reminders` | `{ remindAt: string }` | `ReminderDto` |
-| `DELETE` | `/tasks/:id/reminders/:index` | — | `OkDto` |
+| Method   | Path                          | Body                   | Response      |
+| -------- | ----------------------------- | ---------------------- | ------------- |
+| `POST`   | `/tasks/:id/reminders`        | `{ remindAt: string }` | `ReminderDto` |
+| `DELETE` | `/tasks/:id/reminders/:index` | —                      | `OkDto`       |
 
 - `POST` appends a new `Reminder` subdoc (`firedAt: null`) and returns it.
 - `DELETE` removes by array index. Returns `{ ok: true }`.
 - Both require auth and verify task ownership.
 
 Request DTO (`AddReminderDto`):
+
 ```ts
 export class AddReminderDto implements IAddReminderDto {
-  @IsISO8601()
-  remindAt: string
+    @IsISO8601()
+    remindAt: string;
 }
 ```
 
@@ -91,6 +92,7 @@ async runPointInTimeReminders(): Promise<void>
 Query: tasks where **any** `reminders` element has `remindAt` in `[now - 5min, now]` and `firedAt` is null.
 
 For each matching task+reminder pair:
+
 1. Call `NotificationsService.send({ userId, type: 'reminder', title: 'Reminder', body: task.title })`.
 2. Update that specific reminder's `firedAt = now` atomically using `$set` with positional operator.
 
@@ -99,6 +101,7 @@ For each matching task+reminder pair:
 Query: tasks where `dueDate.date` is in `[now - 5min, now]` and `dueDateNotifiedAt` is null.
 
 For each match:
+
 1. Call `NotificationsService.send({ userId, type: 'reminder', title: `${task.title} is due`, body: '' })`.
 2. Set `dueDateNotifiedAt = now`.
 

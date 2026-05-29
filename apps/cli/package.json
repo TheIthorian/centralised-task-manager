@@ -1,32 +1,32 @@
 {
-  "name": "@ctm/cli",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "bin": {
-    "ctm": "./dist/main.js"
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run",
-    "lint": "oxlint src",
-    "format": "oxfmt --no-error-on-unmatched-pattern --config ../../.oxfmtrc.json src '**/*.md'"
-  },
-  "dependencies": {
-    "@ctm/api-client": "workspace:*",
-    "@ctm/errors": "workspace:*",
-    "@inquirer/prompts": "7.10.1",
-    "cli-table3": "0.6.5",
-    "commander": "10.0.1",
-    "open": "10.2.0"
-  },
-  "devDependencies": {
-    "@ctm/tsconfig": "workspace:*",
-    "@swc/core": "1.15.33",
-    "@types/node": "17.0.45",
-    "ts-node": "10.9.2",
-    "typescript": "6.0.3",
-    "unplugin-swc": "1.5.9",
-    "vitest": "4.1.7"
-  }
+    "name": "@ctm/cli",
+    "version": "0.0.1",
+    "private": true,
+    "bin": {
+        "ctm": "./dist/main.js"
+    },
+    "type": "module",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --no-error-on-unmatched-pattern --config ../../.oxfmtrc.json src '**/*.md'"
+    },
+    "dependencies": {
+        "@ctm/api-client": "workspace:*",
+        "@ctm/errors": "workspace:*",
+        "@inquirer/prompts": "7.10.1",
+        "cli-table3": "0.6.5",
+        "commander": "10.0.1",
+        "open": "10.2.0"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "@swc/core": "1.15.33",
+        "@types/node": "17.0.45",
+        "ts-node": "10.9.2",
+        "typescript": "6.0.3",
+        "unplugin-swc": "1.5.9",
+        "vitest": "4.1.7"
+    }
 }

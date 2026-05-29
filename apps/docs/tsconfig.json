@@ -1,15 +1,15 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "jsx": "react",
-    "strict": false,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "types": ["@docusaurus/module-type-aliases"]
-  },
-  "include": ["**/*.ts", "**/*.tsx"]
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": ["ES2022", "DOM"],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react",
+        "strict": false,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "types": ["@docusaurus/module-type-aliases"]
+    },
+    "include": ["**/*.ts", "**/*.tsx"]
 }

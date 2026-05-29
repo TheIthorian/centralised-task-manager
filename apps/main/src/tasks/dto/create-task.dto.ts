@@ -1,7 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-    IsString, IsNotEmpty, IsOptional, IsISO8601, Min, Max, IsInt,
-    MaxLength, IsArray, ValidateNested, IsMongoId,
+    IsString,
+    IsNotEmpty,
+    IsOptional,
+    IsISO8601,
+    Min,
+    Max,
+    IsInt,
+    MaxLength,
+    IsArray,
+    ValidateNested,
+    IsMongoId,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LocationDto, DueDateDto, DurationDto } from './update-task.dto.js';

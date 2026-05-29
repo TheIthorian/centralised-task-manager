@@ -27,8 +27,18 @@ function groupByDueDate(tasks: TaskDto[]): Map<string, TaskDto[]> {
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const MONTH_NAMES = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
 ];
 
 const PRIORITY_CHIP_CLASS: Record<number, string> = {
@@ -62,20 +72,27 @@ export function CalendarPage(): React.JSX.Element {
 
     const cells: GridCell[] = [
         ...Array.from<GridCell>({ length: firstDayOfWeek }).fill(null),
-        ...Array.from({ length: daysInMonth }, (_, i): GridCell => ({
-            day: i + 1,
-            key: toDateKey(year, month, i + 1),
-        })),
+        ...Array.from(
+            { length: daysInMonth },
+            (_, i): GridCell => ({
+                day: i + 1,
+                key: toDateKey(year, month, i + 1),
+            }),
+        ),
     ];
 
     const prevMonth = (): void => {
-        if (month === 0) { setMonth(11); setYear((y) => y - 1); }
-        else setMonth((m) => m - 1);
+        if (month === 0) {
+            setMonth(11);
+            setYear((y) => y - 1);
+        } else setMonth((m) => m - 1);
     };
 
     const nextMonth = (): void => {
-        if (month === 11) { setMonth(0); setYear((y) => y + 1); }
-        else setMonth((m) => m + 1);
+        if (month === 11) {
+            setMonth(0);
+            setYear((y) => y + 1);
+        } else setMonth((m) => m + 1);
     };
 
     const saveMutation = useMutation({
@@ -119,7 +136,10 @@ export function CalendarPage(): React.JSX.Element {
                 <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">Calendar</h1>
                 <div className="flex items-center gap-2 ml-auto">
                     <button
-                        onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()); }}
+                        onClick={() => {
+                            setYear(today.getFullYear());
+                            setMonth(today.getMonth());
+                        }}
                         className="border-2 border-nb-black dark:border-white/20 px-2 py-0.5 font-black text-xs uppercase cursor-pointer dark:text-white"
                     >
                         Today
@@ -205,9 +225,15 @@ export function CalendarPage(): React.JSX.Element {
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}
-                onSave={async (id, dto) => { await saveMutation.mutateAsync({ id, dto }); }}
-                onDelete={async (id) => { await deleteMutation.mutateAsync(id); }}
-                onSetFuzzyDeadline={async (id, dto) => { await setFuzzyMutation.mutateAsync({ id, dto }); }}
+                onSave={async (id, dto) => {
+                    await saveMutation.mutateAsync({ id, dto });
+                }}
+                onDelete={async (id) => {
+                    await deleteMutation.mutateAsync(id);
+                }}
+                onSetFuzzyDeadline={async (id, dto) => {
+                    await setFuzzyMutation.mutateAsync({ id, dto });
+                }}
                 isSaving={saveMutation.isPending}
                 isDeleting={deleteMutation.isPending}
                 isSettingFuzzy={setFuzzyMutation.isPending}

@@ -9,34 +9,38 @@
 ## Methods to Add
 
 ### Tasks
-| Method | Params | Returns |
-|---|---|---|
-| `getTask` | `id` | `TaskDto` |
-| `removeFuzzyDeadline` | `id` | `TaskDto` |
-| `addReminder` | `id`, `remindAt: string (ISO)` | `ReminderDto` |
-| `removeReminder` | `id`, `index: number` | `OkDto` |
+
+| Method                | Params                         | Returns       |
+| --------------------- | ------------------------------ | ------------- |
+| `getTask`             | `id`                           | `TaskDto`     |
+| `removeFuzzyDeadline` | `id`                           | `TaskDto`     |
+| `addReminder`         | `id`, `remindAt: string (ISO)` | `ReminderDto` |
+| `removeReminder`      | `id`, `index: number`          | `OkDto`       |
 
 ### Connectors
-| Method | Params | Returns |
-|---|---|---|
-| `getConnectorHealth` | — | `ConnectorHealthDto[]` |
-| `syncConnector` | `source` | `TaskSyncJobDto` |
-| `getSyncJob` | `source`, `jobId` | `TaskSyncJobDto` |
-| `cancelSyncJob` | `source`, `jobId` | `void` |
-| `setConnectionDetails` | `source`, `details: ConnectorDetailsDto` (JSON) | `void` |
-| `listNotionDatabases` | — | `{ id, name }[]` |
+
+| Method                 | Params                                          | Returns                |
+| ---------------------- | ----------------------------------------------- | ---------------------- |
+| `getConnectorHealth`   | —                                               | `ConnectorHealthDto[]` |
+| `syncConnector`        | `source`                                        | `TaskSyncJobDto`       |
+| `getSyncJob`           | `source`, `jobId`                               | `TaskSyncJobDto`       |
+| `cancelSyncJob`        | `source`, `jobId`                               | `void`                 |
+| `setConnectionDetails` | `source`, `details: ConnectorDetailsDto` (JSON) | `void`                 |
+| `listNotionDatabases`  | —                                               | `{ id, name }[]`       |
 
 ### Notifications
-| Method | Params | Returns |
-|---|---|---|
-| `getDiscordConnectUrl` | — | `string` |
+
+| Method                    | Params            | Returns                |
+| ------------------------- | ----------------- | ---------------------- |
+| `getDiscordConnectUrl`    | —                 | `string`               |
 | `testNotificationChannel` | `channel: string` | `TestChannelResultDto` |
 
 ### Authorized Apps (new domain)
-| Method | Params | Returns |
-|---|---|---|
-| `getAuthorizedApps` | — | `AuthorizedAppDto[]` |
-| `revokeAuthorizedApp` | `clientId` | `void` |
+
+| Method                | Params     | Returns              |
+| --------------------- | ---------- | -------------------- |
+| `getAuthorizedApps`   | —          | `AuthorizedAppDto[]` |
+| `revokeAuthorizedApp` | `clientId` | `void`               |
 
 ---
 
@@ -68,6 +72,7 @@ All changes follow existing patterns in `apps/cli/src/commands/`.
 ### apps.ts — new file
 
 New top-level command group `ctm apps`:
+
 - `ctm apps list` — table: [Client ID, Name, Scopes, Authorized At]; `--json`
 - `ctm apps revoke <clientId>` — print confirmation
 
@@ -116,12 +121,14 @@ Import `registerAppsTools` and call it alongside existing registrations.
 ## api-client Type Change
 
 Add to `packages/api-client/src/types.ts`:
+
 ```ts
 /** Connector-specific connection details (e.g. Notion database ID). */
 export type ConnectorDetailsDto = Record<string, unknown>;
 ```
 
 Update `SetConnectionDetailsParams` in `client.types.ts`:
+
 ```ts
 export type SetConnectionDetailsParams = {
     source: string;

@@ -22,7 +22,13 @@ export function TaskList({ tasks, highlightedTaskId, onToggle, onEdit }: TaskLis
     return (
         <div className="flex flex-col gap-2">
             {tasks.map((task) => (
-                <TaskCard key={task.id} task={task} highlighted={task.id === highlightedTaskId} onToggle={onToggle} onEdit={onEdit} />
+                <TaskCard
+                    key={task.id}
+                    task={task}
+                    highlighted={task.id === highlightedTaskId}
+                    onToggle={onToggle}
+                    onEdit={onEdit}
+                />
             ))}
         </div>
     );

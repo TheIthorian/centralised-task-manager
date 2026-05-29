@@ -20,8 +20,16 @@ const SCOPE_REGISTRY: Record<string, ScopeEntry> = {
     'connectors:write': { scope: 'connectors:write', label: 'Manage connectors', required: false },
     'connectors:sync': { scope: 'connectors:sync', label: 'Trigger connector sync', required: false },
     'notifications:read': { scope: 'notifications:read', label: 'Read notifications', required: false },
-    'notification-config:read': { scope: 'notification-config:read', label: 'Read notification prefs', required: false },
-    'notification-config:write': { scope: 'notification-config:write', label: 'Manage notification prefs', required: false },
+    'notification-config:read': {
+        scope: 'notification-config:read',
+        label: 'Read notification prefs',
+        required: false,
+    },
+    'notification-config:write': {
+        scope: 'notification-config:write',
+        label: 'Manage notification prefs',
+        required: false,
+    },
     'profile:read': { scope: 'profile:read', label: 'Read profile', required: false },
     'profile:write': { scope: 'profile:write', label: 'Update profile', required: false },
 };
@@ -145,14 +153,20 @@ export function OAuthConsentPage(): React.JSX.Element {
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">
             <div className="w-full max-w-sm bg-white dark:bg-neutral-900 border-4 border-nb-black dark:border-white/20 shadow-[6px_6px_0px_#111] dark:shadow-none p-8">
-                <p className="text-xs font-black uppercase tracking-widest text-nb-grey mb-1">CTM MCP Server is requesting access</p>
-                <h1 className="text-3xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-1">Authorise CTM</h1>
+                <p className="text-xs font-black uppercase tracking-widest text-nb-grey mb-1">
+                    CTM MCP Server is requesting access
+                </p>
+                <h1 className="text-3xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-1">
+                    Authorise CTM
+                </h1>
                 <p className="text-sm font-bold text-nb-grey mb-5">Signed in as {user.email}</p>
 
                 {/* Permissions box */}
                 <div className="border-2 border-nb-black mb-5" style={{ background: '#fffbe8' }}>
                     <div className="px-3 py-2 border-b-2 border-nb-black bg-[#f5f5f5]">
-                        <span className="text-xs font-black uppercase tracking-widest text-nb-grey">Permissions requested</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-nb-grey">
+                            Permissions requested
+                        </span>
                     </div>
 
                     {/* openid — locked */}
@@ -162,7 +176,9 @@ export function OAuthConsentPage(): React.JSX.Element {
                         </div>
                         <div>
                             <p className="text-xs font-black text-[#aaa]">Verify identity</p>
-                            <p className="text-[10px] font-bold text-[#ccc] uppercase tracking-wide">openid · Required</p>
+                            <p className="text-[10px] font-bold text-[#ccc] uppercase tracking-wide">
+                                openid · Required
+                            </p>
                         </div>
                     </div>
 

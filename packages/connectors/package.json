@@ -1,25 +1,25 @@
 {
-  "name": "@ctm/connectors",
-  "version": "0.0.1",
-  "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run",
-    "lint": "oxlint src",
-    "format": "oxfmt --config ../../.oxfmtrc.json src '**/*.md'",
-    "dev": "tsc -p tsconfig.build.json --watch"
-  },
-  "dependencies": {
-    "@ctm/errors": "workspace:*",
-    "@ctm/http-client": "workspace:*",
-    "ajv": "^8.20.0",
-    "axios": "1.16.1"
-  },
-  "devDependencies": {
-    "@ctm/tsconfig": "workspace:*",
-    "typescript": "6.0.3",
-    "vitest": "4.1.7"
-  }
+    "name": "@ctm/connectors",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json . '**/*.md'",
+        "dev": "tsc -p tsconfig.build.json --watch"
+    },
+    "dependencies": {
+        "@ctm/errors": "workspace:*",
+        "@ctm/http-client": "workspace:*",
+        "ajv": "^8.20.0",
+        "axios": "1.16.1"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "typescript": "6.0.3",
+        "vitest": "4.1.7"
+    }
 }

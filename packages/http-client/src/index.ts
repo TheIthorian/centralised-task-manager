@@ -91,10 +91,7 @@ export class HttpClient {
                     {
                         url,
                         status: response.status,
-                        responseHeaders: redactObject(
-                            response.headers as Record<string, unknown>,
-                            obfuscate,
-                        ),
+                        responseHeaders: redactObject(response.headers as Record<string, unknown>, obfuscate),
                         responseBody: redactObject(response.data as unknown, obfuscate),
                     },
                     'outbound response',
@@ -110,10 +107,7 @@ export class HttpClient {
                         {
                             url,
                             status: error.response.status,
-                            responseHeaders: redactObject(
-                                error.response.headers as Record<string, unknown>,
-                                obfuscate,
-                            ),
+                            responseHeaders: redactObject(error.response.headers as Record<string, unknown>, obfuscate),
                             responseBody: redactObject(error.response.data as unknown, obfuscate),
                         },
                         'outbound response error',

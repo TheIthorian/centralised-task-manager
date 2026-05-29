@@ -51,7 +51,9 @@ export class GoogleTasksOAuthConnector implements OAuthConnector {
         });
 
         if (!response.refresh_token) {
-            throw new OAuthError('Google did not return a refresh token — ensure prompt=consent is set in the auth URL');
+            throw new OAuthError(
+                'Google did not return a refresh token — ensure prompt=consent is set in the auth URL',
+            );
         }
 
         return {

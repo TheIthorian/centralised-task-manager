@@ -1,7 +1,4 @@
-export {
-    ApiClientError,
-    CtmApiClient,
-} from './client.js';
+export { ApiClientError, CtmApiClient } from './client.js';
 export { ConnectorType } from './types.js';
 export type {
     ApiClientOptions,

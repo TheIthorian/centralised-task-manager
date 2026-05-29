@@ -2,7 +2,14 @@ import { type Logger, HttpClient } from '@ctm/http-client';
 import { ExternalServiceError } from '@ctm/errors';
 
 import { TaskConnectorName } from '../types.js';
-import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, UpdateTaskDto, HealthCheckResult } from '../types.js';
+import type {
+    CreateTaskDto,
+    ExternalTaskSource,
+    OAuthTokens,
+    RemoteTask,
+    UpdateTaskDto,
+    HealthCheckResult,
+} from '../types.js';
 import type { GoogleTaskList, GoogleTask } from './google-tasks.types.js';
 
 /** Configuration required to instantiate a {@link GoogleTasksTaskSource}. */

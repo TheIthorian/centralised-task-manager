@@ -18,8 +18,10 @@ export function Button({ variant = 'primary', className, children, ...props }: B
                 'hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none',
                 'active:translate-x-[3px] active:translate-y-[3px] active:shadow-none',
                 'disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0',
-                variant === 'primary' && 'bg-nb-black dark:bg-nb-yellow text-white dark:text-nb-black shadow-[3px_3px_0px_#111] dark:shadow-none',
-                variant === 'secondary' && 'bg-white dark:bg-neutral-800 text-nb-black dark:text-white shadow-[3px_3px_0px_#111] dark:shadow-none',
+                variant === 'primary' &&
+                    'bg-nb-black dark:bg-nb-yellow text-white dark:text-nb-black shadow-[3px_3px_0px_#111] dark:shadow-none',
+                variant === 'secondary' &&
+                    'bg-white dark:bg-neutral-800 text-nb-black dark:text-white shadow-[3px_3px_0px_#111] dark:shadow-none',
                 variant === 'danger' && 'bg-nb-red text-white shadow-[3px_3px_0px_#111]',
                 className,
             )}

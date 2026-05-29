@@ -9,13 +9,13 @@ Add due-date section grouping to the Tasks page "All" filter view. Tasks are buc
 
 ## Sections (in order)
 
-| Section | Criteria | Header colour |
-|---|---|---|
-| ⚠ Overdue | `due.date` < today (not completed) | Red chip |
-| Today | `due.date` === today | Blue chip |
-| This Week | `due.date` within current calendar week (Mon–Sun), after today | Black chip |
-| Upcoming | `due.date` > end of current week | Black chip |
-| No Date | no `due` field | Grey chip |
+| Section   | Criteria                                                       | Header colour |
+| --------- | -------------------------------------------------------------- | ------------- |
+| ⚠ Overdue | `due.date` < today (not completed)                             | Red chip      |
+| Today     | `due.date` === today                                           | Blue chip     |
+| This Week | `due.date` within current calendar week (Mon–Sun), after today | Black chip    |
+| Upcoming  | `due.date` > end of current week                               | Black chip    |
+| No Date   | no `due` field                                                 | Grey chip     |
 
 Tasks within each section are sorted ascending by `due.date` (no-date section has no defined order).
 
@@ -31,8 +31,9 @@ font: 11px / 900 / uppercase / 0.08em tracking
 ```
 
 Chip colours:
+
 - Overdue: red background (`#fca5a5`), red border/shadow
-- Today: blue background (`#bfdbfe`), blue border/shadow  
+- Today: blue background (`#bfdbfe`), blue border/shadow
 - This Week / Upcoming: white background, black border/shadow
 - No Date: light grey background, grey border/shadow
 
@@ -47,6 +48,7 @@ Sections with zero tasks are hidden entirely.
 File: `apps/web/src/components/tasks/GroupedTaskList.tsx`
 
 Accepts the same props as `TaskList` (`tasks`, `onToggle`, `onEdit`). Internally:
+
 1. Calls a pure helper `bucketTasks(tasks)` → `{ overdue, today, thisWeek, upcoming, noDate }`.
 2. Renders each non-empty bucket as a section chip + flat list of `TaskCard` components.
 3. Empty state (all buckets empty) renders the same yellow "No Tasks Here" block as `TaskList`.
@@ -59,14 +61,14 @@ Pure function — no React, easily unit-tested. Uses `startOfDay`, `endOfWeek` c
 
 ```ts
 type TaskBuckets = {
-  overdue: TaskDto[];
-  today: TaskDto[];
-  thisWeek: TaskDto[];
-  upcoming: TaskDto[];
-  noDate: TaskDto[];
+    overdue: TaskDto[];
+    today: TaskDto[];
+    thisWeek: TaskDto[];
+    upcoming: TaskDto[];
+    noDate: TaskDto[];
 };
 
-export function bucketTasks(tasks: TaskDto[], now?: Date): TaskBuckets
+export function bucketTasks(tasks: TaskDto[], now?: Date): TaskBuckets;
 ```
 
 `now` param makes it trivially testable without mocking.
@@ -91,9 +93,9 @@ When `filter === 'all'`, render `<GroupedTaskList>` instead of `<TaskList>`. All
 
 ## Files Touched
 
-| File | Change |
-|---|---|
-| `apps/web/src/components/tasks/GroupedTaskList.tsx` | New |
-| `apps/web/src/lib/bucket-tasks.ts` | New |
-| `apps/web/src/lib/bucket-tasks.spec.ts` | New (unit tests) |
-| `apps/web/src/pages/TasksPage.tsx` | Switch on filter |
+| File                                                | Change           |
+| --------------------------------------------------- | ---------------- |
+| `apps/web/src/components/tasks/GroupedTaskList.tsx` | New              |
+| `apps/web/src/lib/bucket-tasks.ts`                  | New              |
+| `apps/web/src/lib/bucket-tasks.spec.ts`             | New (unit tests) |
+| `apps/web/src/pages/TasksPage.tsx`                  | Switch on filter |

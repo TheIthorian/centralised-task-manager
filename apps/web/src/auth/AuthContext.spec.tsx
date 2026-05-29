@@ -10,11 +10,13 @@ const mockApi = {
 };
 
 vi.mock('../api/web-api-client.js', () => ({
-    WebApiClient: vi.fn(class MockWebApiClient {
-        constructor() {
-            return mockApi;
-        }
-    }),
+    WebApiClient: vi.fn(
+        class MockWebApiClient {
+            constructor() {
+                return mockApi;
+            }
+        },
+    ),
 }));
 
 vi.mock('js-cookie', () => {

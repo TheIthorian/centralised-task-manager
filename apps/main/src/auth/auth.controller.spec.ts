@@ -393,7 +393,9 @@ describe('JWT signed with a mismatched key', () => {
         const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 
         const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-        const payload = Buffer.from(JSON.stringify({ sub: 'fake-user-id', email: 'fake@example.com', iat: Math.floor(Date.now() / 1000) })).toString('base64url');
+        const payload = Buffer.from(
+            JSON.stringify({ sub: 'fake-user-id', email: 'fake@example.com', iat: Math.floor(Date.now() / 1000) }),
+        ).toString('base64url');
         const signer = createSign('SHA256');
         signer.update(`${header}.${payload}`);
         const signature = signer.sign(privateKey, 'base64url');

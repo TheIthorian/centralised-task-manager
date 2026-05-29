@@ -113,7 +113,12 @@ export function registerConnectorsCommand(program: Command): void {
                 if (opts.json) {
                     print(formatJson(job));
                 } else {
-                    print(formatTable(['ID', 'Source', 'Status', 'Stage', 'Synced', 'Skipped', 'Error'], [syncJobRow(job)]));
+                    print(
+                        formatTable(
+                            ['ID', 'Source', 'Status', 'Stage', 'Synced', 'Skipped', 'Error'],
+                            [syncJobRow(job)],
+                        ),
+                    );
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -136,7 +141,12 @@ export function registerConnectorsCommand(program: Command): void {
                 if (opts.json) {
                     print(formatJson(job));
                 } else {
-                    print(formatTable(['ID', 'Source', 'Status', 'Stage', 'Synced', 'Skipped', 'Error'], [syncJobRow(job)]));
+                    print(
+                        formatTable(
+                            ['ID', 'Source', 'Status', 'Stage', 'Synced', 'Skipped', 'Error'],
+                            [syncJobRow(job)],
+                        ),
+                    );
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -210,7 +220,12 @@ export function registerConnectorsCommand(program: Command): void {
                 if (opts.json) {
                     print(formatJson(dbs));
                 } else {
-                    print(formatTable(['ID', 'Name'], dbs.map((db) => [db.id, db.name])));
+                    print(
+                        formatTable(
+                            ['ID', 'Name'],
+                            dbs.map((db) => [db.id, db.name]),
+                        ),
+                    );
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));

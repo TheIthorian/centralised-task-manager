@@ -37,11 +37,13 @@ Extract `apps/web/src/components/ui/` to `packages/ui/src/`:
 ### Flow
 
 Current:
+
 ```
 MCP client → GET /oauth/authorize → NestJS returns inline HTML → user submits → POST /oauth/authorize → redirect with code
 ```
 
 New:
+
 ```
 MCP client → GET /oauth/authorize → NestJS redirects to /oauth/consent?{params} → React SPA renders consent page → user submits → POST /oauth/authorize → redirect with code
 ```
@@ -57,6 +59,7 @@ The React consent page lives at `/oauth/consent` in `apps/web`. It reads query p
 ### Consent page design
 
 Neobrutalist, matches `LoginPage.tsx`:
+
 - Yellow dot-grid background
 - White card with 4px black border + 6px offset shadow
 - Permissions box with `#fffbe8` background (hint of yellow) and `#111` borders
@@ -70,19 +73,19 @@ Neobrutalist, matches `LoginPage.tsx`:
 
 Defined as a static map in `apps/main/src/oauth/scopes.ts`:
 
-| Scope | Label | Required |
-|---|---|---|
-| `openid` | Verify identity | Yes |
-| `tasks:read` | Read tasks | No |
-| `tasks:write` | Create & manage tasks | No |
-| `connectors:read` | Read connectors | No |
-| `connectors:write` | Manage connectors | No |
-| `connectors:sync` | Trigger connector sync | No |
-| `notifications:read` | Read notifications | No |
-| `notification-config:read` | Read notification prefs | No |
-| `notification-config:write` | Manage notification prefs | No |
-| `profile:read` | Read profile | No |
-| `profile:write` | Update profile | No |
+| Scope                       | Label                     | Required |
+| --------------------------- | ------------------------- | -------- |
+| `openid`                    | Verify identity           | Yes      |
+| `tasks:read`                | Read tasks                | No       |
+| `tasks:write`               | Create & manage tasks     | No       |
+| `connectors:read`           | Read connectors           | No       |
+| `connectors:write`          | Manage connectors         | No       |
+| `connectors:sync`           | Trigger connector sync    | No       |
+| `notifications:read`        | Read notifications        | No       |
+| `notification-config:read`  | Read notification prefs   | No       |
+| `notification-config:write` | Manage notification prefs | No       |
+| `profile:read`              | Read profile              | No       |
+| `profile:write`             | Update profile            | No       |
 
 The consent page receives the requested scopes via query param, filters to known scopes, groups them by resource prefix, and renders checkboxes. Unknown scopes are ignored.
 

@@ -30,29 +30,39 @@ describe('OAuthConsentPage', () => {
     });
 
     it('renders the requesting access header', () => {
-        renderConsentPage('?scope=tasks:read+tasks:write&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code');
+        renderConsentPage(
+            '?scope=tasks:read+tasks:write&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+        );
         expect(screen.getByText(/requesting access/i)).toBeInTheDocument();
     });
 
     it('shows the signed-in user email', () => {
-        renderConsentPage('?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code');
+        renderConsentPage(
+            '?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+        );
         expect(screen.getByText(/user@example.com/i)).toBeInTheDocument();
     });
 
     it('renders scope groups from the scope query param', () => {
-        renderConsentPage('?scope=tasks:read+tasks:write+notifications:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code');
+        renderConsentPage(
+            '?scope=tasks:read+tasks:write+notifications:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+        );
         expect(screen.getByText('Tasks')).toBeInTheDocument();
         expect(screen.getByText('Notifications')).toBeInTheDocument();
         expect(screen.getByText('Read tasks')).toBeInTheDocument();
     });
 
     it('renders openid as locked/required', () => {
-        renderConsentPage('?scope=openid+tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code');
+        renderConsentPage(
+            '?scope=openid+tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+        );
         expect(screen.getByText(/required/i)).toBeInTheDocument();
     });
 
     it('allows toggling a scope off', () => {
-        renderConsentPage('?scope=tasks:read+tasks:write&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code');
+        renderConsentPage(
+            '?scope=tasks:read+tasks:write&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+        );
         const writeCheckbox = screen.getByRole('checkbox', { name: /create & manage tasks/i });
         expect(writeCheckbox).toHaveAttribute('aria-checked', 'true');
         fireEvent.click(writeCheckbox);
@@ -60,14 +70,18 @@ describe('OAuthConsentPage', () => {
     });
 
     it('does not render email or password fields', () => {
-        renderConsentPage('?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code');
+        renderConsentPage(
+            '?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+        );
         expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
         expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
     });
 
     it('shows session expired error on 401', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ status: 401, ok: false }));
-        renderConsentPage('?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code');
+        renderConsentPage(
+            '?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+        );
         fireEvent.click(screen.getByRole('button', { name: /authorise/i }));
         await waitFor(() => expect(screen.getByText(/session expired/i)).toBeInTheDocument());
     });
@@ -82,7 +96,9 @@ describe('OAuthConsentPage', () => {
         const assignSpy = vi.fn();
         Object.defineProperty(window, 'location', { value: { assign: assignSpy }, writable: true });
 
-        renderConsentPage('?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code');
+        renderConsentPage(
+            '?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+        );
         fireEvent.click(screen.getByRole('button', { name: /authorise/i }));
 
         await waitFor(() => expect(assignSpy).toHaveBeenCalledWith('http://localhost:4000/cb?code=abc123'));

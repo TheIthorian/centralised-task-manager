@@ -14,9 +14,7 @@ const LOCAL_SOURCE = 'local';
 
 @Injectable()
 export class TasksService {
-    constructor(
-        @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
-    ) {}
+    constructor(@InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>) {}
 
     /** List tasks for a user with optional filters. */
     async list(userId: string, query: ListTasksQueryDto): Promise<TaskDocument[]> {
@@ -163,11 +161,7 @@ export class TasksService {
 
         // Outbound sync (CTM → external source) is disabled; status changes are local-only.
 
-        return this.taskModel.findByIdAndUpdate(
-            taskId,
-            { status: dto.status },
-            { new: true },
-        ) as Promise<TaskDocument>;
+        return this.taskModel.findByIdAndUpdate(taskId, { status: dto.status }, { new: true }) as Promise<TaskDocument>;
     }
 
     /** Delete a task via write-through.
@@ -311,7 +305,8 @@ export class TasksService {
             }
 
             const referenceTime = existing.createdAt ?? existing.syncedAt;
-            const hasLocalChanges = existing.updatedAt !== undefined && referenceTime !== undefined && existing.updatedAt > referenceTime;
+            const hasLocalChanges =
+                existing.updatedAt !== undefined && referenceTime !== undefined && existing.updatedAt > referenceTime;
 
             if (hasLocalChanges) {
                 skipped++;
@@ -365,15 +360,7 @@ export class TasksService {
     }
 
     /** Remove a reminder from a task by its array index. */
-    async removeReminder({
-        taskId,
-        userId,
-        index,
-    }: {
-        taskId: string;
-        userId: string;
-        index: number;
-    }): Promise<void> {
+    async removeReminder({ taskId, userId, index }: { taskId: string; userId: string; index: number }): Promise<void> {
         const task = await this.findOne({ taskId, userId });
 
         if (index < 0 || index >= task.reminders.length) {
@@ -382,10 +369,7 @@ export class TasksService {
 
         task.reminders.splice(index, 1);
 
-        await this.taskModel.updateOne(
-            { _id: taskId },
-            { $set: { reminders: task.reminders } },
-        );
+        await this.taskModel.updateOne({ _id: taskId }, { $set: { reminders: task.reminders } });
     }
 
     private parseDueFields(dto: {

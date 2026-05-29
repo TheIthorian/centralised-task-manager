@@ -11,7 +11,14 @@ type DiscordCardProps = {
 };
 
 /** Displays the Discord notification connector with connect / disconnect / test actions. */
-export function DiscordCard({ status, onConnect, onDisconnect, onTest, isPending, testSent }: DiscordCardProps): React.JSX.Element {
+export function DiscordCard({
+    status,
+    onConnect,
+    onDisconnect,
+    onTest,
+    isPending,
+    testSent,
+}: DiscordCardProps): React.JSX.Element {
     return (
         <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex items-center justify-between gap-4">
             <div>

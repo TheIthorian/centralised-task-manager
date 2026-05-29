@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Patch, Delete, Put, Param, Body, Query, Request, UseGuards, HttpCode } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Patch,
+    Delete,
+    Put,
+    Param,
+    Body,
+    Query,
+    Request,
+    UseGuards,
+    HttpCode,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
 import { TasksService } from './tasks.service.js';
@@ -90,7 +103,11 @@ export class TasksController {
     /** Set task status (complete or uncomplete). */
     @ApiOperation({ summary: 'Set task status to open or done' })
     @Put(':id/status')
-    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: SetTaskStatusDto): Promise<TaskDto> {
+    async setStatus(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Body() dto: SetTaskStatusDto,
+    ): Promise<TaskDto> {
         const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, dto });
         return this.toResponse(t);
     }

@@ -57,7 +57,7 @@ const router = createBrowserRouter([
             },
         ],
     },
-{ path: '*', element: <NotFoundPage /> },
+    { path: '*', element: <NotFoundPage /> },
 ]);
 
 export default function App(): React.JSX.Element {

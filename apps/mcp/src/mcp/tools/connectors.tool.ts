@@ -104,10 +104,13 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
     server.registerTool(
         'set_connection_details',
         {
-            description: 'Save connector-specific connection details (e.g. Notion database ID). Pass a JSON object of key-value pairs.',
+            description:
+                'Save connector-specific connection details (e.g. Notion database ID). Pass a JSON object of key-value pairs.',
             inputSchema: {
                 source: z.string().min(1),
-                details: z.record(z.string(), z.unknown()).describe('Connector-specific details as a key-value object (e.g. {"databaseId": "abc123"})'),
+                details: z
+                    .record(z.string(), z.unknown())
+                    .describe('Connector-specific details as a key-value object (e.g. {"databaseId": "abc123"})'),
             },
             annotations: { destructiveHint: false, idempotentHint: true },
         },

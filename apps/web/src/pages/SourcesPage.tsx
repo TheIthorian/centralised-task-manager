@@ -29,10 +29,7 @@ export function SourcesPage(): React.JSX.Element {
         queryFn: () => api.listConnectors(),
     });
 
-    const {
-        data: healthResults = [],
-        isLoading: isHealthLoading,
-    } = useQuery({
+    const { data: healthResults = [], isLoading: isHealthLoading } = useQuery({
         queryKey: ['connectors', 'health'],
         queryFn: () => api.getConnectorHealth(),
         enabled: connectors.some((c) => c.connected),
