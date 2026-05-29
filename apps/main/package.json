@@ -20,6 +20,7 @@
         "@ctm/request-logger": "workspace:*",
         "@fastify/cors": "11.2.0",
         "@fastify/formbody": "8.0.2",
+        "@fastify/multipart": "^10.0.0",
         "@nestjs/common": "11.1.21",
         "@nestjs/config": "4.0.4",
         "@nestjs/core": "11.1.21",
