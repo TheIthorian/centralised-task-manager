@@ -1,5 +1,5 @@
 import { mkdirSync } from 'fs';
-import { mkdir, readdir, readFile, rm, stat, writeFile } from 'fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
 import type { FileStorage } from './file-storage.interface.js';
 
@@ -31,12 +31,6 @@ export class LocalFileStorage implements FileStorage {
 
     async delete(prefix: string): Promise<void> {
         const dir = join(this.baseDir, prefix);
-
-        try {
-            await stat(dir);
-        } catch {
-            return;
-        }
 
         await rm(dir, { recursive: true, force: true });
     }
