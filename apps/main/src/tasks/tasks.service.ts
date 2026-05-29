@@ -77,6 +77,8 @@ export class TasksService {
 
         if (query.noDate) {
             filter['due'] = null;
+            // When noDate is true, date range params are irrelevant — clear any due.date conditions.
+            delete filter['due.date'];
         }
 
         const page = query.page ?? 1;

@@ -149,6 +149,15 @@ export function TasksPage(): React.JSX.Element {
                 // Optimistically move to done section
                 const allBuckets = ['overdue', 'today', 'thisWeek', 'upcoming', 'noDate'] as const;
 
+                const bucketSnapshots: Partial<Record<string, { pages: TaskDto[][] }>> = {};
+                const doneSnapshot = doneTasks;
+
+                for (const bucket of allBuckets) {
+                    const snap = qc.getQueryData<{ pages: TaskDto[][] }>(['tasks', 'grouped', bucket]);
+
+                    if (snap) bucketSnapshots[bucket] = snap;
+                }
+
                 let movedTask: TaskDto | undefined;
 
                 for (const bucket of allBuckets) {
@@ -174,7 +183,7 @@ export function TasksPage(): React.JSX.Element {
                     qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
                 }
 
-                return { movedTask };
+                return { movedTask, bucketSnapshots, doneSnapshot };
             }
 
             await qc.cancelQueries({ queryKey: ['tasks', filter] });
@@ -194,7 +203,22 @@ export function TasksPage(): React.JSX.Element {
             return { prev };
         },
         onError: (_err, _vars, ctx) => {
-            if (filter !== 'all' && ctx?.prev) {
+            if (filter === 'all' && ctx) {
+                const { bucketSnapshots, doneSnapshot } = ctx as {
+                    bucketSnapshots?: Partial<Record<string, { pages: TaskDto[][] }>>;
+                    doneSnapshot?: TaskDto[];
+                };
+
+                if (bucketSnapshots) {
+                    for (const [bucket, snap] of Object.entries(bucketSnapshots)) {
+                        qc.setQueryData(['tasks', 'grouped', bucket], snap);
+                    }
+                }
+
+                if (doneSnapshot !== undefined) {
+                    setDoneTasks(doneSnapshot);
+                }
+            } else if (filter !== 'all' && ctx?.prev) {
                 qc.setQueryData(['tasks', filter], ctx.prev);
             }
         },

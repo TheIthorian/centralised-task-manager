@@ -9,7 +9,7 @@ export type BucketQueryResult = {
     isLoading: boolean;
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
-    fetchNextPage: () => void;
+    fetchNextPage: () => Promise<unknown>;
 };
 
 export type GroupedQueryResults = {
@@ -51,8 +51,7 @@ function toBucketResult(
         isLoading: query.isLoading,
         hasNextPage: query.hasNextPage,
         isFetchingNextPage: query.isFetchingNextPage,
-        // Wrap to discard the Promise — callers only need the side effect.
-        fetchNextPage: () => { void query.fetchNextPage(); },
+        fetchNextPage: query.fetchNextPage,
     };
 }
 
