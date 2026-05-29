@@ -189,4 +189,41 @@ export function registerNotificationsCommand(program: Command): void {
                 process.exit(1);
             }
         });
+
+    discord
+        .command('connect')
+        .description('Get Discord OAuth connect URL and open it in your browser')
+        .action(async () => {
+            const parent = notifications.opts<{ token?: string; baseUrl?: string }>();
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const url = await client.getDiscordConnectUrl();
+
+                print(`Opening: ${url}`);
+                const { default: open } = await import('open');
+                await open(url);
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
+
+    // ── Test notification ───────────────────────────────────────────────────────
+
+    notifications
+        .command('test')
+        .description('Send a test notification via a channel (e.g. discord, email)')
+        .argument('<channel>', 'Channel name: discord, email, etc.')
+        .action(async (channel: string) => {
+            const parent = notifications.opts<{ token?: string; baseUrl?: string }>();
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const result = await client.testNotificationChannel({ channel });
+
+                print(result.sent ? 'Sent.' : 'Not sent.');
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
 }

@@ -5,6 +5,7 @@ import { registerLogoutCommand } from './commands/logout.js';
 import { registerTasksCommand } from './commands/tasks.js';
 import { registerConnectorsCommand } from './commands/connectors.js';
 import { registerNotificationsCommand } from './commands/notifications.js';
+import { registerAppsCommand } from './commands/apps.js';
 
 const program = new Command();
 
@@ -15,5 +16,6 @@ registerLogoutCommand(program);
 registerTasksCommand(program);
 registerConnectorsCommand(program);
 registerNotificationsCommand(program);
+registerAppsCommand(program);
 
 program.parse();
