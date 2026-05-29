@@ -17,6 +17,7 @@ import type {
 } from '@ctm/api-client';
 
 const MAX_PART_BYTES = 50 * 1024 * 1024;
+const EFFECTIVE_MAX_BYTES = MAX_PART_BYTES - 4096;
 
 @Injectable()
 export class ExportService {
@@ -35,8 +36,8 @@ export class ExportService {
 
         const [user, tasks, notifications] = await Promise.all([
             this.userModel.findById(uid).orFail(),
-            this.taskModel.find({ userId: uid }).lean(),
-            this.notificationModel.find({ userId: uid }).lean(),
+            this.taskModel.find({ userId: uid }).lean<Task[]>(),
+            this.notificationModel.find({ userId: uid }).lean<Notification[]>(),
         ]);
 
         const profile: ExportProfileDto = {
@@ -46,8 +47,8 @@ export class ExportService {
         };
 
         const exportedAt = new Date().toISOString();
-        const taskDtos = tasks.map((t) => taskToDto(t as TaskDocument));
-        const notifDtos = notifications.map((n) => notifToDto(n as NotificationDocument));
+        const taskDtos = tasks.map((t) => taskToDto(t));
+        const notifDtos = notifications.map((n) => notifToDto(n));
 
         const parts = buildParts({ exportId, exportedAt, profile, tasks: taskDtos, notifications: notifDtos });
 
@@ -75,7 +76,7 @@ export class ExportService {
     }
 }
 
-function taskToDto(t: TaskDocument): ExportTaskDto {
+function taskToDto(t: Task & { _id: Types.ObjectId }): ExportTaskDto {
     return {
         id: String(t._id),
         source: t.source,
@@ -105,7 +106,7 @@ function taskToDto(t: TaskDocument): ExportTaskDto {
     };
 }
 
-function notifToDto(n: NotificationDocument): NotificationDto {
+function notifToDto(n: Notification & { _id: Types.ObjectId; createdAt?: Date }): NotificationDto {
     return {
         id: String(n._id),
         type: n.type,
@@ -146,7 +147,7 @@ function buildParts({
         if (item.type === 'task') current.tasks.push(item.data);
         else current.notifications.push(item.data);
 
-        if (Buffer.byteLength(JSON.stringify(current), 'utf-8') > MAX_PART_BYTES) {
+        if (Buffer.byteLength(JSON.stringify(current), 'utf-8') > EFFECTIVE_MAX_BYTES) {
             if (item.type === 'task') current.tasks.pop();
             else current.notifications.pop();
 
