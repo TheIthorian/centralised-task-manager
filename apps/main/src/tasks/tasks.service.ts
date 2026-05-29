@@ -63,6 +63,22 @@ export class TasksService {
             filter['updatedAt'] = { $gte: new Date(query.lastUpdatedFromDate) };
         }
 
+        if (query.dueBefore) {
+            const existing = (filter['due.date'] as Record<string, unknown>) ?? {};
+
+            filter['due.date'] = { ...existing, $lt: new Date(query.dueBefore) };
+        }
+
+        if (query.dueAfter) {
+            const existing = (filter['due.date'] as Record<string, unknown>) ?? {};
+
+            filter['due.date'] = { ...existing, $gte: new Date(query.dueAfter) };
+        }
+
+        if (query.noDate) {
+            filter['due'] = null;
+        }
+
         const page = query.page ?? 1;
         const limit = query.limit ?? 50;
 
