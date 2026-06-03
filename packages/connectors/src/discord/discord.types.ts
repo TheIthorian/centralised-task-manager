@@ -19,3 +19,20 @@ export type DiscordDmChannelResponse = {
     id: string;
     type: number;
 };
+
+export type DiscordAuthInfo = {
+    application: {
+        id: string;
+        name: string;
+    };
+    scopes: string[];
+    expires: string; // ISO timestamp
+    user?: {
+        id: string;
+        username: string;
+        discriminator: string;
+        global_name: string | null;
+    };
+};
+
+export type DiscordError = { message: string; code: number };

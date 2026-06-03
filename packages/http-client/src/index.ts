@@ -87,12 +87,14 @@ export class HttpClient {
             (response: AxiosResponse) => {
                 const url = `${String(response.config.baseURL ?? '')}${String(response.config.url ?? '')}`;
 
+                const { status, headers, body } = this.getResponseDetailsForLog(response, obfuscate);
+
                 logger.debug(
                     {
                         url,
-                        status: response.status,
-                        responseHeaders: redactObject(response.headers as Record<string, unknown>, obfuscate),
-                        responseBody: redactObject(response.data as unknown, obfuscate),
+                        status,
+                        responseHeaders: redactObject(headers as Record<string, unknown>, obfuscate),
+                        responseBody: body,
                     },
                     'outbound response',
                 );
@@ -103,12 +105,14 @@ export class HttpClient {
                 if (axios.isAxiosError(error) && error.response) {
                     const url = `${String(error.config?.baseURL ?? '')}${String(error.config?.url ?? '')}`;
 
+                    const { status, headers, body } = this.getResponseDetailsForLog(error.response, obfuscate);
+
                     logger.debug(
                         {
                             url,
-                            status: error.response.status,
-                            responseHeaders: redactObject(error.response.headers as Record<string, unknown>, obfuscate),
-                            responseBody: redactObject(error.response.data as unknown, obfuscate),
+                            status,
+                            responseHeaders: redactObject(headers as Record<string, unknown>, obfuscate),
+                            responseBody: body,
                         },
                         'outbound response error',
                     );
@@ -117,6 +121,23 @@ export class HttpClient {
                 return Promise.reject(error);
             },
         );
+    }
+
+    private getResponseDetailsForLog(
+        response: AxiosResponse,
+        obfuscate: boolean,
+    ): { status: number; headers: unknown; body: unknown } {
+        const contentType = response.headers['content-type'] ?? '';
+        const contentLength = response.headers['content-length'] ?? response.data.length ?? -1;
+        const isJsonResponse = contentType.toString().includes('application/json');
+
+        return {
+            status: response.status,
+            headers: redactObject(response.headers as Record<string, unknown>, obfuscate),
+            body: isJsonResponse
+                ? redactObject(response.data as unknown, obfuscate)
+                : `Service returned ${contentType} of length ${contentLength}`,
+        };
     }
 
     private async send<T>(config: {

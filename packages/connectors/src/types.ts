@@ -97,6 +97,8 @@ export type OAuthConnector = {
     readonly connectorType: ConnectorType;
     /** Optional schema describing per-user connection fields (e.g. notion database picker). */
     readonly connectionDetailsSchema: ConnectionDetailsSchema;
+    /** Probe the provider API with the given tokens to verify the connection is healthy. */
+    healthCheck(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<HealthCheckResult>;
     /** Build the OAuth authorization URL for the given user state value. */
     getAuthUrl(userId: string): string;
     /** Exchange an OAuth authorization code for a token set. */
@@ -109,6 +111,7 @@ export type OAuthConnector = {
 
 /** Result of a connector health probe. */
 export type HealthCheckResult = {
+    source: ConnectorName;
     healthy: boolean;
     error?: string;
 };
@@ -116,8 +119,6 @@ export type HealthCheckResult = {
 /** Task CRUD contract for connectors that read and write remote tasks. */
 export type ExternalTaskSource = {
     readonly name: TaskConnectorName;
-    /** Probe the provider API with the given tokens to verify the connection is healthy. */
-    healthCheck(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<HealthCheckResult>;
     /** Fetch all tasks accessible with the given token set. */
     fetchTasks(tokens: OAuthTokens, connectionDetails?: Record<string, unknown>): Promise<RemoteTask[]>;
     /** Create a new task and return the created representation. */

@@ -28,3 +28,17 @@ export interface GoogleTokenResponse {
     refresh_token?: string;
     expires_in: number;
 }
+
+export type GoogleTokenInfo = {
+    azp: string;
+    aud: string;
+    sub: string;
+    scope: string;
+    exp: string; // unix secs, as string
+    expires_in: string; // secs, as string
+    access_type: string;
+    email?: string;
+    email_verified?: string; // "true" | "false"
+};
+
+export type GoogleTokenInfoError = { error: string; error_description: string };

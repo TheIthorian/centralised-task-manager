@@ -1,8 +1,9 @@
 import { HttpClient, type Logger } from '@ctm/http-client';
 
 import { ConnectorName, ConnectorType } from '../types.js';
-import type { ConnectionDetailsSchema, OAuthConnector, OAuthTokens } from '../types.js';
+import type { ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
 import type { NotionTokenResponse } from './notion.types.js';
+import { NOTION_VERSION } from './notion.source.js';
 
 /** Configuration required to instantiate a {@link NotionOAuthConnector}. */
 export type NotionOAuthConnectorConfig = {
@@ -34,6 +35,19 @@ export class NotionOAuthConnector implements OAuthConnector {
 
     constructor(private readonly config: NotionOAuthConnectorConfig) {
         this.http = new HttpClient({ baseUrl: 'https://api.notion.com', logger: config.logger });
+    }
+
+    /** Probe the Notion API to verify the connection is healthy. */
+    async healthCheck(tokens: OAuthTokens): Promise<HealthCheckResult> {
+        try {
+            await this.http.get<unknown>('/v1/users/me', {
+                Authorization: `Bearer ${tokens.accessToken}`,
+                'Notion-Version': NOTION_VERSION,
+            });
+            return { source: this.name, healthy: true };
+        } catch (err) {
+            return { source: this.name, healthy: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
     }
 
     /** Build the OAuth authorization URL for the given user state. */

@@ -3,8 +3,8 @@ import { type Logger, HttpClient } from '@ctm/http-client';
 import { OAuthError } from '@ctm/errors';
 
 import { ConnectorName, ConnectorType } from '../types.js';
-import type { ConnectionDetailsSchema, OAuthConnector, OAuthTokens } from '../types.js';
-import type { GoogleTokenResponse } from './google-tasks.types.js';
+import type { ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
+import type { GoogleTokenInfo, GoogleTokenResponse } from './google-tasks.types.js';
 
 /** Configuration required to instantiate a {@link GoogleTasksOAuthConnector}. */
 export type GoogleTasksOAuthConnectorConfig = {
@@ -23,6 +23,18 @@ export class GoogleTasksOAuthConnector implements OAuthConnector {
 
     constructor(private readonly config: GoogleTasksOAuthConnectorConfig) {
         this.http = new HttpClient({ baseUrl: 'https://oauth2.googleapis.com', logger: config.logger });
+    }
+
+    /** Probe the Google Tasks API to verify the connection is healthy. */
+    async healthCheck(tokens: OAuthTokens): Promise<HealthCheckResult> {
+        try {
+            await this.http.get<GoogleTokenInfo>(`tokeninfo?access_token=${tokens.accessToken}`, {
+                Authorization: `Bearer ${tokens.accessToken}`,
+            });
+            return { healthy: true, source: this.name };
+        } catch (err) {
+            return { healthy: false, error: err instanceof Error ? err.message : 'Unknown error', source: this.name };
+        }
     }
 
     /** PKCE deferred to a future version — requires app-level verifier state management */

@@ -1,6 +1,12 @@
 import { HttpClient, type Logger } from '@ctm/http-client';
 import { ConnectorName, ConnectorType } from '../types.js';
-import type { ConnectionDetailsSchema, ConnectionSettings, OAuthConnector, OAuthTokens } from '../types.js';
+import type {
+    ConnectionDetailsSchema,
+    ConnectionSettings,
+    HealthCheckResult,
+    OAuthConnector,
+    OAuthTokens,
+} from '../types.js';
 import type { DiscordTokenResponse, DiscordUserResponse } from './discord.types.js';
 
 /** Configuration required to instantiate a {@link DiscordOAuthConnector}. */
@@ -21,6 +27,16 @@ export class DiscordOAuthConnector implements OAuthConnector {
 
     constructor(private readonly config: DiscordOAuthConnectorConfig) {
         this.http = new HttpClient({ baseUrl: 'https://discord.com/api/v10', logger: config.logger });
+    }
+
+    /** Probe the Discord API to verify the connection is healthy. */
+    async healthCheck(tokens: OAuthTokens): Promise<HealthCheckResult> {
+        try {
+            await this.resolveUserId(tokens);
+            return { healthy: true, source: this.name };
+        } catch (err) {
+            return { healthy: false, error: err instanceof Error ? err.message : 'Unknown error', source: this.name };
+        }
     }
 
     /** Build the Discord OAuth2 authorization URL. Requests identify + bot scopes with DM permission. */
