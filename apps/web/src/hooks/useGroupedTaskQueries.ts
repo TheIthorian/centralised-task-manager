@@ -67,7 +67,7 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: WebApiClie
             api.listTasks({ status: 'open', dueBefore: today, page: pageParam as number, limit: PAGE_SIZE }),
         initialPageParam: 1,
         getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+            lastPage?.length === PAGE_SIZE ? pages.length + 1 : undefined,
         enabled,
     });
 
@@ -77,7 +77,7 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: WebApiClie
             api.listTasks({ filter: 'today', page: pageParam as number, limit: PAGE_SIZE }),
         initialPageParam: 1,
         getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+            lastPage?.length === PAGE_SIZE ? pages.length + 1 : undefined,
         enabled,
     });
 
@@ -93,7 +93,7 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: WebApiClie
             }),
         initialPageParam: 1,
         getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+            lastPage?.length === PAGE_SIZE ? pages.length + 1 : undefined,
         enabled,
     });
 
@@ -103,7 +103,7 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: WebApiClie
             api.listTasks({ status: 'open', dueAfter: nextMonday, page: pageParam as number, limit: PAGE_SIZE }),
         initialPageParam: 1,
         getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+            lastPage?.length === PAGE_SIZE ? pages.length + 1 : undefined,
         enabled,
     });
 
@@ -113,7 +113,7 @@ export function useGroupedTaskQueries({ api, enabled = true }: { api: WebApiClie
             api.listTasks({ status: 'open', noDate: true, page: pageParam as number, limit: PAGE_SIZE }),
         initialPageParam: 1,
         getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+            lastPage?.length === PAGE_SIZE ? pages.length + 1 : undefined,
         enabled,
     });
 

@@ -104,7 +104,7 @@ export function TasksPage(): React.JSX.Element {
             }),
         initialPageParam: 1,
         getNextPageParam: (lastPage, pages) =>
-            lastPage.length === PAGE_SIZE ? pages.length + 1 : undefined,
+            lastPage?.length === PAGE_SIZE ? pages.length + 1 : undefined,
         enabled: filter !== 'all',
     });
 

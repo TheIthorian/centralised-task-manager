@@ -58,7 +58,7 @@ export function CalendarPage(): React.JSX.Element {
     const qc = useQueryClient();
 
     const { data: tasks = [] } = useQuery({
-        queryKey: ['tasks', 'all'],
+        queryKey: ['calendar-tasks'],
         queryFn: () => api.listTasks({ filter: 'all' }),
     });
 
