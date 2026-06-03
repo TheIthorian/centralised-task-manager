@@ -50,7 +50,7 @@
         "@nestjs/testing": "11.1.21",
         "@swc/core": "1.15.33",
         "@types/bcrypt": "6.0.0",
-        "@types/node": "17.0.45",
+        "@types/node": "24.12.4",
         "@types/passport-jwt": "4.0.1",
         "@types/passport-local": "1.0.38",
         "fastify": "5.8.5",
