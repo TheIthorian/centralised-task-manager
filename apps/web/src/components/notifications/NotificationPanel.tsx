@@ -19,6 +19,8 @@ const TYPE_ICON: Record<NotificationDto['type'], string> = {
 function resolveUrl(n: NotificationDto): string | null {
     const { data } = n;
 
+    if (!data) return null;
+
     if (data.type === 'reminder' && data.taskId) return `/tasks?highlightTaskId=${data.taskId}`;
     if (data.type === 'reminder') return '/tasks';
     if (data.type === 'upcoming_deadline') return '/tasks?filter=upcoming';
@@ -133,7 +135,7 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
                                 n.read ? 'opacity-50' : ''
                             }`}
                         >
-                            <span className="text-base leading-none mt-0.5 flex-shrink-0">{TYPE_ICON[n.type]}</span>
+                            <span className="text-base leading-none mt-0.5 shrink-0">{TYPE_ICON[n.type]}</span>
                             <div className="flex-1 min-w-0">
                                 <p className="font-black text-xs text-nb-black dark:text-white truncate">{n.title}</p>
                                 {n.body && (
@@ -145,7 +147,7 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
                                     {new Date(n.createdAt).toLocaleString()}
                                 </p>
                             </div>
-                            {!n.read && <span className="w-2 h-2 rounded-full bg-nb-yellow flex-shrink-0 mt-1.5" />}
+                            {!n.read && <span className="w-2 h-2 rounded-full bg-nb-yellow shrink-0 mt-1.5" />}
                         </button>
                     ))}
                 </div>
