@@ -34,14 +34,14 @@ export function TimelinePage(): React.JSX.Element {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const { data: tasks = [], isLoading } = useQuery({
-        queryKey: ['tasks', 'all'],
+        queryKey: ['timeline-tasks'],
         queryFn: () => api.listTasks({ filter: 'all' }),
     });
 
     const saveMutation = useMutation({
         mutationFn: ({ id, dto }: { id: string; dto: UpdateTaskDto }) => api.updateTask({ id, dto }),
         onSuccess: (updated) => {
-            qc.setQueryData<TaskDto[]>(['tasks', 'all'], (prev = []) =>
+            qc.setQueryData<TaskDto[]>(['timeline-tasks'], (prev = []) =>
                 prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
             );
         },
@@ -50,14 +50,14 @@ export function TimelinePage(): React.JSX.Element {
     const deleteMutation = useMutation({
         mutationFn: (id: string) => api.deleteTask({ id }),
         onSuccess: (_data, id) => {
-            qc.setQueryData<TaskDto[]>(['tasks', 'all'], (prev = []) => prev.filter((t) => t.id !== id));
+            qc.setQueryData<TaskDto[]>(['timeline-tasks'], (prev = []) => prev.filter((t) => t.id !== id));
         },
     });
 
     const setFuzzyMutation = useMutation({
         mutationFn: ({ id, dto }: { id: string; dto: SetFuzzyDeadlineDto }) => api.setFuzzyDeadline({ id, dto }),
         onSuccess: (updated) => {
-            qc.setQueryData<TaskDto[]>(['tasks', 'all'], (prev = []) =>
+            qc.setQueryData<TaskDto[]>(['timeline-tasks'], (prev = []) =>
                 prev.map((t) => (t.id === updated.id ? { ...t, fuzzyDeadline: updated.fuzzyDeadline } : t)),
             );
         },
@@ -66,7 +66,7 @@ export function TimelinePage(): React.JSX.Element {
     const removeFuzzyMutation = useMutation({
         mutationFn: (id: string) => api.removeFuzzyDeadline({ id }),
         onSuccess: (updated) => {
-            qc.setQueryData<TaskDto[]>(['tasks', 'all'], (prev = []) =>
+            qc.setQueryData<TaskDto[]>(['timeline-tasks'], (prev = []) =>
                 prev.map((t) => (t.id === updated.id ? { ...t, fuzzyDeadline: null } : t)),
             );
         },
