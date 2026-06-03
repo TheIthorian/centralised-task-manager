@@ -27,6 +27,8 @@ export type {
     SetConnectionDetailsParams,
 } from './client.types.js';
 export type {
+    RelationType,
+    TaskRelationDto,
     UserDto,
     TaskDto,
     LocationDto,

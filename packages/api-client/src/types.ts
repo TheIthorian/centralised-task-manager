@@ -11,6 +11,15 @@ export type Duration = {
     unit: 'minute' | 'day';
 };
 
+/** The kind of relation from one task to another. */
+export type RelationType = 'parent' | 'child' | 'next' | 'previous' | 'related';
+
+/** A typed link from one task to another. */
+export type TaskRelationDto = {
+    type: RelationType;
+    targetTaskId: string;
+};
+
 /** Vague deadline classification with optional reminder cadence. */
 export type FuzzyDeadlineInfo = {
     type: 'this_week' | 'this_month' | 'someday';
@@ -39,7 +48,7 @@ export type TaskDto = {
     due?: DueDate | null;
     deadlineDate?: string | null;
     duration?: Duration | null;
-    parentId?: string | null;
+    relations: TaskRelationDto[];
     fuzzyDeadline?: FuzzyDeadlineInfo | null;
     completed: boolean;
     source: string;
@@ -58,7 +67,6 @@ export type CreateTaskDto = {
     due?: { date: string; timezone?: string; recurrence?: string };
     deadlineDate?: string;
     duration?: Duration;
-    parentId?: string;
     source: string;
     locations?: LocationDto[];
 };
