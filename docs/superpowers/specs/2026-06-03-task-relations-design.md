@@ -42,10 +42,12 @@ sides lets either task be read directly without a reverse scan).
   - Validate both tasks exist and are owned by `userId`.
   - Write `{ type, targetTaskId }` on the source task and the inverse
     `{ type: inverse(type), targetTaskId: taskId }` on the target task.
-  - Wrap both writes in a Mongo session/transaction so both land or neither.
+  - Two sequential writes (no Mongo transaction — standalone mongod does not
+    support multi-doc txns; deferred). Use `$addToSet` so each write is idempotent.
   - Dedupe: a `(type, targetTaskId)` pair already present is a no-op (no duplicates).
 - **Remove** `removeRelation({ userId, taskId, type, targetTaskId })`:
-  - Pull the relation from the source and the inverse from the target. Transactional.
+  - Pull the relation from the source and the inverse from the target
+    (two sequential `$pull` writes).
 - **On task delete**: pull any relations across the user's tasks whose
   `targetTaskId` equals the deleted task id (cleanup of dangling references).
 
