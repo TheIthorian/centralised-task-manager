@@ -9,6 +9,18 @@ export type FuzzyDeadlineType = 'this_week' | 'this_month' | 'someday';
 /** How often a task with a fuzzy deadline should be surfaced in reminders. */
 export type RemindEvery = 'daily' | 'weekly';
 
+/** The kind of relation from one task to another. */
+export type RelationType = 'parent' | 'child' | 'next' | 'previous' | 'related';
+
+/** Maps each relation type to the inverse type stored on the target task. */
+export const RELATION_INVERSE: Record<RelationType, RelationType> = {
+    parent: 'child',
+    child: 'parent',
+    next: 'previous',
+    previous: 'next',
+    related: 'related',
+};
+
 @Schema({ _id: false })
 class Location {
     @Prop({ type: String, required: true, maxlength: 200 })
@@ -56,6 +68,17 @@ class Duration {
 
 const DurationSchema = SchemaFactory.createForClass(Duration);
 
+@Schema({ _id: false })
+class TaskRelation {
+    @Prop({ type: String, required: true, enum: ['parent', 'child', 'next', 'previous', 'related'] })
+    type!: RelationType;
+
+    @Prop({ type: Types.ObjectId, ref: 'Task', required: true })
+    targetTaskId!: Types.ObjectId;
+}
+
+const TaskRelationSchema = SchemaFactory.createForClass(TaskRelation);
+
 @Schema({ timestamps: true })
 export class Task {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
@@ -98,8 +121,8 @@ export class Task {
     @Prop({ type: DurationSchema, default: null })
     duration!: { amount: number; unit: 'minute' | 'day' } | null;
 
-    @Prop({ type: Types.ObjectId, ref: 'Task', default: null })
-    parentId!: Types.ObjectId | null;
+    @Prop({ type: [TaskRelationSchema], default: [] })
+    relations!: { type: RelationType; targetTaskId: Types.ObjectId }[];
 
     @Prop({ type: FuzzyDeadlineSchema, default: null })
     fuzzyDeadline!: FuzzyDeadline | null;
@@ -118,3 +141,4 @@ export const TaskSchema = SchemaFactory.createForClass(Task);
 TaskSchema.index({ userId: 1, source: 1, sourceId: 1 }, { unique: true });
 TaskSchema.index({ userId: 1, status: 1 });
 TaskSchema.index({ 'fuzzyDeadline.remindEvery': 1 });
+TaskSchema.index({ userId: 1, 'relations.targetTaskId': 1 });
