@@ -1,5 +1,6 @@
 import type {
     CreateTaskDto,
+    RelationType,
     SetFuzzyDeadlineDto,
     SetTaskStatusDto,
     TaskFilter,
@@ -126,6 +127,18 @@ export type UpdateNotificationPreferencesParams = {
 export type SetConnectionDetailsParams = {
     source: string;
     details: Record<string, unknown>;
+};
+
+/** Parameters for {@link CtmApiClient.addRelation}. */
+export type AddRelationParams = {
+    id: string;
+    dto: { type: RelationType; targetTaskId: string };
+};
+
+/** Parameters for {@link CtmApiClient.removeRelation}. */
+export type RemoveRelationParams = {
+    id: string;
+    dto: { type: RelationType; targetTaskId: string };
 };
 
 /** Options for constructing an {@link ApiClientError}. */

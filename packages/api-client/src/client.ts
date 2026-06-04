@@ -15,6 +15,7 @@ import type {
     UserDto,
 } from './types.js';
 import type {
+    AddRelationParams,
     ApiClientErrorOptions,
     ApiClientOptions,
     CancelSyncJobParams,
@@ -30,6 +31,7 @@ import type {
     RefreshParams,
     RegisterParams,
     RemoveFuzzyDeadlineParams,
+    RemoveRelationParams,
     SetConnectionDetailsParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
@@ -248,6 +250,16 @@ export class CtmApiClient {
     /** Send a test notification via a channel (e.g. 'discord'). */
     async testNotificationChannel({ channel }: { channel: string }): Promise<TestChannelResultDto> {
         return this.request<TestChannelResultDto>({ method: 'POST', path: `/notifications/channels/${channel}/test` });
+    }
+
+    /** Add a typed relation between two tasks. */
+    async addRelation({ id, dto }: AddRelationParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'POST', path: `/tasks/${id}/relations`, body: dto });
+    }
+
+    /** Remove a typed relation between two tasks. */
+    async removeRelation({ id, dto }: RemoveRelationParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/relations`, body: dto });
     }
 
     private filterToParams(filter: TaskFilter): Record<string, string> {
