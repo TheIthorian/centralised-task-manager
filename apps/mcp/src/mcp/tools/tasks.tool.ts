@@ -42,14 +42,13 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
                 due: dueSchema.optional(),
                 deadlineDate: z.string().optional(),
                 duration: durationSchema.optional(),
-                parentId: z.string().optional(),
                 source: z.string().min(1),
             },
             annotations: { destructiveHint: false, idempotentHint: false },
         },
-        async ({ title, description, priority, due, deadlineDate, duration, parentId, source }) => {
+        async ({ title, description, priority, due, deadlineDate, duration, source }) => {
             const task = await client.createTask({
-                dto: { title, description, priority, due, deadlineDate, duration, parentId, source },
+                dto: { title, description, priority, due, deadlineDate, duration, source },
             });
             return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
         },
