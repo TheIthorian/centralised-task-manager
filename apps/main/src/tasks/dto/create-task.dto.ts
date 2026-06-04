@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsString, IsNotEmpty, IsOptional, IsISO8601, Min, Max, IsInt,
-    MaxLength, IsArray, ValidateNested, IsMongoId,
+    MaxLength, IsArray, ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LocationDto, DueDateDto, DurationDto } from './update-task.dto.js';
@@ -50,11 +50,6 @@ export class CreateTaskDto implements ICreateTaskDto {
     @ValidateNested({ each: true })
     @Type(() => LocationDto)
     locations?: LocationDto[];
-
-    @ApiPropertyOptional({ example: 'abc123', description: 'CTM task ObjectId of parent task' })
-    @IsOptional()
-    @IsMongoId()
-    parentId?: string;
 
     @ApiProperty({
         example: 'todoist',
