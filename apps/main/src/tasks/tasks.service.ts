@@ -157,12 +157,6 @@ export class TasksService {
     /** Create a task via write-through: call connector, then persist locally.
      *  When source is 'local', skip the connector and store the task directly in CTM. */
     async create({ userId, dto }: { userId: string; dto: CreateTaskDto }): Promise<TaskDocument> {
-        if (dto.parentId) {
-            const parent = await this.taskModel.findOne({ _id: dto.parentId, userId: new Types.ObjectId(userId) });
-
-            if (!parent) throw new BadRequestException('Parent task not found');
-        }
-
         const { due, deadlineDate } = this.parseDueFields(dto);
 
         // Outbound sync (CTM → external source) is disabled; all creates are local-only.
@@ -179,7 +173,6 @@ export class TasksService {
             due: due ?? null,
             deadlineDate: deadlineDate ?? null,
             duration: dto.duration ?? null,
-            parentId: dto.parentId ? new Types.ObjectId(dto.parentId) : null,
             syncedAt: new Date(),
         });
     }
@@ -332,17 +325,21 @@ export class TasksService {
 
         const buildInsert = (remote: RemoteTask, id: Types.ObjectId): object => {
             const parentSourceId = remote.parentSourceId;
-            let parentId: Types.ObjectId | null = null;
+            let parentObjectId: Types.ObjectId | null = null;
 
             if (parentSourceId) {
                 const existingParent = existingBySourceId.get(parentSourceId);
 
                 if (existingParent) {
-                    parentId = existingParent._id as Types.ObjectId;
+                    parentObjectId = existingParent._id as Types.ObjectId;
                 } else {
-                    parentId = newIdBySourceId.get(parentSourceId) ?? null;
+                    parentObjectId = newIdBySourceId.get(parentSourceId) ?? null;
                 }
             }
+
+            const relations = parentObjectId
+                ? [{ type: 'parent' as RelationType, targetTaskId: parentObjectId }]
+                : [];
 
             return {
                 _id: id,
@@ -357,7 +354,7 @@ export class TasksService {
                 due: remote.due ?? null,
                 deadlineDate: remote.deadline ?? null,
                 duration: remote.duration ?? null,
-                parentId,
+                relations,
                 createdAt: now,
                 updatedAt: now,
                 syncedAt: now,
