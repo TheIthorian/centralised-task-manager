@@ -112,12 +112,12 @@ export class TasksService {
         const inverse = RELATION_INVERSE[type];
 
         await this.taskModel.updateOne(
-            { _id: taskId },
+            { _id: taskId, userId: userObjectId },
             { $addToSet: { relations: { type, targetTaskId: new Types.ObjectId(targetTaskId) } } },
         );
 
         await this.taskModel.updateOne(
-            { _id: targetTaskId },
+            { _id: targetTaskId, userId: userObjectId },
             { $addToSet: { relations: { type: inverse, targetTaskId: new Types.ObjectId(taskId) } } },
         );
 
@@ -139,15 +139,16 @@ export class TasksService {
     }): Promise<TaskDocument> {
         await this.findOne({ taskId, userId });
 
+        const userObjectId = new Types.ObjectId(userId);
         const inverse = RELATION_INVERSE[type];
 
         await this.taskModel.updateOne(
-            { _id: taskId },
+            { _id: taskId, userId: userObjectId },
             { $pull: { relations: { type, targetTaskId: new Types.ObjectId(targetTaskId) } } },
         );
 
         await this.taskModel.updateOne(
-            { _id: targetTaskId },
+            { _id: targetTaskId, userId: userObjectId },
             { $pull: { relations: { type: inverse, targetTaskId: new Types.ObjectId(taskId) } } },
         );
 
