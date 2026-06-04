@@ -6,6 +6,7 @@ import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
 import { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
 import { SetTaskStatusDto } from './dto/set-task-status.dto.js';
+import { TaskRelationDto } from './dto/task-relation.dto.js';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 import type { TaskDocument } from './schemas/task.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
@@ -39,7 +40,7 @@ export class TasksController {
                 : null,
             deadlineDate: t.deadlineDate ? t.deadlineDate.toISOString() : null,
             duration: t.duration ?? null,
-            parentId: t.parentId ? String(t.parentId) : null,
+            relations: t.relations.map((r) => ({ type: r.type, targetTaskId: String(r.targetTaskId) })),
             fuzzyDeadline: t.fuzzyDeadline
                 ? { type: t.fuzzyDeadline.type, remindEvery: t.fuzzyDeadline.remindEvery }
                 : null,
@@ -106,6 +107,42 @@ export class TasksController {
     @Delete(':id/fuzzy-deadline')
     async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskDto> {
         const t = await this.tasks.removeFuzzyDeadline({ taskId: id, userId: req.user.sub });
+        return this.toResponse(t);
+    }
+
+    /** Add a typed relation between two tasks (auto-mirrors the inverse). */
+    @ApiOperation({ summary: 'Add a relation between two tasks' })
+    @Post(':id/relations')
+    async addRelation(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Body() dto: TaskRelationDto,
+    ): Promise<TaskDto> {
+        const t = await this.tasks.addRelation({
+            userId: req.user.sub,
+            taskId: id,
+            type: dto.type,
+            targetTaskId: dto.targetTaskId,
+        });
+
+        return this.toResponse(t);
+    }
+
+    /** Remove a typed relation between two tasks (clears the inverse too). */
+    @ApiOperation({ summary: 'Remove a relation between two tasks' })
+    @Delete(':id/relations')
+    async removeRelation(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Body() dto: TaskRelationDto,
+    ): Promise<TaskDto> {
+        const t = await this.tasks.removeRelation({
+            userId: req.user.sub,
+            taskId: id,
+            type: dto.type,
+            targetTaskId: dto.targetTaskId,
+        });
+
         return this.toResponse(t);
     }
 

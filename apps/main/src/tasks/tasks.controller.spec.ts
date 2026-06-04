@@ -616,6 +616,36 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         expect(JSON.parse(res.body).fuzzyDeadline).toBeNull();
     });
 
+    // ── Relations ──────────────────────────────────────────────────────────────
+
+    it('POST then DELETE /tasks/:id/relations adds and removes a relation', async () => {
+        const id = await createLocal(`Relation source ${Date.now()}`);
+        const targetId = await createLocal(`Relation target ${Date.now()}`);
+
+        const addRes = await app.inject({
+            method: 'POST',
+            url: `/tasks/${id}/relations`,
+            payload: { type: 'parent', targetTaskId: targetId },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect([200, 201]).toContain(addRes.statusCode);
+        const addBody = JSON.parse(addRes.body);
+
+        expect(addBody.relations).toContainEqual({ type: 'parent', targetTaskId: targetId });
+
+        const removeRes = await app.inject({
+            method: 'DELETE',
+            url: `/tasks/${id}/relations`,
+            payload: { type: 'parent', targetTaskId: targetId },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(removeRes.statusCode).toBe(200);
+
+        expect(JSON.parse(removeRes.body).relations).toEqual([]);
+    });
+
     // ── Validation ────────────────────────────────────────────────────────────
 
     it('POST /tasks missing title returns 400', async () => {
