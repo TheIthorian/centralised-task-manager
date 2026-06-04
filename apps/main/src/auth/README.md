@@ -13,6 +13,6 @@ User authentication module for `apps/main`.
 
 | Token            | Default lifetime | Config var                   |
 | ---------------- | ---------------- | ---------------------------- |
-| JWT access token | 15 min           | `JWT_ACCESS_EXPIRES`         |
+| JWT access token | 120 s            | `JWT_ACCESS_EXPIRES` (seconds) |
 | Refresh token    | 30 days          | `REFRESH_TOKEN_EXPIRES_DAYS` |
 | API token        | Never expires    | —                            |

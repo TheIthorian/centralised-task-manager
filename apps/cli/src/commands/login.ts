@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
 import { input, password } from '@inquirer/prompts';
 import { CtmApiClient } from '@ctm/api-client';
-import { readConfig, writeConfig } from '../auth.js';
+import { writeConfig } from '../auth.js';
 import { DEFAULT_BASE_URL } from '../client.js';
 import { print } from '../output.js';
 import { registerClient, performOAuthLogin } from '../oauth.js';
@@ -23,17 +23,14 @@ export function registerLoginCommand(program: Command): void {
 }
 
 async function oauthLogin(baseUrl: string): Promise<void> {
-    const stored = readConfig();
-    let clientId = stored?.clientId;
+    let clientId: string;
 
-    if (!clientId) {
-        try {
-            clientId = await registerClient(baseUrl);
-        } catch (err: unknown) {
-            console.error('Client registration failed:', err instanceof Error ? err.message : String(err));
-            console.error('Try: ctm login --password');
-            process.exit(1);
-        }
+    try {
+        clientId = await registerClient(baseUrl);
+    } catch (err: unknown) {
+        console.error('Client registration failed:', err instanceof Error ? err.message : String(err));
+        console.error('Try: ctm login --password');
+        process.exit(1);
     }
 
     try {

@@ -89,12 +89,15 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
         <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex flex-col gap-2">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <p className="font-black uppercase text-sm tracking-wide text-nb-black dark:text-white">
-                        {app.clientName}
-                    </p>
-                    <p className="text-xs text-nb-black/50 dark:text-white/40 font-bold mt-0.5">
-                        Authorized {authorizedDate}
-                    </p>
+                    <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-black uppercase text-sm tracking-wide text-nb-black dark:text-white">
+                            {app.clientName}
+                        </p>
+                        <span className="px-1.5 py-0.5 text-[10px] font-black uppercase tracking-widest border border-nb-black/30 dark:border-white/20 text-nb-black/50 dark:text-white/40">
+                            {app.type === 'api-token' ? 'API Token' : 'OAuth'}
+                        </span>
+                    </div>
+                    <p className="text-xs text-nb-black/50 dark:text-white/40 font-bold">Authorized {authorizedDate}</p>
                 </div>
 
                 {!confirming && (

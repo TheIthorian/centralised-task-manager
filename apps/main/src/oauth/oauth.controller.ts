@@ -10,6 +10,7 @@ import {
     BadRequestException,
     UseGuards,
     Request,
+    Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
@@ -41,6 +42,8 @@ interface TokenBody {
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
 export class OAuthController {
+    private readonly logger = new Logger(OAuthController.name);
+
     constructor(
         private readonly oauth: OAuthService,
         private readonly config: ConfigService,
@@ -71,6 +74,7 @@ export class OAuthController {
             code_challenge_method: query.code_challenge_method ?? 'S256',
             scope: query.scope ?? 'openid',
             state: query.state ?? '',
+            ...(query.client_id ? { client_id: query.client_id } : {}),
         });
 
         res.redirect(`${webUrl}/oauth/consent?${consentParams.toString()}`, 302);
@@ -91,12 +95,18 @@ export class OAuthController {
         @Res() res: FastifyReply,
         @Headers('accept') accept: string = '',
     ): Promise<void> {
+        this.logger.log(`authorizePost client_id=${query.client_id ?? 'none'} redirect_uri=${query.redirect_uri} user=${req.user?.sub ?? 'unauthenticated'}`);
+
         if (query.client_id) {
             const client = await this.oauthClient.findByClientId(query.client_id);
 
-            if (!client) throw new BadRequestException('Unknown client_id');
+            if (!client) {
+                this.logger.warn(`authorizePost unknown client_id=${query.client_id}`);
+                throw new BadRequestException('Unknown client_id — register via POST /.well-known/oauth-client first');
+            }
 
             if (!isRedirectUriPermitted(client.redirectUris, query.redirect_uri)) {
+                this.logger.warn(`authorizePost redirect_uri not permitted client_id=${query.client_id} redirect_uri=${query.redirect_uri} registered=${client.redirectUris.join(',')}`);
                 throw new BadRequestException('redirect_uri not permitted for this client');
             }
         }

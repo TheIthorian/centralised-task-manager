@@ -17,6 +17,8 @@ export class ApiToken {
 
     @Prop({ type: Date, default: null })
     lastUsedAt!: Date | null;
+
+    createdAt!: Date;
 }
 
 export const ApiTokenSchema = SchemaFactory.createForClass(ApiToken);

@@ -107,7 +107,7 @@ export class OAuthService {
         clientId?: string;
     }): Promise<TokenResponse> {
         const issuer = this.config.get<string>('REDIRECT_BASE_URL') ?? 'http://localhost:3000';
-        const expiresIn = 3600;
+        const expiresInSeconds = this.config.get<number>('JWT_ACCESS_EXPIRES', 120);
 
         const payload: JwtPayload & Record<string, unknown> = {
             sub: userId,
@@ -116,7 +116,7 @@ export class OAuthService {
             aud: issuer,
         };
 
-        const signOptions = { expiresIn };
+        const signOptions = { expiresIn: expiresInSeconds };
 
         const accessToken = this.jwt.sign(payload, signOptions);
         const idToken = this.jwt.sign(payload, signOptions);
@@ -132,7 +132,7 @@ export class OAuthService {
             access_token: accessToken,
             id_token: idToken,
             token_type: 'Bearer',
-            expires_in: expiresIn,
+            expires_in: expiresInSeconds,
             scope: scopes.join(' '),
             refresh_token: rawRefresh,
         };
@@ -151,7 +151,12 @@ export class OAuthService {
 
         if (!user) throw new UnauthorizedException('User not found');
 
-        return this.issueTokens({ userId: record.userId, email: user.email, scopes: record.scopes, clientId: record.clientId });
+        return this.issueTokens({
+            userId: record.userId,
+            email: user.email,
+            scopes: record.scopes,
+            clientId: record.clientId,
+        });
     }
 
     /** Validate a password and return user info (for the login form submission). */

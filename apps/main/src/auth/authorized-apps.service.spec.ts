@@ -5,12 +5,14 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema.js';
 import { OAuthClient, OAuthClientSchema } from './schemas/oauth-client.schema.js';
+import { ApiToken, ApiTokenSchema } from './schemas/api-token.schema.js';
 
 describe('AuthorizedAppsService', () => {
     let module: TestingModule;
     let service: AuthorizedAppsService;
     let refreshTokenModel: Model<typeof RefreshToken>;
     let oauthClientModel: Model<typeof OAuthClient>;
+    let apiTokenModel: Model<typeof ApiToken>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -19,6 +21,7 @@ describe('AuthorizedAppsService', () => {
                 MongooseModule.forFeature([
                     { name: RefreshToken.name, schema: RefreshTokenSchema },
                     { name: OAuthClient.name, schema: OAuthClientSchema },
+                    { name: ApiToken.name, schema: ApiTokenSchema },
                 ]),
             ],
             providers: [AuthorizedAppsService],
@@ -27,13 +30,14 @@ describe('AuthorizedAppsService', () => {
         service = module.get(AuthorizedAppsService);
         refreshTokenModel = module.get(`${RefreshToken.name}Model`);
         oauthClientModel = module.get(`${OAuthClient.name}Model`);
+        apiTokenModel = module.get(`${ApiToken.name}Model`);
     });
 
     afterAll(async () => {
         await module.close();
     });
 
-    it('getAuthorizedApps returns apps for user with active tokens', async () => {
+    it('getAuthorizedApps returns OAuth apps for user with active tokens', async () => {
         const userId = new Types.ObjectId().toHexString();
         const clientId = `client_${Date.now()}`;
 
@@ -54,15 +58,35 @@ describe('AuthorizedAppsService', () => {
         });
 
         const result = await service.getAuthorizedApps(userId);
+        const oauthResult = result.filter((a) => a.type === 'oauth');
 
-        expect(result).toHaveLength(1);
-        expect(result[0]!.clientId).toBe(clientId);
-        expect(result[0]!.clientName).toBe('Test App');
-        expect(result[0]!.scopes).toEqual(['openid', 'tasks:read']);
-        expect(result[0]!.authorizedAt).toBeDefined();
+        expect(oauthResult).toHaveLength(1);
+        expect(oauthResult[0]!.clientId).toBe(clientId);
+        expect(oauthResult[0]!.clientName).toBe('Test App');
+        expect(oauthResult[0]!.scopes).toEqual(['openid', 'tasks:read']);
+        expect(oauthResult[0]!.authorizedAt).toBeDefined();
+        expect(oauthResult[0]!.type).toBe('oauth');
     });
 
-    it('getAuthorizedApps ignores tokens with no clientId', async () => {
+    it('getAuthorizedApps returns API tokens for user', async () => {
+        const userId = new Types.ObjectId().toHexString();
+
+        await apiTokenModel.create({
+            userId: new Types.ObjectId(userId),
+            tokenHash: `hash_api_${Date.now()}`,
+            label: 'My CLI Token',
+        });
+
+        const result = await service.getAuthorizedApps(userId);
+        const apiResult = result.filter((a) => a.type === 'api-token');
+
+        expect(apiResult).toHaveLength(1);
+        expect(apiResult[0]!.clientName).toBe('My CLI Token');
+        expect(apiResult[0]!.scopes).toEqual([]);
+        expect(apiResult[0]!.type).toBe('api-token');
+    });
+
+    it('getAuthorizedApps ignores OAuth tokens with no clientId', async () => {
         const userId = new Types.ObjectId().toHexString();
 
         await refreshTokenModel.create({
@@ -74,7 +98,7 @@ describe('AuthorizedAppsService', () => {
 
         const result = await service.getAuthorizedApps(userId);
 
-        expect(result).toHaveLength(0);
+        expect(result.filter((a) => a.type === 'oauth')).toHaveLength(0);
     });
 
     it('getAuthorizedApps deduplicates multiple tokens for same client', async () => {
@@ -188,9 +212,25 @@ describe('AuthorizedAppsService', () => {
         expect(user2Tokens).toHaveLength(1);
     });
 
+    it('revokeAuthorizedApp api-token: deletes the API token', async () => {
+        const userId = new Types.ObjectId().toHexString();
+
+        const token = await apiTokenModel.create({
+            userId: new Types.ObjectId(userId),
+            tokenHash: `hash_rev_${Date.now()}`,
+            label: 'Revoke Me',
+        });
+
+        await service.revokeAuthorizedApp({ userId, clientId: String(token._id) });
+
+        const tokenAfter = await apiTokenModel.findById(token._id);
+
+        expect(tokenAfter).toBeNull();
+    });
+
     it('revokeAuthorizedApp throws NotFoundException for unknown client', async () => {
         await expect(service.revokeAuthorizedApp({ userId: 'uid', clientId: 'client_nonexistent' })).rejects.toThrow(
-            'OAuth client client_nonexistent not found',
+            'Authorized app client_nonexistent not found',
         );
     });
 });

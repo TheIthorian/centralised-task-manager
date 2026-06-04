@@ -14,7 +14,7 @@ export const envSchema = Joi.object({
     WEB_URL: Joi.string().default('http://localhost:3000'),
     RSA_PRIVATE_KEY: Joi.string().required(),
     RSA_PUBLIC_KEY: Joi.string().required(),
-    JWT_ACCESS_EXPIRES: Joi.string().default('15m'),
+    JWT_ACCESS_EXPIRES: Joi.number().integer().min(30).default(120),
     REFRESH_TOKEN_EXPIRES_DAYS: Joi.number().integer().min(1).default(30),
     DISCORD_CLIENT_ID: Joi.string().allow('').default(''),
     DISCORD_CLIENT_SECRET: Joi.string().allow('').default(''),

@@ -33,7 +33,7 @@ pnpm --filter @ctm/main dev
 | `ENCRYPTION_KEY`                | 64 hex chars — used to encrypt OAuth tokens at rest |
 | `RSA_PRIVATE_KEY`               | Base64-encoded PKCS8 private key PEM                |
 | `RSA_PUBLIC_KEY`                | Base64-encoded SPKI public key PEM                  |
-| `JWT_ACCESS_EXPIRES`            | Access token TTL (e.g. `15m`)                       |
+| `JWT_ACCESS_EXPIRES`            | Access token TTL in seconds (default `120`)         |
 | `REFRESH_TOKEN_EXPIRES_DAYS`    | Refresh token TTL in days                           |
 | `TODOIST_CLIENT_ID` / `_SECRET` | Todoist OAuth app credentials                       |
 | `GOOGLE_CLIENT_ID` / `_SECRET`  | Google OAuth app credentials                        |

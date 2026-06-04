@@ -8,7 +8,7 @@ import { OAuthClient } from './schemas/oauth-client.schema.js';
 
 /** Input payload for RFC 7591 dynamic client registration. */
 export type RegisterClientInput = {
-    client_name?: string;
+    client_name: string;
     redirect_uris: string[];
     grant_types?: string[];
     response_types?: string[];
@@ -19,7 +19,7 @@ export type RegisterClientInput = {
 export type RegisterClientOutput = {
     client_id: string;
     client_secret: string;
-    client_name?: string;
+    client_name: string;
     redirect_uris: string[];
     grant_types: string[];
     response_types: string[];
@@ -76,7 +76,7 @@ export class OAuthClientService {
         const doc = new this.model({
             clientId,
             clientSecretHash,
-            clientName: input.client_name || '',
+            clientName: input.client_name,
             redirectUris: input.redirect_uris,
             grantTypes: input.grant_types ?? ['authorization_code'],
             responseTypes: input.response_types ?? ['code'],

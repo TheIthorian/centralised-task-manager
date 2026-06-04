@@ -10,7 +10,7 @@ CTM supports two token types: short-lived **JWT access tokens** (for web/SPA use
 
 ## JWT access tokens
 
-JWTs are issued on `POST /auth/register` and `POST /auth/login`. They expire after 15 minutes by default.
+JWTs are issued on `POST /auth/register` and `POST /auth/login`. They expire after 120 seconds by default (configurable via `JWT_ACCESS_EXPIRES`, in seconds).
 
 Include them as a bearer token:
 

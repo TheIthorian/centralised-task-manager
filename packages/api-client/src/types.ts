@@ -273,12 +273,13 @@ export type MarkAllReadResultDto = {
     updated: number;
 };
 
-/** An OAuth client that a user has authorized. No token data included. */
+/** An OAuth client or API token that a user has authorized. No token data included. */
 export type AuthorizedAppDto = {
     clientId: string;
     clientName: string;
     scopes: string[];
     authorizedAt: string;
+    type: 'oauth' | 'api-token';
 };
 
 /** Metadata for a single file persisted to storage (embedded in ExportResponseDto). */
