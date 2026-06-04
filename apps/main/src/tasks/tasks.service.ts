@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
-import { Task, type TaskDocument } from './schemas/task.schema.js';
+import { Task, RELATION_INVERSE, type RelationType, type TaskDocument } from './schemas/task.schema.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
 import type { UpdateTaskDto } from './dto/update-task.dto.js';
 import type { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
@@ -81,6 +81,77 @@ export class TasksService {
         if (!task) throw new NotFoundException('Task not found');
 
         return task;
+    }
+
+    /** Add a typed relation between two of the user's tasks, auto-mirroring the
+     *  inverse relation onto the target. Idempotent: re-adding the same pair is a no-op.
+     *  Throws BadRequestException for self-relations and NotFoundException for
+     *  missing/unowned tasks. */
+    async addRelation({
+        userId,
+        taskId,
+        type,
+        targetTaskId,
+    }: {
+        userId: string;
+        taskId: string;
+        type: RelationType;
+        targetTaskId: string;
+    }): Promise<TaskDocument> {
+        if (taskId === targetTaskId) throw new BadRequestException('A task cannot relate to itself');
+
+        const userObjectId = new Types.ObjectId(userId);
+
+        const [source, target] = await Promise.all([
+            this.taskModel.findOne({ _id: taskId, userId: userObjectId }),
+            this.taskModel.findOne({ _id: targetTaskId, userId: userObjectId }),
+        ]);
+
+        if (!source || !target) throw new NotFoundException('Task not found');
+
+        const inverse = RELATION_INVERSE[type];
+
+        await this.taskModel.updateOne(
+            { _id: taskId },
+            { $addToSet: { relations: { type, targetTaskId: new Types.ObjectId(targetTaskId) } } },
+        );
+
+        await this.taskModel.updateOne(
+            { _id: targetTaskId },
+            { $addToSet: { relations: { type: inverse, targetTaskId: new Types.ObjectId(taskId) } } },
+        );
+
+        return this.taskModel.findById(taskId) as Promise<TaskDocument>;
+    }
+
+    /** Remove a typed relation between two tasks, clearing both the relation and its
+     *  inverse. No-op if the relation does not exist. */
+    async removeRelation({
+        userId,
+        taskId,
+        type,
+        targetTaskId,
+    }: {
+        userId: string;
+        taskId: string;
+        type: RelationType;
+        targetTaskId: string;
+    }): Promise<TaskDocument> {
+        await this.findOne({ taskId, userId });
+
+        const inverse = RELATION_INVERSE[type];
+
+        await this.taskModel.updateOne(
+            { _id: taskId },
+            { $pull: { relations: { type, targetTaskId: new Types.ObjectId(targetTaskId) } } },
+        );
+
+        await this.taskModel.updateOne(
+            { _id: targetTaskId },
+            { $pull: { relations: { type: inverse, targetTaskId: new Types.ObjectId(taskId) } } },
+        );
+
+        return this.taskModel.findById(taskId) as Promise<TaskDocument>;
     }
 
     /** Create a task via write-through: call connector, then persist locally.
@@ -177,6 +248,12 @@ export class TasksService {
 
         // Outbound sync (CTM → external source) is disabled; deletes are local-only.
         await this.taskModel.deleteOne({ _id: taskId });
+
+        // Clear any relations on other tasks pointing at the deleted task.
+        await this.taskModel.updateMany(
+            { userId: new Types.ObjectId(userId), 'relations.targetTaskId': new Types.ObjectId(taskId) },
+            { $pull: { relations: { targetTaskId: new Types.ObjectId(taskId) } } },
+        );
     }
 
     /** Set the fuzzy deadline on a task (local-only, never written to source). */
