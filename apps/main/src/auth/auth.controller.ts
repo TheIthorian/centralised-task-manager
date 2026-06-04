@@ -2,13 +2,10 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuard
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
-import type { TokenPair, ApiTokenDto, CreatedApiTokenDto, AuthorizedAppDto } from '@ctm/api-client';
+import type { TokenPair, AuthorizedAppDto } from '@ctm/api-client';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
-import { CreateTokenDto } from './dto/create-token.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
-import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
-import { ApiTokenService } from './api-token.service.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
@@ -26,7 +23,6 @@ interface JwtRequest {
 export class AuthController {
     constructor(
         private readonly auth: AuthService,
-        private readonly apiTokens: ApiTokenService,
         private readonly authorizedApps: AuthorizedAppsService,
     ) {}
 
@@ -55,46 +51,6 @@ export class AuthController {
     @HttpCode(200)
     async refresh(@Body() dto: RefreshDto): Promise<TokenPair> {
         return this.auth.refreshTokens(dto.refreshToken);
-    }
-
-    /** Issue a new long-lived API token (for CLI/MCP). Raw token shown once. */
-    @ApiBearerAuth('jwt')
-    @ApiOperation({
-        summary: 'Issue a long-lived API token',
-        description: 'The raw token value is returned once and never stored in plaintext.',
-    })
-    @Post('tokens')
-    @UseGuards(JwtAuthGuard)
-    async createToken(@Request() req: JwtRequest, @Body() dto: CreateTokenDto): Promise<CreatedApiTokenDto> {
-        const { rawToken, record } = await this.apiTokens.create({ userId: req.user.sub, label: dto.label });
-
-        return { token: rawToken, id: String(record._id), label: record.label };
-    }
-
-    /** List all API tokens for the current user (no raw values). */
-    @ApiBearerAuth('jwt')
-    @ApiOperation({ summary: 'List API tokens for the authenticated user' })
-    @Get('tokens')
-    @UseGuards(CombinedAuthGuard)
-    async listTokens(@Request() req: JwtRequest): Promise<ApiTokenDto[]> {
-        const tokens = await this.apiTokens.list(req.user.sub);
-
-        return tokens.map((t) => ({
-            id: String(t._id),
-            label: t.label,
-            lastUsedAt: t.lastUsedAt?.toISOString() ?? null,
-        }));
-    }
-
-    /** Revoke an API token by id. */
-    @ApiBearerAuth('jwt')
-    @ApiOperation({ summary: 'Revoke an API token by id' })
-    @ApiResponse({ status: 204 })
-    @Delete('tokens/:id')
-    @HttpCode(204)
-    @UseGuards(CombinedAuthGuard)
-    async revokeToken(@Request() req: JwtRequest, @Param('id') id: string): Promise<void> {
-        await this.apiTokens.revoke({ tokenId: id, userId: req.user.sub });
     }
 
     /** List OAuth clients the current user has authorized. */

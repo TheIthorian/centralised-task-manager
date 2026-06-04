@@ -1,8 +1,7 @@
 import { Controller, Delete, Get, HttpCode, Patch, Body, Request, UseGuards, NotFoundException } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { AuthService } from '../auth/auth.service.js';
-import { ApiTokenService } from '../auth/api-token.service.js';
 import { UsersService } from './users.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
@@ -13,12 +12,11 @@ interface AuthRequest {
 }
 
 @Controller('users')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class UsersController {
     constructor(
         private readonly users: UsersService,
         private readonly auth: AuthService,
-        private readonly apiTokens: ApiTokenService,
     ) {}
 
     /** Get the current user's profile. */
@@ -48,7 +46,7 @@ export class UsersController {
     async deleteMe(@Request() req: AuthRequest): Promise<void> {
         const userId = req.user.sub;
 
-        await Promise.all([this.auth.revokeAllRefreshTokens(userId), this.apiTokens.deleteAllByUserId(userId)]);
+        await this.auth.revokeAllRefreshTokens(userId);
 
         await this.users.delete(userId);
     }

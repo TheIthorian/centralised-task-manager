@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { ExecutionContext } from '@nestjs/common';
 import { TasksController } from './tasks.controller.js';
 import { TasksService } from './tasks.service.js';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import type { ReminderDto, OkDto } from '@ctm/api-client';
 
 const mockService = {
@@ -29,7 +29,7 @@ describe('TasksController – reminder endpoints', () => {
             controllers: [TasksController],
             providers: [{ provide: TasksService, useValue: mockService }],
         })
-            .overrideGuard(CombinedAuthGuard)
+            .overrideGuard(JwtAuthGuard)
             .useValue({ canActivate: (_ctx: ExecutionContext) => true })
             .compile();
 

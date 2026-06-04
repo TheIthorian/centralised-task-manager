@@ -5,7 +5,7 @@ import { DataPortabilityController } from './data-portability.controller.js';
 import { ExportService } from './export.service.js';
 import { ImportService } from './import.service.js';
 import { FilesService } from '../files/files.service.js';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { Export, ExportSchema } from './schemas/export.schema.js';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
@@ -44,7 +44,7 @@ describe('DataPortabilityController', () => {
                 { provide: FilesService, useValue: mockFilesService },
             ],
         })
-            .overrideGuard(CombinedAuthGuard)
+            .overrideGuard(JwtAuthGuard)
             .useValue({ canActivate: (_ctx: ExecutionContext) => true })
             .compile();
 

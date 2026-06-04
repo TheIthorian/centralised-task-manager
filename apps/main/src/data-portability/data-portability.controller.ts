@@ -2,7 +2,7 @@ import { Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/commo
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { NotFoundError, ValidationError } from '@ctm/errors';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -16,7 +16,7 @@ type AuthRequest = FastifyRequest & { user: JwtPayload };
 
 @ApiTags('Data Portability')
 @Controller('users/me')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class DataPortabilityController {
     constructor(
         @InjectModel(Export.name) private readonly exportModel: Model<ExportDocument>,

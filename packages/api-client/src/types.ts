@@ -243,20 +243,6 @@ export type DiscordStatusDto = {
     discordUserId?: string;
 };
 
-/** A long-lived API token record (raw token value not included). */
-export type ApiTokenDto = {
-    id: string;
-    label: string;
-    lastUsedAt: string | null;
-};
-
-/** Response after creating a long-lived API token. Raw token shown once. */
-export type CreatedApiTokenDto = {
-    id: string;
-    label: string;
-    token: string;
-};
-
 /** Result of sending a test notification to a channel. */
 export type TestChannelResultDto = {
     sent: boolean;
@@ -273,13 +259,13 @@ export type MarkAllReadResultDto = {
     updated: number;
 };
 
-/** An OAuth client or API token that a user has authorized. No token data included. */
+/** An OAuth client that a user has authorized. No token data included. */
 export type AuthorizedAppDto = {
     clientId: string;
     clientName: string;
     scopes: string[];
     authorizedAt: string;
-    type: 'oauth' | 'api-token';
+    type: 'oauth';
 };
 
 /** Metadata for a single file persisted to storage (embedded in ExportResponseDto). */

@@ -13,7 +13,7 @@ import {
     HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { TasksService } from './tasks.service.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
@@ -32,7 +32,7 @@ type AuthRequest = {
 @ApiTags('Tasks')
 @ApiBearerAuth('jwt')
 @Controller('tasks')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class TasksController {
     constructor(private readonly tasks: TasksService) {}
 

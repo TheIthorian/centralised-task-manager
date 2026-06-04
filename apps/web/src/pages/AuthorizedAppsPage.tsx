@@ -94,7 +94,7 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
                             {app.clientName}
                         </p>
                         <span className="px-1.5 py-0.5 text-[10px] font-black uppercase tracking-widest border border-nb-black/30 dark:border-white/20 text-nb-black/50 dark:text-white/40">
-                            {app.type === 'api-token' ? 'API Token' : 'OAuth'}
+                            OAuth
                         </span>
                     </div>
                     <p className="text-xs text-nb-black/50 dark:text-white/40 font-bold">Authorized {authorizedDate}</p>
