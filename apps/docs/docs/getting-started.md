@@ -53,17 +53,3 @@ Once a connector is set up, the sync worker mirrors tasks within ~15 minutes:
 GET /tasks
 Authorization: Bearer <accessToken>
 ```
-
-## 4. Issue an API token (for CLI/MCP)
-
-For non-interactive use (CLI, MCP server), create a long-lived API token:
-
-```http
-POST /auth/tokens
-Authorization: Bearer <accessToken>
-Content-Type: application/json
-
-{ "label": "my-cli" }
-```
-
-The `token` field is returned **once**. Store it securely — it cannot be retrieved again.

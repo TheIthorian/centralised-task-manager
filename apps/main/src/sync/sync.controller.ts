@@ -1,6 +1,6 @@
 import { Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { ConnectorName } from '@ctm/connectors';
 import type { TaskSyncJobDto } from '@ctm/api-client';
@@ -14,7 +14,7 @@ type AuthRequest = {
 @ApiTags('Sync')
 @Controller('connectors/:source/sync')
 @ApiBearerAuth('jwt')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class SyncController {
     constructor(private readonly sync: SyncService) {}
 

@@ -26,6 +26,8 @@ export type {
     UpdateNotificationPreferencesParams,
     UpdateTaskParams,
     SetConnectionDetailsParams,
+    DownloadExportFileParams,
+    ImportDataParams,
 } from './client.types.js';
 export type {
     AuthorizedAppDto,
@@ -60,8 +62,6 @@ export type {
     UpdateChannelPrefsDto,
     UpdateNotificationPreferencesDto,
     DiscordStatusDto,
-    ApiTokenDto,
-    CreatedApiTokenDto,
     TestChannelResultDto,
     MarkReadResultDto,
     MarkAllReadResultDto,

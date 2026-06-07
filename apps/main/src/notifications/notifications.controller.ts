@@ -12,7 +12,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { UsersService } from '../users/users.service.js';
 import { Channel, NotificationsService } from './notifications.service.js';
 import { ListNotificationsQueryDto } from './dto/list-notifications-query.dto.js';
@@ -30,7 +30,7 @@ type AuthRequest = { user: JwtPayload };
 
 @ApiTags('Notifications')
 @Controller('notifications')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class NotificationsController {
     constructor(
         private readonly usersService: UsersService,

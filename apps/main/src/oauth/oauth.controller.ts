@@ -15,7 +15,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { OAuthClientService, isRedirectUriPermitted } from '../auth/oauth-client.service.js';
 import { OAuthService } from './oauth.service.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
@@ -87,7 +87,7 @@ export class OAuthController {
     @ApiExcludeEndpoint()
     @Post('authorize')
     @HttpCode(302)
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async authorizePost(
         @Query() query: AuthorizeQuery,
         @Body() body: { selected_scopes?: string } = {},
@@ -174,7 +174,7 @@ export class OAuthController {
      */
     @ApiOperation({ summary: 'Get OIDC claims for the authenticated user' })
     @Get('userinfo')
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async userinfo(@Request() req: { user: JwtPayload }): Promise<object> {
         return { sub: req.user.sub, email: req.user.email };
     }

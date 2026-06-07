@@ -27,14 +27,14 @@ ctm login
 # Stores tokens in ~/.config/ctm/config.json
 ```
 
-### API token (non-interactive)
+### Access token (non-interactive)
 
-Generate a long-lived token in the web app or via the API (`POST /auth/tokens`), then pass it via flag or environment variable:
+Pass a JWT access token via flag or environment variable to override stored credentials:
 
 ```bash
-ctm tasks --token <your-token> list
+ctm tasks --token <access-token> list
 # or
-CTM_TOKEN=<your-token> ctm tasks list
+CTM_TOKEN=<access-token> ctm tasks list
 ```
 
 ### Custom server URL
