@@ -137,4 +137,14 @@ describe('DiscordOAuthConnector', () => {
             expect(id).toBe('discord-user-123');
         });
     });
+
+    describe('resolveAccountIdentity', () => {
+        it('returns the discord user id', async () => {
+            mockHttp.get.mockResolvedValue({ id: 'discord-7', username: 'testuser', discriminator: '0001' });
+
+            const identity = await connector.resolveAccountIdentity(tokens);
+
+            expect(identity.externalAccountId).toBe('discord-7');
+        });
+    });
 });
