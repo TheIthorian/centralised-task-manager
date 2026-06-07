@@ -3,6 +3,7 @@ import { useSearchParams, Navigate } from 'react-router';
 import { Button } from '@ctm/ui';
 import { useAuth } from '../auth/AuthContext.js';
 import { readTokens } from '../auth/auth-storage.js';
+import config from '../config.js';
 
 type ScopeEntry = {
     scope: string;
@@ -119,7 +120,7 @@ export function OAuthConsentPage(): React.JSX.Element {
 
         const { accessToken } = readTokens();
 
-        const apiBase = import.meta.env['VITE_API_URL'] ?? 'http://localhost:3000';
+        const apiBase = config.apiUrl;
 
         try {
             const res = await fetch(`${apiBase}/oauth/authorize?${postParams.toString()}`, {

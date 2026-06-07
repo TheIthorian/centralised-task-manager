@@ -100,3 +100,13 @@ export type WebRemoveReminderParams = {
     id: string;
     index: number;
 };
+
+export type WebDownloadExportFileParams = {
+    exportId: string;
+    filename: string;
+};
+
+export type WebImportDataParams = {
+    files: Blob[];
+    onConflict: 'replace' | 'ignore';
+};

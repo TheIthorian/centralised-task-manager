@@ -4,6 +4,8 @@ import type {
     ConnectorHealthDto,
     ConnectorStatusDto,
     DiscordStatusDto,
+    ExportResponseDto,
+    ImportResponseDto,
     MarkAllReadResultDto,
     MarkReadResultDto,
     NotificationDto,
@@ -27,6 +29,8 @@ import type {
     CreateTaskParams,
     DeleteTaskParams,
     DisconnectConnectorParams,
+    DownloadExportFileParams,
+    ImportDataParams,
     GetConnectorAuthUrlParams,
     GetSyncJobParams,
     ListNotificationsParams,
@@ -245,6 +249,33 @@ export class CtmApiClient {
         await this.request<void>({ method: 'DELETE', path: '/users/me' });
     }
 
+    /** Generate a full data export. Returns metadata for the created files. */
+    async exportData(): Promise<ExportResponseDto> {
+        return this.request<ExportResponseDto>({ method: 'POST', path: '/users/me/export' });
+    }
+
+    /** Download a single export file as a Blob. */
+    async downloadExportFile({ exportId, filename }: DownloadExportFileParams): Promise<Blob> {
+        return this.request<Blob>({
+            method: 'GET',
+            path: `/users/me/exports/${exportId}/${filename}`,
+            responseType: 'blob',
+        });
+    }
+
+    /** Import user data from one or more export files. */
+    async importData({ files, onConflict }: ImportDataParams): Promise<ImportResponseDto> {
+        const form = new FormData();
+
+        for (const file of files) {
+            form.append('files', file);
+        }
+
+        form.append('onConflict', onConflict);
+
+        return this.request<ImportResponseDto>({ method: 'POST', path: '/users/me/import', body: form });
+    }
+
     /** List in-app notifications for the current user. */
     async listNotifications({ page = 1, limit = 20, unreadOnly = false }: ListNotificationsParams = {}): Promise<
         NotificationDto[]
@@ -345,11 +376,13 @@ export class CtmApiClient {
         path,
         body,
         params,
+        responseType,
     }: {
         method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
         path: string;
         body?: unknown;
         params?: Record<string, string>;
+        responseType?: 'blob';
     }): Promise<T> {
         try {
             const response = await this.client.request<T>({
@@ -357,6 +390,7 @@ export class CtmApiClient {
                 url: path,
                 data: body,
                 params,
+                ...(responseType !== undefined ? { responseType } : {}),
             });
 
             return response.data;

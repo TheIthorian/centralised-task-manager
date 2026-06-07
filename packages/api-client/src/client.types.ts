@@ -185,3 +185,15 @@ export type RemoveReminderParams = {
 export type RevokeAuthorizedAppParams = {
     clientId: string;
 };
+
+/** Parameters for {@link CtmApiClient.downloadExportFile}. */
+export type DownloadExportFileParams = {
+    exportId: string;
+    filename: string;
+};
+
+/** Parameters for {@link CtmApiClient.importData}. */
+export type ImportDataParams = {
+    files: Blob[];
+    onConflict: 'replace' | 'ignore';
+};

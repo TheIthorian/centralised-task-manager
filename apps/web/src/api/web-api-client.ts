@@ -5,6 +5,8 @@ import {
     type ConnectorHealthDto,
     type ConnectorStatusDto,
     type DiscordStatusDto,
+    type ExportResponseDto,
+    type ImportResponseDto,
     type MarkAllReadResultDto,
     type MarkReadResultDto,
     type NotificationDto,
@@ -26,7 +28,9 @@ import type {
     WebConnectorParams,
     WebCreateTaskParams,
     WebDeleteTaskParams,
+    WebDownloadExportFileParams,
     WebGetSyncJobParams,
+    WebImportDataParams,
     WebListTasksParams,
     WebLoginParams,
     WebRegisterParams,
@@ -176,6 +180,21 @@ export class WebApiClient {
     /** Delete the current user profile. */
     async deleteMe(): Promise<void> {
         await this.execute({ request: () => this.apiClient.deleteMe() });
+    }
+
+    /** Generate a full data export for the current user. */
+    async exportData(): Promise<ExportResponseDto> {
+        return this.execute({ request: () => this.apiClient.exportData() });
+    }
+
+    /** Download a single export file as a Blob. */
+    async downloadExportFile({ exportId, filename }: WebDownloadExportFileParams): Promise<Blob> {
+        return this.execute({ request: () => this.apiClient.downloadExportFile({ exportId, filename }) });
+    }
+
+    /** Import user data from one or more export files. */
+    async importData({ files, onConflict }: WebImportDataParams): Promise<ImportResponseDto> {
+        return this.execute({ request: () => this.apiClient.importData({ files, onConflict }) });
     }
 
     /** Get the Discord OAuth connect URL. */

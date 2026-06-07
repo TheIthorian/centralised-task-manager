@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo } from 'react';
+import config from '../config.js';
 
 type Props = {
     children: React.ReactNode;
@@ -42,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <p className="text-nb-grey dark:text-neutral-400 mb-4 text-sm">
                     An unexpected error occurred in this section.
                 </p>
-                {import.meta.env.DEV && (
+                {config.isDev && (
                     <details className="mb-4 text-xs font-mono">
                         <summary className="cursor-pointer text-nb-grey dark:text-neutral-400 mb-1">
                             Error details

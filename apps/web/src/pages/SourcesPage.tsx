@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthContext.js';
 import { readTokens } from '../auth/auth-storage.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 import { NotionSetupModal } from '../components/sources/NotionSetupModal.js';
+import config from '../config.js';
 
 /** Settings sub-page: connected task sources. */
 export function SourcesPage(): React.JSX.Element {
@@ -41,7 +42,7 @@ export function SourcesPage(): React.JSX.Element {
 
     // WebSocket connection — opens once, cleans up on unmount
     useEffect(() => {
-        const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+        const baseUrl = config.apiUrl;
         const { accessToken } = readTokens();
 
         const socket = io(baseUrl, {

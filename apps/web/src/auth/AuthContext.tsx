@@ -3,6 +3,7 @@ import type { UserDto } from '@ctm/api-client';
 import { WebApiClient } from '../api/web-api-client.js';
 import { clearAuthStorage, readTokens, readUser, writeTokens, writeUser } from './auth-storage.js';
 import { useToast } from '../toast/ToastContext.js';
+import config from '../config.js';
 
 type AuthContextValue = {
     user: UserDto | null;
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     };
 
     const api = new WebApiClient({
-        baseUrl: import.meta.env.VITE_API_URL ?? 'http://localhost:3000',
+        baseUrl: config.apiUrl,
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         onTokens: (nextTokens) => {
