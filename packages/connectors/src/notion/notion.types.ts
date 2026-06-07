@@ -8,6 +8,16 @@ export type NotionTokenResponse = {
     workspace_name: string;
 };
 
+/** Response from GET /v1/users/me (the bot user for the integration). */
+export type NotionMeResponse = {
+    id: string;
+    name: string | null;
+    bot: {
+        workspace_name: string | null;
+        owner?: { user?: { person?: { email?: string } } };
+    };
+};
+
 /** A single option in a select or status property */
 export type NotionSelectOption = {
     id: string;

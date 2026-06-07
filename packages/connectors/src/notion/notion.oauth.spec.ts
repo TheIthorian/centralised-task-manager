@@ -94,6 +94,26 @@ describe('NotionOAuthConnector', () => {
         });
     });
 
+    describe('resolveAccountIdentity', () => {
+        it('uses bot id and workspace name', async () => {
+            (connector as any).http = {
+                get: async () => ({
+                    id: 'bot-1',
+                    name: 'CTM',
+                    bot: { workspace_name: 'Acme', owner: { user: { person: { email: 'me@acme.com' } } } },
+                }),
+            };
+
+            const identity = await connector.resolveAccountIdentity({
+                accessToken: 'tok',
+                refreshToken: '',
+                expiresAt: new Date(),
+            });
+
+            expect(identity).toEqual({ externalAccountId: 'bot-1', email: 'me@acme.com', label: 'Acme' });
+        });
+    });
+
     describe('refreshToken', () => {
         it('POSTs refresh_token grant with Basic auth and returns updated tokens', async () => {
             mockHttp.post.mockResolvedValue({
