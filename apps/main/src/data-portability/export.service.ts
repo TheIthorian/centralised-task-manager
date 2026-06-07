@@ -47,8 +47,8 @@ export class ExportService {
         };
 
         const exportedAt = new Date().toISOString();
-        const taskDtos = tasks.map((t) => taskToDto(t));
-        const notifDtos = notifications.map((n) => notifToDto(n));
+        const taskDtos = tasks.map((t) => taskToDto(t as Task & { _id: Types.ObjectId }));
+        const notifDtos = notifications.map((n) => notifToDto(n as Notification & { _id: Types.ObjectId }));
 
         const parts = buildParts({ exportId, exportedAt, profile, tasks: taskDtos, notifications: notifDtos });
 
@@ -85,28 +85,26 @@ function taskToDto(t: Task & { _id: Types.ObjectId }): ExportTaskDto {
         description: t.description ?? null,
         status: t.status,
         priority: t.priority ?? null,
-        tags: t.tags,
-        due: t.due
-            ? { date: t.due.date.toISOString(), timezone: t.due.timezone, recurrence: t.due.recurrence }
-            : null,
+        tags: t.tags ?? [],
+        due: t.due ? { date: t.due.date.toISOString(), timezone: t.due.timezone, recurrence: t.due.recurrence } : null,
         deadlineDate: t.deadlineDate ? t.deadlineDate.toISOString() : null,
         duration: t.duration ?? null,
         fuzzyDeadline: t.fuzzyDeadline
             ? { type: t.fuzzyDeadline.type, remindEvery: t.fuzzyDeadline.remindEvery }
             : null,
-        reminders: t.reminders.map((r) => ({
+        reminders: (t.reminders ?? []).map((r) => ({
             remindAt: r.remindAt.toISOString(),
             firedAt: r.firedAt ? r.firedAt.toISOString() : null,
         })),
         dueDateNotifiedAt: t.dueDateNotifiedAt ? t.dueDateNotifiedAt.toISOString() : null,
-        locations: t.locations,
+        locations: t.locations ?? [],
         syncedAt: t.syncedAt.toISOString(),
         createdAt: t.createdAt ? t.createdAt.toISOString() : '',
         updatedAt: t.updatedAt ? t.updatedAt.toISOString() : '',
     };
 }
 
-function notifToDto(n: Notification & { _id: Types.ObjectId; createdAt?: Date }): NotificationDto {
+function notifToDto(n: Notification & { _id: Types.ObjectId }): NotificationDto {
     return {
         id: String(n._id),
         type: n.type,
@@ -162,14 +160,16 @@ function buildParts({
 
     const totalParts = parts.length;
 
-    return parts.map((part, i): ExportEnvelopeDto => ({
-        version: '1',
-        exportedAt,
-        exportId,
-        part: i + 1,
-        totalParts,
-        ...(i === 0 ? { profile } : {}),
-        tasks: part.tasks,
-        notifications: part.notifications,
-    }));
+    return parts.map(
+        (part, i): ExportEnvelopeDto => ({
+            version: '1',
+            exportedAt,
+            exportId,
+            part: i + 1,
+            totalParts,
+            ...(i === 0 ? { profile } : {}),
+            tasks: part.tasks,
+            notifications: part.notifications,
+        }),
+    );
 }
