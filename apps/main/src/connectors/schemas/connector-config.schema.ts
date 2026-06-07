@@ -52,4 +52,3 @@ ConnectorConfigSchema.index(
     { userId: 1, source: 1, externalAccountId: 1 },
     { unique: true, partialFilterExpression: { externalAccountId: { $type: 'string' } } },
 );
-ConnectorConfigSchema.index({ userId: 1 });

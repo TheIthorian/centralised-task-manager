@@ -47,7 +47,7 @@ export class ConnectorsService {
         }
     }
 
-    /** Handle OAuth callback: exchange code, encrypt and upsert tokens. */
+    /** Handle OAuth callback: exchange code, resolve account identity, encrypt and upsert tokens per account. */
     async handleCallback({
         source,
         code,
@@ -59,12 +59,16 @@ export class ConnectorsService {
     }): Promise<ConnectorConfigDocument> {
         const connector = this.registry.get(source);
         const tokens = await connector.exchangeCode(code);
+        const identity = await connector.resolveAccountIdentity(tokens);
         const extra = (await connector.resolveConnectionSettings?.(tokens)) ?? {};
 
         const doc = await this.configModel.findOneAndUpdate(
-            { userId: new Types.ObjectId(userId), source },
+            { userId: new Types.ObjectId(userId), source, externalAccountId: identity.externalAccountId },
             {
                 ...extra,
+                externalAccountId: identity.externalAccountId,
+                email: identity.email ?? null,
+                label: identity.label ?? null,
                 accessToken: this.encryption.encrypt(tokens.accessToken),
                 refreshToken: this.encryption.encrypt(tokens.refreshToken),
                 tokenExpiresAt: tokens.expiresAt,
@@ -77,6 +81,59 @@ export class ConnectorsService {
         if (!doc) throw new InternalError('Upsert failed unexpectedly');
 
         return doc;
+    }
+
+    /** List all of a user's connection rows for one source. */
+    async listConnectionsForSource({
+        userId,
+        source,
+    }: {
+        userId: string;
+        source: ConnectorName;
+    }): Promise<ConnectorConfigDocument[]> {
+        return this.configModel.find({ userId: new Types.ObjectId(userId), source });
+    }
+
+    /** Load a single connection by id, scoped to the user. Throws if not found. */
+    private async getConnection({
+        userId,
+        connectionId,
+    }: {
+        userId: string;
+        connectionId: string;
+    }): Promise<ConnectorConfigDocument> {
+        const doc = await this.configModel.findOne({
+            _id: connectionId,
+            userId: new Types.ObjectId(userId),
+        });
+
+        if (!doc) throw new NotFoundException('Connection not found');
+
+        return doc;
+    }
+
+    /** Load a single connection by id (public wrapper for sync). Throws if not found. */
+    async getConnectionForSync({
+        userId,
+        connectionId,
+    }: {
+        userId: string;
+        connectionId: string;
+    }): Promise<ConnectorConfigDocument> {
+        return this.getConnection({ userId, connectionId });
+    }
+
+    /** Get the source name for a connection. Throws if not found. */
+    async getConnectionSource({
+        userId,
+        connectionId,
+    }: {
+        userId: string;
+        connectionId: string;
+    }): Promise<string> {
+        const doc = await this.getConnection({ userId, connectionId });
+
+        return doc.source;
     }
 
     /** Update a connector config's settings or enabled state. */
@@ -100,18 +157,19 @@ export class ConnectorsService {
         return doc;
     }
 
-    /** Remove a connector config by source name. */
-    async removeBySource({ source, userId }: { source: ConnectorName; userId: string }): Promise<void> {
-        const result = await this.configModel.deleteOne({ source, userId: new Types.ObjectId(userId) });
+    /** Remove a single connection by id. */
+    async removeConnection({ userId, connectionId }: { userId: string; connectionId: string }): Promise<void> {
+        const result = await this.configModel.deleteOne({
+            _id: connectionId,
+            userId: new Types.ObjectId(userId),
+        });
 
-        if (result.deletedCount === 0) throw new NotFoundException('Connector config not found');
+        if (result.deletedCount === 0) throw new NotFoundException('Connection not found');
     }
 
-    /** Get decrypted OAuthTokens for a user+source. Throws NotFoundException if not connected. */
-    async getDecryptedTokens({ userId, source }: { userId: string; source: ConnectorName }): Promise<OAuthTokens> {
-        const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
-
-        if (!config) throw new NotFoundException(`Not connected to ${source}`);
+    /** Get decrypted OAuthTokens for a connection. Throws NotFoundException if not connected. */
+    async getDecryptedTokens({ userId, connectionId }: { userId: string; connectionId: string }): Promise<OAuthTokens> {
+        const config = await this.getConnection({ userId, connectionId });
 
         return {
             accessToken: this.encryption.decrypt(config.accessToken),
@@ -121,13 +179,11 @@ export class ConnectorsService {
     }
 
     /**
-     * Returns decrypted tokens for a user+source, refreshing them first if they
+     * Returns decrypted tokens for a connection, refreshing them first if they
      * expire within 5 minutes. Persists updated tokens to the database on refresh.
      */
-    async ensureFreshTokens({ userId, source }: { userId: string; source: ConnectorName }): Promise<OAuthTokens> {
-        const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
-
-        if (!config) throw new NotFoundException(`Not connected to ${source}`);
+    async ensureFreshTokens({ userId, connectionId }: { userId: string; connectionId: string }): Promise<OAuthTokens> {
+        const config = await this.getConnection({ userId, connectionId });
 
         const tokens: OAuthTokens = {
             accessToken: this.encryption.decrypt(config.accessToken),
@@ -141,41 +197,29 @@ export class ConnectorsService {
             return tokens;
         }
 
-        const connector = this.registry.get(source);
+        const connector = this.registry.get(config.source as ConnectorName);
         const fresh = await connector.refreshToken(tokens);
 
-        await this.configModel.findOneAndUpdate(
-            { userId: new Types.ObjectId(userId), source },
-            {
-                accessToken: this.encryption.encrypt(fresh.accessToken),
-                refreshToken: this.encryption.encrypt(fresh.refreshToken),
-                tokenExpiresAt: fresh.expiresAt,
-            },
-        );
+        await this.configModel.findByIdAndUpdate(connectionId, {
+            accessToken: this.encryption.encrypt(fresh.accessToken),
+            refreshToken: this.encryption.encrypt(fresh.refreshToken),
+            tokenExpiresAt: fresh.expiresAt,
+        });
 
         return fresh;
     }
 
-    /** Get the stored settings for a user+source connector. Returns empty object if not found. */
-    async getSettings({ userId, source }: { userId: string; source: ConnectorName }): Promise<Record<string, unknown>> {
-        const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
+    /** Get the stored settings for a connection. Returns empty object if not found. */
+    async getSettings({ userId, connectionId }: { userId: string; connectionId: string }): Promise<Record<string, unknown>> {
+        const config = await this.getConnection({ userId, connectionId });
 
-        return config?.settings ?? {};
+        return config.settings ?? {};
     }
 
-    /** Get the config document ID for a user+source. Throws NotFoundException if not found. */
-    async getConfigIdBySource({ userId, source }: { userId: string; source: ConnectorName }): Promise<string> {
-        const config = await this.configModel.findOne({ userId: new Types.ObjectId(userId), source });
-
-        if (!config) throw new NotFoundException(`Not connected to ${source}`);
-
-        return String(config._id);
-    }
-
-    /** Update lastSyncedAt timestamp for a user+source connector config. */
-    async updateLastSyncedAt({ userId, source }: { userId: string; source: ConnectorName }): Promise<void> {
+    /** Update lastSyncedAt timestamp for a connection. */
+    async updateLastSyncedAt({ userId, connectionId }: { userId: string; connectionId: string }): Promise<void> {
         await this.configModel.findOneAndUpdate(
-            { userId: new Types.ObjectId(userId), source },
+            { _id: connectionId, userId: new Types.ObjectId(userId) },
             { lastSyncedAt: new Date() },
         );
     }

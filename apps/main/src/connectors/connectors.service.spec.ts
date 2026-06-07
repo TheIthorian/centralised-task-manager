@@ -1,8 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { Test } from '@nestjs/testing';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { ConnectorsService } from './connectors.service.js';
-import { ConnectorName } from '@ctm/connectors';
+import { ConnectorConfig, ConnectorConfigSchema, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
+import { EncryptionService } from './encryption.service.js';
+import { JwtService } from '@nestjs/jwt';
+import { OAuthConnectorRegistry, ConnectorName } from '@ctm/connectors';
 import type { OAuthTokens } from '@ctm/connectors';
 
 const freshTokens: OAuthTokens = {
@@ -23,6 +28,7 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
     const mockModel = {
         findOne: vi.fn().mockResolvedValue(config),
         findOneAndUpdate: vi.fn().mockResolvedValue(null),
+        findByIdAndUpdate: vi.fn().mockResolvedValue(null),
     };
     const mockEncryption = {
         decrypt: vi.fn((v: string) => `decrypted-${v}`),
@@ -44,7 +50,7 @@ describe('ConnectorsService.ensureFreshTokens', () => {
 
         const result = await service.ensureFreshTokens({
             userId: new Types.ObjectId().toString(),
-            source: ConnectorName.Todoist,
+            connectionId: new Types.ObjectId().toString(),
         });
 
         expect(mockConnector.refreshToken).not.toHaveBeenCalled();
@@ -59,11 +65,11 @@ describe('ConnectorsService.ensureFreshTokens', () => {
 
         const result = await service.ensureFreshTokens({
             userId: new Types.ObjectId().toString(),
-            source: ConnectorName.Todoist,
+            connectionId: new Types.ObjectId().toString(),
         });
 
         expect(mockConnector.refreshToken).toHaveBeenCalled();
-        expect(mockModel.findOneAndUpdate).toHaveBeenCalledWith(
+        expect(mockModel.findByIdAndUpdate).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
                 accessToken: `encrypted-${freshTokens.accessToken}`,
@@ -81,8 +87,71 @@ describe('ConnectorsService.ensureFreshTokens', () => {
         await expect(
             service.ensureFreshTokens({
                 userId: new Types.ObjectId().toString(),
-                source: ConnectorName.Todoist,
+                connectionId: new Types.ObjectId().toString(),
             }),
         ).rejects.toThrow(NotFoundException);
     });
+});
+
+describe('ConnectorsService connections (real DB)', () => {
+    let service: ConnectorsService;
+    let model: Model<ConnectorConfigDocument>;
+    let externalAccountId = 'ext-1';
+
+    const mockConnector = {
+        exchangeCode: vi.fn(async () => ({
+            accessToken: 'a',
+            refreshToken: 'r',
+            expiresAt: new Date(Date.now() + 3_600_000),
+        })),
+        resolveAccountIdentity: vi.fn(async () => ({ externalAccountId, email: 'e@x.com' })),
+    };
+
+    beforeAll(async () => {
+        const moduleRef = await Test.createTestingModule({
+            imports: [
+                MongooseModule.forRoot(process.env['MONGODB_URI']!),
+                MongooseModule.forFeature([{ name: ConnectorConfig.name, schema: ConnectorConfigSchema }]),
+            ],
+            providers: [
+                ConnectorsService,
+                { provide: OAuthConnectorRegistry, useValue: { get: () => mockConnector } },
+                { provide: EncryptionService, useValue: { encrypt: (v: string) => v, decrypt: (v: string) => v } },
+                { provide: JwtService, useValue: {} },
+            ],
+        }).compile();
+
+        service = moduleRef.get(ConnectorsService);
+        model = moduleRef.get<Model<ConnectorConfigDocument>>(getModelToken(ConnectorConfig.name));
+    });
+
+    it('handleCallback dedups by externalAccountId (re-auth updates in place)', async () => {
+        const userId = new Types.ObjectId().toString();
+        const source = ConnectorName.GoogleTasks;
+        externalAccountId = 'ext-1-' + Date.now();
+
+        await service.handleCallback({ source, code: 'c1', userId });
+        await service.handleCallback({ source, code: 'c2', userId });
+
+        const rows = await service.listConnectionsForSource({ userId, source });
+        expect(rows).toHaveLength(1);
+        expect(rows[0]!.externalAccountId).toBe(externalAccountId);
+    });
+
+    it('listConnectionsForSource returns all accounts of a source', async () => {
+        const userId = new Types.ObjectId().toString();
+        const source = ConnectorName.GoogleTasks;
+        const extA = 'ext-A-' + Date.now();
+        const extB = 'ext-B-' + Date.now();
+
+        externalAccountId = extA;
+        await service.handleCallback({ source, code: 'c1', userId });
+        externalAccountId = extB;
+        await service.handleCallback({ source, code: 'c2', userId });
+
+        const rows = await service.listConnectionsForSource({ userId, source });
+        expect(rows.map((r) => r.externalAccountId).sort()).toEqual([extA, extB].sort());
+    });
+
+    void model;
 });
