@@ -4,6 +4,7 @@ import type { UpdateUserDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { Button, Input } from '@ctm/ui';
+import { DataSection } from '../components/settings/DataSection.js';
 
 /** Settings sub-page: user profile, password change, and account deletion. */
 export function ProfilePage(): React.JSX.Element {
@@ -111,6 +112,9 @@ export function ProfilePage(): React.JSX.Element {
                     </Button>
                 </div>
             </form>
+
+            {/* Data export / import */}
+            <DataSection />
 
             {/* Danger zone */}
             <div className="border-2 border-nb-red p-5">
