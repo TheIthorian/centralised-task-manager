@@ -1,8 +1,8 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 
 import { ConnectorName, ConnectorType } from '../types.js';
-import type { ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
-import type { TodoistTokenResponse } from './todoist.types.js';
+import type { AccountIdentity, ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
+import type { TodoistSyncUserResponse, TodoistTokenResponse } from './todoist.types.js';
 
 /** Configuration required to instantiate a {@link TodoistOAuthConnector}. */
 export type TodoistOAuthConnectorConfig = {
@@ -23,6 +23,17 @@ export class TodoistOAuthConnector implements OAuthConnector {
     constructor(private readonly config: TodoistOAuthConnectorConfig) {
         this.http = new HttpClient({ baseUrl: 'https://todoist.com', logger: config.logger });
         this.resourceHttp = new HttpClient({ baseUrl: 'https://api.todoist.com/api/v1', logger: config.logger });
+    }
+
+    /** Resolve the Todoist account identity via the sync `user` resource. */
+    async resolveAccountIdentity(tokens: OAuthTokens): Promise<AccountIdentity> {
+        const res = await this.resourceHttp.post<TodoistSyncUserResponse>(
+            '/sync',
+            { sync_token: '*', resource_types: '["user"]' },
+            { Authorization: `Bearer ${tokens.accessToken}` },
+        );
+
+        return { externalAccountId: String(res.user.id), email: res.user.email };
     }
 
     /** Probe the Todoist API to verify the connection is healthy. */

@@ -33,6 +33,18 @@ describe('TodoistOAuthConnector', () => {
         mockHttp = (connector as any).http;
     });
 
+    describe('resolveAccountIdentity', () => {
+        it('returns user id and email', async () => {
+            (connector as any).resourceHttp = {
+                post: async () => ({ user: { id: 'todoist-9', email: 'x@y.com' } }),
+            };
+
+            const identity = await connector.resolveAccountIdentity(tokens);
+
+            expect(identity).toEqual({ externalAccountId: 'todoist-9', email: 'x@y.com' });
+        });
+    });
+
     describe('getAuthUrl', () => {
         it('includes client_id, redirect_uri, scope, and state', () => {
             const url = connector.getAuthUrl('user-123');
