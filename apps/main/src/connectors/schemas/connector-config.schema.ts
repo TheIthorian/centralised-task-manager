@@ -11,6 +11,15 @@ export class ConnectorConfig<TConfig extends ConnectorSettings = ConnectorSettin
     @Prop({ type: String, required: true, maxlength: 50, enum: ConnectorName })
     source!: TConfig['source'];
 
+    @Prop({ type: String, default: null, maxlength: 255 })
+    externalAccountId!: string | null;
+
+    @Prop({ type: String, default: null, maxlength: 320 })
+    email!: string | null;
+
+    @Prop({ type: String, default: null, maxlength: 200 })
+    label!: string | null;
+
     @Prop({ type: String, required: true })
     accessToken!: string;
 
@@ -37,4 +46,10 @@ export class ConnectorConfig<TConfig extends ConnectorSettings = ConnectorSettin
 export type ConnectorConfigDocument = HydratedDocument<ConnectorConfig>;
 
 export const ConnectorConfigSchema = SchemaFactory.createForClass(ConnectorConfig);
-ConnectorConfigSchema.index({ userId: 1, source: 1 }, { unique: true });
+// One row per connected external account. Partial filter lets legacy rows
+// (externalAccountId null, pre-backfill) coexist without violating uniqueness.
+ConnectorConfigSchema.index(
+    { userId: 1, source: 1, externalAccountId: 1 },
+    { unique: true, partialFilterExpression: { externalAccountId: { $type: 'string' } } },
+);
+ConnectorConfigSchema.index({ userId: 1 });
