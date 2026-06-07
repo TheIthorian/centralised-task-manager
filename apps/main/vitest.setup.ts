@@ -1,9 +1,17 @@
 import { resolve } from 'path';
+import { generateKeyPairSync } from 'crypto';
 import mongoose from 'mongoose';
 
-// Load .env.test into process.env so NestJS ConfigModule picks up RSA keys and
-// other test-only variables during module compilation.
 process.loadEnvFile(resolve(import.meta.dirname, '.env.test'));
+
+const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+});
+
+process.env['RSA_PRIVATE_KEY'] = Buffer.from(privateKey).toString('base64');
+process.env['RSA_PUBLIC_KEY'] = Buffer.from(publicKey).toString('base64');
 
 beforeAll(async () => {
     try {
