@@ -34,6 +34,7 @@ import type {
     WebListTasksParams,
     WebLoginParams,
     WebRegisterParams,
+    WebRelationParams,
     WebRemoveFuzzyDeadlineParams,
     WebRemoveReminderParams,
     WebSetFuzzyDeadlineParams,
@@ -125,6 +126,16 @@ export class WebApiClient {
     /** Remove a reminder from a task by its array index. */
     async removeReminder({ id, index }: WebRemoveReminderParams): Promise<OkDto> {
         return this.execute({ request: () => this.apiClient.removeReminder({ id, index }) });
+    }
+
+    /** Add a typed relation between two tasks. */
+    async addRelation({ id, dto }: WebRelationParams): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.addRelation({ id, dto }) });
+    }
+
+    /** Remove a typed relation between two tasks. */
+    async removeRelation({ id, dto }: WebRelationParams): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.removeRelation({ id, dto }) });
     }
 
     /** Delete a task for the current user. */

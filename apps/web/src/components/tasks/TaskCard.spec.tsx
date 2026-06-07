@@ -15,6 +15,9 @@ const baseTask: TaskDto = {
     priority: 1,
     tags: [],
     locations: [],
+    relations: [],
+    reminders: [],
+    dueDateNotifiedAt: null,
 };
 
 describe('TaskCard', () => {

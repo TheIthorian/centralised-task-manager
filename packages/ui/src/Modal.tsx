@@ -7,13 +7,21 @@ type ModalProps = {
     onClose: () => void;
     title?: string;
     children: React.ReactNode;
+    /** Tailwind max-width class applied on desktop. Defaults to `md:max-w-md`. */
+    widthClassName?: string;
 };
 
 /**
  * Portal-based modal. On mobile slides up from the bottom; on desktop is centred.
  * Closes on Escape key or backdrop click.
  */
-export function Modal({ open, onClose, title, children }: ModalProps): React.JSX.Element | null {
+export function Modal({
+    open,
+    onClose,
+    title,
+    children,
+    widthClassName = 'md:max-w-md',
+}: ModalProps): React.JSX.Element | null {
     useEffect(() => {
         if (!open) return;
 
@@ -33,7 +41,8 @@ export function Modal({ open, onClose, title, children }: ModalProps): React.JSX
             <div className="absolute inset-0 bg-nb-black/60" onClick={onClose} aria-hidden="true" />
             <div
                 className={clsx(
-                    'relative z-10 w-full md:max-w-md',
+                    'relative z-10 w-full',
+                    widthClassName,
                     'bg-white dark:bg-neutral-900 border-t-4 md:border-4 border-nb-black dark:border-white/20',
                     'md:shadow-[5px_5px_0px_#111] dark:md:shadow-none',
                     'p-6',

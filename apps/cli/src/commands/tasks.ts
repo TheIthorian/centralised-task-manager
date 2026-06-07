@@ -1,7 +1,9 @@
 import { type Command, Option } from 'commander';
 import { buildClient } from '../client.js';
 import { formatJson, formatTable, print } from '../output.js';
-import type { TaskDto } from '@ctm/api-client';
+import type { RelationType, TaskDto } from '@ctm/api-client';
+
+const RELATION_TYPES: RelationType[] = ['parent', 'child', 'next', 'previous', 'related'];
 
 function taskRow(t: TaskDto): string[] {
     const dueStr = t.due ? new Date(t.due.date).toLocaleDateString() + (t.due.recurrence ? ' ↻' : '') : '-';
@@ -325,7 +327,70 @@ export function registerTasksCommand(program: Command): void {
                             [taskRow(task)],
                         ),
                     );
+
+                    if (task.relations.length > 0) {
+                        print('');
+                        print(
+                            formatTable(
+                                ['Relation', 'Target Task ID'],
+                                task.relations.map((r) => [r.type, r.targetTaskId]),
+                            ),
+                        );
+                    }
                 }
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
+
+    tasks
+        .command('add-relation')
+        .description('Add a typed relation from one task to another')
+        .argument('<id>', 'Source task ID')
+        .addOption(
+            new Option('--type <type>', 'Relation type: parent, child, next, previous, related')
+                .choices(RELATION_TYPES)
+                .makeOptionMandatory(),
+        )
+        .requiredOption('--target <id>', 'Target task ID')
+        .option('--json', 'Output as JSON')
+        .action(async (id: string, opts: { type: RelationType; target: string; json?: boolean }) => {
+            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const task = await client.addRelation({ id, dto: { type: opts.type, targetTaskId: opts.target } });
+
+                if (opts.json) {
+                    print(formatJson(task));
+                } else {
+                    print(`Relation ${opts.type} → ${opts.target} added to task ${id}.`);
+                }
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
+
+    tasks
+        .command('remove-relation')
+        .description('Remove a typed relation from one task to another')
+        .argument('<id>', 'Source task ID')
+        .addOption(
+            new Option('--type <type>', 'Relation type: parent, child, next, previous, related')
+                .choices(RELATION_TYPES)
+                .makeOptionMandatory(),
+        )
+        .requiredOption('--target <id>', 'Target task ID')
+        .action(async (id: string, opts: { type: RelationType; target: string }) => {
+            const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
+
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                await client.removeRelation({ id, dto: { type: opts.type, targetTaskId: opts.target } });
+
+                print(`Relation ${opts.type} → ${opts.target} removed from task ${id}.`);
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
                 process.exit(1);

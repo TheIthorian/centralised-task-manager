@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { getErrorMessage } from '../../api/error-message.js';
 import { useToast } from '../../toast/ToastContext.js';
 import { useAuth } from '../../auth/AuthContext.js';
@@ -7,9 +7,11 @@ import { Modal, Button, Input } from '@ctm/ui';
 import type {
     FuzzyDeadlineInfo,
     LocationDto,
+    RelationType,
     ReminderDto,
     SetFuzzyDeadlineDto,
     TaskDto,
+    TaskRelationDto,
     UpdateTaskDto,
 } from '@ctm/api-client';
 
@@ -31,6 +33,16 @@ const FUZZY_TYPE_LABELS: Record<FuzzyDeadlineInfo['type'], string> = {
     this_month: 'This Month',
     someday: 'Someday',
 };
+
+const RELATION_TYPE_LABELS: Record<RelationType, string> = {
+    parent: 'Parent',
+    child: 'Child',
+    next: 'Next',
+    previous: 'Previous',
+    related: 'Related',
+};
+
+const RELATION_TYPES = Object.keys(RELATION_TYPE_LABELS) as RelationType[];
 
 /** Modal for editing an existing task's details. */
 export function TaskModal({
@@ -65,6 +77,11 @@ export function TaskModal({
     const [newLocUrl, setNewLocUrl] = useState('');
     const [reminders, setReminders] = useState<{ remindAt: string; firedAt: string | null }[]>([]);
     const [newRemindAt, setNewRemindAt] = useState('');
+    const [relations, setRelations] = useState<TaskRelationDto[]>([]);
+    const [newRelationType, setNewRelationType] = useState<RelationType>('related');
+    const [newRelationTarget, setNewRelationTarget] = useState('');
+    const [relationSearch, setRelationSearch] = useState('');
+    const [relationMenuOpen, setRelationMenuOpen] = useState(false);
 
     useEffect(() => {
         if (task) {
@@ -85,8 +102,22 @@ export function TaskModal({
             setNewLocUrl('');
             setReminders(task.reminders ?? []);
             setNewRemindAt('');
+            setRelations(task.relations ?? []);
+            setNewRelationType('related');
+            setNewRelationTarget('');
+            setRelationSearch('');
+            setRelationMenuOpen(false);
         }
     }, [task]);
+
+    // Load the task list to resolve relation target titles and populate the target picker.
+    const { data: allTasks = [] } = useQuery<TaskDto[]>({
+        queryKey: ['tasks', 'relation-picker'],
+        queryFn: () => api.listTasks({ filter: 'all' }),
+        enabled: open && task !== null,
+    });
+
+    const titleById = new Map(allTasks.map((t) => [t.id, t.title]));
 
     const addReminderMutation = useMutation({
         mutationFn: (remindAt: string) => {
@@ -108,6 +139,31 @@ export function TaskModal({
         },
         onSuccess: (_data: unknown, index: number) => {
             setReminders((prev) => prev.filter((_, i) => i !== index));
+        },
+    });
+
+    const addRelationMutation = useMutation({
+        mutationFn: (dto: TaskRelationDto) => {
+            if (!task) return Promise.reject(new Error('No task'));
+
+            return api.addRelation({ id: task.id, dto });
+        },
+        onSuccess: (updated: TaskDto) => {
+            setRelations(updated.relations);
+            setNewRelationTarget('');
+            setRelationSearch('');
+            setRelationMenuOpen(false);
+        },
+    });
+
+    const removeRelationMutation = useMutation({
+        mutationFn: (dto: TaskRelationDto) => {
+            if (!task) return Promise.reject(new Error('No task'));
+
+            return api.removeRelation({ id: task.id, dto });
+        },
+        onSuccess: (updated: TaskDto) => {
+            setRelations(updated.relations);
         },
     });
 
@@ -159,7 +215,7 @@ export function TaskModal({
     const busy = isSaving || isDeleting || isSettingFuzzy || isRemovingFuzzy;
 
     return (
-        <Modal open={open} onClose={onClose} title="Edit Task">
+        <Modal open={open} onClose={onClose} title="Edit Task" widthClassName="md:max-w-2xl">
             <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-6 pr-1">
                 <form onSubmit={handleSave} className="flex flex-col gap-4">
                     <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -299,6 +355,116 @@ export function TaskModal({
                                 disabled={!newRemindAt || busy}
                                 onClick={() => addReminderMutation.mutate(new Date(newRemindAt).toISOString())}
                                 className="border-2 border-nb-black dark:border-white/20 font-black text-xs px-3 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white disabled:opacity-40"
+                            >
+                                Add
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Relations */}
+                    <div className="border-t-2 border-nb-black/20 dark:border-white/10 pt-3">
+                        <p className="font-black uppercase text-xs tracking-widest text-nb-black/40 dark:text-white/30 mb-2">
+                            Relations
+                        </p>
+                        {relations.length > 0 && (
+                            <ul className="flex flex-col gap-1 mb-2">
+                                {relations.map((rel) => (
+                                    <li
+                                        key={`${rel.type}:${rel.targetTaskId}`}
+                                        className="flex items-center gap-2 text-xs font-bold"
+                                    >
+                                        <span className="border-2 border-nb-black dark:border-white/30 px-1.5 py-0.5 uppercase text-[10px] tracking-wide text-nb-black dark:text-white">
+                                            {RELATION_TYPE_LABELS[rel.type]}
+                                        </span>
+                                        <span className="text-nb-black dark:text-white truncate flex-1">
+                                            {titleById.get(rel.targetTaskId) ?? rel.targetTaskId}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeRelationMutation.mutate(rel)}
+                                            disabled={busy || removeRelationMutation.isPending}
+                                            className="text-nb-red font-black text-xs hover:underline flex-shrink-0 disabled:opacity-40"
+                                        >
+                                            Remove
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <div className="flex gap-2">
+                            <select
+                                value={newRelationType}
+                                onChange={(e) => setNewRelationType(e.target.value as RelationType)}
+                                disabled={busy || addRelationMutation.isPending}
+                                className="border-2 border-nb-black dark:border-white/20 font-bold text-xs px-2 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white"
+                            >
+                                {RELATION_TYPES.map((t) => (
+                                    <option key={t} value={t}>
+                                        {RELATION_TYPE_LABELS[t]}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="relative flex-1">
+                                <input
+                                    type="text"
+                                    value={relationSearch}
+                                    placeholder="Search a task…"
+                                    disabled={busy || addRelationMutation.isPending}
+                                    onChange={(e) => {
+                                        setRelationSearch(e.target.value);
+                                        setNewRelationTarget('');
+                                        setRelationMenuOpen(true);
+                                    }}
+                                    onFocus={() => setRelationMenuOpen(true)}
+                                    onBlur={() => setTimeout(() => setRelationMenuOpen(false), 150)}
+                                    className="w-full border-2 border-nb-black dark:border-white/20 font-bold text-xs px-2 py-1 bg-white dark:bg-neutral-800 text-nb-black dark:text-white"
+                                />
+                                {relationMenuOpen &&
+                                    (() => {
+                                        const q = relationSearch.trim().toLowerCase();
+                                        const matches = allTasks
+                                            .filter((t) => t.id !== task.id)
+                                            .filter((t) => q === '' || t.title.toLowerCase().includes(q))
+                                            .slice(0, 8);
+
+                                        return (
+                                            <ul className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto border-2 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-800 shadow-[3px_3px_0px_#111] dark:shadow-none">
+                                                {matches.length === 0 ? (
+                                                    <li className="px-2 py-1 text-xs font-bold text-nb-grey">
+                                                        No matches
+                                                    </li>
+                                                ) : (
+                                                    matches.map((t) => (
+                                                        <li key={t.id}>
+                                                            <button
+                                                                type="button"
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault();
+                                                                    setNewRelationTarget(t.id);
+                                                                    setRelationSearch(t.title);
+                                                                    setRelationMenuOpen(false);
+                                                                }}
+                                                                className="w-full text-left px-2 py-1 text-xs font-bold text-nb-black dark:text-white hover:bg-nb-black hover:text-white dark:hover:bg-white/20 truncate"
+                                                            >
+                                                                {t.title}
+                                                            </button>
+                                                        </li>
+                                                    ))
+                                                )}
+                                            </ul>
+                                        );
+                                    })()}
+                            </div>
+                            <button
+                                type="button"
+                                disabled={!newRelationTarget || busy || addRelationMutation.isPending}
+                                onClick={() =>
+                                    addRelationMutation.mutate({
+                                        type: newRelationType,
+                                        targetTaskId: newRelationTarget,
+                                    })
+                                }
+                                className="border-2 border-nb-black dark:border-white/30 px-3 py-1 font-black text-xs bg-white dark:bg-neutral-800 text-nb-black dark:text-white disabled:opacity-40"
                             >
                                 Add
                             </button>

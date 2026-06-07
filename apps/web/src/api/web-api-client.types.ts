@@ -1,6 +1,7 @@
 import type {
     CreateTaskDto,
     ListTasksParams,
+    RelationType,
     SetFuzzyDeadlineDto,
     SetTaskStatusDto,
     UpdateTaskDto,
@@ -99,6 +100,11 @@ export type WebAddReminderParams = {
 export type WebRemoveReminderParams = {
     id: string;
     index: number;
+};
+
+export type WebRelationParams = {
+    id: string;
+    dto: { type: RelationType; targetTaskId: string };
 };
 
 export type WebDownloadExportFileParams = {
