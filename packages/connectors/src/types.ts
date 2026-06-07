@@ -53,6 +53,16 @@ export type OAuthTokens = {
     expiresAt: Date;
 };
 
+/** Identity of a single connected external account. */
+export type AccountIdentity = {
+    /** Provider's stable account id. Used as the per-account key. */
+    externalAccountId: string;
+    /** Account email, when the provider exposes one. */
+    email?: string;
+    /** Human-friendly label (e.g. a Notion workspace name) when no email. */
+    label?: string;
+};
+
 /** Payload for creating a new remote task. */
 export type CreateTaskDto = {
     title: string;
@@ -107,6 +117,8 @@ export type OAuthConnector = {
     refreshToken(tokens: OAuthTokens): Promise<OAuthTokens>;
     /** Optionally resolve extra settings to persist after a successful OAuth callback. */
     resolveConnectionSettings?(tokens: OAuthTokens): Promise<ConnectionSettings>;
+    /** Resolve the external account identity for a freshly-connected token set. */
+    resolveAccountIdentity(tokens: OAuthTokens): Promise<AccountIdentity>;
 };
 
 /** Result of a connector health probe. */
