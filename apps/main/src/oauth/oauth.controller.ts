@@ -5,16 +5,21 @@ import {
     Query,
     Body,
     Res,
+    Headers,
     HttpCode,
     BadRequestException,
     UseGuards,
     Request,
+    Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { OAuthClientService, isRedirectUriPermitted } from '../auth/oauth-client.service.js';
 import { OAuthService } from './oauth.service.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import { filterScopes } from './scopes.js';
 
 interface AuthorizeQuery {
     client_id?: string;
@@ -37,7 +42,13 @@ interface TokenBody {
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
 export class OAuthController {
-    constructor(private readonly oauth: OAuthService) {}
+    private readonly logger = new Logger(OAuthController.name);
+
+    constructor(
+        private readonly oauth: OAuthService,
+        private readonly config: ConfigService,
+        private readonly oauthClient: OAuthClientService,
+    ) {}
 
     /**
      * Authorization endpoint — shows login form or issues auth code.
@@ -54,69 +65,73 @@ export class OAuthController {
             throw new BadRequestException('PKCE code_challenge is required');
         }
 
-        const params = new URLSearchParams({
+        const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173');
+
+        const consentParams = new URLSearchParams({
+            response_type: query.response_type,
             redirect_uri: query.redirect_uri,
             code_challenge: query.code_challenge,
+            code_challenge_method: query.code_challenge_method ?? 'S256',
             scope: query.scope ?? 'openid',
             state: query.state ?? '',
+            ...(query.client_id ? { client_id: query.client_id } : {}),
         });
 
-        const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign in — CTM</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 400px; margin: 80px auto; padding: 0 16px; }
-    h1 { font-size: 1.4rem; margin-bottom: 1.5rem; }
-    label { display: block; margin-bottom: 4px; font-size: 0.875rem; font-weight: 500; }
-    input { width: 100%; padding: 8px 10px; margin-bottom: 16px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
-    button { width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
-    button:hover { background: #1d4ed8; }
-    .error { color: #dc2626; font-size: 0.875rem; margin-bottom: 12px; }
-  </style>
-</head>
-<body>
-  <h1>Sign in to CTM</h1>
-  <form method="POST" action="/oauth/authorize?${params.toString()}">
-    <label for="email">Email</label>
-    <input id="email" type="email" name="email" required autocomplete="email">
-    <label for="password">Password</label>
-    <input id="password" type="password" name="password" required autocomplete="current-password">
-    <button type="submit">Sign in</button>
-  </form>
-</body>
-</html>`;
-
-        res.type('text/html').send(html);
+        res.redirect(`${webUrl}/oauth/consent?${consentParams.toString()}`, 302);
     }
 
     /**
-     * Authorization endpoint (form POST) — validates credentials and redirects with code.
+     * Authorization endpoint (POST) — issues auth code for the authenticated user.
+     * Requires a valid Bearer token in the Authorization header.
      */
     @ApiExcludeEndpoint()
     @Post('authorize')
     @HttpCode(302)
+    @UseGuards(JwtAuthGuard)
     async authorizePost(
         @Query() query: AuthorizeQuery,
-        @Body() body: { email: string; password: string },
+        @Body() body: { selected_scopes?: string } = {},
+        @Request() req: { user: JwtPayload },
         @Res() res: FastifyReply,
+        @Headers('accept') accept: string = '',
     ): Promise<void> {
-        const { id } = await this.oauth.validatePassword({ email: body.email, password: body.password });
+        this.logger.log(`authorizePost client_id=${query.client_id ?? 'none'} redirect_uri=${query.redirect_uri} user=${req.user?.sub ?? 'unauthenticated'}`);
 
-        const scopes = (query.scope ?? 'openid').split(' ');
+        if (query.client_id) {
+            const client = await this.oauthClient.findByClientId(query.client_id);
+
+            if (!client) {
+                this.logger.warn(`authorizePost unknown client_id=${query.client_id}`);
+                throw new BadRequestException('Unknown client_id — register via POST /.well-known/oauth-client first');
+            }
+
+            if (!isRedirectUriPermitted(client.redirectUris, query.redirect_uri)) {
+                this.logger.warn(`authorizePost redirect_uri not permitted client_id=${query.client_id} redirect_uri=${query.redirect_uri} registered=${client.redirectUris.join(',')}`);
+                throw new BadRequestException('redirect_uri not permitted for this client');
+            }
+        }
+
+        const requestedScopes = (query.scope ?? 'openid').split(/\s+/);
+        const selectedScopes = body.selected_scopes ? body.selected_scopes.split(/\s+/) : requestedScopes;
+        const scopes = filterScopes(selectedScopes.filter((s) => requestedScopes.includes(s)));
         const code = await this.oauth.createAuthCode({
-            userId: id,
+            userId: req.user.sub,
             redirectUri: query.redirect_uri,
             codeChallenge: query.code_challenge,
             scopes,
+            clientId: query.client_id,
         });
 
         const redirectUrl = new URL(query.redirect_uri);
         redirectUrl.searchParams.set('code', code);
 
         if (query.state) redirectUrl.searchParams.set('state', query.state);
+
+        if (accept.includes('application/json')) {
+            await res.status(200).send({ location: redirectUrl.toString() });
+
+            return;
+        }
 
         res.redirect(redirectUrl.toString());
     }
@@ -159,7 +174,7 @@ export class OAuthController {
      */
     @ApiOperation({ summary: 'Get OIDC claims for the authenticated user' })
     @Get('userinfo')
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async userinfo(@Request() req: { user: JwtPayload }): Promise<object> {
         return { sub: req.user.sub, email: req.user.email };
     }

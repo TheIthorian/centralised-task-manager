@@ -1,10 +1,10 @@
 import { type InputHTMLAttributes } from 'react';
 import clsx from 'clsx';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+type InputProps = InputHTMLAttributes<HTMLInputElement> & {
     label?: string;
     error?: string;
-}
+};
 
 /** Neobrutalist text input with optional label and error message. */
 export function Input({ label, error, className, id, ...props }: InputProps): React.JSX.Element {
@@ -13,7 +13,10 @@ export function Input({ label, error, className, id, ...props }: InputProps): Re
     return (
         <div className="flex flex-col gap-1">
             {label && (
-                <label htmlFor={inputId} className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white">
+                <label
+                    htmlFor={inputId}
+                    className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white"
+                >
                     {label}
                 </label>
             )}

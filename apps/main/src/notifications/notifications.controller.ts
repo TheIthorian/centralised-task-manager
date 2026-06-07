@@ -12,12 +12,10 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { UsersService } from '../users/users.service.js';
 import { Channel, NotificationsService } from './notifications.service.js';
-import { Notification, type NotificationDocument } from './schemas/notification.schema.js';
+import { ListNotificationsQueryDto } from './dto/list-notifications-query.dto.js';
 import type { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import type {
@@ -32,12 +30,11 @@ type AuthRequest = { user: JwtPayload };
 
 @ApiTags('Notifications')
 @Controller('notifications')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class NotificationsController {
     constructor(
         private readonly usersService: UsersService,
         private readonly notificationsService: NotificationsService,
-        @InjectModel(Notification.name) private readonly notificationModel: Model<NotificationDocument>,
     ) {}
 
     // ── Channels ───────────────────────────────────────────────────────────────
@@ -59,31 +56,13 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'List in-app notifications' })
     @Get()
-    async list(
-        @Request() req: AuthRequest,
-        @Query('page') page = 1,
-        @Query('limit') limit = 20,
-        @Query('unreadOnly') unreadOnly = false,
-    ): Promise<NotificationDto[]> {
-        const filter: Record<string, unknown> = { userId: new Types.ObjectId(req.user.sub) };
-
-        if (unreadOnly) filter['read'] = false;
-
-        const docs = await this.notificationModel
-            .find(filter)
-            .select('type title body read createdAt')
-            .skip((Number(page) - 1) * Number(limit))
-            .limit(Number(limit))
-            .sort({ createdAt: -1 });
-
-        return docs.map((d) => ({
-            id: String(d._id),
-            type: d.type,
-            title: d.title,
-            body: d.body,
-            read: d.read,
-            createdAt: d.createdAt?.toISOString() ?? new Date(0).toISOString(),
-        }));
+    async list(@Request() req: AuthRequest, @Query() query: ListNotificationsQueryDto): Promise<NotificationDto[]> {
+        return this.notificationsService.list({
+            userId: req.user.sub,
+            page: query.page,
+            limit: query.limit,
+            unreadOnly: query.unreadOnly,
+        });
     }
 
     /** Mark a single notification as read. */
@@ -91,15 +70,7 @@ export class NotificationsController {
     @ApiOperation({ summary: 'Mark a notification as read' })
     @Patch(':id/read')
     async markRead(@Request() req: AuthRequest, @Param('id') id: string): Promise<MarkReadResultDto> {
-        const doc = await this.notificationModel.findOneAndUpdate(
-            { _id: id, userId: new Types.ObjectId(req.user.sub) },
-            { read: true },
-            { new: true },
-        );
-
-        if (!doc) throw new NotFoundException('Notification not found');
-
-        return { id: String(doc._id), read: doc.read };
+        return this.notificationsService.markRead({ userId: req.user.sub, id });
     }
 
     /** Mark all notifications as read for the current user. */
@@ -108,12 +79,7 @@ export class NotificationsController {
     @Patch('read-all')
     @HttpCode(200)
     async markAllRead(@Request() req: AuthRequest): Promise<MarkAllReadResultDto> {
-        const result = await this.notificationModel.updateMany(
-            { userId: new Types.ObjectId(req.user.sub), read: false },
-            { read: true },
-        );
-
-        return { updated: result.modifiedCount };
+        return this.notificationsService.markAllRead({ userId: req.user.sub });
     }
 
     // ── Preferences ────────────────────────────────────────────────────────────
@@ -134,7 +100,10 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Update notification preferences' })
     @Patch('preferences')
-    async updatePreferences(@Request() req: AuthRequest, @Body() dto: UpdatePreferencesDto): Promise<NotificationPreferencesDto> {
+    async updatePreferences(
+        @Request() req: AuthRequest,
+        @Body() dto: UpdatePreferencesDto,
+    ): Promise<NotificationPreferencesDto> {
         return this.usersService.updateNotificationPreferences({ userId: req.user.sub, prefs: dto });
     }
 }

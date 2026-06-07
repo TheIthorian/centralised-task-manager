@@ -32,7 +32,10 @@ export class ErrorBoundary extends Component<Props, State> {
         if (fallback) return fallback;
 
         return (
-            <div role="alert" className="m-4 border-4 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-900 shadow-[4px_4px_0px_#111] dark:shadow-none p-6 max-w-lg">
+            <div
+                role="alert"
+                className="m-4 border-4 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-900 shadow-[4px_4px_0px_#111] dark:shadow-none p-6 max-w-lg"
+            >
                 <h2 className="text-xl font-black uppercase text-nb-black dark:text-white mb-2">
                     Something went wrong
                 </h2>

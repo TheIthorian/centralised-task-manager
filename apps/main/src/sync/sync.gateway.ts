@@ -1,9 +1,4 @@
-import {
-    WebSocketGateway,
-    WebSocketServer,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
-} from '@nestjs/websockets';
+import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
@@ -12,9 +7,10 @@ import { toSyncJobDto } from './sync-job.dto.js';
 
 @WebSocketGateway({
     cors: {
-        origin: process.env['CORS_ORIGIN'] === '*' || !process.env['CORS_ORIGIN']
-            ? true
-            : process.env['CORS_ORIGIN']!.split(',').map((o) => o.trim()),
+        origin:
+            process.env['CORS_ORIGIN'] === '*' || !process.env['CORS_ORIGIN']
+                ? true
+                : process.env['CORS_ORIGIN']!.split(',').map((o) => o.trim()),
         credentials: !!process.env['CORS_ORIGIN'] && process.env['CORS_ORIGIN'] !== '*',
     },
 })
@@ -28,8 +24,9 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     /** Authenticate the connecting socket via JWT; joins it to a user-scoped room or disconnects. */
     handleConnection(client: Socket): void {
-        const token = client.handshake.auth['token'] as string | undefined
-            ?? client.handshake.headers['authorization']?.replace('Bearer ', '');
+        const token =
+            (client.handshake.auth['token'] as string | undefined) ??
+            client.handshake.headers['authorization']?.replace('Bearer ', '');
 
         if (!token) {
             this.logger.warn(`WS connection rejected: no token`);

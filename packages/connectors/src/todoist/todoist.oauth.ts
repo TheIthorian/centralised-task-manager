@@ -1,7 +1,7 @@
 import { type Logger, HttpClient } from '@ctm/http-client';
 
 import { ConnectorName, ConnectorType } from '../types.js';
-import type { ConnectionDetailsSchema, OAuthConnector, OAuthTokens } from '../types.js';
+import type { ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
 import type { TodoistTokenResponse } from './todoist.types.js';
 
 /** Configuration required to instantiate a {@link TodoistOAuthConnector}. */
@@ -18,9 +18,25 @@ export class TodoistOAuthConnector implements OAuthConnector {
     readonly connectionDetailsSchema: ConnectionDetailsSchema = {};
 
     private readonly http: HttpClient;
+    private readonly resourceHttp: HttpClient;
 
     constructor(private readonly config: TodoistOAuthConnectorConfig) {
         this.http = new HttpClient({ baseUrl: 'https://todoist.com', logger: config.logger });
+        this.resourceHttp = new HttpClient({ baseUrl: 'https://api.todoist.com/api/v1', logger: config.logger });
+    }
+
+    /** Probe the Todoist API to verify the connection is healthy. */
+    async healthCheck(tokens: OAuthTokens): Promise<HealthCheckResult> {
+        try {
+            await this.resourceHttp.get('/tasks?limit=1', { Authorization: `Bearer ${tokens.accessToken}` });
+            return { source: this.name, healthy: true };
+        } catch (err) {
+            return {
+                source: this.name,
+                healthy: false,
+                error: err instanceof Error ? err.message : 'Unknown error',
+            };
+        }
     }
 
     /** Build the OAuth authorization URL for the given user state. */

@@ -1,9 +1,17 @@
 import {
     ApiClientError,
     CtmApiClient,
+    type AuthorizedAppDto,
     type ConnectorHealthDto,
     type ConnectorStatusDto,
     type DiscordStatusDto,
+    type MarkAllReadResultDto,
+    type MarkReadResultDto,
+    type NotificationDto,
+    type NotificationPreferencesDto,
+    type OkDto,
+    type UpdateNotificationPreferencesDto,
+    type ReminderDto,
     type TaskDto,
     type TaskSyncJobDto,
     type TokenPair,
@@ -11,6 +19,7 @@ import {
 } from '@ctm/api-client';
 import type { StoredAuthTokens } from '../auth/auth-storage.js';
 import type {
+    WebAddReminderParams,
     WebApiClientOptions,
     WebApiError,
     WebCancelSyncJobParams,
@@ -22,6 +31,7 @@ import type {
     WebLoginParams,
     WebRegisterParams,
     WebRemoveFuzzyDeadlineParams,
+    WebRemoveReminderParams,
     WebSetFuzzyDeadlineParams,
     WebSetTaskStatusParams,
     WebSyncConnectorParams,
@@ -38,6 +48,7 @@ export class WebApiClient {
     private accessToken: string | null;
     private refreshToken: string | null;
     private apiClient: CtmApiClient;
+    private pendingRefresh: Promise<StoredAuthTokens> | null = null;
 
     constructor({ baseUrl, accessToken, refreshToken, onTokens, onUnauthorized, onError }: WebApiClientOptions) {
         this.baseUrl = baseUrl;
@@ -67,9 +78,14 @@ export class WebApiClient {
         });
     }
 
+    /** Get a single task by ID. */
+    async getTask({ id }: { id: string }): Promise<TaskDto> {
+        return this.execute({ request: () => this.apiClient.getTask({ id }) });
+    }
+
     /** List tasks for the current user. */
-    async listTasks({ filter }: WebListTasksParams = {}): Promise<TaskDto[]> {
-        return this.execute({ request: () => this.apiClient.listTasks({ filter }) });
+    async listTasks(params: WebListTasksParams = {}): Promise<TaskDto[]> {
+        return this.execute({ request: () => this.apiClient.listTasks(params) });
     }
 
     /** Create a task for the current user. */
@@ -95,6 +111,16 @@ export class WebApiClient {
     /** Remove the fuzzy deadline from a task. */
     async removeFuzzyDeadline({ id }: WebRemoveFuzzyDeadlineParams): Promise<TaskDto> {
         return this.execute({ request: () => this.apiClient.removeFuzzyDeadline({ id }) });
+    }
+
+    /** Add a reminder datetime to a task. */
+    async addReminder({ id, dto }: WebAddReminderParams): Promise<ReminderDto> {
+        return this.execute({ request: () => this.apiClient.addReminder({ id, dto }) });
+    }
+
+    /** Remove a reminder from a task by its array index. */
+    async removeReminder({ id, index }: WebRemoveReminderParams): Promise<OkDto> {
+        return this.execute({ request: () => this.apiClient.removeReminder({ id, index }) });
     }
 
     /** Delete a task for the current user. */
@@ -172,14 +198,69 @@ export class WebApiClient {
         return this.execute({ request: () => this.apiClient.testNotificationChannel({ channel }) });
     }
 
-/** Save connection details for a connector (e.g. Notion database ID). */
-    async setConnectionDetails({ source, details }: { source: string; details: Record<string, unknown> }): Promise<void> {
+    /** Get notification preferences for the current user. */
+    async getNotificationPreferences(): Promise<NotificationPreferencesDto> {
+        return this.execute({ request: () => this.apiClient.getNotificationPreferences() });
+    }
+
+    /** Update notification preferences for the current user. */
+    async updateNotificationPreferences({
+        dto,
+    }: {
+        dto: UpdateNotificationPreferencesDto;
+    }): Promise<NotificationPreferencesDto> {
+        return this.execute({ request: () => this.apiClient.updateNotificationPreferences({ dto }) });
+    }
+
+    /** List in-app notifications for the current user. */
+    async listNotifications({ unreadOnly = false }: { unreadOnly?: boolean } = {}): Promise<NotificationDto[]> {
+        return this.execute({ request: () => this.apiClient.listNotifications({ unreadOnly }) });
+    }
+
+    /** Mark a single notification as read. */
+    async markNotificationRead({ id }: { id: string }): Promise<MarkReadResultDto> {
+        return this.execute({ request: () => this.apiClient.markNotificationRead({ id }) });
+    }
+
+    /** Mark all notifications as read. */
+    async markAllNotificationsRead(): Promise<MarkAllReadResultDto> {
+        return this.execute({ request: () => this.apiClient.markAllNotificationsRead() });
+    }
+
+    /** Save connection details for a connector (e.g. Notion database ID). */
+    async setConnectionDetails({
+        source,
+        details,
+    }: {
+        source: string;
+        details: Record<string, unknown>;
+    }): Promise<void> {
         await this.execute({ request: () => this.apiClient.setConnectionDetails({ source, details }) });
     }
 
     /** List Notion databases accessible via the user's Notion integration. */
     async listNotionDatabases(): Promise<{ id: string; name: string }[]> {
         return this.execute({ request: () => this.apiClient.listNotionDatabases() });
+    }
+
+    /** List OAuth apps the current user has authorized. */
+    async getAuthorizedApps(): Promise<AuthorizedAppDto[]> {
+        return this.execute({ request: () => this.apiClient.getAuthorizedApps() });
+    }
+
+    /** Revoke access for an authorized OAuth app. */
+    async revokeAuthorizedApp({ clientId }: { clientId: string }): Promise<void> {
+        await this.execute({ request: () => this.apiClient.revokeAuthorizedApp({ clientId }) });
+    }
+
+    /** Return the current access token (used for WebSocket authentication). */
+    getAccessToken(): string | null {
+        return this.accessToken;
+    }
+
+    /** Return the API base URL (used for WebSocket connection). */
+    getBaseUrl(): string {
+        return this.baseUrl;
     }
 
     private createApiClient(): CtmApiClient {
@@ -241,16 +322,17 @@ export class WebApiClient {
         }
 
         try {
-            const refreshClient = new CtmApiClient({
-                baseUrl: this.baseUrl,
-                refreshToken: this.refreshToken,
-            });
-            const nextTokens = await refreshClient.refresh();
+            if (!this.pendingRefresh) {
+                const refreshToken = this.refreshToken;
+                this.pendingRefresh = new CtmApiClient({ baseUrl: this.baseUrl, refreshToken })
+                    .refresh()
+                    .then((tokens) => ({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }))
+                    .finally(() => (this.pendingRefresh = null));
+            }
 
-            this.setTokens({
-                accessToken: nextTokens.accessToken,
-                refreshToken: nextTokens.refreshToken,
-            });
+            const nextTokens = await this.pendingRefresh;
+
+            this.setTokens(nextTokens);
 
             return await request();
         } catch (refreshError) {

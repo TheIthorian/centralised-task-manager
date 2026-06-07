@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router';
 import { useAuth } from '../../auth/AuthContext.js';
 import { useTheme } from '../../theme/ThemeContext.js';
-import { Button } from '../ui/index.js';
+import { Button } from '@ctm/ui';
+import { useNotificationSocket } from '../../hooks/useNotificationSocket.js';
 import clsx from 'clsx';
 
 const navItems = [
@@ -13,12 +14,14 @@ const navItems = [
 
 /** Desktop left sidebar. Hidden on mobile via md: breakpoint in AppShell. */
 export function Sidebar(): React.JSX.Element {
-    const { user, logout } = useAuth();
+    const { user, logout, api } = useAuth();
     const { theme, toggle } = useTheme();
     const { pathname } = useLocation();
 
+    useNotificationSocket(api);
+
     return (
-        <aside className="hidden md:flex flex-col w-36 h-screen sticky top-0 bg-nb-black border-r-4 border-nb-black flex-shrink-0">
+        <aside className="hidden md:flex flex-col w-36 h-dvh sticky top-0 bg-nb-black border-r-4 border-nb-black flex-shrink-0">
             <div className="p-4 border-b-2 border-white/10">
                 <span className="text-nb-yellow font-black text-lg uppercase tracking-tight">CTM</span>
             </div>

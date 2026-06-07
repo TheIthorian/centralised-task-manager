@@ -46,6 +46,8 @@ export function logRequest({
     status?: number;
     durationMs?: number;
 }): void {
+    if (req.method === 'OPTIONS') return; // skip noisy CORS preflight requests
+
     const log = buildRequestLog({ req, status, durationMs });
     const message = `${log.method} ${log.url} ${status ?? '-'}`;
 
@@ -57,15 +59,7 @@ export function logRequest({
 }
 
 /** Logs an unhandled error for a request. */
-export function logRequestError({
-    logger,
-    req,
-    error,
-}: {
-    logger: Logger;
-    req: IncomingMessage;
-    error: Error;
-}): void {
+export function logRequestError({ logger, req, error }: { logger: Logger; req: IncomingMessage; error: Error }): void {
     logger.error(
         {
             method: req.method,

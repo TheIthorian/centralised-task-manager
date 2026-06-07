@@ -7,11 +7,7 @@ import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
-        AuthModule,
-        UsersModule,
-    ],
+    imports: [MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]), AuthModule, UsersModule],
     controllers: [TasksController],
     providers: [TasksService],
     exports: [TasksService],

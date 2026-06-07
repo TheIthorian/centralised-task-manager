@@ -66,7 +66,11 @@ describe('GroupedTaskList', () => {
     });
 
     it('renders Done section for completed tasks instead of their date bucket', () => {
-        const task = makeTask({ id: '7', completed: true, due: { date: TODAY_DATE, timezone: null, recurrence: null } });
+        const task = makeTask({
+            id: '7',
+            completed: true,
+            due: { date: TODAY_DATE, timezone: null, recurrence: null },
+        });
         render(<GroupedTaskList tasks={[task]} onToggle={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText(/done/i)).toBeInTheDocument();
         expect(screen.queryByText(/today/i)).not.toBeInTheDocument();

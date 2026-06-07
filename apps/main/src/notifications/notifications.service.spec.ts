@@ -7,6 +7,7 @@ import { InAppChannel } from './channels/in-app.channel.js';
 import { EmailChannel } from './channels/email.channel.js';
 import { DiscordChannel, DiscordAuthExpiredError } from './channels/discord.channel.js';
 import { User, UserSchema, type UserDocument } from '../users/schemas/user.schema.js';
+import { Notification, NotificationSchema } from './schemas/notification.schema.js';
 
 describe('NotificationsService', () => {
     let module: TestingModule;
@@ -24,7 +25,10 @@ describe('NotificationsService', () => {
         module = await Test.createTestingModule({
             imports: [
                 MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
-                MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+                MongooseModule.forFeature([
+                    { name: User.name, schema: UserSchema },
+                    { name: Notification.name, schema: NotificationSchema },
+                ]),
             ],
             providers: [
                 NotificationsService,
@@ -56,7 +60,13 @@ describe('NotificationsService', () => {
             notificationPreferences: { dailySummary: { inApp: true, discord: false, email: false } },
         });
 
-        await service.send({ userId: String(user._id), type: 'daily_summary', title: 'T', body: 'B' });
+        await service.send({
+            userId: String(user._id),
+            type: 'daily_summary',
+            data: { type: 'daily_summary' },
+            title: 'T',
+            body: 'B',
+        });
 
         expect(inApp.send).toHaveBeenCalledOnce();
         expect(email.send).not.toHaveBeenCalled();
@@ -70,7 +80,13 @@ describe('NotificationsService', () => {
             notificationPreferences: { dailySummary: { inApp: false, discord: false, email: false } },
         });
 
-        await service.send({ userId: String(user._id), type: 'daily_summary', title: 'T', body: 'B' });
+        await service.send({
+            userId: String(user._id),
+            type: 'daily_summary',
+            data: { type: 'daily_summary' },
+            title: 'T',
+            body: 'B',
+        });
 
         expect(inApp.send).not.toHaveBeenCalled();
     });
@@ -82,7 +98,13 @@ describe('NotificationsService', () => {
             notificationPreferences: { reminder: { inApp: false, discord: true, email: false } },
         });
 
-        await service.send({ userId: String(user._id), type: 'reminder', title: 'T', body: 'B' });
+        await service.send({
+            userId: String(user._id),
+            type: 'reminder',
+            data: { type: 'reminder' },
+            title: 'T',
+            body: 'B',
+        });
 
         expect(discord.send).toHaveBeenCalledOnce();
     });
@@ -95,11 +117,15 @@ describe('NotificationsService', () => {
         });
         discord.send.mockRejectedValue(new DiscordAuthExpiredError());
 
-        await service.send({ userId: String(user._id), type: 'reminder', title: 'T', body: 'B' });
+        await service.send({
+            userId: String(user._id),
+            type: 'reminder',
+            data: { type: 'reminder' },
+            title: 'T',
+            body: 'B',
+        });
 
-        expect(inApp.send).toHaveBeenCalledWith(
-            expect.objectContaining({ type: 'connector_reconnect' }),
-        );
+        expect(inApp.send).toHaveBeenCalledWith(expect.objectContaining({ type: 'connector_reconnect' }));
     });
 
     it('continues to email channel even if inApp fails', async () => {
@@ -110,13 +136,25 @@ describe('NotificationsService', () => {
         });
         inApp.send.mockRejectedValue(new Error('DB down'));
 
-        await service.send({ userId: String(user._id), type: 'reminder', title: 'T', body: 'B' });
+        await service.send({
+            userId: String(user._id),
+            type: 'reminder',
+            data: { type: 'reminder' },
+            title: 'T',
+            body: 'B',
+        });
 
         expect(email.send).toHaveBeenCalledOnce();
     });
 
     it('is a no-op when user is not found', async () => {
-        await service.send({ userId: '000000000000000000000000', type: 'reminder', title: 'T', body: 'B' });
+        await service.send({
+            userId: '000000000000000000000000',
+            type: 'reminder',
+            data: { type: 'reminder' },
+            title: 'T',
+            body: 'B',
+        });
 
         expect(inApp.send).not.toHaveBeenCalled();
     });

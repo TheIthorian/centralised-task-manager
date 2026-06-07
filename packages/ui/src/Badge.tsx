@@ -2,10 +2,10 @@ import clsx from 'clsx';
 
 type BadgeVariant = 'p1' | 'p2' | 'p3' | 'source';
 
-interface BadgeProps {
+type BadgeProps = {
     variant: BadgeVariant;
     children: React.ReactNode;
-}
+};
 
 /** Small neobrutalist badge for priority or source labels. */
 export function Badge({ variant, children }: BadgeProps): React.JSX.Element {

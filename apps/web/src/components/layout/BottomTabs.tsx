@@ -1,4 +1,6 @@
 import { Link, useLocation } from 'react-router';
+import { useAuth } from '../../auth/AuthContext.js';
+import { useNotificationSocket } from '../../hooks/useNotificationSocket.js';
 import clsx from 'clsx';
 
 const tabs = [
@@ -11,6 +13,9 @@ const tabs = [
 /** Mobile bottom tab bar. Hidden on desktop via md:hidden in AppShell. */
 export function BottomTabs(): React.JSX.Element {
     const { pathname } = useLocation();
+    const { api } = useAuth();
+
+    useNotificationSocket(api);
 
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-nb-black border-t-4 border-nb-black flex z-40">

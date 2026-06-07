@@ -31,6 +31,9 @@ export class AuthCode {
     })
     scopes!: string[];
 
+    @Prop({ type: String })
+    clientId?: string;
+
     @Prop({ type: Date, required: true })
     expiresAt!: Date;
 }

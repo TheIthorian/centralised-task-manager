@@ -1,13 +1,15 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, useSearchParams, Link } from 'react-router';
 import { useAuth } from '../auth/AuthContext.js';
 import { getErrorMessage } from '../api/error-message.js';
-import { Button, Input } from '../components/ui/index.js';
+import { Button, Input } from '@ctm/ui';
 
 /** Full-page login form on yellow background. */
 export function LoginPage(): React.JSX.Element {
     const { login } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const returnTo = searchParams.get('return') ?? '/tasks';
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -20,7 +22,7 @@ export function LoginPage(): React.JSX.Element {
 
         try {
             await login(email, password);
-            await navigate('/tasks');
+            await navigate(returnTo);
         } catch (error) {
             setError(getErrorMessage(error, 'Invalid email or password.'));
         } finally {
@@ -29,9 +31,11 @@ export function LoginPage(): React.JSX.Element {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="min-h-dvh flex items-center justify-center p-4">
             <div className="w-full max-w-sm bg-white dark:bg-neutral-900 border-4 border-nb-black dark:border-white/20 shadow-[6px_6px_0px_#111] dark:shadow-none p-8">
-                <h1 className="text-3xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-6">CTM Login</h1>
+                <h1 className="text-3xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-6">
+                    CTM Login
+                </h1>
 
                 {error && (
                     <div className="border-2 border-nb-red bg-nb-red/10 p-3 mb-4">

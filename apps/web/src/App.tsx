@@ -6,14 +6,17 @@ import { AppShell } from './components/layout/AppShell.js';
 import { ToastProvider } from './toast/ToastContext.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { RegisterPage } from './pages/RegisterPage.js';
+import { OAuthConsentPage } from './pages/OAuthConsentPage.js';
 import { TasksPage } from './pages/TasksPage.js';
 import { SettingsLayout } from './pages/SettingsLayout.js';
 import { SourcesPage } from './pages/SourcesPage.js';
 import { ProfilePage } from './pages/ProfilePage.js';
+import { NotificationsPage } from './pages/NotificationsPage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
 import { CalendarPage } from './pages/CalendarPage.js';
 import { TimelinePage } from './pages/TimelinePage.js';
 import { ErrorPage } from './pages/ErrorPage.js';
+import { AuthorizedAppsPage } from './pages/AuthorizedAppsPage.js';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -27,6 +30,7 @@ const queryClient = new QueryClient({
 const router = createBrowserRouter([
     { path: '/login', element: <LoginPage /> },
     { path: '/register', element: <RegisterPage /> },
+    { path: '/oauth/consent', element: <OAuthConsentPage /> },
     {
         path: '/',
         element: (
@@ -47,6 +51,8 @@ const router = createBrowserRouter([
                     { index: true, element: <Navigate to="/settings/sources" replace /> },
                     { path: 'sources', element: <SourcesPage /> },
                     { path: 'profile', element: <ProfilePage /> },
+                    { path: 'notifications', element: <NotificationsPage /> },
+                    { path: 'authorized-apps', element: <AuthorizedAppsPage /> },
                 ],
             },
         ],

@@ -14,9 +14,7 @@ const LOCAL_SOURCE = 'local';
 
 @Injectable()
 export class TasksService {
-    constructor(
-        @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
-    ) {}
+    constructor(@InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>) {}
 
     /** List tasks for a user with optional filters. */
     async list(userId: string, query: ListTasksQueryDto): Promise<TaskDocument[]> {
@@ -63,6 +61,24 @@ export class TasksService {
 
         if (query.lastUpdatedFromDate) {
             filter['updatedAt'] = { $gte: new Date(query.lastUpdatedFromDate) };
+        }
+
+        if (query.dueBefore) {
+            const existing = (filter['due.date'] as Record<string, unknown>) ?? {};
+
+            filter['due.date'] = { ...existing, $lt: new Date(query.dueBefore) };
+        }
+
+        if (query.dueAfter) {
+            const existing = (filter['due.date'] as Record<string, unknown>) ?? {};
+
+            filter['due.date'] = { ...existing, $gte: new Date(query.dueAfter) };
+        }
+
+        if (query.noDate) {
+            filter['due'] = null;
+            // When noDate is true, date range params are irrelevant — clear any due.date conditions.
+            delete filter['due.date'];
         }
 
         const page = query.page ?? 1;
@@ -228,11 +244,7 @@ export class TasksService {
 
         // Outbound sync (CTM → external source) is disabled; status changes are local-only.
 
-        return this.taskModel.findByIdAndUpdate(
-            taskId,
-            { status: dto.status },
-            { new: true },
-        ) as Promise<TaskDocument>;
+        return this.taskModel.findByIdAndUpdate(taskId, { status: dto.status }, { new: true }) as Promise<TaskDocument>;
     }
 
     /** Delete a task via write-through.
@@ -386,7 +398,8 @@ export class TasksService {
             }
 
             const referenceTime = existing.createdAt ?? existing.syncedAt;
-            const hasLocalChanges = existing.updatedAt !== undefined && referenceTime !== undefined && existing.updatedAt > referenceTime;
+            const hasLocalChanges =
+                existing.updatedAt !== undefined && referenceTime !== undefined && existing.updatedAt > referenceTime;
 
             if (hasLocalChanges) {
                 skipped++;
@@ -411,6 +424,45 @@ export class TasksService {
         }
 
         return { synced, skipped };
+    }
+
+    /** Append a reminder to a task. Returns the new ReminderDto. */
+    async addReminder({
+        taskId,
+        userId,
+        dto,
+    }: {
+        taskId: string;
+        userId: string;
+        dto: { remindAt: string };
+    }): Promise<{ remindAt: string; firedAt: string | null }> {
+        const task = await this.taskModel.findOneAndUpdate(
+            { _id: taskId, userId: new Types.ObjectId(userId) },
+            { $push: { reminders: { remindAt: new Date(dto.remindAt), firedAt: null } } },
+            { new: true },
+        );
+
+        if (!task) throw new NotFoundException('Task not found');
+
+        const added = task.reminders[task.reminders.length - 1]!;
+
+        return {
+            remindAt: added.remindAt.toISOString(),
+            firedAt: added.firedAt ? added.firedAt.toISOString() : null,
+        };
+    }
+
+    /** Remove a reminder from a task by its array index. */
+    async removeReminder({ taskId, userId, index }: { taskId: string; userId: string; index: number }): Promise<void> {
+        const task = await this.findOne({ taskId, userId });
+
+        if (index < 0 || index >= task.reminders.length) {
+            throw new BadRequestException('Reminder index out of range');
+        }
+
+        task.reminders.splice(index, 1);
+
+        await this.taskModel.updateOne({ _id: taskId }, { $set: { reminders: task.reminders } });
     }
 
     private parseDueFields(dto: {

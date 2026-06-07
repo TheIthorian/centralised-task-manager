@@ -4,6 +4,8 @@ import clsx from 'clsx';
 const tabs = [
     { label: 'Sources', path: '/settings/sources' },
     { label: 'Profile', path: '/settings/profile' },
+    { label: 'Notifications', path: '/settings/notifications' },
+    { label: 'Authorized Apps', path: '/settings/authorized-apps' },
 ];
 
 /** Settings shell with sub-nav (desktop only). */

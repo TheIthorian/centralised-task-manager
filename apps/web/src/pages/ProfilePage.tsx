@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import type { UpdateUserDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
-import { Button, Input } from '../components/ui/index.js';
+import { Button, Input } from '@ctm/ui';
 
 /** Settings sub-page: user profile, password change, and account deletion. */
 export function ProfilePage(): React.JSX.Element {
@@ -62,7 +62,9 @@ export function ProfilePage(): React.JSX.Element {
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
                 <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">Profile</h1>
-                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">Update your account details.</p>
+                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
+                    Update your account details.
+                </p>
             </div>
 
             {/* Update form */}

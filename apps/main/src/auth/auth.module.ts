@@ -9,12 +9,10 @@ import { WellKnownController } from './well-known.controller.js';
 import { AuthService } from './auth.service.js';
 import { LocalStrategy } from './strategies/local.strategy.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
-import { ApiToken, ApiTokenSchema } from './schemas/api-token.schema.js';
 import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema.js';
 import { OAuthClient, OAuthClientSchema } from './schemas/oauth-client.schema.js';
-import { ApiTokenService } from './api-token.service.js';
 import { OAuthClientService } from './oauth-client.service.js';
-import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
+import { AuthorizedAppsService } from './authorized-apps.service.js';
 
 @Module({
     imports: [
@@ -27,18 +25,17 @@ import { CombinedAuthGuard } from './guards/combined-auth.guard.js';
                 publicKey: Buffer.from(config.getOrThrow<string>('RSA_PUBLIC_KEY'), 'base64').toString('utf8'),
                 signOptions: {
                     algorithm: 'RS256' as const,
-                    expiresIn: config.get('JWT_ACCESS_EXPIRES', '15m') as `${number}${'s' | 'm' | 'h' | 'd'}`,
+                    expiresIn: config.get<number>('JWT_ACCESS_EXPIRES', 120),
                 },
             }),
         }),
         MongooseModule.forFeature([
-            { name: ApiToken.name, schema: ApiTokenSchema },
             { name: RefreshToken.name, schema: RefreshTokenSchema },
             { name: OAuthClient.name, schema: OAuthClientSchema },
         ]),
     ],
     controllers: [AuthController, WellKnownController],
-    providers: [AuthService, LocalStrategy, JwtStrategy, ApiTokenService, OAuthClientService, CombinedAuthGuard],
-    exports: [AuthService, JwtModule, ApiTokenService, OAuthClientService, CombinedAuthGuard],
+    providers: [AuthService, LocalStrategy, JwtStrategy, OAuthClientService, AuthorizedAppsService],
+    exports: [AuthService, JwtModule, OAuthClientService, AuthorizedAppsService],
 })
 export class AuthModule {}

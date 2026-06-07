@@ -6,15 +6,18 @@ import React from 'react';
 import OriginalCodeTabs from '@theme-original/ApiExplorer/CodeTabs';
 import { TabsProvider, useTabsContextValue } from '@docusaurus/theme-common/internal';
 
-export default function CodeTabs({ children, ...props }: React.ComponentProps<typeof OriginalCodeTabs>): JSX.Element {
+export default function CodeTabs({ children, ...props }: React.ComponentProps<typeof OriginalCodeTabs>): React.ReactElement {
     const values = React.useMemo(
         () =>
             React.Children.toArray(children)
                 .filter(React.isValidElement)
-                .map((child) => ({
-                    value: (child as React.ReactElement).props.value as string,
-                    label: ((child as React.ReactElement).props.label ?? (child as React.ReactElement).props.value) as string,
-                })),
+                .map((child) => {
+                    const p = (child as React.ReactElement<Record<string, unknown>>).props;
+                    return {
+                        value: p['value'] as string,
+                        label: (p['label'] ?? p['value']) as string,
+                    };
+                }),
         [children],
     );
 

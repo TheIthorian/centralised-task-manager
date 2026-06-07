@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../auth/AuthContext.js';
 import { getErrorMessage } from '../api/error-message.js';
-import { Button, Input } from '../components/ui/index.js';
+import { Button, Input } from '@ctm/ui';
 
 /** Full-page registration form. Auto-logs in on success. */
 export function RegisterPage(): React.JSX.Element {
@@ -38,9 +38,11 @@ export function RegisterPage(): React.JSX.Element {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="min-h-dvh flex items-center justify-center p-4">
             <div className="w-full max-w-sm bg-white dark:bg-neutral-900 border-4 border-nb-black dark:border-white/20 shadow-[6px_6px_0px_#111] dark:shadow-none p-8">
-                <h1 className="text-3xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-6">Create Account</h1>
+                <h1 className="text-3xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-6">
+                    Create Account
+                </h1>
 
                 {error && (
                     <div className="border-2 border-nb-red bg-nb-red/10 p-3 mb-4">

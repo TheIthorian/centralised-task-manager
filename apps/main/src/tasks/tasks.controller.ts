@@ -1,6 +1,19 @@
-import { Controller, Get, Post, Patch, Delete, Put, Param, Body, Query, Request, UseGuards, HttpCode } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Patch,
+    Delete,
+    Put,
+    Param,
+    Body,
+    Query,
+    Request,
+    UseGuards,
+    HttpCode,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { TasksService } from './tasks.service.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
@@ -10,7 +23,8 @@ import { TaskRelationDto } from './dto/task-relation.dto.js';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 import type { TaskDocument } from './schemas/task.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
-import type { TaskDto } from '@ctm/api-client';
+import { AddReminderDto } from './dto/add-reminder.dto.js';
+import type { TaskDto, ReminderDto, OkDto } from '@ctm/api-client';
 
 type AuthRequest = {
     user: JwtPayload;
@@ -19,7 +33,7 @@ type AuthRequest = {
 @ApiTags('Tasks')
 @ApiBearerAuth('jwt')
 @Controller('tasks')
-@UseGuards(CombinedAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class TasksController {
     constructor(private readonly tasks: TasksService) {}
 
@@ -44,6 +58,11 @@ export class TasksController {
             fuzzyDeadline: t.fuzzyDeadline
                 ? { type: t.fuzzyDeadline.type, remindEvery: t.fuzzyDeadline.remindEvery }
                 : null,
+            reminders: t.reminders.map((r) => ({
+                remindAt: r.remindAt.toISOString(),
+                firedAt: r.firedAt ? r.firedAt.toISOString() : null,
+            })),
+            dueDateNotifiedAt: t.dueDateNotifiedAt ? t.dueDateNotifiedAt.toISOString() : null,
             createdAt: t.createdAt ? t.createdAt.toISOString() : t.syncedAt.toISOString(),
             updatedAt: t.updatedAt ? t.updatedAt.toISOString() : t.syncedAt.toISOString(),
         };
@@ -85,7 +104,11 @@ export class TasksController {
     /** Set task status (complete or uncomplete). */
     @ApiOperation({ summary: 'Set task status to open or done' })
     @Put(':id/status')
-    async setStatus(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: SetTaskStatusDto): Promise<TaskDto> {
+    async setStatus(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Body() dto: SetTaskStatusDto,
+    ): Promise<TaskDto> {
         const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, dto });
         return this.toResponse(t);
     }
@@ -144,6 +167,30 @@ export class TasksController {
         });
 
         return this.toResponse(t);
+    }
+
+    /** Add a reminder datetime to a task. */
+    @ApiOperation({ summary: 'Add a reminder to a task' })
+    @Post(':id/reminders')
+    async addReminder(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Body() dto: AddReminderDto,
+    ): Promise<ReminderDto> {
+        return this.tasks.addReminder({ taskId: id, userId: req.user.sub, dto });
+    }
+
+    /** Remove a reminder from a task by index. */
+    @ApiOperation({ summary: 'Remove a reminder from a task' })
+    @ApiResponse({ status: 200 })
+    @Delete(':id/reminders/:index')
+    async removeReminder(
+        @Request() req: AuthRequest,
+        @Param('id') id: string,
+        @Param('index') index: string,
+    ): Promise<OkDto> {
+        await this.tasks.removeReminder({ taskId: id, userId: req.user.sub, index: Number(index) });
+        return { ok: true };
     }
 
     /** Delete a task (write-through to source). */

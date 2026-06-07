@@ -11,6 +11,7 @@ import { RemindersModule } from './reminders/reminders.module.js';
 import { OAuthModule } from './oauth/oauth.module.js';
 import { SyncModule } from './sync/sync.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { DataPortabilityModule } from './data-portability/data-portability.module.js';
 
 @Module({
     imports: [
@@ -24,6 +25,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
         OAuthModule,
         SyncModule,
         NotificationsModule,
+        DataPortabilityModule,
     ],
 })
 export class AppModule implements NestModule {

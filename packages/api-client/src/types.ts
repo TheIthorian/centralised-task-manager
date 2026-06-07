@@ -26,6 +26,12 @@ export type FuzzyDeadlineInfo = {
     remindEvery: 'daily' | 'weekly' | null;
 };
 
+/** A single point-in-time reminder attached to a task. */
+export type ReminderDto = {
+    remindAt: string; // ISO datetime
+    firedAt: string | null; // set once the notification has been sent
+};
+
 /** Authenticated user representation. */
 export type UserDto = {
     id: string;
@@ -50,6 +56,8 @@ export type TaskDto = {
     duration?: Duration | null;
     relations: TaskRelationDto[];
     fuzzyDeadline?: FuzzyDeadlineInfo | null;
+    reminders: ReminderDto[];
+    dueDateNotifiedAt: string | null;
     completed: boolean;
     source: string;
     sourceId: string;
@@ -94,6 +102,11 @@ export type SetFuzzyDeadlineDto = {
     remindEvery?: 'daily' | 'weekly';
 };
 
+/** Body for adding a reminder to a task. */
+export type AddReminderDto = {
+    remindAt: string; // ISO datetime
+};
+
 export enum ConnectorType {
     TaskSync = 'task_sync',
     Notification = 'notification',
@@ -123,6 +136,9 @@ export type NotionDatabaseDto = {
 export type OkDto = {
     ok: boolean;
 };
+
+/** Connector-specific connection details payload (e.g. Notion database ID). */
+export type ConnectorDetailsDto = Record<string, unknown>;
 
 /** Response after updating a connector config. */
 export type UpdateConnectorResponseDto = {
@@ -181,10 +197,18 @@ export type TaskFilter = 'all' | 'today' | 'upcoming' | 'done';
 /** Discriminated union of notification event types. */
 export type NotificationType = 'connector_reconnect' | 'daily_summary' | 'reminder' | 'upcoming_deadline';
 
+/** Type-safe payload carried by each notification type. */
+export type NotificationData =
+    | { type: 'reminder'; taskId?: string }
+    | { type: 'upcoming_deadline' }
+    | { type: 'connector_reconnect'; source?: string }
+    | { type: 'daily_summary' };
+
 /** A single in-app notification. */
 export type NotificationDto = {
     id: string;
     type: NotificationType;
+    data: NotificationData | null;
     title: string;
     body: string;
     read: boolean;
@@ -227,20 +251,6 @@ export type DiscordStatusDto = {
     discordUserId?: string;
 };
 
-/** A long-lived API token record (raw token value not included). */
-export type ApiTokenDto = {
-    id: string;
-    label: string;
-    lastUsedAt: string | null;
-};
-
-/** Response after creating a long-lived API token. Raw token shown once. */
-export type CreatedApiTokenDto = {
-    id: string;
-    label: string;
-    token: string;
-};
-
 /** Result of sending a test notification to a channel. */
 export type TestChannelResultDto = {
     sent: boolean;
@@ -255,4 +265,85 @@ export type MarkReadResultDto = {
 /** Result of marking all notifications as read. */
 export type MarkAllReadResultDto = {
     updated: number;
+};
+
+/** An OAuth client that a user has authorized. No token data included. */
+export type AuthorizedAppDto = {
+    clientId: string;
+    clientName: string;
+    scopes: string[];
+    authorizedAt: string;
+    type: 'oauth';
+};
+
+/** Metadata for a single file persisted to storage (embedded in ExportResponseDto). */
+export type StoredFileDto = {
+    filename: string;
+    sizeBytes: number;
+    contentType: string;
+    sha256: string;
+};
+
+/** Response from POST /users/me/export. */
+export type ExportResponseDto = {
+    exportId: string;
+    files: StoredFileDto[];
+};
+
+/** Profile section of an export envelope. */
+export type ExportProfileDto = {
+    email: string;
+    name: string;
+    notificationPreferences: NotificationPreferencesDto;
+};
+
+/** Task shape used in export envelopes — includes full status (not just `completed`). */
+export type ExportTaskDto = {
+    id: string;
+    source: string;
+    sourceId: string;
+    title: string;
+    description: string | null;
+    status: 'open' | 'done' | 'archived';
+    priority: 1 | 2 | 3 | 4 | null;
+    tags: string[];
+    due: DueDate | null;
+    deadlineDate: string | null;
+    duration: Duration | null;
+    fuzzyDeadline: FuzzyDeadlineInfo | null;
+    reminders: ReminderDto[];
+    dueDateNotifiedAt: string | null;
+    locations: LocationDto[];
+    syncedAt: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+/** The JSON envelope written to each export part file. */
+export type ExportEnvelopeDto = {
+    version: '1';
+    exportedAt: string;
+    exportId: string;
+    part: number;
+    totalParts: number;
+    /** Only present in part 1. */
+    profile?: ExportProfileDto;
+    tasks: ExportTaskDto[];
+    notifications: NotificationDto[];
+};
+
+/** Request body for POST /users/me/import (multipart form field). */
+export type ImportRequestDto = {
+    onConflict: 'replace' | 'ignore';
+};
+
+export type ImportSummaryDto = {
+    tasks: number;
+    notifications: number;
+};
+
+/** Response from POST /users/me/import. */
+export type ImportResponseDto = {
+    imported: ImportSummaryDto;
+    skipped: ImportSummaryDto;
 };

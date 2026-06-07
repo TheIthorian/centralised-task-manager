@@ -1,11 +1,11 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@ctm/tsconfig/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "lib": ["ES2022"],
-    "types": ["node"]
-  },
-  "include": ["src"]
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "@ctm/tsconfig/base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "lib": ["ES2022", "DOM"],
+        "types": ["node"]
+    },
+    "include": ["src"]
 }

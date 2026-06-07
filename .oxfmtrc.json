@@ -4,9 +4,5 @@
     "singleQuote": true,
     "printWidth": 120,
     "trailingComma": "all",
-    "ignorePatterns": [
-        "dist/**",
-        "node_modules/**",
-        "*.d.ts"
-    ]
+    "ignorePatterns": ["dist/**", "node_modules/**", "*.d.ts"]
 }

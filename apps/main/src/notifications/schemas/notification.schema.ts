@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import type { NotificationType } from '../dto/send-notification.dto.js';
+import type { NotificationData, NotificationType } from '../dto/send-notification.dto.js';
 
 /** Hydrated Mongoose document type for a Notification. */
 export type NotificationDocument = HydratedDocument<Notification>;
@@ -22,6 +22,9 @@ export class Notification {
 
     @Prop({ type: String, required: true, maxlength: 2000 })
     body!: string;
+
+    @Prop({ type: Object, default: null })
+    data!: NotificationData | null;
 
     @Prop({ type: Boolean, default: false })
     read!: boolean;

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsIn, IsBoolean, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsIn, IsBoolean, MaxLength, IsISO8601 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class ListTasksQueryDto {
@@ -36,6 +36,25 @@ export class ListTasksQueryDto {
     @IsOptional()
     @IsString()
     lastUpdatedFromDate?: string;
+
+    /** ISO date string — only tasks where due.date < dueBefore. Must not be combined with the \`filter\` preset. */
+    @ApiPropertyOptional({ example: '2026-05-30T00:00:00.000Z' })
+    @IsOptional()
+    @IsISO8601()
+    dueBefore?: string;
+
+    /** ISO date string — only tasks where due.date >= dueAfter. */
+    @ApiPropertyOptional({ example: '2026-05-29T00:00:00.000Z' })
+    @IsOptional()
+    @IsISO8601()
+    dueAfter?: string;
+
+    /** When true, only return tasks with no due date. */
+    @ApiPropertyOptional({ example: true })
+    @IsOptional()
+    @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+    @IsBoolean()
+    noDate?: boolean;
 
     @ApiPropertyOptional({ default: 1, example: 1 })
     @IsOptional()

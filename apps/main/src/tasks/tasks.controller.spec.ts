@@ -200,6 +200,150 @@ describe('TasksModule', () => {
         expect(res.statusCode).toBe(200);
         expect(JSON.parse(res.body).completed).toBe(true);
     });
+
+    it('GET /tasks?noDate=true returns only tasks without a due date', async () => {
+        const title = `nodate-task-${Date.now()}`;
+
+        await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: { title, source: 'local' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/tasks?noDate=true&status=open',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+
+        const tasks = JSON.parse(res.body) as Array<{ title: string; due: unknown }>;
+
+        expect(tasks.some((t) => t.title === title)).toBe(true);
+        expect(tasks.every((t) => t.due === null)).toBe(true);
+    });
+
+    it('GET /tasks?dueBefore= returns only tasks with due.date before that date', async () => {
+        const pastTitle = `past-task-${Date.now()}`;
+        const futureTitle = `future-task-${Date.now()}`;
+        const yesterday = new Date();
+
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+
+        const nextYear = new Date();
+
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+        await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: {
+                title: pastTitle,
+                source: 'local',
+                due: { date: yesterday.toISOString(), timezone: null, recurrence: null },
+            },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: {
+                title: futureTitle,
+                source: 'local',
+                due: { date: nextYear.toISOString(), timezone: null, recurrence: null },
+            },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const today = new Date();
+
+        today.setHours(0, 0, 0, 0);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: `/tasks?dueBefore=${encodeURIComponent(today.toISOString())}&status=open`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+
+        const tasks = JSON.parse(res.body) as Array<{ title: string }>;
+
+        expect(tasks.some((t) => t.title === pastTitle)).toBe(true);
+        expect(tasks.some((t) => t.title === futureTitle)).toBe(false);
+    });
+
+    it('GET /tasks?dueAfter= returns only tasks with due.date on or after that date', async () => {
+        const futureTitle = `future-after-${Date.now()}`;
+        const nextYear = new Date();
+
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+        await app.inject({
+            method: 'POST',
+            url: '/tasks',
+            payload: {
+                title: futureTitle,
+                source: 'local',
+                due: { date: nextYear.toISOString(), timezone: null, recurrence: null },
+            },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const tomorrow = new Date();
+
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: `/tasks?dueAfter=${encodeURIComponent(tomorrow.toISOString())}&status=open`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+
+        const tasks = JSON.parse(res.body) as Array<{ title: string }>;
+
+        expect(tasks.some((t) => t.title === futureTitle)).toBe(true);
+    });
+
+    it('GET /tasks?page=1&limit=2 paginates correctly', async () => {
+        // Create 3 tasks
+        for (let i = 0; i < 3; i++) {
+            await app.inject({
+                method: 'POST',
+                url: '/tasks',
+                payload: { title: `page-task-${Date.now()}-${i}`, source: 'local' },
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+        }
+
+        const page1 = await app.inject({
+            method: 'GET',
+            url: '/tasks?page=1&limit=2&noDate=true&status=open',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+        const page2 = await app.inject({
+            method: 'GET',
+            url: '/tasks?page=2&limit=2&noDate=true&status=open',
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(page1.statusCode).toBe(200);
+        expect(page2.statusCode).toBe(200);
+
+        const p1 = JSON.parse(page1.body) as unknown[];
+        const p2 = JSON.parse(page2.body) as unknown[];
+
+        expect(p1.length).toBe(2);
+        // page2 has at least 1 task (we created 3 no-date tasks)
+        expect(p2.length).toBeGreaterThanOrEqual(1);
+    });
 });
 
 // ─── Local source: auth guards, CRUD, validation, filtering ──────────────────
@@ -756,7 +900,12 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
 
     it('GET /tasks?status=done returns only done tasks', async () => {
         const id = await createLocal(`ToComplete ${Date.now()}`);
-        await app.inject({ method: 'PUT', url: `/tasks/${id}/status`, payload: { status: 'done' }, headers: { authorization: `Bearer ${jwt}` } });
+        await app.inject({
+            method: 'PUT',
+            url: `/tasks/${id}/status`,
+            payload: { status: 'done' },
+            headers: { authorization: `Bearer ${jwt}` },
+        });
 
         const res = await app.inject({
             method: 'GET',

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthContext.js';
-import { Button } from '../ui/index.js';
+import { Button } from '@ctm/ui';
 
 type NotionSetupModalProps = {
     source: string;
@@ -14,14 +14,17 @@ export function NotionSetupModal({ source, onComplete, onClose }: NotionSetupMod
     const { api } = useAuth();
     const [selectedId, setSelectedId] = useState<string>('');
 
-    const { data: databases = [], isLoading, isError } = useQuery({
+    const {
+        data: databases = [],
+        isLoading,
+        isError,
+    } = useQuery({
         queryKey: ['notion-databases'],
         queryFn: () => api.listNotionDatabases(),
     });
 
     const saveMutation = useMutation({
-        mutationFn: () =>
-            api.setConnectionDetails({ source, details: { databaseId: selectedId } }),
+        mutationFn: () => api.setConnectionDetails({ source, details: { databaseId: selectedId } }),
         onSuccess: () => {
             onComplete();
         },
@@ -48,7 +51,9 @@ export function NotionSetupModal({ source, onComplete, onClose }: NotionSetupMod
                 </p>
 
                 {isLoading && (
-                    <p className="font-bold text-nb-black/60 dark:text-white/50 text-sm uppercase">Loading databases…</p>
+                    <p className="font-bold text-nb-black/60 dark:text-white/50 text-sm uppercase">
+                        Loading databases…
+                    </p>
                 )}
 
                 {isError && (
@@ -101,10 +106,7 @@ export function NotionSetupModal({ source, onComplete, onClose }: NotionSetupMod
                     <Button variant="secondary" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button
-                        onClick={() => saveMutation.mutate()}
-                        disabled={!selectedId || saveMutation.isPending}
-                    >
+                    <Button onClick={() => saveMutation.mutate()} disabled={!selectedId || saveMutation.isPending}>
                         {saveMutation.isPending ? 'Saving…' : 'Save'}
                     </Button>
                 </div>

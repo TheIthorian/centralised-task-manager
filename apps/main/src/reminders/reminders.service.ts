@@ -19,10 +19,83 @@ export class RemindersService {
     /** Run daily at 09:00. Send reminders, upcoming deadlines, and connector health notifications. */
     @Cron('0 9 * * *')
     async runDailyReminders(): Promise<void> {
+        await Promise.all([this.sendTaskReminders(), this.sendConnectorReconnectAlerts()]);
+    }
+
+    /** Run every 5 minutes. Fire point-in-time reminders and due-date notifications. */
+    @Cron('*/5 * * * *')
+    async runPointInTimeReminders(): Promise<void> {
+        const now = new Date();
+        const windowStart = new Date(now.getTime() - 5 * 60 * 1000);
+
         await Promise.all([
-            this.sendTaskReminders(),
-            this.sendConnectorReconnectAlerts(),
+            this.fireManualReminders({ now, windowStart }),
+            this.fireDueDateReminders({ now, windowStart }),
         ]);
+    }
+
+    private async fireManualReminders({ now, windowStart }: { now: Date; windowStart: Date }): Promise<void> {
+        const tasks = await this.taskModel
+            .find({
+                reminders: {
+                    $elemMatch: {
+                        remindAt: { $gte: windowStart, $lte: now },
+                        firedAt: null,
+                    },
+                },
+            })
+            .select('userId title reminders');
+
+        this.logger.log(`Point-in-time reminders: ${tasks.length} tasks with pending reminders`);
+
+        for (const task of tasks) {
+            for (let i = 0; i < task.reminders.length; i++) {
+                const reminder = task.reminders[i]!;
+
+                if (reminder.firedAt !== null) continue;
+                if (reminder.remindAt < windowStart || reminder.remindAt > now) continue;
+
+                await this.notifications.send({
+                    userId: String(task.userId),
+                    type: 'reminder',
+                    data: { type: 'reminder', taskId: String(task._id) },
+                    title: 'Reminder',
+                    body: task.title,
+                });
+
+                await this.taskModel.updateOne(
+                    { _id: task._id, [`reminders.${i}.firedAt`]: null },
+                    { $set: { [`reminders.${i}.firedAt`]: new Date() } },
+                );
+            }
+        }
+    }
+
+    private async fireDueDateReminders({ now, windowStart }: { now: Date; windowStart: Date }): Promise<void> {
+        const tasks = await this.taskModel
+            .find({
+                'due.date': { $gte: windowStart, $lte: now },
+                dueDateNotifiedAt: null,
+                status: { $ne: 'done' },
+            })
+            .select('userId title due');
+
+        this.logger.log(`Due-date reminders: ${tasks.length} tasks due`);
+
+        for (const task of tasks) {
+            await this.notifications.send({
+                userId: String(task.userId),
+                type: 'reminder',
+                data: { type: 'reminder', taskId: String(task._id) },
+                title: `${task.title} is due`,
+                body: '',
+            });
+
+            await this.taskModel.updateOne(
+                { _id: task._id, dueDateNotifiedAt: null },
+                { $set: { dueDateNotifiedAt: new Date() } },
+            );
+        }
     }
 
     /** Return task IDs that should be surfaced today for a given user. */
@@ -61,6 +134,7 @@ export class RemindersService {
             await this.notifications.send({
                 userId,
                 type: 'reminder',
+                data: { type: 'reminder' },
                 title: `You have ${userTasks.length} task${userTasks.length === 1 ? '' : 's'} due for attention`,
                 body: taskList,
             });
@@ -82,6 +156,7 @@ export class RemindersService {
             await this.notifications.send({
                 userId,
                 type: 'upcoming_deadline',
+                data: { type: 'upcoming_deadline' },
                 title: `${userTasks.length} task${userTasks.length === 1 ? '' : 's'} due this week`,
                 body: taskList,
             });
@@ -103,6 +178,7 @@ export class RemindersService {
             await this.notifications.send({
                 userId,
                 type: 'connector_reconnect',
+                data: { type: 'connector_reconnect', source: configs[0]?.source },
                 title: `${configs.length} connector${configs.length === 1 ? '' : 's'} need reconnecting`,
                 body: sourceList,
             });

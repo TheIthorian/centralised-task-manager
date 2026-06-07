@@ -38,11 +38,11 @@ healthCheck(tokens: OAuthTokens, settings?: object): Promise<{ healthy: boolean;
 
 Each connector implements a lightweight probe against its provider API:
 
-| Connector     | Probe endpoint                  |
-|---------------|---------------------------------|
-| Todoist       | `GET /projects` (or `/user`)    |
-| Google Tasks  | `GET /users/@me/lists`          |
-| Notion        | `GET /users/me`                 |
+| Connector    | Probe endpoint               |
+| ------------ | ---------------------------- |
+| Todoist      | `GET /projects` (or `/user`) |
+| Google Tasks | `GET /users/@me/lists`       |
+| Notion       | `GET /users/me`              |
 
 Returns `{ healthy: true }` on success, `{ healthy: false, error: string }` on any failure (401, network error, etc.).
 
@@ -53,6 +53,7 @@ Returns `{ healthy: true }` on success, `{ healthy: false, error: string }` on a
 **Auth:** JWT-protected (same as existing connector endpoints)
 
 **Logic:**
+
 1. Fetch all `ConnectorConfig` docs for the authenticated user where `connected = true`
 2. For each config, in parallel (`Promise.allSettled`):
    a. Call `ensureFreshTokens(config)`
@@ -63,10 +64,10 @@ Returns `{ healthy: true }` on success, `{ healthy: false, error: string }` on a
 
 ```ts
 type ConnectorHealthDto = {
-  source: ConnectorName;
-  healthy: boolean;
-  error?: string;
-}
+    source: ConnectorName;
+    healthy: boolean;
+    error?: string;
+};
 ```
 
 **Error handling:** `Promise.allSettled` ensures one failing probe doesn't block others. A thrown error is treated as `healthy: false`.
@@ -82,6 +83,7 @@ At the top of the sync execution in `SyncService`, call `ensureFreshTokens(confi
 ### 5. Frontend — `SourcesPage` + `SourceCard`
 
 **Load sequence:**
+
 1. Page mounts → `GET /connectors` loads connector list (existing)
 2. After connectors load → fire `GET /connectors/health` (non-blocking, separate fetch)
 3. Health result stored in local state keyed by `source`
@@ -90,13 +92,14 @@ At the top of the sync execution in `SyncService`, call `ensureFreshTokens(confi
 
 **`SourceCard` receives a `health` prop:**
 
-| State | UI |
-|---|---|
-| `undefined` (not connected, or health pending) | Normal |
-| `{ healthy: true }` | Normal |
-| `{ healthy: false }` | Yellow warning badge + "Reconnect" button (replaces Sync) |
+| State                                          | UI                                                        |
+| ---------------------------------------------- | --------------------------------------------------------- |
+| `undefined` (not connected, or health pending) | Normal                                                    |
+| `{ healthy: true }`                            | Normal                                                    |
+| `{ healthy: false }`                           | Yellow warning badge + "Reconnect" button (replaces Sync) |
 
 **`api-client` changes:**
+
 - Add `ConnectorHealthDto` to `types.ts`
 - Add `getConnectorHealth(): Promise<ConnectorHealthDto[]>` method to the API client class
 

@@ -1,4 +1,11 @@
-import type { CreateTaskDto, SetFuzzyDeadlineDto, SetTaskStatusDto, TaskFilter, UpdateTaskDto, UpdateUserDto } from '@ctm/api-client';
+import type {
+    CreateTaskDto,
+    ListTasksParams,
+    SetFuzzyDeadlineDto,
+    SetTaskStatusDto,
+    UpdateTaskDto,
+    UpdateUserDto,
+} from '@ctm/api-client';
 import type { StoredAuthTokens } from '../auth/auth-storage.js';
 
 /** Normalized API error surfaced to UI consumers. */
@@ -33,9 +40,7 @@ export type WebRegisterParams = {
     password: string;
 };
 
-export type WebListTasksParams = {
-    filter?: TaskFilter;
-};
+export type WebListTasksParams = ListTasksParams;
 
 export type WebCreateTaskParams = {
     dto: CreateTaskDto;
@@ -84,4 +89,14 @@ export type WebGetSyncJobParams = {
 export type WebCancelSyncJobParams = {
     source: string;
     jobId: string;
+};
+
+export type WebAddReminderParams = {
+    id: string;
+    dto: { remindAt: string };
+};
+
+export type WebRemoveReminderParams = {
+    id: string;
+    index: number;
 };

@@ -1,5 +1,6 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
 import type {
+    AuthorizedAppDto,
     ConnectorHealthDto,
     ConnectorStatusDto,
     DiscordStatusDto,
@@ -7,6 +8,8 @@ import type {
     MarkReadResultDto,
     NotificationDto,
     NotificationPreferencesDto,
+    OkDto,
+    ReminderDto,
     TaskDto,
     TaskFilter,
     TaskSyncJobDto,
@@ -16,6 +19,8 @@ import type {
 } from './types.js';
 import type {
     AddRelationParams,
+    AddReminderParams,
+    GetTaskParams,
     ApiClientErrorOptions,
     ApiClientOptions,
     CancelSyncJobParams,
@@ -32,6 +37,8 @@ import type {
     RegisterParams,
     RemoveFuzzyDeadlineParams,
     RemoveRelationParams,
+    RemoveReminderParams,
+    RevokeAuthorizedAppParams,
     SetConnectionDetailsParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
@@ -98,16 +105,42 @@ export class CtmApiClient {
     }
 
     /** List tasks, optionally filtered by UI filter and/or update date. */
-    async listTasks({ filter = 'all', lastUpdatedFromDate }: ListTasksParams = {}): Promise<TaskDto[]> {
-        const params = this.filterToParams(filter);
+    async listTasks({
+        filter,
+        lastUpdatedFromDate,
+        page,
+        limit,
+        status,
+        dueBefore,
+        dueAfter,
+        noDate,
+    }: ListTasksParams = {}): Promise<TaskDto[]> {
+        const params: Record<string, string> = filter ? this.filterToParams(filter) : {};
+
+        if (status) params['status'] = status;
 
         if (lastUpdatedFromDate) params['lastUpdatedFromDate'] = lastUpdatedFromDate;
+
+        if (page !== undefined) params['page'] = String(page);
+
+        if (limit !== undefined) params['limit'] = String(limit);
+
+        if (dueBefore) params['dueBefore'] = dueBefore;
+
+        if (dueAfter) params['dueAfter'] = dueAfter;
+
+        if (noDate !== undefined) params['noDate'] = String(noDate);
 
         return this.request<TaskDto[]>({
             method: 'GET',
             path: '/tasks',
             params,
         });
+    }
+
+    /** Get a single task by ID. */
+    async getTask({ id }: GetTaskParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'GET', path: `/tasks/${id}` });
     }
 
     /** Create a new task. */
@@ -138,6 +171,16 @@ export class CtmApiClient {
     /** Remove the fuzzy deadline from a task. */
     async removeFuzzyDeadline({ id }: RemoveFuzzyDeadlineParams): Promise<TaskDto> {
         return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/fuzzy-deadline` });
+    }
+
+    /** Add a reminder datetime to a task. */
+    async addReminder({ id, dto }: AddReminderParams): Promise<ReminderDto> {
+        return this.request<ReminderDto>({ method: 'POST', path: `/tasks/${id}/reminders`, body: dto });
+    }
+
+    /** Remove a reminder from a task by its index in the reminders array. */
+    async removeReminder({ id, index }: RemoveReminderParams): Promise<OkDto> {
+        return this.request<OkDto>({ method: 'DELETE', path: `/tasks/${id}/reminders/${index}` });
     }
 
     /** List all connector statuses for the current user. */
@@ -177,7 +220,7 @@ export class CtmApiClient {
         await this.request<void>({ method: 'DELETE', path: `/connectors/${source}/sync/${jobId}` });
     }
 
-/** Save connection details for a connector (e.g. Notion database ID). */
+    /** Save connection details for a connector (e.g. Notion database ID). */
     async setConnectionDetails({ source, details }: SetConnectionDetailsParams): Promise<void> {
         await this.request<void>({ method: 'POST', path: `/connectors/${source}/connection-details`, body: details });
     }
@@ -203,7 +246,9 @@ export class CtmApiClient {
     }
 
     /** List in-app notifications for the current user. */
-    async listNotifications({ page = 1, limit = 20, unreadOnly = false }: ListNotificationsParams = {}): Promise<NotificationDto[]> {
+    async listNotifications({ page = 1, limit = 20, unreadOnly = false }: ListNotificationsParams = {}): Promise<
+        NotificationDto[]
+    > {
         return this.request<NotificationDto[]>({
             method: 'GET',
             path: '/notifications',
@@ -227,13 +272,22 @@ export class CtmApiClient {
     }
 
     /** Update notification preferences (partial). */
-    async updateNotificationPreferences({ dto }: UpdateNotificationPreferencesParams): Promise<NotificationPreferencesDto> {
-        return this.request<NotificationPreferencesDto>({ method: 'PATCH', path: '/notifications/preferences', body: dto });
+    async updateNotificationPreferences({
+        dto,
+    }: UpdateNotificationPreferencesParams): Promise<NotificationPreferencesDto> {
+        return this.request<NotificationPreferencesDto>({
+            method: 'PATCH',
+            path: '/notifications/preferences',
+            body: dto,
+        });
     }
 
     /** Get the Discord OAuth URL for connecting. */
     async getDiscordConnectUrl(): Promise<string> {
-        const response = await this.request<{ url: string }>({ method: 'GET', path: '/connectors/discord/connect-url' });
+        const response = await this.request<{ url: string }>({
+            method: 'GET',
+            path: '/connectors/discord/connect-url',
+        });
         return response.url;
     }
 
@@ -261,6 +315,16 @@ export class CtmApiClient {
     async removeRelation({ id, dto }: RemoveRelationParams): Promise<TaskDto> {
         return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/relations`, body: dto });
     }
+  
+    /** List OAuth apps the current user has authorized. */
+    async getAuthorizedApps(): Promise<AuthorizedAppDto[]> {
+        return this.request<AuthorizedAppDto[]>({ method: 'GET', path: '/auth/me/authorized-apps' });
+    }
+
+    /** Revoke access for an authorized OAuth app. */
+    async revokeAuthorizedApp({ clientId }: RevokeAuthorizedAppParams): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: `/auth/me/authorized-apps/${clientId}` });
+    }
 
     private filterToParams(filter: TaskFilter): Record<string, string> {
         switch (filter) {
@@ -272,7 +336,7 @@ export class CtmApiClient {
                 return { filter: 'upcoming' };
             case 'all':
             default:
-                return {};
+                return { filter: 'all' };
         }
     }
 

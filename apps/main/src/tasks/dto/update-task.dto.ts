@@ -1,14 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-    IsString, IsOptional, IsISO8601, IsInt, Min, Max,
-    IsArray, MaxLength, IsUrl, ValidateNested, IsEnum,
+    IsString,
+    IsOptional,
+    IsISO8601,
+    IsInt,
+    Min,
+    Max,
+    IsArray,
+    MaxLength,
+    IsUrl,
+    ValidateNested,
+    IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import type {
-    LocationDto as ILocationDto,
-    Duration,
-    UpdateTaskDto as IUpdateTaskDto,
-} from '@ctm/api-client';
+import type { LocationDto as ILocationDto, Duration, UpdateTaskDto as IUpdateTaskDto } from '@ctm/api-client';
 
 export class LocationDto implements ILocationDto {
     @ApiPropertyOptional({ example: 'Eiffel Tower', maxLength: 200 })

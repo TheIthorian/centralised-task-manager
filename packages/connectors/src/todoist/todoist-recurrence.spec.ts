@@ -50,9 +50,7 @@ describe('todoistStringToRrule', () => {
         const logger = { warn: vi.fn() };
         const result = todoistStringToRrule('every other weekend', logger);
         expect(result).toBeNull();
-        expect(logger.warn).toHaveBeenCalledWith(
-            expect.stringContaining('every other weekend'),
-        );
+        expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('every other weekend'));
     });
 });
 

@@ -13,6 +13,7 @@
 ## File Map
 
 **Create:**
+
 - `packages/connectors/src/discord/discord.types.ts` — Discord API response shapes
 - `packages/connectors/src/discord/discord.oauth.ts` — `DiscordOAuthConnector` + config type
 - `packages/connectors/src/discord/discord.oauth.spec.ts` — unit tests (fetch mocked)
@@ -20,6 +21,7 @@
 - `packages/connectors/src/discord/discord.channel.spec.ts` — unit tests (fetch mocked)
 
 **Modify:**
+
 - `packages/connectors/src/types.ts` — add `NotificationChannel<TConfig>`, `DiscordChannelConfig`
 - `packages/connectors/src/index.ts` — export Discord classes and new types
 - `apps/main/src/connectors/schemas/connector-config.schema.ts` — add `internalSettings`, `TypedConnectorConfig` union
@@ -31,6 +33,7 @@
 - `apps/main/src/notifications/notifications.module.ts` — remove `DiscordConnection`, add `ConnectorConfig` model
 
 **Delete:**
+
 - `apps/main/src/connectors/schemas/discord-connection.schema.ts`
 
 ---
@@ -38,6 +41,7 @@
 ## Task 1: Add `NotificationChannel<TConfig>` and `DiscordChannelConfig` to shared types
 
 **Files:**
+
 - Modify: `packages/connectors/src/types.ts`
 
 - [ ] **Step 1: Add the two new types** at the bottom of `packages/connectors/src/types.ts`:
@@ -62,6 +66,7 @@ export type NotificationChannel<TConfig> = {
 ```bash
 pnpm --filter @ctm/connectors build
 ```
+
 Expected: exits 0, no type errors.
 
 - [ ] **Step 3: Commit**
@@ -76,6 +81,7 @@ git commit -m "feat(connectors): add NotificationChannel and DiscordChannelConfi
 ## Task 2: Create `discord.types.ts`
 
 **Files:**
+
 - Create: `packages/connectors/src/discord/discord.types.ts`
 
 - [ ] **Step 1: Create the file**
@@ -109,6 +115,7 @@ export type DiscordDmChannelResponse = {
 ```bash
 pnpm --filter @ctm/connectors build
 ```
+
 Expected: exits 0.
 
 - [ ] **Step 3: Commit**
@@ -123,6 +130,7 @@ git commit -m "feat(connectors): add Discord API response types"
 ## Task 3: Create `DiscordOAuthConnector`
 
 **Files:**
+
 - Create: `packages/connectors/src/discord/discord.oauth.ts`
 - Create: `packages/connectors/src/discord/discord.oauth.spec.ts`
 
@@ -190,9 +198,7 @@ describe('DiscordOAuthConnector', () => {
 
             const [url, opts] = fetchSpy.mock.calls[0] as [string, RequestInit];
             expect(url).toBe('https://discord.com/api/v10/oauth2/token');
-            expect((opts.headers as Record<string, string>)['Content-Type']).toBe(
-                'application/x-www-form-urlencoded',
-            );
+            expect((opts.headers as Record<string, string>)['Content-Type']).toBe('application/x-www-form-urlencoded');
             expect(result.accessToken).toBe('acc');
             expect(result.refreshToken).toBe('ref');
             expect(result.expiresAt.getTime()).toBeGreaterThanOrEqual(before + 604800 * 1000);
@@ -268,6 +274,7 @@ describe('DiscordOAuthConnector', () => {
 ```bash
 pnpm --filter @ctm/connectors test discord.oauth.spec.ts
 ```
+
 Expected: FAIL — `DiscordOAuthConnector` not found.
 
 - [ ] **Step 3: Implement `discord.oauth.ts`**
@@ -373,6 +380,7 @@ export class DiscordOAuthConnector implements OAuthConnector {
 ```bash
 pnpm --filter @ctm/connectors test discord.oauth.spec.ts
 ```
+
 Expected: all tests PASS.
 
 - [ ] **Step 5: Commit**
@@ -387,6 +395,7 @@ git commit -m "feat(connectors): add DiscordOAuthConnector"
 ## Task 4: Create `DiscordChannel` in `packages/connectors`
 
 **Files:**
+
 - Create: `packages/connectors/src/discord/discord.channel.ts`
 - Create: `packages/connectors/src/discord/discord.channel.spec.ts`
 
@@ -490,6 +499,7 @@ describe('DiscordChannel', () => {
 ```bash
 pnpm --filter @ctm/connectors test discord.channel.spec.ts
 ```
+
 Expected: FAIL — `DiscordChannel` not found.
 
 - [ ] **Step 3: Implement `discord.channel.ts`**
@@ -550,6 +560,7 @@ export class DiscordChannel implements NotificationChannel<DiscordChannelConfig>
 ```bash
 pnpm --filter @ctm/connectors test discord.channel.spec.ts
 ```
+
 Expected: all tests PASS.
 
 - [ ] **Step 5: Commit**
@@ -564,12 +575,24 @@ git commit -m "feat(connectors): add DiscordChannel implementing NotificationCha
 ## Task 5: Export Discord classes from `packages/connectors`
 
 **Files:**
+
 - Modify: `packages/connectors/src/index.ts`
 
 - [ ] **Step 1: Add Discord exports** to `packages/connectors/src/index.ts`:
 
 ```ts
-export type { RemoteTask, OAuthTokens, CreateTaskDto, UpdateTaskDto, OAuthConnector, ExternalTaskSource, ConnectionField, ConnectionDetailsSchema, NotificationChannel, DiscordChannelConfig } from './types.js';
+export type {
+    RemoteTask,
+    OAuthTokens,
+    CreateTaskDto,
+    UpdateTaskDto,
+    OAuthConnector,
+    ExternalTaskSource,
+    ConnectionField,
+    ConnectionDetailsSchema,
+    NotificationChannel,
+    DiscordChannelConfig,
+} from './types.js';
 export { OAuthConnectorRegistry, ExternalTaskSourceRegistry } from './registry.js';
 export { TodoistOAuthConnector } from './todoist/todoist.oauth.js';
 export type { TodoistOAuthConnectorConfig } from './todoist/todoist.oauth.js';
@@ -593,6 +616,7 @@ export { DiscordChannel } from './discord/discord.channel.js';
 ```bash
 pnpm --filter @ctm/connectors build
 ```
+
 Expected: exits 0, all exports resolve.
 
 - [ ] **Step 3: Commit**
@@ -607,6 +631,7 @@ git commit -m "feat(connectors): export Discord connector and channel classes"
 ## Task 6: Add `internalSettings` + `TypedConnectorConfig` to the schema
 
 **Files:**
+
 - Modify: `apps/main/src/connectors/schemas/connector-config.schema.ts`
 
 - [ ] **Step 1: Add the `internalSettings` prop and `TypedConnectorConfig` type**
@@ -678,6 +703,7 @@ ConnectorConfigSchema.index({ userId: 1, source: 1 }, { unique: true });
 ```bash
 pnpm --filter @ctm/main build
 ```
+
 Expected: exits 0.
 
 - [ ] **Step 3: Commit**
@@ -692,6 +718,7 @@ git commit -m "feat(main): add internalSettings field and TypedConnectorConfig d
 ## Task 7: Strip `internalSettings` from API responses in `ConnectorsController`
 
 **Files:**
+
 - Modify: `apps/main/src/connectors/connectors.controller.ts`
 
 - [ ] **Step 1: Verify where `settings` is returned to the client**
@@ -699,6 +726,7 @@ git commit -m "feat(main): add internalSettings field and TypedConnectorConfig d
 Open `apps/main/src/connectors/connectors.controller.ts`. The `listConfigs` method at line 57 maps configs — confirm it does NOT include `settings` or `internalSettings` in the mapped object. If it doesn't, no change needed here. If it does, remove both fields from the mapping.
 
 The current map (around line 60) is:
+
 ```ts
 return configs.map((c) => ({
     id: String(c._id),
@@ -708,6 +736,7 @@ return configs.map((c) => ({
     lastError: c.lastError,
 }));
 ```
+
 `settings` and `internalSettings` are already excluded — no change required.
 
 - [ ] **Step 2: Check `ConnectorsService.update` patch validation**
@@ -725,6 +754,7 @@ git commit --allow-empty -m "chore(main): verify internalSettings excluded from 
 ## Task 8: Refactor `apps/main` `DiscordChannel` to delegate to package
 
 **Files:**
+
 - Modify: `apps/main/src/notifications/channels/discord.channel.ts`
 - Modify: `apps/main/src/notifications/channels/discord.channel.spec.ts`
 
@@ -806,10 +836,9 @@ describe('DiscordChannel (NestJS wrapper)', () => {
         await channel.send({ userId: new Types.ObjectId().toHexString(), type: 'reminder', title: 'T', body: 'B' });
 
         expect(fetchSpy).toHaveBeenCalledTimes(2);
-        expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
-            expect.objectContaining({ source: 'discord' }),
-            { 'internalSettings.dmChannelId': 'new-chan' },
-        );
+        expect(mockFindOneAndUpdate).toHaveBeenCalledWith(expect.objectContaining({ source: 'discord' }), {
+            'internalSettings.dmChannelId': 'new-chan',
+        });
     });
 });
 ```
@@ -819,6 +848,7 @@ describe('DiscordChannel (NestJS wrapper)', () => {
 ```bash
 pnpm --filter @ctm/main test discord.channel.spec.ts
 ```
+
 Expected: FAIL — imports not found.
 
 - [ ] **Step 3: Implement the new `DiscordChannel` wrapper**
@@ -830,7 +860,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { DiscordChannel as DiscordChannelConnector } from '@ctm/connectors';
-import { ConnectorConfig, type ConnectorConfigDocument, type TypedConnectorConfig } from '../../connectors/schemas/connector-config.schema.js';
+import {
+    ConnectorConfig,
+    type ConnectorConfigDocument,
+    type TypedConnectorConfig,
+} from '../../connectors/schemas/connector-config.schema.js';
 import type { SendNotificationDto } from '../dto/send-notification.dto.js';
 
 const connector = new DiscordChannelConnector();
@@ -839,9 +873,7 @@ const connector = new DiscordChannelConnector();
 export class DiscordChannel {
     private readonly logger = new Logger(DiscordChannel.name);
 
-    constructor(
-        @InjectModel(ConnectorConfig.name) private readonly model: Model<ConnectorConfigDocument>,
-    ) {}
+    constructor(@InjectModel(ConnectorConfig.name) private readonly model: Model<ConnectorConfigDocument>) {}
 
     /** Send a DM via Discord bot. No-op if the user has no discord ConnectorConfig. */
     async send({ userId, title, body }: SendNotificationDto): Promise<void> {
@@ -879,6 +911,7 @@ export class DiscordChannel {
 ```bash
 pnpm --filter @ctm/main test discord.channel.spec.ts
 ```
+
 Expected: all tests PASS.
 
 - [ ] **Step 5: Commit**
@@ -893,6 +926,7 @@ git commit -m "refactor(main): DiscordChannel delegates to @ctm/connectors, read
 ## Task 9: Refactor `DiscordController` to use `DiscordOAuthConnector`
 
 **Files:**
+
 - Modify: `apps/main/src/connectors/discord.controller.ts`
 
 - [ ] **Step 1: Replace the controller**
@@ -900,7 +934,19 @@ git commit -m "refactor(main): DiscordChannel delegates to @ctm/connectors, read
 Replace `apps/main/src/connectors/discord.controller.ts` with:
 
 ```ts
-import { Controller, Get, Post, Delete, Query, Request, Res, UseGuards, HttpCode, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Delete,
+    Query,
+    Request,
+    Res,
+    UseGuards,
+    HttpCode,
+    Logger,
+    UnauthorizedException,
+} from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -909,16 +955,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { DiscordOAuthConnector, DiscordChannel as DiscordChannelConnector } from '@ctm/connectors';
 import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
-import { ConnectorConfig, type ConnectorConfigDocument, type TypedConnectorConfig } from './schemas/connector-config.schema.js';
+import {
+    ConnectorConfig,
+    type ConnectorConfigDocument,
+    type TypedConnectorConfig,
+} from './schemas/connector-config.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 
 type OAuthStatePayload = { sub: string };
 
 const TEST_MESSAGES = [
     '👋 Hey! Your CTM notifications are working perfectly!',
-    '🎉 Connection successful! I\'ll ping you here when something needs your attention.',
+    "🎉 Connection successful! I'll ping you here when something needs your attention.",
     '✅ All systems go! CTM is ready to send you notifications.',
-    '🚀 Discord connected! You\'re all set to receive task reminders here.',
+    "🚀 Discord connected! You're all set to receive task reminders here.",
     '💬 Hello from CTM! Notifications are live and ready to go.',
 ];
 
@@ -1093,6 +1143,7 @@ export class DiscordController {
 ```bash
 pnpm --filter @ctm/main build
 ```
+
 Expected: exits 0.
 
 - [ ] **Step 3: Commit**
@@ -1107,6 +1158,7 @@ git commit -m "refactor(main): DiscordController uses DiscordOAuthConnector from
 ## Task 10: Update modules and delete `DiscordConnection` schema
 
 **Files:**
+
 - Modify: `apps/main/src/connectors/connectors.module.ts`
 - Modify: `apps/main/src/notifications/notifications.module.ts`
 - Delete: `apps/main/src/connectors/schemas/discord-connection.schema.ts`
@@ -1138,9 +1190,7 @@ import { UsersModule } from '../users/users.module.js';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([
-            { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
-        ]),
+        MongooseModule.forFeature([{ name: ConnectorConfig.name, schema: ConnectorConfigSchema }]),
         AuthModule,
         UsersModule,
     ],
@@ -1238,15 +1288,19 @@ export class NotificationsModule {}
 - [ ] **Step 3: Update `notifications.service.ts`** — remove `DiscordAuthExpiredError` (bot tokens don't expire via user OAuth; failures are now generic and caught by `safeRun`).
 
 Replace the import line:
+
 ```ts
 import { DiscordChannel, DiscordAuthExpiredError } from './channels/discord.channel.js';
 ```
+
 with:
+
 ```ts
 import { DiscordChannel } from './channels/discord.channel.js';
 ```
 
 Replace the `sendDiscord` private method:
+
 ```ts
 private async sendDiscord(dto: SendNotificationDto): Promise<void> {
     await this.discord.send(dto);
@@ -1262,15 +1316,19 @@ git rm apps/main/src/connectors/schemas/discord-connection.schema.ts
 - [ ] **Step 5: Update `notifications.service.ts`** — remove `DiscordAuthExpiredError` (bot tokens don't expire via user OAuth; generic failures are already caught by `safeRun`).
 
 Replace the import:
+
 ```ts
 import { DiscordChannel, DiscordAuthExpiredError } from './channels/discord.channel.js';
 ```
+
 with:
+
 ```ts
 import { DiscordChannel } from './channels/discord.channel.js';
 ```
 
 Replace the `sendDiscord` private method:
+
 ```ts
 private async sendDiscord(dto: SendNotificationDto): Promise<void> {
     await this.discord.send(dto);
@@ -1288,6 +1346,7 @@ git rm apps/main/src/connectors/schemas/discord-connection.schema.ts
 ```bash
 pnpm --filter @ctm/main build && pnpm --filter @ctm/main test
 ```
+
 Expected: build exits 0, all tests pass.
 
 - [ ] **Step 8: Commit**
@@ -1306,6 +1365,7 @@ git commit -m "refactor(main): remove DiscordConnection schema, use ConnectorCon
 ```bash
 pnpm build
 ```
+
 Expected: all packages build, exits 0.
 
 - [ ] **Step 2: Run all tests**
@@ -1313,6 +1373,7 @@ Expected: all packages build, exits 0.
 ```bash
 pnpm test
 ```
+
 Expected: all tests pass.
 
 - [ ] **Step 3: Lint**
@@ -1320,4 +1381,5 @@ Expected: all tests pass.
 ```bash
 pnpm lint
 ```
+
 Expected: exits 0, no errors.

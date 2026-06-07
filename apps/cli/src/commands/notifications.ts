@@ -111,46 +111,44 @@ export function registerNotificationsCommand(program: Command): void {
         .option('--upcoming-deadline-in-app <bool>')
         .option('--upcoming-deadline-discord <bool>')
         .option('--upcoming-deadline-email <bool>')
-        .action(
-            async (opts: Record<string, string | undefined>) => {
-                const parent = notifications.opts<{ token?: string; baseUrl?: string }>();
+        .action(async (opts: Record<string, string | undefined>) => {
+            const parent = notifications.opts<{ token?: string; baseUrl?: string }>();
 
-                const parseBool = (v: string | undefined): boolean | undefined =>
-                    v === undefined ? undefined : v === 'true';
+            const parseBool = (v: string | undefined): boolean | undefined =>
+                v === undefined ? undefined : v === 'true';
 
-                try {
-                    const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                    const result = await client.updateNotificationPreferences({
-                        dto: {
-                            connectorReconnect: {
-                                inApp: parseBool(opts['connectorReconnectInApp']),
-                                discord: parseBool(opts['connectorReconnectDiscord']),
-                                email: parseBool(opts['connectorReconnectEmail']),
-                            },
-                            dailySummary: {
-                                inApp: parseBool(opts['dailySummaryInApp']),
-                                discord: parseBool(opts['dailySummaryDiscord']),
-                                email: parseBool(opts['dailySummaryEmail']),
-                            },
-                            reminder: {
-                                inApp: parseBool(opts['reminderInApp']),
-                                discord: parseBool(opts['reminderDiscord']),
-                                email: parseBool(opts['reminderEmail']),
-                            },
-                            upcomingDeadline: {
-                                inApp: parseBool(opts['upcomingDeadlineInApp']),
-                                discord: parseBool(opts['upcomingDeadlineDiscord']),
-                                email: parseBool(opts['upcomingDeadlineEmail']),
-                            },
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const result = await client.updateNotificationPreferences({
+                    dto: {
+                        connectorReconnect: {
+                            inApp: parseBool(opts['connectorReconnectInApp']),
+                            discord: parseBool(opts['connectorReconnectDiscord']),
+                            email: parseBool(opts['connectorReconnectEmail']),
                         },
-                    });
-                    print(formatJson(result));
-                } catch (err: unknown) {
-                    console.error(err instanceof Error ? err.message : String(err));
-                    process.exit(1);
-                }
-            },
-        );
+                        dailySummary: {
+                            inApp: parseBool(opts['dailySummaryInApp']),
+                            discord: parseBool(opts['dailySummaryDiscord']),
+                            email: parseBool(opts['dailySummaryEmail']),
+                        },
+                        reminder: {
+                            inApp: parseBool(opts['reminderInApp']),
+                            discord: parseBool(opts['reminderDiscord']),
+                            email: parseBool(opts['reminderEmail']),
+                        },
+                        upcomingDeadline: {
+                            inApp: parseBool(opts['upcomingDeadlineInApp']),
+                            discord: parseBool(opts['upcomingDeadlineDiscord']),
+                            email: parseBool(opts['upcomingDeadlineEmail']),
+                        },
+                    },
+                });
+                print(formatJson(result));
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
 
     // ── Discord ──────────────────────────────────────────────────────────────────
 
@@ -184,6 +182,43 @@ export function registerNotificationsCommand(program: Command): void {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
                 await client.disconnectDiscord();
                 print('Discord disconnected.');
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
+
+    discord
+        .command('connect')
+        .description('Get Discord OAuth connect URL and open it in your browser')
+        .action(async () => {
+            const parent = notifications.opts<{ token?: string; baseUrl?: string }>();
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const url = await client.getDiscordConnectUrl();
+
+                print(`Opening: ${url}`);
+                const { default: open } = await import('open');
+                await open(url);
+            } catch (err: unknown) {
+                console.error(err instanceof Error ? err.message : String(err));
+                process.exit(1);
+            }
+        });
+
+    // ── Test notification ───────────────────────────────────────────────────────
+
+    notifications
+        .command('test')
+        .description('Send a test notification via a channel (e.g. discord, email)')
+        .argument('<channel>', 'Channel name: discord, email, etc.')
+        .action(async (channel: string) => {
+            const parent = notifications.opts<{ token?: string; baseUrl?: string }>();
+            try {
+                const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
+                const result = await client.testNotificationChannel({ channel });
+
+                print(result.sent ? 'Sent.' : 'Not sent.');
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
                 process.exit(1);

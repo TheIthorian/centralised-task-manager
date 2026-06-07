@@ -17,7 +17,7 @@ import {
 import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { ConnectorName, TaskConnectorName, ConnectorType, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
+import { ConnectorName, TaskConnectorName, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
 import Ajv from 'ajv';
 import type { NotionTaskSource } from '@ctm/connectors';
 import type {
@@ -28,7 +28,7 @@ import type {
     OkDto,
     UpdateConnectorResponseDto,
 } from '@ctm/api-client';
-import { CombinedAuthGuard } from '../auth/guards/combined-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
@@ -54,7 +54,7 @@ export class ConnectorsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'List connectors for the current user' })
     @Get()
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async listConnectors(@Request() req: AuthRequest): Promise<ConnectorStatusDto[]> {
         const available = this.connectors.listAvailable();
         const configs = await this.connectors.listConfigs(req.user.sub);
@@ -87,28 +87,22 @@ export class ConnectorsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Health-check connected task-sync connectors' })
     @Get('health')
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async checkHealth(@Request() req: AuthRequest): Promise<ConnectorHealthDto[]> {
         const configs = await this.connectors.listConfigs(req.user.sub);
-        const taskSyncConfigs = configs.filter((c) => {
-            if (!c.enabled) return false;
-            const connector = this.oAuthConnectorRegistry.get(c.source as ConnectorName);
-            return connector.connectorType === ConnectorType.TaskSync;
-        });
 
         const results = await Promise.allSettled(
-            taskSyncConfigs.map(async (config) => {
-                const source = config.source as ConnectorName;
-                const tokens = await this.connectors.ensureFreshTokens({ userId: req.user.sub, source });
-                const taskSource = this.externalTaskSourceRegistry.get(config.source as unknown as TaskConnectorName);
-                return { source: config.source, ...(await taskSource.healthCheck(tokens)) };
+            configs.map(async (config) => {
+                const connector = this.oAuthConnectorRegistry.get(config.source);
+                const tokens = await this.connectors.ensureFreshTokens({ userId: req.user.sub, source: config.source });
+                return await connector.healthCheck(tokens);
             }),
         );
 
         return results.map((result, i) => {
             if (result.status === 'fulfilled') return result.value;
             const message = result.reason instanceof Error ? result.reason.message : 'Unknown error';
-            return { source: taskSyncConfigs[i]!.source, healthy: false, error: message };
+            return { source: configs[i]!.source, healthy: false, error: message };
         });
     }
 
@@ -116,7 +110,7 @@ export class ConnectorsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'List Notion databases for the connected integration' })
     @Get('notion/databases')
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async listNotionDatabases(@Request() req: AuthRequest): Promise<NotionDatabaseDto[]> {
         const tokens = await this.connectors.getDecryptedTokens({ userId: req.user.sub, source: ConnectorName.Notion });
         const connector = this.externalTaskSourceRegistry.get(TaskConnectorName.Notion) as NotionTaskSource;
@@ -127,7 +121,7 @@ export class ConnectorsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Save connection details for a connector' })
     @Post(':connectorName/connection-details')
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @HttpCode(200)
     async setConnectionDetails(
         @Request() req: AuthRequest,
@@ -170,7 +164,7 @@ export class ConnectorsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Get OAuth URL for a connector' })
     @Get(':connectorName/auth')
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async getOAuthUrl(
         @Request() req: AuthRequest,
         @Param('connectorName') connectorName: ConnectorName,
@@ -184,7 +178,7 @@ export class ConnectorsController {
     @ApiOperation({ summary: 'Disconnect a connector' })
     @ApiResponse({ status: 204 })
     @Delete(':connectorName')
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @HttpCode(204)
     async removeByConnectorName(
         @Request() req: AuthRequest,
@@ -239,7 +233,7 @@ export class ConnectorsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Update a connector config' })
     @Patch('configs/:id')
-    @UseGuards(CombinedAuthGuard)
+    @UseGuards(JwtAuthGuard)
     async update(
         @Request() req: AuthRequest,
         @Param('id') id: string,

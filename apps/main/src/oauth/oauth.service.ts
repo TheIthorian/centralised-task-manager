@@ -39,16 +39,18 @@ export class OAuthService {
         redirectUri,
         codeChallenge,
         scopes,
+        clientId,
     }: {
         userId: string;
         redirectUri: string;
         codeChallenge: string;
         scopes: string[];
+        clientId?: string;
     }): Promise<string> {
         const code = randomBytes(32).toString('hex');
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-        await this.authCodeModel.create({ code, userId, redirectUri, codeChallenge, scopes, expiresAt });
+        await this.authCodeModel.create({ code, userId, redirectUri, codeChallenge, scopes, expiresAt, clientId });
 
         return code;
     }
@@ -84,13 +86,28 @@ export class OAuthService {
 
         if (!user) throw new UnauthorizedException('User not found');
 
-        return this.issueTokens({ userId: String(user._id), email: user.email, scopes: authCode.scopes });
+        return this.issueTokens({
+            userId: String(user._id),
+            email: user.email,
+            scopes: authCode.scopes,
+            clientId: authCode.clientId,
+        });
     }
 
     /** Issue access_token + id_token + refresh_token for a user. */
-    async issueTokens({ userId, email, scopes }: { userId: string; email: string; scopes: string[] }): Promise<TokenResponse> {
+    async issueTokens({
+        userId,
+        email,
+        scopes,
+        clientId,
+    }: {
+        userId: string;
+        email: string;
+        scopes: string[];
+        clientId?: string;
+    }): Promise<TokenResponse> {
         const issuer = this.config.get<string>('REDIRECT_BASE_URL') ?? 'http://localhost:3000';
-        const expiresIn = 3600;
+        const expiresInSeconds = this.config.get<number>('JWT_ACCESS_EXPIRES', 120);
 
         const payload: JwtPayload & Record<string, unknown> = {
             sub: userId,
@@ -99,7 +116,7 @@ export class OAuthService {
             aud: issuer,
         };
 
-        const signOptions = { expiresIn };
+        const signOptions = { expiresIn: expiresInSeconds };
 
         const accessToken = this.jwt.sign(payload, signOptions);
         const idToken = this.jwt.sign(payload, signOptions);
@@ -109,13 +126,13 @@ export class OAuthService {
         const expiresInDays = this.config.get<number>('REFRESH_TOKEN_EXPIRES_DAYS', 30);
         const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-        await this.refreshTokenModel.create({ tokenHash, userId, expiresAt });
+        await this.refreshTokenModel.create({ tokenHash, userId, expiresAt, scopes, clientId });
 
         return {
             access_token: accessToken,
             id_token: idToken,
             token_type: 'Bearer',
-            expires_in: expiresIn,
+            expires_in: expiresInSeconds,
             scope: scopes.join(' '),
             refresh_token: rawRefresh,
         };
@@ -134,7 +151,12 @@ export class OAuthService {
 
         if (!user) throw new UnauthorizedException('User not found');
 
-        return this.issueTokens({ userId: record.userId, email: user.email, scopes: ['openid', 'email', 'profile'] });
+        return this.issueTokens({
+            userId: record.userId,
+            email: user.email,
+            scopes: record.scopes,
+            clientId: record.clientId,
+        });
     }
 
     /** Validate a password and return user info (for the login form submission). */

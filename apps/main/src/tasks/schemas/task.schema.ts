@@ -79,6 +79,16 @@ class TaskRelation {
 
 const TaskRelationSchema = SchemaFactory.createForClass(TaskRelation);
 
+class Reminder {
+    @Prop({ type: Date, required: true })
+    remindAt!: Date;
+
+    @Prop({ type: Date, default: null })
+    firedAt!: Date | null;
+}
+
+const ReminderSchema = SchemaFactory.createForClass(Reminder);
+
 @Schema({ timestamps: true })
 export class Task {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
@@ -127,6 +137,12 @@ export class Task {
     @Prop({ type: FuzzyDeadlineSchema, default: null })
     fuzzyDeadline!: FuzzyDeadline | null;
 
+    @Prop({ type: [ReminderSchema], default: [] })
+    reminders!: { remindAt: Date; firedAt: Date | null }[];
+
+    @Prop({ type: Date, default: null })
+    dueDateNotifiedAt!: Date | null;
+
     @Prop({ type: [LocationSchema], default: [] })
     locations!: { name: string; googleMapsUrl: string }[];
 
@@ -142,3 +158,5 @@ TaskSchema.index({ userId: 1, source: 1, sourceId: 1 }, { unique: true });
 TaskSchema.index({ userId: 1, status: 1 });
 TaskSchema.index({ 'fuzzyDeadline.remindEvery': 1 });
 TaskSchema.index({ userId: 1, 'relations.targetTaskId': 1 });
+TaskSchema.index({ 'reminders.remindAt': 1, 'reminders.firedAt': 1 });
+TaskSchema.index({ 'due.date': 1, dueDateNotifiedAt: 1 });

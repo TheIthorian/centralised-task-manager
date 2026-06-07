@@ -46,6 +46,13 @@ export class ValidationError extends AppError {
     }
 }
 
+/** Thrown when an OAuth flow fails (e.g. missing tokens, revoked access) (HTTP 502). */
+export class OAuthError extends AppError {
+    constructor(message: string) {
+        super(message, 'OAUTH_ERROR', 502);
+    }
+}
+
 /** Thrown when an unexpected internal error occurs (HTTP 500). */
 export class InternalError extends AppError {
     constructor(message: string) {

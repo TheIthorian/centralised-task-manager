@@ -1,4 +1,6 @@
 import type {
+    AddReminderDto,
+    ConnectorDetailsDto,
     CreateTaskDto,
     RelationType,
     SetFuzzyDeadlineDto,
@@ -61,6 +63,18 @@ export type ListTasksParams = {
     filter?: TaskFilter;
     /** ISO date string — only return tasks updated on or after this date. */
     lastUpdatedFromDate?: string;
+    /** Page number (1-based). */
+    page?: number;
+    /** Number of tasks per page. */
+    limit?: number;
+    /** Filter by status directly (alternative to `filter` preset). */
+    status?: 'open' | 'done' | 'archived';
+    /** ISO date string — only tasks where due.date < dueBefore. Must not be combined with the `filter` preset. */
+    dueBefore?: string;
+    /** ISO date string — only tasks where due.date >= dueAfter. Must not be combined with the `filter` preset. */
+    dueAfter?: string;
+    /** When true, only return tasks with no due date. */
+    noDate?: boolean;
 };
 
 /** Parameters for {@link CtmApiClient.getConnectorAuthUrl}. */
@@ -126,7 +140,7 @@ export type UpdateNotificationPreferencesParams = {
 /** Parameters for {@link CtmApiClient.setConnectionDetails}. */
 export type SetConnectionDetailsParams = {
     source: string;
-    details: Record<string, unknown>;
+    details: ConnectorDetailsDto;
 };
 
 /** Parameters for {@link CtmApiClient.addRelation}. */
@@ -148,4 +162,26 @@ export type ApiClientErrorOptions = {
     method: string;
     path: string;
     responseBody?: unknown;
+};
+
+/** Parameters for {@link CtmApiClient.getTask}. */
+export type GetTaskParams = {
+    id: string;
+};
+
+/** Parameters for {@link CtmApiClient.addReminder}. */
+export type AddReminderParams = {
+    id: string;
+    dto: AddReminderDto;
+};
+
+/** Parameters for {@link CtmApiClient.removeReminder}. */
+export type RemoveReminderParams = {
+    id: string;
+    index: number;
+};
+
+/** Parameters for {@link CtmApiClient.revokeAuthorizedApp}. */
+export type RevokeAuthorizedAppParams = {
+    clientId: string;
 };
