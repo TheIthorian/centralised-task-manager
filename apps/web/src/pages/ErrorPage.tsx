@@ -1,4 +1,5 @@
 import { Link, useRouteError } from 'react-router';
+import config from '../config.js';
 
 function getErrorMessage(error: unknown): string {
     if (error instanceof Error) return error.message;
@@ -20,7 +21,7 @@ export function ErrorPage(): React.JSX.Element {
                 <p className="text-nb-grey dark:text-neutral-400 text-sm mb-6">
                     An unexpected error occurred. Try reloading or go back to tasks.
                 </p>
-                {import.meta.env.DEV && (
+                {config.isDev && (
                     <details className="mb-6 text-left text-xs font-mono">
                         <summary className="cursor-pointer text-nb-grey dark:text-neutral-400 mb-1">
                             Error details

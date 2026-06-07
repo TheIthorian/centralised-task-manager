@@ -11,7 +11,7 @@ export class WellKnownController {
     ) {}
 
     private get issuer(): string {
-        return this.config.get<string>('REDIRECT_BASE_URL') ?? 'http://localhost:3000';
+        return this.config.get<string>('REDIRECT_BASE_URL')!;
     }
 
     /** RFC 7591 dynamic client registration (implemented in AuthModule). */

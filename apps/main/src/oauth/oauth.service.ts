@@ -106,7 +106,7 @@ export class OAuthService {
         scopes: string[];
         clientId?: string;
     }): Promise<TokenResponse> {
-        const issuer = this.config.get<string>('REDIRECT_BASE_URL') ?? 'http://localhost:3000';
+        const issuer = this.config.get<string>('REDIRECT_BASE_URL')!;
         const expiresInSeconds = this.config.get<number>('JWT_ACCESS_EXPIRES', 120);
 
         const payload: JwtPayload & Record<string, unknown> = {
