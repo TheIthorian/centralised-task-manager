@@ -86,7 +86,6 @@ export function registerTasksCommand(program: Command): void {
         .option('--deadline <date>', 'Hard deadline date (ISO 8601)')
         .option('--duration <amount>', 'Duration amount (integer)')
         .option('--duration-unit <unit>', 'Duration unit: minute or day')
-        .option('--parent <id>', 'Parent task CTM ID')
         .option('--json', 'Output as JSON')
         .action(
             async (opts: {
@@ -99,7 +98,6 @@ export function registerTasksCommand(program: Command): void {
                 deadline?: string;
                 duration?: string;
                 durationUnit?: string;
-                parent?: string;
                 json?: boolean;
             }) => {
                 const parent = tasks.opts<{ token?: string; baseUrl?: string }>();
@@ -134,7 +132,6 @@ export function registerTasksCommand(program: Command): void {
                                       unit: (opts.durationUnit ?? 'minute') as 'minute' | 'day',
                                   }
                                 : undefined,
-                            parentId: opts.parent,
                         },
                     });
 

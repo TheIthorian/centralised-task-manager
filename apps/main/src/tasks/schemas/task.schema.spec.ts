@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { TaskSchema } from './task.schema.js';
+import { model, Types } from 'mongoose';
+import { TaskSchema, RELATION_INVERSE } from './task.schema.js';
 
 describe('TaskSchema', () => {
     it('has compound unique index on userId+source+sourceId', () => {
@@ -44,10 +45,30 @@ describe('TaskSchema', () => {
         expect(TaskSchema.path('duration.unit')).toBeDefined();
     });
 
-    it('has parentId field defaulting to null', () => {
-        const path = TaskSchema.path('parentId');
-        expect(path).toBeDefined();
-        expect(path.options.default).toBeNull();
+    it('no longer has a parentId field', () => {
+        expect(TaskSchema.path('parentId')).toBeUndefined();
+    });
+
+    it('has relations field defaulting to []', () => {
+        const TaskModel = model('TaskRelTest_' + Date.now(), TaskSchema);
+        const t = new TaskModel({
+            userId: new Types.ObjectId(),
+            source: 'local',
+            sourceId: 's1',
+            title: 't',
+            syncedAt: new Date(),
+        });
+
+        expect(Array.isArray(t.relations)).toBe(true);
+        expect(t.relations).toHaveLength(0);
+    });
+
+    it('exposes RELATION_INVERSE mapping each type to its inverse', () => {
+        expect(RELATION_INVERSE.parent).toBe('child');
+        expect(RELATION_INVERSE.child).toBe('parent');
+        expect(RELATION_INVERSE.next).toBe('previous');
+        expect(RELATION_INVERSE.previous).toBe('next');
+        expect(RELATION_INVERSE.related).toBe('related');
     });
 
     it('does not have sourceDueDate field', () => {

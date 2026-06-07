@@ -30,6 +30,8 @@ export type {
     ImportDataParams,
 } from './client.types.js';
 export type {
+    RelationType,
+    TaskRelationDto,
     AuthorizedAppDto,
     UserDto,
     TaskDto,

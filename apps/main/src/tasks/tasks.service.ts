@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
-import { Task, type TaskDocument } from './schemas/task.schema.js';
+import { Task, RELATION_INVERSE, type RelationType, type TaskDocument } from './schemas/task.schema.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
 import type { UpdateTaskDto } from './dto/update-task.dto.js';
 import type { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
@@ -99,15 +99,81 @@ export class TasksService {
         return task;
     }
 
+    /** Add a typed relation between two of the user's tasks, auto-mirroring the
+     *  inverse relation onto the target. Idempotent: re-adding the same pair is a no-op.
+     *  Throws BadRequestException for self-relations and NotFoundException for
+     *  missing/unowned tasks. */
+    async addRelation({
+        userId,
+        taskId,
+        type,
+        targetTaskId,
+    }: {
+        userId: string;
+        taskId: string;
+        type: RelationType;
+        targetTaskId: string;
+    }): Promise<TaskDocument> {
+        if (taskId === targetTaskId) throw new BadRequestException('A task cannot relate to itself');
+
+        const userObjectId = new Types.ObjectId(userId);
+
+        const [source, target] = await Promise.all([
+            this.taskModel.findOne({ _id: taskId, userId: userObjectId }),
+            this.taskModel.findOne({ _id: targetTaskId, userId: userObjectId }),
+        ]);
+
+        if (!source || !target) throw new NotFoundException('Task not found');
+
+        const inverse = RELATION_INVERSE[type];
+
+        await this.taskModel.updateOne(
+            { _id: taskId, userId: userObjectId },
+            { $addToSet: { relations: { type, targetTaskId: new Types.ObjectId(targetTaskId) } } },
+        );
+
+        await this.taskModel.updateOne(
+            { _id: targetTaskId, userId: userObjectId },
+            { $addToSet: { relations: { type: inverse, targetTaskId: new Types.ObjectId(taskId) } } },
+        );
+
+        return this.taskModel.findById(taskId) as Promise<TaskDocument>;
+    }
+
+    /** Remove a typed relation between two tasks, clearing both the relation and its
+     *  inverse. No-op if the relation does not exist. */
+    async removeRelation({
+        userId,
+        taskId,
+        type,
+        targetTaskId,
+    }: {
+        userId: string;
+        taskId: string;
+        type: RelationType;
+        targetTaskId: string;
+    }): Promise<TaskDocument> {
+        await this.findOne({ taskId, userId });
+
+        const userObjectId = new Types.ObjectId(userId);
+        const inverse = RELATION_INVERSE[type];
+
+        await this.taskModel.updateOne(
+            { _id: taskId, userId: userObjectId },
+            { $pull: { relations: { type, targetTaskId: new Types.ObjectId(targetTaskId) } } },
+        );
+
+        await this.taskModel.updateOne(
+            { _id: targetTaskId, userId: userObjectId },
+            { $pull: { relations: { type: inverse, targetTaskId: new Types.ObjectId(taskId) } } },
+        );
+
+        return this.taskModel.findById(taskId) as Promise<TaskDocument>;
+    }
+
     /** Create a task via write-through: call connector, then persist locally.
      *  When source is 'local', skip the connector and store the task directly in CTM. */
     async create({ userId, dto }: { userId: string; dto: CreateTaskDto }): Promise<TaskDocument> {
-        if (dto.parentId) {
-            const parent = await this.taskModel.findOne({ _id: dto.parentId, userId: new Types.ObjectId(userId) });
-
-            if (!parent) throw new BadRequestException('Parent task not found');
-        }
-
         const { due, deadlineDate } = this.parseDueFields(dto);
 
         // Outbound sync (CTM → external source) is disabled; all creates are local-only.
@@ -124,7 +190,6 @@ export class TasksService {
             due: due ?? null,
             deadlineDate: deadlineDate ?? null,
             duration: dto.duration ?? null,
-            parentId: dto.parentId ? new Types.ObjectId(dto.parentId) : null,
             syncedAt: new Date(),
         });
     }
@@ -189,6 +254,12 @@ export class TasksService {
 
         // Outbound sync (CTM → external source) is disabled; deletes are local-only.
         await this.taskModel.deleteOne({ _id: taskId });
+
+        // Clear any relations on other tasks pointing at the deleted task.
+        await this.taskModel.updateMany(
+            { userId: new Types.ObjectId(userId), 'relations.targetTaskId': new Types.ObjectId(taskId) },
+            { $pull: { relations: { targetTaskId: new Types.ObjectId(taskId) } } },
+        );
     }
 
     /** Set the fuzzy deadline on a task (local-only, never written to source). */
@@ -267,17 +338,21 @@ export class TasksService {
 
         const buildInsert = (remote: RemoteTask, id: Types.ObjectId): object => {
             const parentSourceId = remote.parentSourceId;
-            let parentId: Types.ObjectId | null = null;
+            let parentObjectId: Types.ObjectId | null = null;
 
             if (parentSourceId) {
                 const existingParent = existingBySourceId.get(parentSourceId);
 
                 if (existingParent) {
-                    parentId = existingParent._id as Types.ObjectId;
+                    parentObjectId = existingParent._id as Types.ObjectId;
                 } else {
-                    parentId = newIdBySourceId.get(parentSourceId) ?? null;
+                    parentObjectId = newIdBySourceId.get(parentSourceId) ?? null;
                 }
             }
+
+            const relations = parentObjectId
+                ? [{ type: 'parent' as RelationType, targetTaskId: parentObjectId }]
+                : [];
 
             return {
                 _id: id,
@@ -292,7 +367,7 @@ export class TasksService {
                 due: remote.due ?? null,
                 deadlineDate: remote.deadline ?? null,
                 duration: remote.duration ?? null,
-                parentId,
+                relations,
                 createdAt: now,
                 updatedAt: now,
                 syncedAt: now,

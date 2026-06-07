@@ -18,6 +18,7 @@ import type {
     UserDto,
 } from './types.js';
 import type {
+    AddRelationParams,
     AddReminderParams,
     GetTaskParams,
     ApiClientErrorOptions,
@@ -35,6 +36,7 @@ import type {
     RefreshParams,
     RegisterParams,
     RemoveFuzzyDeadlineParams,
+    RemoveRelationParams,
     RemoveReminderParams,
     RevokeAuthorizedAppParams,
     SetConnectionDetailsParams,
@@ -304,6 +306,16 @@ export class CtmApiClient {
         return this.request<TestChannelResultDto>({ method: 'POST', path: `/notifications/channels/${channel}/test` });
     }
 
+    /** Add a typed relation between two tasks. */
+    async addRelation({ id, dto }: AddRelationParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'POST', path: `/tasks/${id}/relations`, body: dto });
+    }
+
+    /** Remove a typed relation between two tasks. */
+    async removeRelation({ id, dto }: RemoveRelationParams): Promise<TaskDto> {
+        return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/relations`, body: dto });
+    }
+  
     /** List OAuth apps the current user has authorized. */
     async getAuthorizedApps(): Promise<AuthorizedAppDto[]> {
         return this.request<AuthorizedAppDto[]>({ method: 'GET', path: '/auth/me/authorized-apps' });

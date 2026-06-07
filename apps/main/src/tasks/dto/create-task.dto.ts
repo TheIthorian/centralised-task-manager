@@ -60,11 +60,6 @@ export class CreateTaskDto implements ICreateTaskDto {
     @Type(() => LocationDto)
     locations?: LocationDto[];
 
-    @ApiPropertyOptional({ example: 'abc123', description: 'CTM task ObjectId of parent task' })
-    @IsOptional()
-    @IsMongoId()
-    parentId?: string;
-
     @ApiProperty({
         example: 'todoist',
         description: 'Connector source to write through to',
