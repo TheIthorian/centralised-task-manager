@@ -68,6 +68,24 @@ describe('GoogleTasksOAuthConnector', () => {
         });
     });
 
+    describe('resolveAccountIdentity', () => {
+        it('returns sub as externalAccountId and email', async () => {
+            (connector as any).userInfoHttp = {
+                get: async () => ({ sub: 'google-123', email: 'a@b.com' }),
+            };
+
+            const identity = await connector.resolveAccountIdentity(tokens);
+
+            expect(identity).toEqual({ externalAccountId: 'google-123', email: 'a@b.com' });
+        });
+    });
+
+    describe('email scope', () => {
+        it('getAuthUrl requests the email scope', () => {
+            expect(connector.getAuthUrl('state')).toContain('email');
+        });
+    });
+
     describe('refreshToken', () => {
         it('POSTs refresh_token and returns updated tokens', async () => {
             mockHttp.post.mockResolvedValue({
