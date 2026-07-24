@@ -4,11 +4,18 @@ import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fa
 import { ValidationPipe } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { getModelToken } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { AppModule } from '../app.module.js';
+import {
+    ConnectorConfig,
+    type ConnectorConfigDocument,
+} from '../connectors/schemas/connector-config.schema.js';
 
 describe('SyncController', () => {
     let app: NestFastifyApplication;
     let jwt: string;
+    let connectionId: string;
 
     beforeAll(async () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
@@ -27,33 +34,48 @@ describe('SyncController', () => {
             payload: { name: 'Sync Tester', email, password: 'password123' },
         });
 
-        jwt = JSON.parse(res.body).accessToken;
+        const body = JSON.parse(res.body);
+
+        jwt = body.accessToken;
+
+        const configModel = app.get<Model<ConnectorConfigDocument>>(getModelToken(ConnectorConfig.name));
+        const config = await configModel.create({
+            userId: new Types.ObjectId(body.user.id as string),
+            source: 'todoist',
+            externalAccountId: `ext-${Date.now()}`,
+            accessToken: 'enc',
+            refreshToken: 'enc',
+            tokenExpiresAt: new Date(Date.now() + 3600_000),
+            enabled: true,
+        });
+
+        connectionId = String(config._id);
     });
 
     afterAll(async () => {
         await app.close();
     });
 
-    it('POST /connectors/:source/sync without auth returns 401', async () => {
-        const res = await app.inject({ method: 'POST', url: '/connectors/todoist/sync' });
+    it('POST sync without auth returns 401', async () => {
+        const res = await app.inject({ method: 'POST', url: '/connectors/connections/000000000000000000000000/sync' });
 
         expect(res.statusCode).toBe(401);
     });
 
-    it('GET /connectors/todoist/sync/:jobId returns 404 for unknown job', async () => {
+    it('GET sync/:jobId returns 404 for unknown job', async () => {
         const res = await app.inject({
             method: 'GET',
-            url: '/connectors/todoist/sync/000000000000000000000000',
+            url: `/connectors/connections/${connectionId}/sync/000000000000000000000000`,
             headers: { authorization: `Bearer ${jwt}` },
         });
 
         expect(res.statusCode).toBe(404);
     });
 
-    it('DELETE /connectors/todoist/sync/:jobId returns 404 for unknown job', async () => {
+    it('DELETE sync/:jobId returns 404 for unknown job', async () => {
         const res = await app.inject({
             method: 'DELETE',
-            url: '/connectors/todoist/sync/000000000000000000000000',
+            url: `/connectors/connections/${connectionId}/sync/000000000000000000000000`,
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -63,7 +85,7 @@ describe('SyncController', () => {
     it('POST creates a job and GET retrieves it', async () => {
         const postRes = await app.inject({
             method: 'POST',
-            url: '/connectors/todoist/sync',
+            url: `/connectors/connections/${connectionId}/sync`,
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -77,7 +99,7 @@ describe('SyncController', () => {
 
         const getRes = await app.inject({
             method: 'GET',
-            url: `/connectors/todoist/sync/${body.id}`,
+            url: `/connectors/connections/${connectionId}/sync/${body.id}`,
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -90,7 +112,7 @@ describe('SyncController', () => {
     it('DELETE cancels a job', async () => {
         const postRes = await app.inject({
             method: 'POST',
-            url: '/connectors/todoist/sync',
+            url: `/connectors/connections/${connectionId}/sync`,
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -98,7 +120,7 @@ describe('SyncController', () => {
 
         const delRes = await app.inject({
             method: 'DELETE',
-            url: `/connectors/todoist/sync/${id}`,
+            url: `/connectors/connections/${connectionId}/sync/${id}`,
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -108,7 +130,7 @@ describe('SyncController', () => {
     it('User B cannot access User A sync jobs', async () => {
         const postRes = await app.inject({
             method: 'POST',
-            url: '/connectors/todoist/sync',
+            url: `/connectors/connections/${connectionId}/sync`,
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -124,7 +146,7 @@ describe('SyncController', () => {
 
         const getRes = await app.inject({
             method: 'GET',
-            url: `/connectors/todoist/sync/${id}`,
+            url: `/connectors/connections/${connectionId}/sync/${id}`,
             headers: { authorization: `Bearer ${jwtB}` },
         });
 

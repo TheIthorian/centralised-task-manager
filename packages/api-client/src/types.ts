@@ -61,7 +61,7 @@ export type TaskDto = {
     completed: boolean;
     source: string;
     sourceId: string;
-    externalAccountId: string;
+    externalAccountId: string | null;
     tags: string[];
     locations: LocationDto[];
     createdAt: string;
