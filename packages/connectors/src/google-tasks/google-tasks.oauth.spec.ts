@@ -7,6 +7,7 @@ vi.mock('@ctm/http-client', () => {
     return {
         HttpClient: class MockHttpClient {
             post = vi.fn();
+            get = vi.fn();
         },
     };
 });
@@ -31,6 +32,28 @@ describe('GoogleTasksOAuthConnector', () => {
         vi.clearAllMocks();
         connector = new GoogleTasksOAuthConnector(config);
         mockHttp = (connector as any).http;
+    });
+
+    describe('healthCheck', () => {
+        it('returns healthy when the API responds successfully', async () => {
+            mockHttp.get.mockResolvedValue({ aud: 'google_client_id' });
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(mockHttp.get).toHaveBeenCalledWith(`tokeninfo?access_token=${tokens.accessToken}`, {
+                Authorization: `Bearer ${tokens.accessToken}`,
+            });
+            expect(result).toEqual({ source: connector.name, healthy: true });
+        });
+
+        it('returns unhealthy with error when the API throws', async () => {
+            mockHttp.get.mockRejectedValue(new Error('Token expired'));
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(result.healthy).toBe(false);
+            expect(result.error).toBe('Token expired');
+        });
     });
 
     describe('getAuthUrl', () => {

@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotionOAuthConnector } from './notion.oauth.js';
+import { NOTION_VERSION } from './notion.source.js';
 import type { OAuthTokens } from '../types.js';
 
 vi.mock('@ctm/http-client', () => {
     return {
         HttpClient: class MockHttpClient {
             post = vi.fn();
+            get = vi.fn();
         },
     };
 });
@@ -42,6 +44,29 @@ describe('NotionOAuthConnector', () => {
 
     it('name is "notion"', () => {
         expect(connector.name).toBe('notion');
+    });
+
+    describe('healthCheck', () => {
+        it('returns healthy when the API responds successfully', async () => {
+            mockHttp.get.mockResolvedValue({ object: 'user' });
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(mockHttp.get).toHaveBeenCalledWith('/v1/users/me', {
+                Authorization: `Bearer ${tokens.accessToken}`,
+                'Notion-Version': NOTION_VERSION,
+            });
+            expect(result).toEqual({ source: connector.name, healthy: true });
+        });
+
+        it('returns unhealthy with error when the API throws', async () => {
+            mockHttp.get.mockRejectedValue(new Error('Invalid token'));
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(result.healthy).toBe(false);
+            expect(result.error).toBe('Invalid token');
+        });
     });
 
     describe('getAuthUrl', () => {

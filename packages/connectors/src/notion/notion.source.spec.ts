@@ -319,27 +319,4 @@ describe('NotionTaskSource', () => {
             ]);
         });
     });
-
-    describe('healthCheck', () => {
-        it('returns { healthy: true } when the API responds successfully', async () => {
-            mockHttp.get.mockResolvedValue({ object: 'user' });
-
-            const result = await source.healthCheck(tokens);
-
-            expect(mockHttp.get).toHaveBeenCalledWith('/v1/users/me', {
-                Authorization: `Bearer ${tokens.accessToken}`,
-                'Notion-Version': '2022-06-28',
-            });
-            expect(result).toEqual({ healthy: true });
-        });
-
-        it('returns { healthy: false, error } when the API throws', async () => {
-            mockHttp.get.mockRejectedValue(new Error('Invalid token'));
-
-            const result = await source.healthCheck(tokens);
-
-            expect(result.healthy).toBe(false);
-            expect(result.error).toBe('Invalid token');
-        });
-    });
 });

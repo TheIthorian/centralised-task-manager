@@ -8,7 +8,7 @@ const base = { source: 'todoist', connected: false, lastSynced: undefined };
 describe('SourceCard', () => {
     it('renders the source name', () => {
         render(<SourceCard connector={base} onConnect={vi.fn()} onDisconnect={vi.fn()} isPending={false} />);
-        expect(screen.getByText('todoist')).toBeInTheDocument();
+        expect(screen.getByText('Todoist')).toBeInTheDocument();
     });
 
     it('shows Connect button when not connected', () => {
