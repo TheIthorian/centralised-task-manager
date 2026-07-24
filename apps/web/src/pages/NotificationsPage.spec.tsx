@@ -41,7 +41,7 @@ describe('NotificationsPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockApi.getNotificationPreferences.mockResolvedValue(mockPrefs);
-        mockApi.listConnectors.mockResolvedValue([{ source: 'discord', connected: false }]);
+        mockApi.listConnectors.mockResolvedValue([{ source: 'discord', accounts: [] }]);
     });
 
     it('renders all notification type rows', async () => {

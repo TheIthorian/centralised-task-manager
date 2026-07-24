@@ -79,16 +79,16 @@ export type WebUpdateMeParams = {
 };
 
 export type WebSyncConnectorParams = {
-    source: string;
+    connectionId: string;
 };
 
 export type WebGetSyncJobParams = {
-    source: string;
+    connectionId: string;
     jobId: string;
 };
 
 export type WebCancelSyncJobParams = {
-    source: string;
+    connectionId: string;
     jobId: string;
 };
 

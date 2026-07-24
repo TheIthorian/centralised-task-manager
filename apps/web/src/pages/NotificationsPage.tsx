@@ -41,7 +41,7 @@ export function NotificationsPage(): React.JSX.Element {
         queryFn: () => api.listConnectors(),
     });
 
-    const discordConnected = connectors?.find((c) => c.source === 'discord')?.connected ?? false;
+    const discordConnected = (connectors?.find((c) => c.source === 'discord')?.accounts.length ?? 0) > 0;
 
     const mutation = useMutation({
         mutationFn: (dto: UpdateNotificationPreferencesDto) => api.updateNotificationPreferences({ dto }),

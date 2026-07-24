@@ -33,11 +33,11 @@ export function SourcesPage(): React.JSX.Element {
     const { data: healthResults = [], isLoading: isHealthLoading } = useQuery({
         queryKey: ['connectors', 'health'],
         queryFn: () => api.getConnectorHealth(),
-        enabled: connectors.some((c) => c.connected),
+        enabled: connectors.some((c) => c.accounts.length > 0),
     });
 
-    const healthBySource = new Map<string, ConnectorHealthDto>(
-        healthResults.map((h: ConnectorHealthDto) => [h.source, h]),
+    const healthByConnection = new Map<string, ConnectorHealthDto>(
+        healthResults.map((h: ConnectorHealthDto) => [h.connectionId, h]),
     );
 
     // WebSocket connection — opens once, cleans up on unmount
@@ -51,7 +51,7 @@ export function SourcesPage(): React.JSX.Element {
         });
 
         socket.on('sync:progress', (job: TaskSyncJobDto) => {
-            setSyncJobs((prev) => new Map(prev).set(job.source, job));
+            setSyncJobs((prev) => new Map(prev).set(job.connectionId, job));
 
             if (job.status === 'done') {
                 void qc.invalidateQueries({ queryKey: ['tasks'] });
@@ -74,23 +74,24 @@ export function SourcesPage(): React.JSX.Element {
     });
 
     const disconnectMutation = useMutation({
-        mutationFn: (source: string) => api.disconnectConnector({ source }),
-        onSuccess: (_data, source) => {
+        mutationFn: (connectionId: string) => api.disconnectConnector({ connectionId }),
+        onSuccess: (_data, connectionId) => {
             qc.setQueryData<ConnectorStatusDto[]>(['connectors'], (prev = []) =>
-                prev.map((c) => (c.source === source ? { ...c, connected: false, lastSynced: undefined } : c)),
+                prev.map((c) => ({ ...c, accounts: c.accounts.filter((a) => a.connectionId !== connectionId) })),
             );
         },
     });
 
     const syncMutation = useMutation({
-        mutationFn: (source: string) => api.syncConnector({ source }),
+        mutationFn: (connectionId: string) => api.syncConnector({ connectionId }),
         onSuccess: (job) => {
-            setSyncJobs((prev) => new Map(prev).set(job.source, job));
+            setSyncJobs((prev) => new Map(prev).set(job.connectionId, job));
         },
     });
 
     const cancelSyncMutation = useMutation({
-        mutationFn: ({ source, jobId }: { source: string; jobId: string }) => api.cancelSyncJob({ source, jobId }),
+        mutationFn: ({ connectionId, jobId }: { connectionId: string; jobId: string }) =>
+            api.cancelSyncJob({ connectionId, jobId }),
         onError: (err) => {
             setBanner({ type: 'error', message: getErrorMessage(err, 'Failed to cancel sync.') });
         },
@@ -106,7 +107,21 @@ export function SourcesPage(): React.JSX.Element {
         },
     });
 
-    const [setupSource, setSetupSource] = useState<string | null>(null);
+    const [setupConnectionId, setSetupConnectionId] = useState<string | null>(null);
+    const [pendingSetupSource, setPendingSetupSource] = useState<string | null>(null);
+
+    // Post-OAuth redirect only names the source; resolve the connection needing setup once connectors load.
+    useEffect(() => {
+        if (!pendingSetupSource) return;
+
+        const connector = connectors.find((c) => c.source === pendingSetupSource);
+        const account = connector?.accounts.find((a) => a.setupRequired);
+
+        if (account) {
+            setSetupConnectionId(account.connectionId);
+            setPendingSetupSource(null);
+        }
+    }, [pendingSetupSource, connectors]);
 
     useEffect(() => {
         const connected = searchParams.get('connected');
@@ -114,7 +129,7 @@ export function SourcesPage(): React.JSX.Element {
         const errorParam = searchParams.get('error');
 
         if (connected && setup === 'required') {
-            setSetupSource(connected);
+            setPendingSetupSource(connected);
             setSearchParams({}, { replace: true });
         } else if (connected) {
             setBanner({ type: 'success', message: `${connected} connected successfully.` });
@@ -197,13 +212,15 @@ export function SourcesPage(): React.JSX.Element {
                                     key={connector.source}
                                     connector={connector}
                                     onConnect={(source) => connectMutation.mutate(source)}
-                                    onDisconnect={(source) => disconnectMutation.mutate(source)}
-                                    onSync={(source) => syncMutation.mutate(source)}
-                                    onCancelSync={(source, jobId) => cancelSyncMutation.mutate({ source, jobId })}
-                                    onConfigure={(source) => setSetupSource(source)}
-                                    syncJob={syncJobs.get(connector.source)}
+                                    onDisconnect={(connectionId) => disconnectMutation.mutate(connectionId)}
+                                    onSync={(connectionId) => syncMutation.mutate(connectionId)}
+                                    onCancelSync={(connectionId, jobId) =>
+                                        cancelSyncMutation.mutate({ connectionId, jobId })
+                                    }
+                                    onConfigure={(connectionId) => setSetupConnectionId(connectionId)}
+                                    syncJobs={syncJobs}
                                     isPending={isPending}
-                                    health={healthBySource.get(connector.source)}
+                                    healthByConnection={healthByConnection}
                                     isHealthLoading={isHealthLoading}
                                 />
                             ))}
@@ -227,27 +244,29 @@ export function SourcesPage(): React.JSX.Element {
                             key={connector.source}
                             connector={connector}
                             onConnect={(source) => connectMutation.mutate(source)}
-                            onDisconnect={(source) => disconnectMutation.mutate(source)}
-                            onSync={(source) => syncMutation.mutate(source)}
-                            onCancelSync={(source, jobId) => cancelSyncMutation.mutate({ source, jobId })}
+                            onDisconnect={(connectionId) => disconnectMutation.mutate(connectionId)}
+                            onSync={(connectionId) => syncMutation.mutate(connectionId)}
+                            onCancelSync={(connectionId, jobId) =>
+                                cancelSyncMutation.mutate({ connectionId, jobId })
+                            }
                             onTest={(source) => testChannelMutation.mutate(source)}
-                            syncJob={syncJobs.get(connector.source)}
+                            syncJobs={syncJobs}
                             isPending={isPending}
                         />
                     ))}
             </div>
 
-            {setupSource && (
+            {setupConnectionId && (
                 <NotionSetupModal
-                    source={setupSource}
+                    connectionId={setupConnectionId}
                     onComplete={() => {
-                        setBanner({ type: 'success', message: `${setupSource} connected successfully.` });
-                        setSetupSource(null);
+                        setBanner({ type: 'success', message: 'Account connected successfully.' });
+                        setSetupConnectionId(null);
                         void qc.invalidateQueries({ queryKey: ['connectors'] });
                     }}
                     onClose={() => {
                         setBanner({ type: 'error', message: 'Setup cancelled. Notion was not fully configured.' });
-                        setSetupSource(null);
+                        setSetupConnectionId(null);
                     }}
                 />
             )}

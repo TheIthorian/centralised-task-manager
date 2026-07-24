@@ -158,24 +158,24 @@ export class WebApiClient {
         return this.execute({ request: () => this.apiClient.getConnectorAuthUrl({ source }) });
     }
 
-    /** Disconnect a connector for the current user. */
-    async disconnectConnector({ source }: WebConnectorParams): Promise<void> {
-        await this.execute({ request: () => this.apiClient.disconnectConnector({ source }) });
+    /** Disconnect a single connection for the current user. */
+    async disconnectConnector({ connectionId }: { connectionId: string }): Promise<void> {
+        await this.execute({ request: () => this.apiClient.disconnectConnector({ connectionId }) });
     }
 
-    /** Start a pull-sync job for a connected source. */
-    async syncConnector({ source }: WebSyncConnectorParams): Promise<TaskSyncJobDto> {
-        return this.execute({ request: () => this.apiClient.syncConnector({ source }) });
+    /** Start a pull-sync job for a connection. */
+    async syncConnector({ connectionId }: WebSyncConnectorParams): Promise<TaskSyncJobDto> {
+        return this.execute({ request: () => this.apiClient.syncConnector({ connectionId }) });
     }
 
     /** Get the status of a sync job. */
-    async getSyncJob({ source, jobId }: WebGetSyncJobParams): Promise<TaskSyncJobDto> {
-        return this.execute({ request: () => this.apiClient.getSyncJob({ source, jobId }) });
+    async getSyncJob({ connectionId, jobId }: WebGetSyncJobParams): Promise<TaskSyncJobDto> {
+        return this.execute({ request: () => this.apiClient.getSyncJob({ connectionId, jobId }) });
     }
 
     /** Cancel a sync job. */
-    async cancelSyncJob({ source, jobId }: WebCancelSyncJobParams): Promise<void> {
-        await this.execute({ request: () => this.apiClient.cancelSyncJob({ source, jobId }) });
+    async cancelSyncJob({ connectionId, jobId }: WebCancelSyncJobParams): Promise<void> {
+        await this.execute({ request: () => this.apiClient.cancelSyncJob({ connectionId, jobId }) });
     }
 
     /** Get the current user profile. */
@@ -257,20 +257,20 @@ export class WebApiClient {
         return this.execute({ request: () => this.apiClient.markAllNotificationsRead() });
     }
 
-    /** Save connection details for a connector (e.g. Notion database ID). */
+    /** Save connection details for a connection (e.g. Notion database ID). */
     async setConnectionDetails({
-        source,
+        connectionId,
         details,
     }: {
-        source: string;
+        connectionId: string;
         details: Record<string, unknown>;
     }): Promise<void> {
-        await this.execute({ request: () => this.apiClient.setConnectionDetails({ source, details }) });
+        await this.execute({ request: () => this.apiClient.setConnectionDetails({ connectionId, details }) });
     }
 
-    /** List Notion databases accessible via the user's Notion integration. */
-    async listNotionDatabases(): Promise<{ id: string; name: string }[]> {
-        return this.execute({ request: () => this.apiClient.listNotionDatabases() });
+    /** List Notion databases accessible via a connection's Notion integration. */
+    async listNotionDatabases({ connectionId }: { connectionId: string }): Promise<{ id: string; name: string }[]> {
+        return this.execute({ request: () => this.apiClient.listNotionDatabases({ connectionId }) });
     }
 
     /** List OAuth apps the current user has authorized. */

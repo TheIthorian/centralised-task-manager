@@ -4,13 +4,13 @@ import { useAuth } from '../../auth/AuthContext.js';
 import { Button } from '@ctm/ui';
 
 type NotionSetupModalProps = {
-    source: string;
+    connectionId: string;
     onComplete: () => void;
     onClose: () => void;
 };
 
 /** Post-OAuth setup modal: lets the user pick which Notion database to sync. */
-export function NotionSetupModal({ source, onComplete, onClose }: NotionSetupModalProps): React.JSX.Element {
+export function NotionSetupModal({ connectionId, onComplete, onClose }: NotionSetupModalProps): React.JSX.Element {
     const { api } = useAuth();
     const [selectedId, setSelectedId] = useState<string>('');
 
@@ -19,12 +19,12 @@ export function NotionSetupModal({ source, onComplete, onClose }: NotionSetupMod
         isLoading,
         isError,
     } = useQuery({
-        queryKey: ['notion-databases'],
-        queryFn: () => api.listNotionDatabases(),
+        queryKey: ['notion-databases', connectionId],
+        queryFn: () => api.listNotionDatabases({ connectionId }),
     });
 
     const saveMutation = useMutation({
-        mutationFn: () => api.setConnectionDetails({ source, details: { databaseId: selectedId } }),
+        mutationFn: () => api.setConnectionDetails({ connectionId, details: { databaseId: selectedId } }),
         onSuccess: () => {
             onComplete();
         },

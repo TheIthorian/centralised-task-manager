@@ -46,6 +46,7 @@ export type {
     AddReminderDto,
     ConnectorAuthUrlDto,
     ConnectorDetailsDto,
+    ConnectorAccountDto,
     ConnectorStatusDto,
     ConnectorHealthDto,
     NotionDatabaseDto,
