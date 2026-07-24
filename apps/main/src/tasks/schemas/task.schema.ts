@@ -101,6 +101,9 @@ export class Task {
     @Prop({ type: String, required: true, maxlength: 255 })
     sourceId!: string;
 
+    @Prop({ type: String, default: null, maxlength: 255 })
+    externalAccountId!: string | null;
+
     @Prop({ type: String, required: true, maxlength: 200 })
     title!: string;
 
@@ -155,7 +158,7 @@ export class Task {
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
-TaskSchema.index({ userId: 1, source: 1, sourceId: 1 }, { unique: true });
+TaskSchema.index({ userId: 1, source: 1, externalAccountId: 1, sourceId: 1 }, { unique: true });
 TaskSchema.index({ userId: 1, status: 1 });
 TaskSchema.index({ 'fuzzyDeadline.remindEvery': 1 });
 TaskSchema.index({ userId: 1, 'relations.targetTaskId': 1 });
