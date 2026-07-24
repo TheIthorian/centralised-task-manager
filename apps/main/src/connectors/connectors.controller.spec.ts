@@ -1,12 +1,16 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
+import { getModelToken } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
+import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
 
 describe('ConnectorsModule', () => {
     let app: NestFastifyApplication;
     let jwt: string;
+    let configModel: Model<ConnectorConfigDocument>;
     const email = `connectors+${Date.now()}@example.com`;
 
     beforeAll(async () => {
@@ -24,6 +28,7 @@ describe('ConnectorsModule', () => {
         });
 
         jwt = JSON.parse(regRes.body).accessToken;
+        configModel = app.get<Model<ConnectorConfigDocument>>(getModelToken(ConnectorConfig.name));
     });
 
     afterAll(async () => {
@@ -46,6 +51,56 @@ describe('ConnectorsModule', () => {
         expect(sources).toContain('google_tasks');
     });
 
+    it('GET /connectors groups accounts under each source', async () => {
+        const regRes = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: {
+                name: 'Connectors Grouper',
+                email: `connectors-group+${Date.now()}@example.com`,
+                password: 'password123',
+            },
+        });
+        const regBody = JSON.parse(regRes.body);
+        const groupJwt: string = regBody.accessToken;
+        const groupUserId: string = regBody.user.id;
+
+        const base = {
+            userId: new Types.ObjectId(groupUserId),
+            accessToken: 'enc',
+            refreshToken: 'enc',
+            tokenExpiresAt: new Date(Date.now() + 3600_000),
+            enabled: true,
+        };
+
+        await configModel.create([
+            { ...base, source: 'google_tasks', externalAccountId: 'ext-A', email: 'a@x.com' },
+            { ...base, source: 'google_tasks', externalAccountId: 'ext-B', email: 'b@x.com' },
+            { ...base, source: 'notion', externalAccountId: 'ext-C', email: null },
+        ]);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/connectors',
+            headers: { authorization: `Bearer ${groupJwt}` },
+        });
+
+        expect(res.statusCode).toBe(200);
+        const body = JSON.parse(res.body) as Array<{
+            source: string;
+            accounts: Array<{ connectionId: string; externalAccountId: string; email: string | null }>;
+        }>;
+
+        const google = body.find((c) => c.source === 'google_tasks');
+
+        expect(google!.accounts.map((a) => a.externalAccountId).sort()).toEqual(['ext-A', 'ext-B']);
+        expect(google!.accounts.every((a) => typeof a.connectionId === 'string')).toBe(true);
+
+        const notion = body.find((c) => c.source === 'notion');
+
+        expect(notion!.accounts).toHaveLength(1);
+    });
+
     it('GET /connectors/:connectorName/auth returns an OAuth URL', async () => {
         const res = await app.inject({
             method: 'GET',
@@ -59,10 +114,10 @@ describe('ConnectorsModule', () => {
         expect(body.url).toContain('todoist.com/oauth/authorize');
     });
 
-    it('DELETE /connectors/:connectorName with no connected config returns 404', async () => {
+    it('DELETE /connectors/connections/:connectionId with unknown id returns 404', async () => {
         const res = await app.inject({
             method: 'DELETE',
-            url: '/connectors/todoist',
+            url: '/connectors/connections/000000000000000000000000',
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -142,8 +197,8 @@ describe('Connectors — auth guards and user isolation', () => {
         expect(res.statusCode).toBe(401);
     });
 
-    it('DELETE /connectors/:connectorName without auth returns 401', async () => {
-        const res = await app.inject({ method: 'DELETE', url: '/connectors/todoist' });
+    it('DELETE /connectors/connections/:connectionId without auth returns 401', async () => {
+        const res = await app.inject({ method: 'DELETE', url: '/connectors/connections/000000000000000000000000' });
 
         expect(res.statusCode).toBe(401);
     });
@@ -158,7 +213,7 @@ describe('Connectors — auth guards and user isolation', () => {
         expect(res.statusCode).toBe(401);
     });
 
-    it('both users see all connectors as disconnected', async () => {
+    it('both users see all connectors with no accounts', async () => {
         const resA = await app.inject({
             method: 'GET',
             url: '/connectors',
@@ -170,17 +225,17 @@ describe('Connectors — auth guards and user isolation', () => {
             headers: { authorization: `Bearer ${jwtB}` },
         });
 
-        const bodyA = JSON.parse(resA.body) as Array<{ connected: boolean }>;
-        const bodyB = JSON.parse(resB.body) as Array<{ connected: boolean }>;
+        const bodyA = JSON.parse(resA.body) as Array<{ accounts: unknown[] }>;
+        const bodyB = JSON.parse(resB.body) as Array<{ accounts: unknown[] }>;
 
-        expect(bodyA.every((c) => !c.connected)).toBe(true);
-        expect(bodyB.every((c) => !c.connected)).toBe(true);
+        expect(bodyA.every((c) => c.accounts.length === 0)).toBe(true);
+        expect(bodyB.every((c) => c.accounts.length === 0)).toBe(true);
     });
 
-    it('POST /connectors/:connectorName/connection-details with unknown connector returns error', async () => {
+    it('POST /connectors/connections/:connectionId/connection-details with unknown connection returns error', async () => {
         const res = await app.inject({
             method: 'POST',
-            url: '/connectors/unknown_xyz/connection-details',
+            url: '/connectors/connections/000000000000000000000000/connection-details',
             payload: {},
             headers: { authorization: `Bearer ${jwtA}` },
         });

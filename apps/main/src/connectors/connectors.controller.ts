@@ -58,27 +58,38 @@ export class ConnectorsController {
     async listConnectors(@Request() req: AuthRequest): Promise<ConnectorStatusDto[]> {
         const available = this.connectors.listAvailable();
         const configs = await this.connectors.listConfigs(req.user.sub);
-        const configMap = new Map(configs.map((c) => [c.source, c]));
+
+        const bySource = new Map<string, typeof configs>();
+
+        for (const config of configs) {
+            const list = bySource.get(config.source) ?? [];
+
+            list.push(config);
+            bySource.set(config.source, list);
+        }
 
         return available.map((connectorName) => {
-            const config = configMap.get(connectorName);
             const connector = this.oAuthConnectorRegistry.get(connectorName);
-            const connected = config?.enabled ?? false;
+            const requiredKeys = Object.entries(connector.connectionDetailsSchema)
+                .filter(([, v]) => v.inputDefinition.required)
+                .map(([k]) => k);
 
-            const setupRequired =
-                connected &&
-                Object.entries(connector.connectionDetailsSchema)
-                    .filter(([, v]) => v.inputDefinition.required)
-                    .map(([k]) => k as keyof typeof connector.connectionDetailsSchema)
-                    .some((k) => !(config!.settings as Record<string, unknown>)[k]);
+            const accounts = (bySource.get(connectorName) ?? [])
+                .filter((c) => c.enabled)
+                .map((c) => ({
+                    connectionId: String(c._id),
+                    externalAccountId: c.externalAccountId ?? '',
+                    email: c.email,
+                    label: c.label,
+                    lastSynced: c.lastSyncedAt?.toISOString(),
+                    setupRequired: requiredKeys.some((k) => !(c.settings as Record<string, unknown>)[k]),
+                }));
 
             return {
                 source: connectorName,
-                connected,
-                lastSynced: config?.lastSyncedAt?.toISOString(),
                 connectorType: connector.connectorType,
                 connectionSchema: connector.connectionDetailsSchema,
-                setupRequired,
+                accounts,
             };
         });
     }
@@ -90,29 +101,49 @@ export class ConnectorsController {
     @UseGuards(JwtAuthGuard)
     async checkHealth(@Request() req: AuthRequest): Promise<ConnectorHealthDto[]> {
         const configs = await this.connectors.listConfigs(req.user.sub);
+        const enabled = configs.filter((c) => c.enabled);
 
         const results = await Promise.allSettled(
-            configs.map(async (config) => {
+            enabled.map(async (config) => {
                 const connector = this.oAuthConnectorRegistry.get(config.source);
-                const tokens = await this.connectors.ensureFreshTokens({ userId: req.user.sub, source: config.source });
-                return await connector.healthCheck(tokens);
+                const tokens = await this.connectors.ensureFreshTokens({
+                    userId: req.user.sub,
+                    connectionId: String(config._id),
+                });
+                const health = await connector.healthCheck(tokens);
+
+                return { ...health, connectionId: String(config._id) };
             }),
         );
 
         return results.map((result, i) => {
             if (result.status === 'fulfilled') return result.value;
             const message = result.reason instanceof Error ? result.reason.message : 'Unknown error';
-            return { source: configs[i]!.source, healthy: false, error: message };
+            return {
+                source: enabled[i]!.source,
+                connectionId: String(enabled[i]!._id),
+                healthy: false,
+                error: message,
+            };
         });
     }
 
     /** List Notion databases available to the authenticated user's integration. */
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'List Notion databases for the connected integration' })
-    @Get('notion/databases')
+    @Get('connections/:connectionId/notion/databases')
     @UseGuards(JwtAuthGuard)
-    async listNotionDatabases(@Request() req: AuthRequest): Promise<NotionDatabaseDto[]> {
-        const tokens = await this.connectors.getDecryptedTokens({ userId: req.user.sub, source: ConnectorName.Notion });
+    async listNotionDatabases(
+        @Request() req: AuthRequest,
+        @Param('connectionId') connectionId: string,
+    ): Promise<NotionDatabaseDto[]> {
+        const source = await this.connectors.getConnectionSource({ userId: req.user.sub, connectionId });
+
+        if (source !== ConnectorName.Notion) {
+            throw new BadRequestException('Connection is not a Notion connection');
+        }
+
+        const tokens = await this.connectors.ensureFreshTokens({ userId: req.user.sub, connectionId });
         const connector = this.externalTaskSourceRegistry.get(TaskConnectorName.Notion) as NotionTaskSource;
         return connector.listDatabases(tokens);
     }
@@ -120,15 +151,16 @@ export class ConnectorsController {
     /** Validate required fields against the connector's schema, then store in ConnectorConfig.settings. */
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Save connection details for a connector' })
-    @Post(':connectorName/connection-details')
+    @Post('connections/:connectionId/connection-details')
     @UseGuards(JwtAuthGuard)
     @HttpCode(200)
     async setConnectionDetails(
         @Request() req: AuthRequest,
-        @Param('connectorName') connectorName: ConnectorName,
+        @Param('connectionId') connectionId: string,
         @Body() body: Record<string, unknown>,
     ): Promise<OkDto> {
-        const connector = this.oAuthConnectorRegistry.get(connectorName);
+        const source = await this.connectors.getConnectionSource({ userId: req.user.sub, connectionId });
+        const connector = this.oAuthConnectorRegistry.get(source as ConnectorName);
         const schema = connector.connectionDetailsSchema;
 
         if (Object.keys(schema).length > 0) {
@@ -152,7 +184,7 @@ export class ConnectorsController {
         }
 
         await this.connectors.update({
-            configId: await this.connectors.getConfigIdBySource({ userId: req.user.sub, source: connectorName }),
+            configId: connectionId,
             userId: req.user.sub,
             patch: { settings: body },
         });
@@ -173,18 +205,18 @@ export class ConnectorsController {
         return { url };
     }
 
-    /** Disconnect a connector. */
+    /** Disconnect a single connection. */
     @ApiBearerAuth('jwt')
-    @ApiOperation({ summary: 'Disconnect a connector' })
+    @ApiOperation({ summary: 'Disconnect a connection' })
     @ApiResponse({ status: 204 })
-    @Delete(':connectorName')
+    @Delete('connections/:connectionId')
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
-    async removeByConnectorName(
+    async removeConnection(
         @Request() req: AuthRequest,
-        @Param('connectorName') connectorName: ConnectorName,
+        @Param('connectionId') connectionId: string,
     ): Promise<void> {
-        await this.connectors.removeBySource({ source: connectorName, userId: req.user.sub });
+        await this.connectors.removeConnection({ userId: req.user.sub, connectionId });
     }
 
     /** OAuth callback — called by the provider after user grants access. */
