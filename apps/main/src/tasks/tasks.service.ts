@@ -299,10 +299,12 @@ export class TasksService {
     async upsertFromRemote({
         userId,
         source,
+        externalAccountId,
         remoteTasks,
     }: {
         userId: string;
         source: TaskConnectorName;
+        externalAccountId: string;
         remoteTasks: RemoteTask[];
     }): Promise<{ synced: number; skipped: number }> {
         if (remoteTasks.length === 0) return { synced: 0, skipped: 0 };
@@ -313,6 +315,7 @@ export class TasksService {
         const existingTasks = await this.taskModel.find({
             userId: userObjectId,
             source,
+            externalAccountId,
             sourceId: { $in: sourceIds },
         });
 
@@ -358,6 +361,7 @@ export class TasksService {
                 _id: id,
                 userId: userObjectId,
                 source,
+                externalAccountId,
                 sourceId: remote.sourceId,
                 title: remote.title,
                 description: remote.description ?? null,
