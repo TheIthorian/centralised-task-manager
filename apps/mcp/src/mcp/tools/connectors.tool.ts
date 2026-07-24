@@ -7,7 +7,8 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
     server.registerTool(
         'list_connectors',
         {
-            description: 'List all connected task sources and their sync status.',
+            description:
+                'List all task sources with their connected accounts (each account has a connectionId used by the other connector tools).',
             inputSchema: {},
             annotations: { readOnlyHint: true },
         },
@@ -33,13 +34,13 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
     server.registerTool(
         'disconnect_connector',
         {
-            description: 'Disconnect a task source by name.',
-            inputSchema: { source: z.string().min(1) },
+            description: 'Disconnect a single connection by its connectionId (from list_connectors).',
+            inputSchema: { connectionId: z.string().min(1) },
             annotations: { destructiveHint: true, idempotentHint: true },
         },
-        async ({ source }) => {
-            await client.disconnectConnector({ source });
-            return { content: [{ type: 'text' as const, text: `Connector ${source} disconnected.` }] };
+        async ({ connectionId }) => {
+            await client.disconnectConnector({ connectionId });
+            return { content: [{ type: 'text' as const, text: `Connection ${connectionId} disconnected.` }] };
         },
     );
 
@@ -59,12 +60,12 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
     server.registerTool(
         'sync_connector',
         {
-            description: 'Trigger a pull-sync job for a connected task source.',
-            inputSchema: { source: z.string().min(1) },
+            description: 'Trigger a pull-sync job for a connection (connectionId from list_connectors).',
+            inputSchema: { connectionId: z.string().min(1) },
             annotations: { destructiveHint: false, idempotentHint: false },
         },
-        async ({ source }) => {
-            const job = await client.syncConnector({ source });
+        async ({ connectionId }) => {
+            const job = await client.syncConnector({ connectionId });
             return { content: [{ type: 'text' as const, text: JSON.stringify(job) }] };
         },
     );
@@ -74,13 +75,13 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         {
             description: 'Get the current status of a sync job.',
             inputSchema: {
-                source: z.string().min(1),
+                connectionId: z.string().min(1),
                 jobId: z.string().min(1),
             },
             annotations: { readOnlyHint: true },
         },
-        async ({ source, jobId }) => {
-            const job = await client.getSyncJob({ source, jobId });
+        async ({ connectionId, jobId }) => {
+            const job = await client.getSyncJob({ connectionId, jobId });
             return { content: [{ type: 'text' as const, text: JSON.stringify(job) }] };
         },
     );
@@ -90,13 +91,13 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         {
             description: 'Cancel an in-progress sync job.',
             inputSchema: {
-                source: z.string().min(1),
+                connectionId: z.string().min(1),
                 jobId: z.string().min(1),
             },
             annotations: { destructiveHint: true, idempotentHint: true },
         },
-        async ({ source, jobId }) => {
-            await client.cancelSyncJob({ source, jobId });
+        async ({ connectionId, jobId }) => {
+            await client.cancelSyncJob({ connectionId, jobId });
             return { content: [{ type: 'text' as const, text: `Sync job ${jobId} cancelled.` }] };
         },
     );
@@ -105,30 +106,30 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         'set_connection_details',
         {
             description:
-                'Save connector-specific connection details (e.g. Notion database ID). Pass a JSON object of key-value pairs.',
+                'Save connection-specific details (e.g. Notion database ID) for a connection. Pass a JSON object of key-value pairs.',
             inputSchema: {
-                source: z.string().min(1),
+                connectionId: z.string().min(1),
                 details: z
                     .record(z.string(), z.unknown())
                     .describe('Connector-specific details as a key-value object (e.g. {"databaseId": "abc123"})'),
             },
             annotations: { destructiveHint: false, idempotentHint: true },
         },
-        async ({ source, details }) => {
-            await client.setConnectionDetails({ source, details });
-            return { content: [{ type: 'text' as const, text: `Connection details for ${source} updated.` }] };
+        async ({ connectionId, details }) => {
+            await client.setConnectionDetails({ connectionId, details });
+            return { content: [{ type: 'text' as const, text: `Connection details for ${connectionId} updated.` }] };
         },
     );
 
     server.registerTool(
         'list_notion_databases',
         {
-            description: 'List Notion databases accessible via the connected Notion integration.',
-            inputSchema: {},
+            description: 'List Notion databases accessible via a Notion connection (connectionId from list_connectors).',
+            inputSchema: { connectionId: z.string().min(1) },
             annotations: { readOnlyHint: true },
         },
-        async () => {
-            const dbs = await client.listNotionDatabases();
+        async ({ connectionId }) => {
+            const dbs = await client.listNotionDatabases({ connectionId });
             return { content: [{ type: 'text' as const, text: JSON.stringify(dbs) }] };
         },
     );

@@ -2,7 +2,6 @@ import { Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuards } fr
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
-import { ConnectorName } from '@ctm/connectors';
 import type { TaskSyncJobDto } from '@ctm/api-client';
 import { SyncService } from './sync.service.js';
 import { toSyncJobDto } from './sync-job.dto.js';
@@ -12,17 +11,20 @@ type AuthRequest = {
 };
 
 @ApiTags('Sync')
-@Controller('connectors/:source/sync')
+@Controller('connectors/connections/:connectionId/sync')
 @ApiBearerAuth('jwt')
 @UseGuards(JwtAuthGuard)
 export class SyncController {
     constructor(private readonly sync: SyncService) {}
 
-    /** Start a pull-sync job for a connected source. */
-    @ApiOperation({ summary: 'Start a pull-sync job for a connector source' })
+    /** Start a pull-sync job for a connection. */
+    @ApiOperation({ summary: 'Start a pull-sync job for a connection' })
     @Post()
-    async createJob(@Request() req: AuthRequest, @Param('source') source: ConnectorName): Promise<TaskSyncJobDto> {
-        const job = await this.sync.createJob({ userId: req.user.sub, source });
+    async createJob(
+        @Request() req: AuthRequest,
+        @Param('connectionId') connectionId: string,
+    ): Promise<TaskSyncJobDto> {
+        const job = await this.sync.createJob({ userId: req.user.sub, connectionId });
 
         return toSyncJobDto(job);
     }

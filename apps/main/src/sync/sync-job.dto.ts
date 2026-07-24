@@ -8,6 +8,7 @@ export function toSyncJobDto(job: TaskSyncJobDocument): TaskSyncJobDto {
         type: job.type,
         status: job.status,
         source: job.source,
+        connectionId: job.connectionId,
         stage: job.stage,
         synced: job.synced,
         skipped: job.skipped,

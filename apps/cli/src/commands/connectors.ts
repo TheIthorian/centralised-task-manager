@@ -3,12 +3,20 @@ import { buildClient } from '../client.js';
 import { formatJson, formatTable, print } from '../output.js';
 import type { ConnectorStatusDto, ConnectorHealthDto, TaskSyncJobDto } from '@ctm/api-client';
 
-function connectorRow(c: ConnectorStatusDto): string[] {
-    return [c.source, c.connected ? 'connected' : 'disconnected', c.lastSynced ?? '-'];
+function connectorRows(c: ConnectorStatusDto): string[][] {
+    if (c.accounts.length === 0) return [[c.source, '-', '-', 'disconnected', '-']];
+
+    return c.accounts.map((a) => [
+        c.source,
+        a.email ?? a.label ?? a.externalAccountId,
+        a.connectionId,
+        a.setupRequired ? 'setup required' : 'connected',
+        a.lastSynced ?? '-',
+    ]);
 }
 
 function healthRow(h: ConnectorHealthDto): string[] {
-    return [h.source, h.healthy ? 'healthy' : 'unhealthy', h.error ?? '-'];
+    return [h.source, h.connectionId, h.healthy ? 'healthy' : 'unhealthy', h.error ?? '-'];
 }
 
 function syncJobRow(j: TaskSyncJobDto): string[] {
@@ -36,7 +44,12 @@ export function registerConnectorsCommand(program: Command): void {
                 if (opts.json) {
                     print(formatJson(result));
                 } else {
-                    print(formatTable(['Source', 'Status', 'Last Synced'], result.map(connectorRow)));
+                    print(
+                        formatTable(
+                            ['Source', 'Account', 'Connection ID', 'Status', 'Last Synced'],
+                            result.flatMap(connectorRows),
+                        ),
+                    );
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -64,14 +77,14 @@ export function registerConnectorsCommand(program: Command): void {
 
     connectors
         .command('disconnect')
-        .description('Disconnect a task source')
-        .argument('<source>', 'Connector source name')
-        .action(async (source: string) => {
+        .description('Disconnect a single connection (see `connectors list` for connection IDs)')
+        .argument('<connectionId>', 'Connection ID')
+        .action(async (connectionId: string) => {
             const parent = connectors.opts<{ token?: string; baseUrl?: string }>();
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                await client.disconnectConnector({ source });
-                print(`Connector ${source} disconnected.`);
+                await client.disconnectConnector({ connectionId });
+                print(`Connection ${connectionId} disconnected.`);
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
                 process.exit(1);
@@ -91,7 +104,7 @@ export function registerConnectorsCommand(program: Command): void {
                 if (opts.json) {
                     print(formatJson(result));
                 } else {
-                    print(formatTable(['Source', 'Healthy', 'Error'], result.map(healthRow)));
+                    print(formatTable(['Source', 'Connection ID', 'Healthy', 'Error'], result.map(healthRow)));
                 }
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
@@ -101,14 +114,14 @@ export function registerConnectorsCommand(program: Command): void {
 
     connectors
         .command('sync')
-        .description('Trigger a pull-sync job for a connected source')
-        .argument('<source>', 'Connector source name (e.g. todoist)')
+        .description('Trigger a pull-sync job for a connection (see `connectors list` for connection IDs)')
+        .argument('<connectionId>', 'Connection ID')
         .option('--json', 'Output as JSON')
-        .action(async (source: string, opts: { json?: boolean }) => {
+        .action(async (connectionId: string, opts: { json?: boolean }) => {
             const parent = connectors.opts<{ token?: string; baseUrl?: string }>();
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                const job = await client.syncConnector({ source });
+                const job = await client.syncConnector({ connectionId });
 
                 if (opts.json) {
                     print(formatJson(job));
@@ -129,14 +142,14 @@ export function registerConnectorsCommand(program: Command): void {
     connectors
         .command('sync-status')
         .description('Check the status of a sync job')
-        .argument('<source>', 'Connector source name')
+        .argument('<connectionId>', 'Connection ID')
         .argument('<jobId>', 'Sync job ID')
         .option('--json', 'Output as JSON')
-        .action(async (source: string, jobId: string, opts: { json?: boolean }) => {
+        .action(async (connectionId: string, jobId: string, opts: { json?: boolean }) => {
             const parent = connectors.opts<{ token?: string; baseUrl?: string }>();
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                const job = await client.getSyncJob({ source, jobId });
+                const job = await client.getSyncJob({ connectionId, jobId });
 
                 if (opts.json) {
                     print(formatJson(job));
@@ -157,13 +170,13 @@ export function registerConnectorsCommand(program: Command): void {
     connectors
         .command('sync-cancel')
         .description('Cancel an in-progress sync job')
-        .argument('<source>', 'Connector source name')
+        .argument('<connectionId>', 'Connection ID')
         .argument('<jobId>', 'Sync job ID')
-        .action(async (source: string, jobId: string) => {
+        .action(async (connectionId: string, jobId: string) => {
             const parent = connectors.opts<{ token?: string; baseUrl?: string }>();
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                await client.cancelSyncJob({ source, jobId });
+                await client.cancelSyncJob({ connectionId, jobId });
 
                 print(`Sync job ${jobId} cancelled.`);
             } catch (err: unknown) {
@@ -174,10 +187,10 @@ export function registerConnectorsCommand(program: Command): void {
 
     connectors
         .command('set-details')
-        .description('Save connector-specific connection details (e.g. Notion database ID)')
-        .argument('<source>', 'Connector source name (e.g. notion)')
+        .description('Save connection-specific details (e.g. Notion database ID)')
+        .argument('<connectionId>', 'Connection ID')
         .requiredOption('--details <json>', 'JSON object of connection details (e.g. \'{"databaseId":"abc123"}\')')
-        .action(async (source: string, opts: { details: string }) => {
+        .action(async (connectionId: string, opts: { details: string }) => {
             const parent = connectors.opts<{ token?: string; baseUrl?: string }>();
 
             let details: Record<string, unknown>;
@@ -198,9 +211,9 @@ export function registerConnectorsCommand(program: Command): void {
 
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                await client.setConnectionDetails({ source, details });
+                await client.setConnectionDetails({ connectionId, details });
 
-                print(`Connection details for ${source} updated.`);
+                print(`Connection details for ${connectionId} updated.`);
             } catch (err: unknown) {
                 console.error(err instanceof Error ? err.message : String(err));
                 process.exit(1);
@@ -209,13 +222,14 @@ export function registerConnectorsCommand(program: Command): void {
 
     connectors
         .command('notion-databases')
-        .description('List Notion databases accessible via the connected Notion integration')
+        .description('List Notion databases accessible via a Notion connection')
+        .argument('<connectionId>', 'Connection ID of the Notion connection')
         .option('--json', 'Output as JSON')
-        .action(async (opts: { json?: boolean }) => {
+        .action(async (connectionId: string, opts: { json?: boolean }) => {
             const parent = connectors.opts<{ token?: string; baseUrl?: string }>();
             try {
                 const client = buildClient({ token: parent.token, baseUrl: parent.baseUrl });
-                const dbs = await client.listNotionDatabases();
+                const dbs = await client.listNotionDatabases({ connectionId });
 
                 if (opts.json) {
                     print(formatJson(dbs));

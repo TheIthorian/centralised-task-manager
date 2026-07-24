@@ -22,18 +22,21 @@ export class SyncService {
         private readonly gateway: SyncGateway,
     ) {}
 
-    /** Create a TaskSyncJob and start async execution. Returns the new job document. */
-    async createJob({ userId, source }: { userId: string; source: ConnectorName }): Promise<TaskSyncJobDocument> {
+    /** Create a TaskSyncJob for a connection and start async execution. Returns the new job document. */
+    async createJob({ userId, connectionId }: { userId: string; connectionId: string }): Promise<TaskSyncJobDocument> {
+        const connection = await this.connectors.getConnectionForSync({ userId, connectionId });
+
         const job = await this.taskSyncModel.create({
             userId: new Types.ObjectId(userId),
-            source,
+            connectionId,
+            source: connection.source,
             status: 'queued',
             stage: null,
             synced: 0,
             skipped: 0,
         });
 
-        void this.runSync(String(job._id), userId, source);
+        void this.runSync(String(job._id), userId, connectionId);
 
         return job;
     }
@@ -65,7 +68,7 @@ export class SyncService {
         // If updated is null, job was already terminal — no-op is intentional
     }
 
-    private async runSync(jobId: string, userId: string, source: ConnectorName): Promise<void> {
+    private async runSync(jobId: string, userId: string, connectionId: string): Promise<void> {
         const update = async (patch: Partial<TaskSyncJobDocument>): Promise<TaskSyncJobDocument | null> =>
             this.taskSyncModel.findByIdAndUpdate(jobId, patch, { new: true });
 
@@ -78,8 +81,10 @@ export class SyncService {
 
             if (job.status === 'cancelled') return;
 
-            const tokens = await this.connectors.ensureFreshTokens({ userId, source });
-            const settings = await this.connectors.getSettings({ userId, source });
+            const connection = await this.connectors.getConnectionForSync({ userId, connectionId });
+            const source = connection.source as ConnectorName;
+            const tokens = await this.connectors.ensureFreshTokens({ userId, connectionId });
+            const settings = await this.connectors.getSettings({ userId, connectionId });
             const connector = this.registry.get(source as unknown as TaskConnectorName);
             const remoteTasks = await connector.fetchTasks(tokens, settings);
 
@@ -92,6 +97,7 @@ export class SyncService {
             const { synced, skipped } = await this.tasks.upsertFromRemote({
                 userId,
                 source: source as unknown as TaskConnectorName,
+                externalAccountId: connection.externalAccountId ?? '',
                 remoteTasks,
             });
 
@@ -100,7 +106,7 @@ export class SyncService {
 
             if (!job || job.status === 'cancelled') return;
 
-            await this.connectors.updateLastSyncedAt({ userId, source });
+            await this.connectors.updateLastSyncedAt({ userId, connectionId });
 
             const finalJob = await this.taskSyncModel.findByIdAndUpdate(
                 jobId,
@@ -112,7 +118,7 @@ export class SyncService {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
 
-            this.logger.error(`Sync failed jobId=${jobId} source=${source}: ${message}`);
+            this.logger.error(`Sync failed jobId=${jobId} connectionId=${connectionId}: ${message}`);
 
             const failedJob = await this.taskSyncModel.findByIdAndUpdate(
                 jobId,

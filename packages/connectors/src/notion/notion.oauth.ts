@@ -25,7 +25,7 @@ export class NotionOAuthConnector implements OAuthConnector {
                 type: 'remote_select',
                 label: 'Task Database',
                 required: true,
-                endpoint: '/connectors/notion/databases',
+                endpoint: '/connectors/connections/{connectionId}/notion/databases',
             },
             validationSchema: { type: 'string', minLength: 1 },
         },

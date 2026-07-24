@@ -61,6 +61,7 @@ export type TaskDto = {
     completed: boolean;
     source: string;
     sourceId: string;
+    externalAccountId: string | null;
     tags: string[];
     locations: LocationDto[];
     createdAt: string;
@@ -146,20 +147,28 @@ export type UpdateConnectorResponseDto = {
     enabled: boolean;
 };
 
-/** Connection status for a single task source connector. */
-export type ConnectorStatusDto = {
-    source: string;
-    connected: boolean;
+/** One connected external account under a source. */
+export type ConnectorAccountDto = {
+    connectionId: string;
+    externalAccountId: string;
+    email: string | null;
+    label: string | null;
     lastSynced?: string;
-    connectorType: ConnectorType;
-    connectionSchema: Record<string, unknown>;
-    /** True when the connector is connected but required connection details (e.g. databaseId) have not been saved yet. */
     setupRequired: boolean;
 };
 
-/** Health-check result for a single connected task-sync connector. */
+/** Connection status for a single task source connector (now multi-account). */
+export type ConnectorStatusDto = {
+    source: string;
+    connectorType: ConnectorType;
+    connectionSchema: Record<string, unknown>;
+    accounts: ConnectorAccountDto[];
+};
+
+/** Health-check result for a single connected task-sync connection. */
 export type ConnectorHealthDto = {
     source: string;
+    connectionId: string;
     healthy: boolean;
     error?: string;
 };
@@ -170,6 +179,7 @@ export type TaskSyncJobDto = {
     type: string;
     status: 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
     source: string;
+    connectionId: string;
     stage: 'fetching' | 'upserting' | null;
     synced: number;
     skipped: number;

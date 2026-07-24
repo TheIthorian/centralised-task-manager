@@ -43,6 +43,7 @@ export class TasksController {
             id: String(t._id),
             source: t.source,
             sourceId: t.sourceId,
+            externalAccountId: t.externalAccountId,
             title: t.title,
             description: t.description,
             completed: t.status === 'done',

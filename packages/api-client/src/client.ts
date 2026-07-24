@@ -50,6 +50,7 @@ import type {
     UpdateMeParams,
     UpdateNotificationPreferencesParams,
     UpdateTaskParams,
+    ListNotionDatabasesParams,
 } from './client.types.js';
 
 /** Structured HTTP error returned by the REST wrapper. */
@@ -204,34 +205,44 @@ export class CtmApiClient {
         return response.url;
     }
 
-    /** Disconnect a connector source. */
-    async disconnectConnector({ source }: DisconnectConnectorParams): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: `/connectors/${source}` });
+    /** Disconnect a single connection by id. */
+    async disconnectConnector({ connectionId }: DisconnectConnectorParams): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: `/connectors/connections/${connectionId}` });
     }
 
-    /** Start a pull-sync job for a connected source. */
-    async syncConnector({ source }: SyncConnectorParams): Promise<TaskSyncJobDto> {
-        return this.request<TaskSyncJobDto>({ method: 'POST', path: `/connectors/${source}/sync` });
+    /** Start a pull-sync job for a connection. */
+    async syncConnector({ connectionId }: SyncConnectorParams): Promise<TaskSyncJobDto> {
+        return this.request<TaskSyncJobDto>({ method: 'POST', path: `/connectors/connections/${connectionId}/sync` });
     }
 
     /** Get the status of a sync job. */
-    async getSyncJob({ source, jobId }: GetSyncJobParams): Promise<TaskSyncJobDto> {
-        return this.request<TaskSyncJobDto>({ method: 'GET', path: `/connectors/${source}/sync/${jobId}` });
+    async getSyncJob({ connectionId, jobId }: GetSyncJobParams): Promise<TaskSyncJobDto> {
+        return this.request<TaskSyncJobDto>({
+            method: 'GET',
+            path: `/connectors/connections/${connectionId}/sync/${jobId}`,
+        });
     }
 
     /** Cancel a sync job. */
-    async cancelSyncJob({ source, jobId }: CancelSyncJobParams): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: `/connectors/${source}/sync/${jobId}` });
+    async cancelSyncJob({ connectionId, jobId }: CancelSyncJobParams): Promise<void> {
+        await this.request<void>({ method: 'DELETE', path: `/connectors/connections/${connectionId}/sync/${jobId}` });
     }
 
-    /** Save connection details for a connector (e.g. Notion database ID). */
-    async setConnectionDetails({ source, details }: SetConnectionDetailsParams): Promise<void> {
-        await this.request<void>({ method: 'POST', path: `/connectors/${source}/connection-details`, body: details });
+    /** Save connection details for a connection (e.g. Notion database ID). */
+    async setConnectionDetails({ connectionId, details }: SetConnectionDetailsParams): Promise<void> {
+        await this.request<void>({
+            method: 'POST',
+            path: `/connectors/connections/${connectionId}/connection-details`,
+            body: details,
+        });
     }
 
-    /** List Notion databases accessible via the user's Notion integration. */
-    async listNotionDatabases(): Promise<{ id: string; name: string }[]> {
-        return this.request<{ id: string; name: string }[]>({ method: 'GET', path: '/connectors/notion/databases' });
+    /** List Notion databases accessible via a connection's Notion integration. */
+    async listNotionDatabases({ connectionId }: ListNotionDatabasesParams): Promise<{ id: string; name: string }[]> {
+        return this.request<{ id: string; name: string }[]>({
+            method: 'GET',
+            path: `/connectors/connections/${connectionId}/notion/databases`,
+        });
     }
 
     /** Get the current user's profile. */
@@ -346,7 +357,7 @@ export class CtmApiClient {
     async removeRelation({ id, dto }: RemoveRelationParams): Promise<TaskDto> {
         return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/relations`, body: dto });
     }
-  
+
     /** List OAuth apps the current user has authorized. */
     async getAuthorizedApps(): Promise<AuthorizedAppDto[]> {
         return this.request<AuthorizedAppDto[]>({ method: 'GET', path: '/auth/me/authorized-apps' });
