@@ -84,7 +84,7 @@ export type GetConnectorAuthUrlParams = {
 
 /** Parameters for {@link CtmApiClient.disconnectConnector}. */
 export type DisconnectConnectorParams = {
-    source: string;
+    connectionId: string;
 };
 
 /** Parameters for {@link CtmApiClient.updateMe}. */
@@ -105,18 +105,18 @@ export type RemoveFuzzyDeadlineParams = {
 
 /** Parameters for {@link CtmApiClient.syncConnector}. */
 export type SyncConnectorParams = {
-    source: string;
+    connectionId: string;
 };
 
 /** Parameters for {@link CtmApiClient.getSyncJob}. */
 export type GetSyncJobParams = {
-    source: string;
+    connectionId: string;
     jobId: string;
 };
 
 /** Parameters for {@link CtmApiClient.cancelSyncJob}. */
 export type CancelSyncJobParams = {
-    source: string;
+    connectionId: string;
     jobId: string;
 };
 
@@ -139,8 +139,13 @@ export type UpdateNotificationPreferencesParams = {
 
 /** Parameters for {@link CtmApiClient.setConnectionDetails}. */
 export type SetConnectionDetailsParams = {
-    source: string;
+    connectionId: string;
     details: ConnectorDetailsDto;
+};
+
+/** Parameters for {@link CtmApiClient.listNotionDatabases}. */
+export type ListNotionDatabasesParams = {
+    connectionId: string;
 };
 
 /** Parameters for {@link CtmApiClient.addRelation}. */
