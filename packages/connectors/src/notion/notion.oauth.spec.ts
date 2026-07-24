@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotionOAuthConnector } from './notion.oauth.js';
+import { NOTION_VERSION } from './notion.source.js';
 import type { OAuthTokens } from '../types.js';
 
 vi.mock('@ctm/http-client', () => {
     return {
         HttpClient: class MockHttpClient {
             post = vi.fn();
+            get = vi.fn();
         },
     };
 });
@@ -42,6 +44,29 @@ describe('NotionOAuthConnector', () => {
 
     it('name is "notion"', () => {
         expect(connector.name).toBe('notion');
+    });
+
+    describe('healthCheck', () => {
+        it('returns healthy when the API responds successfully', async () => {
+            mockHttp.get.mockResolvedValue({ object: 'user' });
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(mockHttp.get).toHaveBeenCalledWith('/v1/users/me', {
+                Authorization: `Bearer ${tokens.accessToken}`,
+                'Notion-Version': NOTION_VERSION,
+            });
+            expect(result).toEqual({ source: connector.name, healthy: true });
+        });
+
+        it('returns unhealthy with error when the API throws', async () => {
+            mockHttp.get.mockRejectedValue(new Error('Invalid token'));
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(result.healthy).toBe(false);
+            expect(result.error).toBe('Invalid token');
+        });
     });
 
     describe('getAuthUrl', () => {
@@ -91,6 +116,26 @@ describe('NotionOAuthConnector', () => {
             const result = await connector.exchangeCode('code-abc');
 
             expect(result.refreshToken).toBe('new_refresh');
+        });
+    });
+
+    describe('resolveAccountIdentity', () => {
+        it('uses bot id and workspace name', async () => {
+            (connector as any).http = {
+                get: async () => ({
+                    id: 'bot-1',
+                    name: 'CTM',
+                    bot: { workspace_name: 'Acme', owner: { user: { person: { email: 'me@acme.com' } } } },
+                }),
+            };
+
+            const identity = await connector.resolveAccountIdentity({
+                accessToken: 'tok',
+                refreshToken: '',
+                expiresAt: new Date(),
+            });
+
+            expect(identity).toEqual({ externalAccountId: 'bot-1', email: 'me@acme.com', label: 'Acme' });
         });
     });
 

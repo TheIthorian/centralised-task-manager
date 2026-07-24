@@ -10,7 +10,6 @@ import {
     MaxLength,
     IsArray,
     ValidateNested,
-    IsMongoId,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LocationDto, DueDateDto, DurationDto } from './update-task.dto.js';

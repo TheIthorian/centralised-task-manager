@@ -79,6 +79,7 @@ class TaskRelation {
 
 const TaskRelationSchema = SchemaFactory.createForClass(TaskRelation);
 
+@Schema({ _id: false })
 class Reminder {
     @Prop({ type: Date, required: true })
     remindAt!: Date;

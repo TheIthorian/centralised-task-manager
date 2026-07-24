@@ -1,6 +1,7 @@
 import { HttpClient, type Logger } from '@ctm/http-client';
 import { ConnectorName, ConnectorType } from '../types.js';
 import type {
+    AccountIdentity,
     ConnectionDetailsSchema,
     ConnectionSettings,
     HealthCheckResult,
@@ -97,6 +98,15 @@ export class DiscordOAuthConnector implements OAuthConnector {
         });
 
         return data.id;
+    }
+
+    /** Resolve the Discord account identity via /users/@me. */
+    async resolveAccountIdentity(tokens: OAuthTokens): Promise<AccountIdentity> {
+        const data = await this.http.get<DiscordUserResponse>('/users/@me', {
+            Authorization: `Bearer ${tokens.accessToken}`,
+        });
+
+        return { externalAccountId: data.id, label: data.username };
     }
 
     /** Resolve Discord-specific settings to persist in ConnectorConfig after OAuth. */

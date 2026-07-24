@@ -7,6 +7,7 @@ vi.mock('@ctm/http-client', () => {
     return {
         HttpClient: class MockHttpClient {
             post = vi.fn();
+            get = vi.fn();
         },
     };
 });
@@ -31,6 +32,42 @@ describe('TodoistOAuthConnector', () => {
         vi.clearAllMocks();
         connector = new TodoistOAuthConnector(config);
         mockHttp = (connector as any).http;
+    });
+
+    describe('resolveAccountIdentity', () => {
+        it('returns user id and email', async () => {
+            (connector as any).resourceHttp = {
+                post: async () => ({ user: { id: 'todoist-9', email: 'x@y.com' } }),
+            };
+
+            const identity = await connector.resolveAccountIdentity(tokens);
+
+            expect(identity).toEqual({ externalAccountId: 'todoist-9', email: 'x@y.com' });
+        });
+    });
+
+    describe('healthCheck', () => {
+        it('returns healthy when the API responds successfully', async () => {
+            const mockResourceHttp = (connector as any).resourceHttp;
+            mockResourceHttp.get.mockResolvedValue({ results: [] });
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(mockResourceHttp.get).toHaveBeenCalledWith('/tasks?limit=1', {
+                Authorization: `Bearer ${tokens.accessToken}`,
+            });
+            expect(result).toEqual({ source: connector.name, healthy: true });
+        });
+
+        it('returns unhealthy with error when the API throws', async () => {
+            const mockResourceHttp = (connector as any).resourceHttp;
+            mockResourceHttp.get.mockRejectedValue(new Error('Unauthorized'));
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(result.healthy).toBe(false);
+            expect(result.error).toBe('Unauthorized');
+        });
     });
 
     describe('getAuthUrl', () => {

@@ -28,6 +28,17 @@ export type TodoistTask = {
     goal_ids: string[];
 };
 
+/** Todoist user object returned by the sync `user` resource. */
+export type TodoistUser = {
+    id: string;
+    email: string;
+};
+
+/** Response from POST /sync with resource_types ["user"]. */
+export type TodoistSyncUserResponse = {
+    user: TodoistUser;
+};
+
 /** OAuth2 token response from the Todoist token endpoint. */
 export type TodoistTokenResponse = {
     access_token: string;

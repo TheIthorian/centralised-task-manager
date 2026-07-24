@@ -42,3 +42,9 @@ export type GoogleTokenInfo = {
 };
 
 export type GoogleTokenInfoError = { error: string; error_description: string };
+
+/** Response from the Google OAuth2 userinfo endpoint. */
+export type GoogleUserInfo = {
+    sub: string;
+    email: string;
+};

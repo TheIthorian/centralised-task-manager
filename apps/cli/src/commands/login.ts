@@ -2,7 +2,6 @@ import type { Command } from 'commander';
 import { input, password } from '@inquirer/prompts';
 import { CtmApiClient } from '@ctm/api-client';
 import { writeConfig } from '../auth.js';
-import { DEFAULT_BASE_URL } from '../client.js';
 import { print } from '../output.js';
 import { registerClient, performOAuthLogin } from '../oauth.js';
 
@@ -11,9 +10,14 @@ export function registerLoginCommand(program: Command): void {
     program
         .command('login')
         .description('Log in and store credentials')
-        .option('--base-url <url>', 'API base URL', process.env['CTM_BASE_URL'] ?? DEFAULT_BASE_URL)
+        .option('--base-url <url>', 'API base URL', process.env['CTM_BASE_URL'])
         .option('--password', 'Use password login instead of browser OAuth')
-        .action(async (opts: { baseUrl: string; password?: boolean }) => {
+        .action(async (opts: { baseUrl?: string; password?: boolean }) => {
+            if (!opts.baseUrl) {
+                console.error('Base URL is required. Pass --base-url <url> or set CTM_BASE_URL.');
+                process.exit(1);
+            }
+
             if (opts.password) {
                 await passwordLogin(opts.baseUrl);
             } else {

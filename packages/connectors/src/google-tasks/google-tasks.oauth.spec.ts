@@ -7,6 +7,7 @@ vi.mock('@ctm/http-client', () => {
     return {
         HttpClient: class MockHttpClient {
             post = vi.fn();
+            get = vi.fn();
         },
     };
 });
@@ -31,6 +32,28 @@ describe('GoogleTasksOAuthConnector', () => {
         vi.clearAllMocks();
         connector = new GoogleTasksOAuthConnector(config);
         mockHttp = (connector as any).http;
+    });
+
+    describe('healthCheck', () => {
+        it('returns healthy when the API responds successfully', async () => {
+            mockHttp.get.mockResolvedValue({ aud: 'google_client_id' });
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(mockHttp.get).toHaveBeenCalledWith(`tokeninfo?access_token=${tokens.accessToken}`, {
+                Authorization: `Bearer ${tokens.accessToken}`,
+            });
+            expect(result).toEqual({ source: connector.name, healthy: true });
+        });
+
+        it('returns unhealthy with error when the API throws', async () => {
+            mockHttp.get.mockRejectedValue(new Error('Token expired'));
+
+            const result = await connector.healthCheck(tokens);
+
+            expect(result.healthy).toBe(false);
+            expect(result.error).toBe('Token expired');
+        });
     });
 
     describe('getAuthUrl', () => {
@@ -65,6 +88,24 @@ describe('GoogleTasksOAuthConnector', () => {
             expect(result.accessToken).toBe('new_access');
             expect(result.refreshToken).toBe('new_refresh');
             expect(result.expiresAt).toBeInstanceOf(Date);
+        });
+    });
+
+    describe('resolveAccountIdentity', () => {
+        it('returns sub as externalAccountId and email', async () => {
+            (connector as any).userInfoHttp = {
+                get: async () => ({ sub: 'google-123', email: 'a@b.com' }),
+            };
+
+            const identity = await connector.resolveAccountIdentity(tokens);
+
+            expect(identity).toEqual({ externalAccountId: 'google-123', email: 'a@b.com' });
+        });
+    });
+
+    describe('email scope', () => {
+        it('getAuthUrl requests the email scope', () => {
+            expect(connector.getAuthUrl('state')).toContain('email');
         });
     });
 

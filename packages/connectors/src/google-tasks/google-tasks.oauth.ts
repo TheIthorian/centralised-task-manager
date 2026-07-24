@@ -3,8 +3,8 @@ import { type Logger, HttpClient } from '@ctm/http-client';
 import { OAuthError } from '@ctm/errors';
 
 import { ConnectorName, ConnectorType } from '../types.js';
-import type { ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
-import type { GoogleTokenInfo, GoogleTokenResponse } from './google-tasks.types.js';
+import type { AccountIdentity, ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
+import type { GoogleTokenInfo, GoogleTokenResponse, GoogleUserInfo } from './google-tasks.types.js';
 
 /** Configuration required to instantiate a {@link GoogleTasksOAuthConnector}. */
 export type GoogleTasksOAuthConnectorConfig = {
@@ -20,9 +20,20 @@ export class GoogleTasksOAuthConnector implements OAuthConnector {
     readonly connectionDetailsSchema: ConnectionDetailsSchema = {};
 
     private readonly http: HttpClient;
+    private readonly userInfoHttp: HttpClient;
 
     constructor(private readonly config: GoogleTasksOAuthConnectorConfig) {
         this.http = new HttpClient({ baseUrl: 'https://oauth2.googleapis.com', logger: config.logger });
+        this.userInfoHttp = new HttpClient({ baseUrl: 'https://www.googleapis.com', logger: config.logger });
+    }
+
+    /** Resolve the Google account identity via the OAuth2 userinfo endpoint. */
+    async resolveAccountIdentity(tokens: OAuthTokens): Promise<AccountIdentity> {
+        const info = await this.userInfoHttp.get<GoogleUserInfo>('/oauth2/v3/userinfo', {
+            Authorization: `Bearer ${tokens.accessToken}`,
+        });
+
+        return { externalAccountId: info.sub, email: info.email };
     }
 
     /** Probe the Google Tasks API to verify the connection is healthy. */
@@ -43,7 +54,7 @@ export class GoogleTasksOAuthConnector implements OAuthConnector {
             client_id: this.config.clientId,
             redirect_uri: this.config.redirectUri,
             response_type: 'code',
-            scope: 'https://www.googleapis.com/auth/tasks',
+            scope: 'https://www.googleapis.com/auth/tasks openid email',
             access_type: 'offline',
             prompt: 'consent',
             state: userId,

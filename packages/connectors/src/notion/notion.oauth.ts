@@ -1,8 +1,8 @@
 import { HttpClient, type Logger } from '@ctm/http-client';
 
 import { ConnectorName, ConnectorType } from '../types.js';
-import type { ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
-import type { NotionTokenResponse } from './notion.types.js';
+import type { AccountIdentity, ConnectionDetailsSchema, HealthCheckResult, OAuthConnector, OAuthTokens } from '../types.js';
+import type { NotionMeResponse, NotionTokenResponse } from './notion.types.js';
 import { NOTION_VERSION } from './notion.source.js';
 
 /** Configuration required to instantiate a {@link NotionOAuthConnector}. */
@@ -35,6 +35,19 @@ export class NotionOAuthConnector implements OAuthConnector {
 
     constructor(private readonly config: NotionOAuthConnectorConfig) {
         this.http = new HttpClient({ baseUrl: 'https://api.notion.com', logger: config.logger });
+    }
+
+    /** Resolve the Notion workspace/bot identity via /v1/users/me. */
+    async resolveAccountIdentity(tokens: OAuthTokens): Promise<AccountIdentity> {
+        const me = await this.http.get<NotionMeResponse>('/v1/users/me', {
+            Authorization: `Bearer ${tokens.accessToken}`,
+            'Notion-Version': NOTION_VERSION,
+        });
+
+        const email = me.bot.owner?.user?.person?.email;
+        const label = me.bot.workspace_name ?? me.name ?? undefined;
+
+        return { externalAccountId: me.id, email, label };
     }
 
     /** Probe the Notion API to verify the connection is healthy. */

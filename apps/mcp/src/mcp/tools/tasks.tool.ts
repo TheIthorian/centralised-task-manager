@@ -13,6 +13,8 @@ const durationSchema = z.object({
     unit: z.enum(['minute', 'day']),
 });
 
+const relationTypeSchema = z.enum(['parent', 'child', 'next', 'previous', 'related']);
+
 /** Register all task-related MCP tools on the given server instance. */
 export function registerTaskTools(server: McpServer, client: CtmApiClient): void {
     server.registerTool(
@@ -182,6 +184,41 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         async ({ id, index }) => {
             await client.removeReminder({ id, index });
             return { content: [{ type: 'text' as const, text: `Reminder ${index} removed from task ${id}.` }] };
+        },
+    );
+
+    server.registerTool(
+        'add_relation',
+        {
+            description:
+                'Add a typed relation from one task to another (parent, child, next, previous, related). The inverse relation is mirrored automatically.',
+            inputSchema: {
+                id: z.string().min(1).describe('Source task ID'),
+                type: relationTypeSchema,
+                targetTaskId: z.string().min(1).describe('Target task ID the relation points to'),
+            },
+            annotations: { destructiveHint: false, idempotentHint: true },
+        },
+        async ({ id, type, targetTaskId }) => {
+            const task = await client.addRelation({ id, dto: { type, targetTaskId } });
+            return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
+        },
+    );
+
+    server.registerTool(
+        'remove_relation',
+        {
+            description: 'Remove a typed relation between two tasks. The inverse relation is removed automatically.',
+            inputSchema: {
+                id: z.string().min(1).describe('Source task ID'),
+                type: relationTypeSchema,
+                targetTaskId: z.string().min(1).describe('Target task ID the relation points to'),
+            },
+            annotations: { destructiveHint: true, idempotentHint: true },
+        },
+        async ({ id, type, targetTaskId }) => {
+            const task = await client.removeRelation({ id, dto: { type, targetTaskId } });
+            return { content: [{ type: 'text' as const, text: JSON.stringify(task) }] };
         },
     );
 }

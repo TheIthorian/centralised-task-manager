@@ -15,6 +15,9 @@ const baseTask: TaskDto = {
     priority: 1,
     tags: [],
     locations: [],
+    relations: [],
+    reminders: [],
+    dueDateNotifiedAt: null,
 };
 
 describe('TaskCard', () => {
@@ -28,9 +31,10 @@ describe('TaskCard', () => {
         expect(screen.getByText('Todoist')).toBeInTheDocument();
     });
 
-    it('falls back when source is missing', () => {
+    it('renders no source badge when source is missing', () => {
         render(<TaskCard task={{ ...baseTask, source: undefined as never }} onToggle={vi.fn()} onEdit={vi.fn()} />);
-        expect(screen.getByText('Unknown')).toBeInTheDocument();
+        expect(screen.queryByText('Todoist')).not.toBeInTheDocument();
+        expect(screen.queryByText('Unknown')).not.toBeInTheDocument();
     });
 
     it('shows P1 priority badge', () => {

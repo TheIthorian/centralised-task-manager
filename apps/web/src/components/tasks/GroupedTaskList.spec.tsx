@@ -11,6 +11,9 @@ function makeTask(overrides: Partial<TaskDto> & { id: string }): TaskDto {
         sourceId: overrides.id,
         tags: [],
         locations: [],
+        relations: [],
+        reminders: [],
+        dueDateNotifiedAt: null,
         createdAt: '2026-01-01T00:00:00Z',
         updatedAt: '2026-01-01T00:00:00Z',
         ...overrides,
@@ -19,7 +22,8 @@ function makeTask(overrides: Partial<TaskDto> & { id: string }): TaskDto {
 
 // Use a fixed past date so "overdue" is predictable
 const OVERDUE_DATE = '2000-01-01';
-const TODAY_DATE = new Date().toISOString().slice(0, 10);
+const now = new Date();
+const TODAY_DATE = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
 describe('GroupedTaskList', () => {
     it('renders empty state when no tasks', () => {

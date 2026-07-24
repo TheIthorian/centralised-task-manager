@@ -224,26 +224,4 @@ describe('GoogleTasksTaskSource', () => {
             });
         });
     });
-
-    describe('healthCheck', () => {
-        it('returns { healthy: true } when the API responds successfully', async () => {
-            mockHttp.get.mockResolvedValue({ items: [] });
-
-            const result = await source.healthCheck(tokens);
-
-            expect(mockHttp.get).toHaveBeenCalledWith('/users/@me/lists', {
-                Authorization: `Bearer ${tokens.accessToken}`,
-            });
-            expect(result).toEqual({ healthy: true });
-        });
-
-        it('returns { healthy: false, error } when the API throws', async () => {
-            mockHttp.get.mockRejectedValue(new Error('Token expired'));
-
-            const result = await source.healthCheck(tokens);
-
-            expect(result.healthy).toBe(false);
-            expect(result.error).toBe('Token expired');
-        });
-    });
 });

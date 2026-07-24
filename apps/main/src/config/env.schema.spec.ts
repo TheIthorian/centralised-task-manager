@@ -9,6 +9,14 @@ describe('envSchema', () => {
             ENCRYPTION_KEY: 'a'.repeat(64),
             RSA_PRIVATE_KEY: 'dGVzdA==',
             RSA_PUBLIC_KEY: 'dGVzdA==',
+            PORT: 3000,
+            NODE_ENV: 'test',
+            REDIRECT_BASE_URL: 'http://localhost:3000',
+            WEB_URL: 'http://localhost:5173',
+            JWT_ACCESS_EXPIRES: 900,
+            REFRESH_TOKEN_EXPIRES_DAYS: 30,
+            LOG_LEVEL: 'info',
+            EXPORT_DIR: '/tmp/exports',
         });
         expect(error).toBeUndefined();
     });
