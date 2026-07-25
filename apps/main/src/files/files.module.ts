@@ -8,8 +8,7 @@ import { LocalFileStorage } from './storage/local-file-storage.js';
     providers: [
         {
             provide: FILE_STORAGE,
-            useFactory: (config: ConfigService) =>
-                new LocalFileStorage(config.get<string>('EXPORT_DIR', './exports')),
+            useFactory: (config: ConfigService) => new LocalFileStorage(config.get<string>('EXPORT_DIR', './exports')),
             inject: [ConfigService],
         },
         FilesService,

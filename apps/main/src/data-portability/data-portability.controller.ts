@@ -108,7 +108,11 @@ function isValidEnvelope(value: unknown): value is ExportEnvelopeDto {
         typeof v['totalParts'] === 'number' &&
         Array.isArray(v['tasks']) &&
         (v['tasks'] as unknown[]).every(
-            (t) => typeof t === 'object' && t !== null && typeof (t as Record<string, unknown>)['source'] === 'string' && typeof (t as Record<string, unknown>)['sourceId'] === 'string',
+            (t) =>
+                typeof t === 'object' &&
+                t !== null &&
+                typeof (t as Record<string, unknown>)['source'] === 'string' &&
+                typeof (t as Record<string, unknown>)['sourceId'] === 'string',
         ) &&
         Array.isArray(v['notifications']) &&
         (v['notifications'] as unknown[]).every((n) => typeof n === 'object' && n !== null)

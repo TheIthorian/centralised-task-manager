@@ -7,18 +7,34 @@ import { FilesService } from '../files/files.service.js';
 import { Export, ExportSchema, type ExportDocument } from './schemas/export.schema.js';
 import { User, UserSchema, type UserDocument } from '../users/schemas/user.schema.js';
 import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
-import { Notification, NotificationSchema, type NotificationDocument } from '../notifications/schemas/notification.schema.js';
+import {
+    Notification,
+    NotificationSchema,
+    type NotificationDocument,
+} from '../notifications/schemas/notification.schema.js';
 
 const mockFilesService = {
-    save: vi.fn().mockImplementation(
-        async ({ prefix, filename, data, contentType }: { prefix: string; filename: string; data: Buffer; contentType: string }) => ({
-            storagePath: `${prefix}/${filename}`,
-            filename,
-            sizeBytes: data.length,
-            contentType,
-            sha256: 'deadbeef'.repeat(8),
-        }),
-    ),
+    save: vi
+        .fn()
+        .mockImplementation(
+            async ({
+                prefix,
+                filename,
+                data,
+                contentType,
+            }: {
+                prefix: string;
+                filename: string;
+                data: Buffer;
+                contentType: string;
+            }) => ({
+                storagePath: `${prefix}/${filename}`,
+                filename,
+                sizeBytes: data.length,
+                contentType,
+                sha256: 'deadbeef'.repeat(8),
+            }),
+        ),
     readByPath: vi.fn(),
     deletePrefix: vi.fn(),
 };
@@ -42,10 +58,7 @@ describe('ExportService', () => {
                     { name: Export.name, schema: ExportSchema },
                 ]),
             ],
-            providers: [
-                ExportService,
-                { provide: FilesService, useValue: mockFilesService },
-            ],
+            providers: [ExportService, { provide: FilesService, useValue: mockFilesService }],
         }).compile();
 
         service = module.get(ExportService);

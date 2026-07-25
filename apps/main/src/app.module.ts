@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RequestLoggingMiddleware } from '@ctm/request-logger';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
+import { HealthModule } from './health/health.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ConnectorsModule } from './connectors/connectors.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
@@ -18,6 +19,7 @@ import { DataPortabilityModule } from './data-portability/data-portability.modul
         ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
         ScheduleModule.forRoot(),
         DatabaseModule,
+        HealthModule,
         AuthModule,
         ConnectorsModule,
         TasksModule,

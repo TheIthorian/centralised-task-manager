@@ -1,0 +1,76 @@
+name: deploy-cloudflare
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - 'apps/web/**'
+            - 'apps/landing/**'
+            - 'apps/docs/**'
+            - 'apps/main/src/**'
+            - 'packages/**'
+            - '.github/workflows/deploy-cloudflare.yml'
+    workflow_dispatch:
+
+concurrency:
+    group: deploy-cloudflare
+    cancel-in-progress: true
+
+env:
+    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+    web:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm exec turbo run build --filter=@ctm/web
+              env:
+                  VITE_API_URL: ${{ vars.VITE_API_URL }}
+            - run: pnpm exec wrangler pages deploy apps/web/dist --project-name=ctm-web --branch=main
+
+    landing:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm exec turbo run build --filter=@ctm/landing
+            - run: pnpm exec wrangler pages deploy apps/landing/dist --project-name=ctm-landing --branch=main
+
+    docs:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            # The docs build regenerates openapi.json from apps/main, which boots the
+            # Nest app; the env below only has to satisfy the config schema.
+            - run: pnpm exec turbo run build --filter=@ctm/docs
+              env:
+                  DOCS_URL: ${{ vars.DOCS_URL }}
+                  JWT_SECRET: docs-build-placeholder-secret-value-32
+                  PORT: '3000'
+                  NODE_ENV: production
+                  REDIRECT_BASE_URL: http://localhost:3000
+                  WEB_URL: http://localhost:5173
+                  JWT_ACCESS_EXPIRES: '120'
+                  REFRESH_TOKEN_EXPIRES_DAYS: '30'
+                  LOG_LEVEL: error
+                  EXPORT_DIR: ./exports
+            - run: pnpm exec wrangler pages deploy apps/docs/build --project-name=ctm-docs --branch=main

@@ -55,7 +55,12 @@ describe('FilesService', () => {
     });
 
     it('deletePrefix removes all files', async () => {
-        await service.save({ prefix: 's', filename: 'f.json', data: Buffer.from('x'), contentType: 'application/json' });
+        await service.save({
+            prefix: 's',
+            filename: 'f.json',
+            data: Buffer.from('x'),
+            contentType: 'application/json',
+        });
         await service.deletePrefix('s');
         // Reading after delete should throw
         await expect(service.readByPath('s/f.json')).rejects.toThrow();

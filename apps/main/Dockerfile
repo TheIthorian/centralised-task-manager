@@ -5,10 +5,9 @@ RUN apk upgrade --no-cache && corepack enable
 
 # ---- prune: extract only what apps/main needs ----
 FROM base AS pruner
-RUN pnpm add -g turbo
 WORKDIR /app
 COPY . .
-RUN turbo prune @ctm/main --docker
+RUN pnpm dlx turbo@2.10.6 prune @ctm/main --docker
 
 # ---- install: install pruned deps ----
 FROM base AS installer
@@ -23,12 +22,13 @@ COPY --from=pruner /app/out/full/ .
 RUN pnpm build --filter=@ctm/main...
 
 # ---- runner: lean production image ----
-FROM node:24.15.0-alpine3.23 AS runner
+FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
-RUN corepack enable
-COPY --from=builder /app/apps/main/dist ./dist
-COPY --from=builder /app/apps/main/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
+# Copy the whole workspace: pnpm links the @ctm/* deps from apps/main/node_modules
+# into packages/*, so they cannot be resolved from the root node_modules alone.
+COPY --from=builder /app ./
+# Runs as root: EXPORT_DIR points at a Railway volume, whose mount point is
+# root-owned, so an unprivileged user cannot create the export directory in it.
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/main/dist/main.js"]

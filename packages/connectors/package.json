@@ -15,11 +15,11 @@
         "@ctm/errors": "workspace:*",
         "@ctm/http-client": "workspace:*",
         "ajv": "^8.20.0",
-        "axios": "1.16.1"
+        "axios": "1.18.1"
     },
     "devDependencies": {
         "@ctm/tsconfig": "workspace:*",
         "typescript": "6.0.3",
-        "vitest": "4.1.7"
+        "vitest": "4.1.10"
     }
 }

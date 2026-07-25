@@ -5,7 +5,6 @@ import type { AuthorizedAppDto } from '@ctm/api-client';
 import { RefreshToken, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
 import { OAuthClient, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
 
-
 @Injectable()
 export class AuthorizedAppsService {
     constructor(

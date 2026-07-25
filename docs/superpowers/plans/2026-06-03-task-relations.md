@@ -31,6 +31,7 @@ This map lives in the schema file (Task 1) and is imported by the service (Task 
 ## Task 1: Schema — replace `parentId` with `relations`
 
 **Files:**
+
 - Modify: `apps/main/src/tasks/schemas/task.schema.ts`
 - Test: `apps/main/src/tasks/schemas/task.schema.spec.ts`
 
@@ -163,6 +164,7 @@ git commit -m "feat(main): add generic task relations schema, drop parentId"
 ## Task 2: api-client types — `relations` on TaskDto, new relation DTO
 
 **Files:**
+
 - Modify: `packages/api-client/src/types.ts`
 - Modify: `packages/api-client/src/index.ts`
 
@@ -230,6 +232,7 @@ git commit -m "feat(api-client): add TaskRelationDto, relations on TaskDto, drop
 ## Task 3: Service — add/remove relation with auto-mirror
 
 **Files:**
+
 - Modify: `apps/main/src/tasks/tasks.service.ts`
 - Test: `apps/main/src/tasks/tasks.service.relations.spec.ts` (new)
 
@@ -488,6 +491,7 @@ git commit -m "feat(main): add/remove task relations with auto-mirror + delete c
 ## Task 4: Service + sync — drop `parentId` from create and upsert
 
 **Files:**
+
 - Modify: `apps/main/src/tasks/tasks.service.ts`
 - Modify: `apps/main/src/data-portability/import.service.ts`
 
@@ -534,9 +538,7 @@ const buildInsert = (remote: RemoteTask, id: Types.ObjectId): object => {
         }
     }
 
-    const relations = parentObjectId
-        ? [{ type: 'parent' as RelationType, targetTaskId: parentObjectId }]
-        : [];
+    const relations = parentObjectId ? [{ type: 'parent' as RelationType, targetTaskId: parentObjectId }] : [];
 
     return {
         _id: id,
@@ -594,6 +596,7 @@ git commit -m "refactor(main): drop parentId from create and sync, write parent 
 ## Task 5: Controller — response mapping + relation endpoints
 
 **Files:**
+
 - Create: `apps/main/src/tasks/dto/task-relation.dto.ts`
 - Modify: `apps/main/src/tasks/tasks.controller.ts`
 - Test: `apps/main/src/tasks/tasks.controller.spec.ts`
@@ -755,6 +758,7 @@ git commit -m "feat(main): add POST/DELETE /tasks/:id/relations endpoints"
 ## Task 6: create-task DTO — drop `parentId`
 
 **Files:**
+
 - Modify: `apps/main/src/tasks/dto/create-task.dto.ts`
 
 - [ ] **Step 1: Remove the `parentId` field**
@@ -790,6 +794,7 @@ git commit -m "refactor(main): drop parentId from create-task DTO"
 ## Task 7: api-client — relation methods on the client
 
 **Files:**
+
 - Modify: `packages/api-client/src/client.ts`
 - Modify: `packages/api-client/src/client.types.ts`
 
@@ -849,6 +854,7 @@ git commit -m "feat(api-client): add addRelation/removeRelation client methods"
 ## Task 8: Fix web build + full verification
 
 **Files:**
+
 - Modify: any `apps/web/src` files referencing `task.parentId` (if present)
 
 - [ ] **Step 1: Find web usages**

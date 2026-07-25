@@ -7,10 +7,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AppModule } from '../app.module.js';
-import {
-    ConnectorConfig,
-    type ConnectorConfigDocument,
-} from '../connectors/schemas/connector-config.schema.js';
+import { ConnectorConfig, type ConnectorConfigDocument } from '../connectors/schemas/connector-config.schema.js';
 
 describe('SyncController', () => {
     let app: NestFastifyApplication;

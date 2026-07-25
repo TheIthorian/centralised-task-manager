@@ -13,12 +13,12 @@
     },
     "dependencies": {
         "@ctm/errors": "workspace:*",
-        "axios": "1.16.1"
+        "axios": "1.18.1"
     },
     "devDependencies": {
         "@ctm/tsconfig": "workspace:*",
         "pino": "10.3.1",
         "typescript": "6.0.3",
-        "vitest": "4.1.7"
+        "vitest": "4.1.10"
     }
 }

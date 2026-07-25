@@ -20,10 +20,7 @@ export class SyncController {
     /** Start a pull-sync job for a connection. */
     @ApiOperation({ summary: 'Start a pull-sync job for a connection' })
     @Post()
-    async createJob(
-        @Request() req: AuthRequest,
-        @Param('connectionId') connectionId: string,
-    ): Promise<TaskSyncJobDto> {
+    async createJob(@Request() req: AuthRequest, @Param('connectionId') connectionId: string): Promise<TaskSyncJobDto> {
         const job = await this.sync.createJob({ userId: req.user.sub, connectionId });
 
         return toSyncJobDto(job);
