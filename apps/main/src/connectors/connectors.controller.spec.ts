@@ -5,6 +5,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
+import { ConnectorName } from '@ctm/connectors';
 import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
 
 describe('ConnectorsModule', () => {
@@ -74,9 +75,9 @@ describe('ConnectorsModule', () => {
         };
 
         await configModel.create([
-            { ...base, source: 'google_tasks', externalAccountId: 'ext-A', email: 'a@x.com' },
-            { ...base, source: 'google_tasks', externalAccountId: 'ext-B', email: 'b@x.com' },
-            { ...base, source: 'notion', externalAccountId: 'ext-C', email: null },
+            { ...base, source: ConnectorName.GoogleTasks, externalAccountId: 'ext-A', email: 'a@x.com' },
+            { ...base, source: ConnectorName.GoogleTasks, externalAccountId: 'ext-B', email: 'b@x.com' },
+            { ...base, source: ConnectorName.Notion, externalAccountId: 'ext-C', email: null },
         ]);
 
         const res = await app.inject({
