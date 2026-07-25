@@ -357,3 +357,11 @@ export type ImportResponseDto = {
     imported: ImportSummaryDto;
     skipped: ImportSummaryDto;
 };
+
+/** Response from GET /health — service liveness for platform healthchecks. */
+export type HealthDto = {
+    status: 'ok' | 'degraded';
+    /** Mongo connection state; omitted by services that have no database. */
+    database?: 'up' | 'down';
+    uptimeSeconds: number;
+};
