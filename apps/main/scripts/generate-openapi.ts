@@ -14,10 +14,11 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { AppModule } from '../src/app.module.js';
 
 async function generate(): Promise<void> {
-    // abortOnError: false — app creation succeeds even when MongoDB is unreachable.
+    // preview: true builds the module graph without instantiating providers, which is
+    // all @nestjs/swagger needs. Nothing connects to MongoDB and no factory runs.
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
         logger: false,
-        abortOnError: false,
+        preview: true,
     });
 
     const config = new DocumentBuilder()
