@@ -1,11 +1,6 @@
-// Load the throwaway config BEFORE any import that triggers NestJS/Mongoose
-// initialization. `override` wins over a developer's real .env so the spec is
-// identical everywhere, and CI needs no environment of its own.
-import { resolve } from 'node:path';
-import { config as loadEnv } from 'dotenv';
-
-// Resolved against the package root, like the openapi.json write below.
-loadEnv({ path: resolve(process.cwd(), '.env.openapi'), override: true });
+// Set BEFORE any import that evaluates AppModule: it tells the module to skip env
+// validation, so the spec builds on a bare checkout with no environment at all.
+process.env['OPENAPI_GENERATION'] = 'true';
 
 import { writeFileSync } from 'node:fs';
 import { NestFactory } from '@nestjs/core';
