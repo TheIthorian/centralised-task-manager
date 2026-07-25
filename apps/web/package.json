@@ -23,6 +23,7 @@
         "socket.io-client": "4.8.3"
     },
     "devDependencies": {
+        "@cloudflare/workers-types": "^5.20260724.1",
         "@ctm/tsconfig": "workspace:*",
         "@tailwindcss/vite": "4.3.3",
         "@testing-library/jest-dom": "7.0.0",
