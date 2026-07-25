@@ -34,7 +34,7 @@ jobs:
             - run: pnpm exec turbo run build --filter=@ctm/web
               env:
                   VITE_API_URL: ${{ vars.VITE_API_URL }}
-            - run: pnpm dlx wrangler@4 pages deploy apps/web/dist --project-name=ctm-web --branch=main
+            - run: pnpm exec wrangler pages deploy apps/web/dist --project-name=ctm-web --branch=main
 
     landing:
         runs-on: ubuntu-latest
@@ -47,7 +47,7 @@ jobs:
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
             - run: pnpm exec turbo run build --filter=@ctm/landing
-            - run: pnpm dlx wrangler@4 pages deploy apps/landing/dist --project-name=ctm-landing --branch=main
+            - run: pnpm exec wrangler pages deploy apps/landing/dist --project-name=ctm-landing --branch=main
 
     docs:
         runs-on: ubuntu-latest
@@ -73,4 +73,4 @@ jobs:
                   REFRESH_TOKEN_EXPIRES_DAYS: '30'
                   LOG_LEVEL: error
                   EXPORT_DIR: ./exports
-            - run: pnpm dlx wrangler@4 pages deploy apps/docs/build --project-name=ctm-docs --branch=main
+            - run: pnpm exec wrangler pages deploy apps/docs/build --project-name=ctm-docs --branch=main
