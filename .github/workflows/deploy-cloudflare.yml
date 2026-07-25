@@ -59,18 +59,9 @@ jobs:
                   node-version-file: .nvmrc
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
-            # The docs build regenerates openapi.json from apps/main, which boots the
-            # Nest app; the env below only has to satisfy the config schema.
+            # The spec is generated from apps/main first; the docs build only renders it.
+            - run: pnpm exec turbo run generate-openapi --filter=@ctm/main
             - run: pnpm exec turbo run build --filter=@ctm/docs
               env:
                   DOCS_URL: ${{ vars.DOCS_URL }}
-                  JWT_SECRET: docs-build-placeholder-secret-value-32
-                  PORT: '3000'
-                  NODE_ENV: production
-                  REDIRECT_BASE_URL: http://localhost:3000
-                  WEB_URL: http://localhost:5173
-                  JWT_ACCESS_EXPIRES: '120'
-                  REFRESH_TOKEN_EXPIRES_DAYS: '30'
-                  LOG_LEVEL: error
-                  EXPORT_DIR: ./exports
             - run: pnpm exec wrangler pages deploy apps/docs/build --project-name=ctm-docs --branch=main

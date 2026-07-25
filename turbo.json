@@ -11,8 +11,9 @@
             "outputs": ["dist/**", "build/**", ".docusaurus/**"]
         },
         "@ctm/docs#build": {
-            "dependsOn": ["@ctm/main#generate-openapi", "^build"],
-            "outputs": ["build/**", ".docusaurus/**"]
+            "dependsOn": ["^build"],
+            "outputs": ["build/**", ".docusaurus/**"],
+            "env": ["DOCS_URL"]
         },
         "test": {
             "dependsOn": ["^build"]

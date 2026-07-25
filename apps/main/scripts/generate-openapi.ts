@@ -1,10 +1,11 @@
-// Set all required env vars BEFORE any imports that trigger NestJS/Mongoose initialization.
-// Short serverSelectionTimeoutMS lets the MongoDB connection fail quickly so the script
-// can generate the spec without a running database.
-process.env['MONGODB_URI'] = 'mongodb://127.0.0.1:27017/swagger?serverSelectionTimeoutMS=200&connectTimeoutMS=200';
-process.env['ENCRYPTION_KEY'] = '0'.repeat(64);
-process.env['RSA_PRIVATE_KEY'] = 'generate-only';
-process.env['RSA_PUBLIC_KEY'] = 'generate-only';
+// Load the throwaway config BEFORE any import that triggers NestJS/Mongoose
+// initialization. `override` wins over a developer's real .env so the spec is
+// identical everywhere, and CI needs no environment of its own.
+import { resolve } from 'node:path';
+import { config as loadEnv } from 'dotenv';
+
+// Resolved against the package root, like the openapi.json write below.
+loadEnv({ path: resolve(process.cwd(), '.env.openapi'), override: true });
 
 import { writeFileSync } from 'node:fs';
 import { NestFactory } from '@nestjs/core';

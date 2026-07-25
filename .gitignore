@@ -2,11 +2,13 @@
 .data/
 node_modules/
 dist/
+apps/main/dist-scripts/
 .turbo/
 !.env.test
 .env
 .env.*
 !.env.example
+!.env.openapi
 .DS_Store
 *.log
 .docusaurus
