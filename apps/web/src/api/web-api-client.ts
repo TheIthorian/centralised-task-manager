@@ -356,7 +356,7 @@ export class WebApiClient {
                 const refreshToken = this.refreshToken;
                 this.pendingRefresh = new CtmApiClient({ baseUrl: this.baseUrl, refreshToken })
                     .refresh()
-                    .then((tokens) => ({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }))
+                    .then((tokens) => ({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken ?? null }))
                     .finally(() => (this.pendingRefresh = null));
             }
 

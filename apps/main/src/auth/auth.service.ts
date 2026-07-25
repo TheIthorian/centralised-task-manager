@@ -45,7 +45,7 @@ export class AuthService {
         const accessToken = this.jwt.sign(payload);
 
         const rawRefresh = `rt_${randomBytes(32).toString('hex')}`;
-        const tokenHash = createHash('sha256').update(rawRefresh).digest('hex');
+        const tokenHash = this.hashToken(rawRefresh);
         const expiresInDays = this.config.get<number>('REFRESH_TOKEN_EXPIRES_DAYS', 30);
         const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
@@ -60,7 +60,7 @@ export class AuthService {
 
     /** Validate a refresh token and issue a new token pair. Old token is deleted (rotation). */
     async refreshTokens(rawRefreshToken: string): Promise<TokenPair & { user: { id: string; email: string } }> {
-        const tokenHash = createHash('sha256').update(rawRefreshToken).digest('hex');
+        const tokenHash = this.hashToken(rawRefreshToken);
         const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash });
 
         if (!record || record.expiresAt < new Date()) {
@@ -77,5 +77,17 @@ export class AuthService {
     /** Delete all refresh tokens for a user (logout everywhere). */
     async revokeAllRefreshTokens(userId: string): Promise<void> {
         await this.refreshTokenModel.deleteMany({ userId });
+    }
+
+    /** Delete a single refresh token. No-op when the token is unknown. */
+    async revokeRefreshToken({ rawRefreshToken }: { rawRefreshToken: string }): Promise<void> {
+        const tokenHash = this.hashToken(rawRefreshToken);
+
+        await this.refreshTokenModel.deleteOne({ tokenHash });
+    }
+
+    /** SHA-256 hash of a raw refresh token, used as the stored lookup key. */
+    private hashToken(rawToken: string): string {
+        return createHash('sha256').update(rawToken).digest('hex');
     }
 }

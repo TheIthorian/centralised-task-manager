@@ -59,11 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
 
         writeTokens({
             accessToken: result.accessToken,
-            refreshToken: result.refreshToken,
+            refreshToken: result.refreshToken ?? null,
         });
         setTokens({
             accessToken: result.accessToken,
-            refreshToken: result.refreshToken,
+            refreshToken: result.refreshToken ?? null,
         });
         writeUser(result.user);
         setUser(result.user);
@@ -74,11 +74,11 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
 
         writeTokens({
             accessToken: result.accessToken,
-            refreshToken: result.refreshToken,
+            refreshToken: result.refreshToken ?? null,
         });
         setTokens({
             accessToken: result.accessToken,
-            refreshToken: result.refreshToken,
+            refreshToken: result.refreshToken ?? null,
         });
         writeUser(result.user);
         setUser(result.user);

@@ -197,7 +197,8 @@ export type UpdateUserDto = {
 /** Access/refresh token pair returned after login or refresh. */
 export type TokenPair = {
     accessToken: string;
-    refreshToken: string;
+    /** Omitted for web clients — the refresh token is returned as an HttpOnly cookie instead. */
+    refreshToken?: string;
     user: UserDto;
 };
 
