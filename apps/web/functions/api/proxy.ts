@@ -8,7 +8,7 @@ const WEB_CLIENT_VALUE = 'web';
  */
 export function buildProxyRequest({ request, apiOrigin }: { request: Request; apiOrigin: string }): Request {
     const url = new URL(request.url);
-    const path = url.pathname.replace(/^\/api/, '') || '/';
+    const path = url.pathname.replace(/^\/api(?=\/|$)/, '') || '/';
     const target = new URL(`${path}${url.search}`, apiOrigin);
 
     const headers = new Headers(request.headers);

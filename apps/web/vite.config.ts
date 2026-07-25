@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
                     target: apiOrigin,
                     changeOrigin: true,
                     ws: true,
-                    rewrite: (path: string): string => path.replace(/^\/api/, ''),
+                    rewrite: (path: string): string => path.replace(/^\/api(?=\/|$)/, '') || '/',
                     headers: { 'X-Ctm-Client': 'web' },
                 },
             },

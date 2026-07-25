@@ -5,9 +5,10 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "tsc -p tsconfig.build.json && vite build",
+        "build": "tsc -p tsconfig.build.json && tsc -p functions/tsconfig.json && vite build",
         "preview": "vite preview",
         "test": "vitest run",
+        "typecheck:functions": "tsc -p functions/tsconfig.json",
         "lint": "oxlint .",
         "format": "oxfmt --config ../../.oxfmtrc.json . '**/*.md'"
     },

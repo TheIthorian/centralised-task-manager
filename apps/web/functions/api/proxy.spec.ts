@@ -25,6 +25,27 @@ describe('buildProxyRequest', () => {
         expect(proxied.url).toBe('https://api.example.com/');
     });
 
+    it('maps /api/ (trailing slash) to /', () => {
+        const request = new Request('https://ctm-web.pages.dev/api/');
+        const proxied = buildProxyRequest({ request, apiOrigin });
+
+        expect(proxied.url).toBe('https://api.example.com/');
+    });
+
+    it('does not strip a path that merely starts with the letters "api"', () => {
+        const request = new Request('https://ctm-web.pages.dev/apiary');
+        const proxied = buildProxyRequest({ request, apiOrigin });
+
+        expect(proxied.url).toBe('https://api.example.com/apiary');
+    });
+
+    it('does not strip /api-status, which is not the /api segment', () => {
+        const request = new Request('https://ctm-web.pages.dev/api-status');
+        const proxied = buildProxyRequest({ request, apiOrigin });
+
+        expect(proxied.url).toBe('https://api.example.com/api-status');
+    });
+
     it('stamps the web client header', () => {
         const request = new Request('https://ctm-web.pages.dev/api/tasks');
         const proxied = buildProxyRequest({ request, apiOrigin });
