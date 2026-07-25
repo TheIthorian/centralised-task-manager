@@ -5,10 +5,9 @@ RUN apk upgrade --no-cache && corepack enable
 
 # ---- prune: extract only what apps/mcp needs ----
 FROM base AS pruner
-RUN pnpm add -g turbo
 WORKDIR /app
 COPY . .
-RUN turbo prune @ctm/mcp --docker
+RUN pnpm dlx turbo@2.10.6 prune @ctm/mcp --docker
 
 # ---- install: install pruned deps ----
 FROM base AS installer
@@ -23,12 +22,12 @@ COPY --from=pruner /app/out/full/ .
 RUN pnpm build --filter=@ctm/mcp...
 
 # ---- runner: lean production image ----
-FROM node:24.15.0-alpine3.23 AS runner
+FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
-RUN corepack enable
-COPY --from=builder /app/apps/mcp/dist ./dist
-COPY --from=builder /app/apps/mcp/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
+# Copy the whole workspace: pnpm links the @ctm/* deps from apps/mcp/node_modules
+# into packages/*, so they cannot be resolved from the root node_modules alone.
+COPY --from=builder --chown=node:node /app ./
+USER node
 EXPOSE 3002
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/mcp/dist/main.js"]

@@ -10,9 +10,9 @@ Managed with **pnpm workspaces** + **Turborepo**.
 
 | App                                      | Description                                                                                                         |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| [`apps/main`](apps/main/README.md)       | NestJS REST API — auth, task aggregation, OAuth flows, API token issuance, serves the web SPA in production         |
+| [`apps/main`](apps/main/README.md)       | NestJS REST API — auth, task aggregation, OAuth flows, API token issuance, scheduled sync + reminders               |
 | [`apps/sync`](apps/sync/README.md)       | NestJS background worker — polls connected sources every 15 min, upserts tasks into MongoDB, refreshes OAuth tokens |
-| [`apps/web`](apps/web/README.md)         | Vite + React SPA — task management UI, served by `apps/main` in production                                          |
+| [`apps/web`](apps/web/README.md)         | Vite + React SPA — task management UI, deployed to Cloudflare Pages                                                 |
 | [`apps/docs`](apps/docs/README.md)       | Docusaurus site — user-facing docs and generated OpenAPI reference                                                  |
 | [`apps/landing`](apps/landing/README.md) | Landing / marketing page                                                                                            |
 
@@ -49,3 +49,8 @@ pnpm format      # oxfmt across workspace
 ```
 
 See each app/package README for detailed setup and environment variables.
+
+## Deployment
+
+Railway (API + MCP) · MongoDB Atlas · Cloudflare Pages (web, landing, docs).
+See [DEPLOYMENT.md](DEPLOYMENT.md).

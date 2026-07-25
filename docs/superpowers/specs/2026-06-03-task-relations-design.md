@@ -11,10 +11,10 @@ Replace the existing single `parentId` field.
 
 ## Relation Types
 
-| Type      | Inverse   |
-| --------- | --------- |
-| `parent`  | `child`   |
-| `next`    | `previous`|
+| Type      | Inverse               |
+| --------- | --------------------- |
+| `parent`  | `child`               |
+| `next`    | `previous`            |
 | `related` | `related` (symmetric) |
 
 `RelationType = 'parent' | 'child' | 'next' | 'previous' | 'related'`
@@ -27,7 +27,11 @@ point for future types.)
 Embedded array on the `Task` document (matches existing embedded sub-doc style):
 
 ```ts
-relations: { type: RelationType; targetTaskId: ObjectId }[]
+relations: {
+    type: RelationType;
+    targetTaskId: ObjectId;
+}
+[];
 ```
 
 - The `parentId` field is **removed entirely**. No data migration of existing docs.
@@ -39,15 +43,15 @@ Both sides of a relation are stored (MongoDB is eventually consistent; storing b
 sides lets either task be read directly without a reverse scan).
 
 - **Add** `addRelation({ userId, taskId, type, targetTaskId })`:
-  - Validate both tasks exist and are owned by `userId`.
-  - Write `{ type, targetTaskId }` on the source task and the inverse
-    `{ type: inverse(type), targetTaskId: taskId }` on the target task.
-  - Two sequential writes (no Mongo transaction — standalone mongod does not
-    support multi-doc txns; deferred). Use `$addToSet` so each write is idempotent.
-  - Dedupe: a `(type, targetTaskId)` pair already present is a no-op (no duplicates).
+    - Validate both tasks exist and are owned by `userId`.
+    - Write `{ type, targetTaskId }` on the source task and the inverse
+      `{ type: inverse(type), targetTaskId: taskId }` on the target task.
+    - Two sequential writes (no Mongo transaction — standalone mongod does not
+      support multi-doc txns; deferred). Use `$addToSet` so each write is idempotent.
+    - Dedupe: a `(type, targetTaskId)` pair already present is a no-op (no duplicates).
 - **Remove** `removeRelation({ userId, taskId, type, targetTaskId })`:
-  - Pull the relation from the source and the inverse from the target
-    (two sequential `$pull` writes).
+    - Pull the relation from the source and the inverse from the target
+      (two sequential `$pull` writes).
 - **On task delete**: pull any relations across the user's tasks whose
   `targetTaskId` equals the deleted task id (cleanup of dangling references).
 

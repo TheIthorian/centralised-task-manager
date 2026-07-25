@@ -79,7 +79,7 @@ NestJS application. Responsibilities:
 - Task aggregation API
 - Connector OAuth flow + token storage
 - API token issuance (for CLI and MCP)
-- Serving the Vite-built `apps/web` SPA in production
+- Scheduled sync + reminder jobs (`@nestjs/schedule`)
 
 Modules follow NestJS conventions: `*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.schema.ts` (Mongoose schemas).
 
@@ -89,7 +89,7 @@ NestJS background worker. No HTTP server. Polls connected sources every 15 minut
 
 ### apps/web
 
-Vite + React SPA. No SSR. Built output is served by `apps/main` in production.
+Vite + React SPA. No SSR. Deployed to Cloudflare Pages (see `DEPLOYMENT.md`).
 
 **Stack:** Vite · React · React Router · Tailwind CSS v4 · TypeScript (strict, `moduleResolution: bundler`)
 

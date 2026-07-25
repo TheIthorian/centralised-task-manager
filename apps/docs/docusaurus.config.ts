@@ -8,7 +8,8 @@ const config: Config = {
     },
     title: 'CTM API Docs',
     tagline: 'Centralised Task Manager — API Reference & Guides',
-    url: 'http://localhost:3001',
+    // DOCS_URL is the public origin the site is deployed under (Cloudflare Pages).
+    url: process.env['DOCS_URL'] ?? 'http://localhost:3001',
     baseUrl: '/',
     onBrokenLinks: 'warn',
     organizationName: 'ctm',
