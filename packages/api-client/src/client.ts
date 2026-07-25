@@ -93,20 +93,29 @@ export class CtmApiClient {
         return this.request<TokenPair>({ method: 'POST', path: '/auth/register', body: { name, email, password } });
     }
 
-    /** Exchange a refresh token for a new token pair. */
+    /**
+     * Exchange a refresh token for a new token pair. Web clients omit the token
+     * and rely on the HttpOnly cookie.
+     */
     async refresh({ refreshToken }: RefreshParams = {}): Promise<TokenPair> {
         const token = refreshToken ?? this.refreshToken;
 
-        if (!token) {
-            throw new ApiClientError({
-                message: 'No refresh token available',
-                statusCode: 0,
-                method: 'POST',
-                path: '/auth/refresh',
-            });
-        }
+        return this.request<TokenPair>({
+            method: 'POST',
+            path: '/auth/refresh',
+            body: token ? { refreshToken: token } : {},
+        });
+    }
 
-        return this.request<TokenPair>({ method: 'POST', path: '/auth/refresh', body: { refreshToken: token } });
+    /** Revoke the current refresh token. */
+    async logout({ refreshToken }: RefreshParams = {}): Promise<void> {
+        const token = refreshToken ?? this.refreshToken;
+
+        await this.request<void>({
+            method: 'POST',
+            path: '/auth/logout',
+            body: token ? { refreshToken: token } : {},
+        });
     }
 
     /** List tasks, optionally filtered by UI filter and/or update date. */
