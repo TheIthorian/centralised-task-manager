@@ -3,6 +3,7 @@
     "concurrency": "12",
     "tasks": {
         "generate-openapi": {
+            "dependsOn": ["^build"],
             "outputs": ["openapi.json"]
         },
         "build": {
