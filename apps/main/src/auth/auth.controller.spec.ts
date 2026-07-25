@@ -526,6 +526,16 @@ describe('Cookie mode for web clients', () => {
         expect(res.statusCode).toBe(401);
     });
 
+    it('rejects a bearer refresh with an empty body with 400, not 401', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/refresh',
+            payload: {},
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
     it('clears the cookie and revokes the token on logout', async () => {
         const email = `web-logout-${Date.now()}@example.com`;
         const registerRes = await app.inject({
@@ -561,5 +571,15 @@ describe('Cookie mode for web clients', () => {
         });
 
         expect(refreshAfterLogout.statusCode).toBe(401);
+    });
+
+    it('logout is idempotent for a bearer client with an empty body (204, no revoke attempted)', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/logout',
+            payload: {},
+        });
+
+        expect(res.statusCode).toBe(204);
     });
 });

@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { UnauthorizedError } from '@ctm/errors';
+import { UnauthorizedError, ValidationError } from '@ctm/errors';
 import { AuthService } from './auth.service.js';
 import type { TokenPair, AuthorizedAppDto } from '@ctm/api-client';
 import { RegisterDto } from './dto/register.dto.js';
@@ -103,7 +103,13 @@ export class AuthController {
     ): Promise<TokenPair> {
         const token = request.cookies[REFRESH_COOKIE_NAME] ?? dto.refreshToken;
 
-        if (!token) throw new UnauthorizedError('No refresh token provided');
+        if (!token) {
+            if (isWebClient({ headers: request.headers })) {
+                throw new UnauthorizedError('No refresh token provided');
+            }
+
+            throw new ValidationError('refreshToken should not be empty');
+        }
 
         const tokens = await this.auth.refreshTokens(token);
 

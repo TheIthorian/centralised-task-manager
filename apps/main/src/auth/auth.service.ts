@@ -46,7 +46,7 @@ export class AuthService {
 
         const rawRefresh = `rt_${randomBytes(32).toString('hex')}`;
         const tokenHash = this.hashToken(rawRefresh);
-        const expiresInDays = this.config.get<number>('REFRESH_TOKEN_EXPIRES_DAYS', 30);
+        const expiresInDays = this.config.getOrThrow<number>('REFRESH_TOKEN_EXPIRES_DAYS');
         const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
         await this.refreshTokenModel.create({ tokenHash, userId: String(user._id), expiresAt });
