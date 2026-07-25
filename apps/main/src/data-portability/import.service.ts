@@ -5,7 +5,13 @@ import { ValidationError } from '@ctm/errors';
 import { User, type UserDocument } from '../users/schemas/user.schema.js';
 import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
 import { Notification, type NotificationDocument } from '../notifications/schemas/notification.schema.js';
-import type { ExportEnvelopeDto, ExportProfileDto, ExportTaskDto, ImportResponseDto, NotificationDto } from '@ctm/api-client';
+import type {
+    ExportEnvelopeDto,
+    ExportProfileDto,
+    ExportTaskDto,
+    ImportResponseDto,
+    NotificationDto,
+} from '@ctm/api-client';
 
 type OnConflict = 'replace' | 'ignore';
 
@@ -125,7 +131,11 @@ export class ImportService {
 
         try {
             if (onConflict === 'ignore') {
-                const result = await this.notificationModel.updateOne(filter, { $setOnInsert: fields }, { upsert: true });
+                const result = await this.notificationModel.updateOne(
+                    filter,
+                    { $setOnInsert: fields },
+                    { upsert: true },
+                );
 
                 return result.upsertedCount > 0;
             }

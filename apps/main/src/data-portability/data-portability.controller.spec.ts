@@ -15,11 +15,18 @@ const userId = new Types.ObjectId().toHexString();
 const authReq = { user: { sub: userId, email: 'test@test.com' } };
 
 const mockExportService = {
-    export: vi.fn().mockResolvedValue({ exportId: 'uuid-1', files: [{ filename: 'export-part-1.json', sizeBytes: 100, contentType: 'application/json', sha256: 'abc' }] }),
+    export: vi
+        .fn()
+        .mockResolvedValue({
+            exportId: 'uuid-1',
+            files: [{ filename: 'export-part-1.json', sizeBytes: 100, contentType: 'application/json', sha256: 'abc' }],
+        }),
 };
 
 const mockImportService = {
-    import: vi.fn().mockResolvedValue({ imported: { tasks: 2, notifications: 1 }, skipped: { tasks: 0, notifications: 0 } }),
+    import: vi
+        .fn()
+        .mockResolvedValue({ imported: { tasks: 2, notifications: 1 }, skipped: { tasks: 0, notifications: 0 } }),
 };
 
 const mockFilesService = {
@@ -73,7 +80,15 @@ describe('DataPortabilityController', () => {
         await exportModel.create({
             userId: new Types.ObjectId(userId),
             exportId,
-            files: [{ storagePath: `${exportId}/export-part-1.json`, filename: 'export-part-1.json', sizeBytes: 5, contentType: 'application/json', sha256: 'abc' }],
+            files: [
+                {
+                    storagePath: `${exportId}/export-part-1.json`,
+                    filename: 'export-part-1.json',
+                    sizeBytes: 5,
+                    contentType: 'application/json',
+                    sha256: 'abc',
+                },
+            ],
         });
 
         const fileBuffer = Buffer.from('{}');
@@ -82,7 +97,10 @@ describe('DataPortabilityController', () => {
         const fakeReply = { header: vi.fn().mockReturnThis(), send: vi.fn() };
         await controller.downloadFile(authReq as never, exportId, 'export-part-1.json', fakeReply as never);
 
-        expect(fakeReply.header).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="export-part-1.json"');
+        expect(fakeReply.header).toHaveBeenCalledWith(
+            'Content-Disposition',
+            'attachment; filename="export-part-1.json"',
+        );
         expect(fakeReply.send).toHaveBeenCalledWith(fileBuffer);
     });
 });

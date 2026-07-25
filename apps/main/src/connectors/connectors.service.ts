@@ -124,13 +124,7 @@ export class ConnectorsService {
     }
 
     /** Get the source name for a connection. Throws if not found. */
-    async getConnectionSource({
-        userId,
-        connectionId,
-    }: {
-        userId: string;
-        connectionId: string;
-    }): Promise<string> {
+    async getConnectionSource({ userId, connectionId }: { userId: string; connectionId: string }): Promise<string> {
         const doc = await this.getConnection({ userId, connectionId });
 
         return doc.source;
@@ -210,7 +204,13 @@ export class ConnectorsService {
     }
 
     /** Get the stored settings for a connection. Returns empty object if not found. */
-    async getSettings({ userId, connectionId }: { userId: string; connectionId: string }): Promise<Record<string, unknown>> {
+    async getSettings({
+        userId,
+        connectionId,
+    }: {
+        userId: string;
+        connectionId: string;
+    }): Promise<Record<string, unknown>> {
         const config = await this.getConnection({ userId, connectionId });
 
         return config.settings ?? {};

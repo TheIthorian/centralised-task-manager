@@ -212,10 +212,7 @@ export class ConnectorsController {
     @Delete('connections/:connectionId')
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
-    async removeConnection(
-        @Request() req: AuthRequest,
-        @Param('connectionId') connectionId: string,
-    ): Promise<void> {
+    async removeConnection(@Request() req: AuthRequest, @Param('connectionId') connectionId: string): Promise<void> {
         await this.connectors.removeConnection({ userId: req.user.sub, connectionId });
     }
 

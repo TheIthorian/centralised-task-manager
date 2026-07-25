@@ -95,7 +95,9 @@ export class OAuthController {
         @Res() res: FastifyReply,
         @Headers('accept') accept: string = '',
     ): Promise<void> {
-        this.logger.log(`authorizePost client_id=${query.client_id ?? 'none'} redirect_uri=${query.redirect_uri} user=${req.user?.sub ?? 'unauthenticated'}`);
+        this.logger.log(
+            `authorizePost client_id=${query.client_id ?? 'none'} redirect_uri=${query.redirect_uri} user=${req.user?.sub ?? 'unauthenticated'}`,
+        );
 
         if (query.client_id) {
             const client = await this.oauthClient.findByClientId(query.client_id);
@@ -106,7 +108,9 @@ export class OAuthController {
             }
 
             if (!isRedirectUriPermitted(client.redirectUris, query.redirect_uri)) {
-                this.logger.warn(`authorizePost redirect_uri not permitted client_id=${query.client_id} redirect_uri=${query.redirect_uri} registered=${client.redirectUris.join(',')}`);
+                this.logger.warn(
+                    `authorizePost redirect_uri not permitted client_id=${query.client_id} redirect_uri=${query.redirect_uri} registered=${client.redirectUris.join(',')}`,
+                );
                 throw new BadRequestException('redirect_uri not permitted for this client');
             }
         }

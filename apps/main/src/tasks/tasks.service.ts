@@ -353,9 +353,7 @@ export class TasksService {
                 }
             }
 
-            const relations = parentObjectId
-                ? [{ type: 'parent' as RelationType, targetTaskId: parentObjectId }]
-                : [];
+            const relations = parentObjectId ? [{ type: 'parent' as RelationType, targetTaskId: parentObjectId }] : [];
 
             return {
                 _id: id,

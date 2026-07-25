@@ -5,7 +5,11 @@ import { type Model, Types } from 'mongoose';
 import { ImportService } from './import.service.js';
 import { User, UserSchema, type UserDocument } from '../users/schemas/user.schema.js';
 import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
-import { Notification, NotificationSchema, type NotificationDocument } from '../notifications/schemas/notification.schema.js';
+import {
+    Notification,
+    NotificationSchema,
+    type NotificationDocument,
+} from '../notifications/schemas/notification.schema.js';
 import type { ExportEnvelopeDto, ExportTaskDto, NotificationDto } from '@ctm/api-client';
 
 function makeEnvelope(overrides: Partial<ExportEnvelopeDto> = {}): ExportEnvelopeDto {
@@ -113,7 +117,14 @@ describe('ImportService', () => {
     it('onConflict=ignore skips existing tasks', async () => {
         const ts = Date.now();
         const user = await userModel.create({ email: `import-ignore-${ts}@test.com`, passwordHash: 'x', name: 'Orig' });
-        await taskModel.create({ userId: user._id, source: 'local', sourceId: `t-${ts}`, title: 'Original', status: 'open', syncedAt: new Date() });
+        await taskModel.create({
+            userId: user._id,
+            source: 'local',
+            sourceId: `t-${ts}`,
+            title: 'Original',
+            status: 'open',
+            syncedAt: new Date(),
+        });
 
         const result = await service.import({
             userId: String(user._id),
@@ -131,7 +142,14 @@ describe('ImportService', () => {
     it('onConflict=replace overwrites existing tasks', async () => {
         const ts = Date.now();
         const user = await userModel.create({ email: `import-replace-${ts}@test.com`, passwordHash: 'x', name: 'R' });
-        await taskModel.create({ userId: user._id, source: 'local', sourceId: `r-${ts}`, title: 'Old', status: 'open', syncedAt: new Date() });
+        await taskModel.create({
+            userId: user._id,
+            source: 'local',
+            sourceId: `r-${ts}`,
+            title: 'Old',
+            status: 'open',
+            syncedAt: new Date(),
+        });
 
         const result = await service.import({
             userId: String(user._id),
@@ -153,7 +171,9 @@ describe('ImportService', () => {
 
         const result = await service.import({
             userId: String(user._id),
-            envelopes: [makeEnvelope({ notifications: [makeNotification({ id: notifId.toHexString(), title: 'New' })] })],
+            envelopes: [
+                makeEnvelope({ notifications: [makeNotification({ id: notifId.toHexString(), title: 'New' })] }),
+            ],
             onConflict: 'ignore',
         });
 
@@ -164,22 +184,28 @@ describe('ImportService', () => {
 
     it('onConflict=replace updates profile name and notificationPreferences', async () => {
         const ts = Date.now();
-        const user = await userModel.create({ email: `import-profile-${ts}@test.com`, passwordHash: 'x', name: 'Old Name' });
+        const user = await userModel.create({
+            email: `import-profile-${ts}@test.com`,
+            passwordHash: 'x',
+            name: 'Old Name',
+        });
 
         await service.import({
             userId: String(user._id),
-            envelopes: [makeEnvelope({
-                profile: {
-                    email: user.email,
-                    name: 'New Name',
-                    notificationPreferences: {
-                        connectorReconnect: { inApp: false, discord: false, email: false },
-                        dailySummary: { inApp: false, discord: false, email: false },
-                        reminder: { inApp: false, discord: false, email: false },
-                        upcomingDeadline: { inApp: false, discord: false, email: false },
+            envelopes: [
+                makeEnvelope({
+                    profile: {
+                        email: user.email,
+                        name: 'New Name',
+                        notificationPreferences: {
+                            connectorReconnect: { inApp: false, discord: false, email: false },
+                            dailySummary: { inApp: false, discord: false, email: false },
+                            reminder: { inApp: false, discord: false, email: false },
+                            upcomingDeadline: { inApp: false, discord: false, email: false },
+                        },
                     },
-                },
-            })],
+                }),
+            ],
             onConflict: 'replace',
         });
 
@@ -189,22 +215,28 @@ describe('ImportService', () => {
 
     it('onConflict=ignore skips profile update', async () => {
         const ts = Date.now();
-        const user = await userModel.create({ email: `import-profile-ignore-${ts}@test.com`, passwordHash: 'x', name: 'Keep' });
+        const user = await userModel.create({
+            email: `import-profile-ignore-${ts}@test.com`,
+            passwordHash: 'x',
+            name: 'Keep',
+        });
 
         await service.import({
             userId: String(user._id),
-            envelopes: [makeEnvelope({
-                profile: {
-                    email: user.email,
-                    name: 'Changed',
-                    notificationPreferences: {
-                        connectorReconnect: { inApp: false, discord: false, email: false },
-                        dailySummary: { inApp: false, discord: false, email: false },
-                        reminder: { inApp: false, discord: false, email: false },
-                        upcomingDeadline: { inApp: false, discord: false, email: false },
+            envelopes: [
+                makeEnvelope({
+                    profile: {
+                        email: user.email,
+                        name: 'Changed',
+                        notificationPreferences: {
+                            connectorReconnect: { inApp: false, discord: false, email: false },
+                            dailySummary: { inApp: false, discord: false, email: false },
+                            reminder: { inApp: false, discord: false, email: false },
+                            upcomingDeadline: { inApp: false, discord: false, email: false },
+                        },
                     },
-                },
-            })],
+                }),
+            ],
             onConflict: 'ignore',
         });
 
