@@ -20,6 +20,7 @@ export function useNotificationSocket(api: WebApiClient): void {
         const baseUrl = api.getBaseUrl();
 
         const socket = io(`${baseUrl}/notifications`, {
+            path: '/api/socket.io',
             transports: ['websocket'],
             auth: { token },
         });

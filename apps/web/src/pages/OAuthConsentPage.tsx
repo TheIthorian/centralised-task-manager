@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useSearchParams, Navigate } from 'react-router';
 import { Button } from '@ctm/ui';
 import { useAuth } from '../auth/AuthContext.js';
-import { readTokens } from '../auth/auth-storage.js';
 import config from '../config.js';
 
 type ScopeEntry = {
@@ -58,7 +57,7 @@ function buildScopeGroups(requestedScopes: string[]): ScopeGroups {
 /** OAuth consent page — shown when a client requests access to CTM. */
 export function OAuthConsentPage(): React.JSX.Element {
     const [params] = useSearchParams();
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, api } = useAuth();
 
     const rawScope = params.get('scope') ?? 'openid';
     const requestedScopes = rawScope.split(/\s+/).filter((s) => s in SCOPE_REGISTRY);
@@ -118,7 +117,7 @@ export function OAuthConsentPage(): React.JSX.Element {
         const selectedWithOpenid = new Set(selected);
         selectedWithOpenid.add('openid');
 
-        const { accessToken } = readTokens();
+        const accessToken = api.getAccessToken();
 
         const apiBase = config.apiUrl;
 

@@ -19,11 +19,11 @@ import {
     type TokenPair,
     type UserDto,
 } from '@ctm/api-client';
-import type { StoredAuthTokens } from '../auth/auth-storage.js';
 import type {
     WebAddReminderParams,
     WebApiClientOptions,
     WebApiError,
+    WebAuthTokens,
     WebCancelSyncJobParams,
     WebConnectorParams,
     WebCreateTaskParams,
@@ -47,18 +47,16 @@ import type {
 /** Web-only API wrapper with refresh, redirect, and toast behavior. */
 export class WebApiClient {
     private readonly baseUrl: string;
-    private readonly onTokens: (tokens: StoredAuthTokens) => void;
+    private readonly onTokens: (tokens: WebAuthTokens) => void;
     private readonly onUnauthorized: () => void;
     private readonly onError: (error: WebApiError) => void;
     private accessToken: string | null;
-    private refreshToken: string | null;
     private apiClient: CtmApiClient;
-    private pendingRefresh: Promise<StoredAuthTokens> | null = null;
+    private pendingRefresh: Promise<WebAuthTokens> | null = null;
 
-    constructor({ baseUrl, accessToken, refreshToken, onTokens, onUnauthorized, onError }: WebApiClientOptions) {
+    constructor({ baseUrl, accessToken, onTokens, onUnauthorized, onError }: WebApiClientOptions) {
         this.baseUrl = baseUrl;
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
         this.onTokens = onTokens;
         this.onUnauthorized = onUnauthorized;
         this.onError = onError;
@@ -283,6 +281,29 @@ export class WebApiClient {
         await this.execute({ request: () => this.apiClient.revokeAuthorizedApp({ clientId }) });
     }
 
+    /**
+     * Exchange the HttpOnly refresh cookie for a new access token.
+     * Deliberately bypasses `execute` — a 401 here means "not logged in", which is
+     * the normal case for an anonymous visitor and must not trigger the
+     * `onUnauthorized` redirect (that would loop on /login).
+     */
+    async refresh(): Promise<TokenPair> {
+        const tokens = await this.apiClient.refresh();
+
+        this.setTokens({ accessToken: tokens.accessToken });
+
+        return tokens;
+    }
+
+    /** Revoke the current session server-side. */
+    async logout(): Promise<void> {
+        await this.execute({
+            request: () => this.apiClient.logout(),
+            retryOnUnauthorized: false,
+            toastOnError: false,
+        });
+    }
+
     /** Return the current access token (used for WebSocket authentication). */
     getAccessToken(): string | null {
         return this.accessToken;
@@ -297,15 +318,13 @@ export class WebApiClient {
         return new CtmApiClient({
             baseUrl: this.baseUrl,
             accessToken: this.accessToken,
-            refreshToken: this.refreshToken,
         });
     }
 
-    private setTokens({ accessToken, refreshToken }: StoredAuthTokens): void {
+    private setTokens({ accessToken }: WebAuthTokens): void {
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
         this.apiClient = this.createApiClient();
-        this.onTokens({ accessToken, refreshToken });
+        this.onTokens({ accessToken });
     }
 
     private async execute<T>({
@@ -321,7 +340,7 @@ export class WebApiClient {
             return await request();
         } catch (error) {
             if (error instanceof ApiClientError && error.statusCode === 401 && retryOnUnauthorized) {
-                return this.retryWithRefresh({ request, error, toastOnError });
+                return this.retryWithRefresh({ request, toastOnError });
             }
 
             const normalizedError = this.normalizeError(error);
@@ -338,25 +357,16 @@ export class WebApiClient {
 
     private async retryWithRefresh<T>({
         request,
-        error,
         toastOnError,
     }: {
         request: () => Promise<T>;
-        error: ApiClientError;
         toastOnError: boolean;
     }): Promise<T> {
-        if (!this.refreshToken) {
-            const normalizedError = this.normalizeError(error);
-            this.onUnauthorized();
-            throw normalizedError;
-        }
-
         try {
             if (!this.pendingRefresh) {
-                const refreshToken = this.refreshToken;
-                this.pendingRefresh = new CtmApiClient({ baseUrl: this.baseUrl, refreshToken })
+                this.pendingRefresh = this.apiClient
                     .refresh()
-                    .then((tokens) => ({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken ?? null }))
+                    .then((tokens) => ({ accessToken: tokens.accessToken }))
                     .finally(() => (this.pendingRefresh = null));
             }
 
