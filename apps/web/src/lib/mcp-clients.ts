@@ -1,3 +1,5 @@
+import type { BrandKey } from './brand-icons.js';
+
 /** Server name written into a client's MCP config when it supports a one-click install. */
 const SERVER_NAME = 'ctm';
 
@@ -16,7 +18,7 @@ export type McpClientAction =
 export type McpClient = {
     id: string;
     label: string;
-    favicon: string;
+    brand: BrandKey;
     /** How to add the server to this client. */
     buildAction: (params: { mcpUrl: string }) => McpClientAction;
     /** Shown under the card so the user knows what the button did. */
@@ -40,14 +42,14 @@ export const MCP_CLIENTS: McpClient[] = [
     {
         id: 'claude',
         label: 'Claude',
-        favicon: '/favicons/claude.png',
+        brand: 'claude',
         buildAction: () => ({ kind: 'copy-url', settingsUrl: 'https://claude.ai/settings/connectors' }),
         hint: 'URL copied. In Claude, choose “Add custom connector” and paste it, then sign in to approve access.',
     },
     {
         id: 'claude-code',
         label: 'Claude Code',
-        favicon: '/favicons/claude.png',
+        brand: 'claude',
         buildAction: ({ mcpUrl }) => ({
             kind: 'copy-command',
             command: `claude mcp add --transport http ${SERVER_NAME} ${mcpUrl}`,
@@ -57,21 +59,21 @@ export const MCP_CLIENTS: McpClient[] = [
     {
         id: 'cursor',
         label: 'Cursor',
-        favicon: '/favicons/cursor.png',
+        brand: 'cursor',
         buildAction: ({ mcpUrl }) => ({ kind: 'deeplink', url: cursorDeeplink({ mcpUrl }) }),
         hint: 'Cursor will ask you to confirm the install, then sign in.',
     },
     {
         id: 'vscode',
         label: 'VS Code',
-        favicon: '/favicons/vscode.png',
+        brand: 'vscode',
         buildAction: ({ mcpUrl }) => ({ kind: 'deeplink', url: vsCodeDeeplink({ mcpUrl }) }),
         hint: 'VS Code will ask you to confirm the install, then sign in.',
     },
     {
         id: 'chatgpt',
         label: 'ChatGPT',
-        favicon: '/favicons/chatgpt.png',
+        brand: 'chatgpt',
         buildAction: () => ({ kind: 'copy-url', settingsUrl: 'https://chatgpt.com/#settings/Connectors' }),
         hint: 'URL copied. In ChatGPT, add a connector and paste it, then sign in to approve access.',
     },

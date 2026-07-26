@@ -1,7 +1,8 @@
 import { ConnectorType } from '@ctm/api-client';
 import type { ConnectorAccountDto, ConnectorStatusDto, ConnectorHealthDto, TaskSyncJobDto } from '@ctm/api-client';
 import { Button } from '@ctm/ui';
-import { getSourceLabel, getSourceFaviconUrl } from '../../lib/source-labels.js';
+import { getSourceLabel, getSourceBrand } from '../../lib/source-labels.js';
+import { BrandIcon } from '../BrandIcon.js';
 
 type SourceCardProps = {
     connector: ConnectorStatusDto;
@@ -165,7 +166,7 @@ export function SourceCard({
     isHealthLoading = false,
 }: SourceCardProps): React.JSX.Element {
     const { source, accounts } = connector;
-    const favicon = getSourceFaviconUrl(source);
+    const brand = getSourceBrand(source);
     const sourceLabel = getSourceLabel(source);
     const hasAccounts = accounts.length > 0;
 
@@ -173,8 +174,8 @@ export function SourceCard({
         <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide flex items-center gap-1.5">
-                        {favicon && <img src={favicon} alt="" width={14} height={14} className="inline-block" />}
+                    <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide flex items-center gap-2">
+                        {brand && <BrandIcon brand={brand} />}
                         {sourceLabel}
                     </p>
                     {!hasAccounts && (
