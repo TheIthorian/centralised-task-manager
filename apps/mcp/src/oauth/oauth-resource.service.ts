@@ -29,9 +29,15 @@ export class OAuthResourceService {
         return `${this.getMcpPublicUrl()}/.well-known/oauth-protected-resource`;
     }
 
-    /** OAuth authorization server(s) that issue tokens accepted by this MCP server. */
+    /**
+     * OAuth authorization server(s) that issue tokens accepted by this MCP server.
+     *
+     * Deliberately not `CTM_API_BASE_URL`: that is the private address this service calls,
+     * which MCP clients cannot reach. This must be the API's public origin, and must match
+     * the `issuer` the API advertises, or clients reject the discovery document.
+     */
     getAuthorizationServer(): string {
-        return this.config.getOrThrow<string>('CTM_API_BASE_URL').replace(/\/$/, '');
+        return this.config.getOrThrow<string>('CTM_PUBLIC_URL').replace(/\/$/, '');
     }
 
     /** URL of the registration endpoint for dynamic client registration (RFC 7591). */
