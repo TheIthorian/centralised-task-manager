@@ -24,7 +24,7 @@ function resolveUrl(n: NotificationDto): string | null {
     if (data.type === 'reminder' && data.taskId) return `/tasks?highlightTaskId=${data.taskId}`;
     if (data.type === 'reminder') return '/tasks';
     if (data.type === 'upcoming_deadline') return '/tasks?filter=upcoming';
-    if (data.type === 'connector_reconnect') return '/settings/sources';
+    if (data.type === 'connector_reconnect') return '/settings/connectors';
     if (data.type === 'daily_summary') return '/tasks';
 
     return null;

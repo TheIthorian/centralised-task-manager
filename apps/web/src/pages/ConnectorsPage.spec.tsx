@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
-import { SourcesPage } from './SourcesPage.js';
+import { ConnectorsPage } from './ConnectorsPage.js';
 
 const mockSocket = { on: vi.fn(), disconnect: vi.fn() };
 const mockIo = vi.fn(() => mockSocket);
@@ -15,6 +15,7 @@ const mockApi = {
     getAccessToken: vi.fn(() => 'token-abc'),
     listConnectors: vi.fn(),
     getConnectorHealth: vi.fn(),
+    getAppConfig: vi.fn(),
 };
 
 vi.mock('../auth/AuthContext.js', () => ({
@@ -31,12 +32,19 @@ function wrapper({ children }: { children: React.ReactNode }): React.JSX.Element
     );
 }
 
-describe('SourcesPage sync socket', () => {
+describe('ConnectorsPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockApi.getAccessToken.mockReturnValue('token-abc');
         mockApi.listConnectors.mockResolvedValue([]);
         mockApi.getConnectorHealth.mockResolvedValue([]);
+        mockApi.getAppConfig.mockResolvedValue({ mcpUrl: 'https://mcp.example.com' });
+    });
+
+    it('shows the MCP url served by the API', async () => {
+        const { findByTestId } = render(<ConnectorsPage />, { wrapper });
+
+        expect(await findByTestId('mcp-url')).toHaveTextContent('https://mcp.example.com');
     });
 
     // Regression: socket.io derives the namespace from the URI's pathname. `SyncGateway`
@@ -45,7 +53,7 @@ describe('SourcesPage sync socket', () => {
     // `path` only — passing `config.apiUrl` (`/api`) here would request the
     // nonexistent `/api` namespace.
     it('connects to the default namespace via the proxied socket.io path', async () => {
-        render(<SourcesPage />, { wrapper });
+        render(<ConnectorsPage />, { wrapper });
 
         await waitFor(() => {
             expect(mockIo).toHaveBeenCalledWith({

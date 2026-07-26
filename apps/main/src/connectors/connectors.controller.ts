@@ -237,7 +237,7 @@ export class ConnectorsController {
 
             await this.connectors.handleCallback({ source: connectorName, code, userId });
 
-            this.logger.log(`oauthCallback handleCallback done, redirecting to ${webUrl}/settings/sources`);
+            this.logger.log(`oauthCallback handleCallback done, redirecting to ${webUrl}/settings/connectors`);
 
             const connector = this.oAuthConnectorRegistry.get(connectorName);
             const needsSetup = Object.keys(connector.connectionDetailsSchema).length > 0;
@@ -245,7 +245,7 @@ export class ConnectorsController {
                 ? `connected=${connectorName}&setup=required`
                 : `connected=${connectorName}`;
 
-            await res.status(302).header('Location', `${webUrl}/settings/sources?${redirectQuery}`).send();
+            await res.status(302).header('Location', `${webUrl}/settings/connectors?${redirectQuery}`).send();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
 
@@ -253,7 +253,7 @@ export class ConnectorsController {
 
             await res
                 .status(302)
-                .header('Location', `${webUrl}/settings/sources?error=${encodeURIComponent(message)}`)
+                .header('Location', `${webUrl}/settings/connectors?error=${encodeURIComponent(message)}`)
                 .send();
         }
     }

@@ -9,7 +9,7 @@ import { RegisterPage } from './pages/RegisterPage.js';
 import { OAuthConsentPage } from './pages/OAuthConsentPage.js';
 import { TasksPage } from './pages/TasksPage.js';
 import { SettingsLayout } from './pages/SettingsLayout.js';
-import { SourcesPage } from './pages/SourcesPage.js';
+import { ConnectorsPage } from './pages/ConnectorsPage.js';
 import { ProfilePage } from './pages/ProfilePage.js';
 import { NotificationsPage } from './pages/NotificationsPage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
@@ -48,8 +48,10 @@ const router = createBrowserRouter([
                 path: 'settings',
                 element: <SettingsLayout />,
                 children: [
-                    { index: true, element: <Navigate to="/settings/sources" replace /> },
-                    { path: 'sources', element: <SourcesPage /> },
+                    { index: true, element: <Navigate to="/settings/connectors" replace /> },
+                    { path: 'connectors', element: <ConnectorsPage /> },
+                    // Kept so old links and post-OAuth redirects still land somewhere.
+                    { path: 'sources', element: <Navigate to="/settings/connectors" replace /> },
                     { path: 'profile', element: <ProfilePage /> },
                     { path: 'notifications', element: <NotificationsPage /> },
                     { path: 'authorized-apps', element: <AuthorizedAppsPage /> },

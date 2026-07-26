@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router';
 import clsx from 'clsx';
 
 const tabs = [
-    { label: 'Sources', path: '/settings/sources' },
+    { label: 'Connectors', path: '/settings/connectors' },
     { label: 'Profile', path: '/settings/profile' },
     { label: 'Notifications', path: '/settings/notifications' },
     { label: 'Authorized Apps', path: '/settings/authorized-apps' },

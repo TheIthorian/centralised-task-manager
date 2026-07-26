@@ -12,6 +12,7 @@ describe('envSchema', () => {
         NODE_ENV: 'test',
         REDIRECT_BASE_URL: 'http://localhost:3000',
         WEB_URL: 'http://localhost:5173',
+        MCP_PUBLIC_URL: 'http://localhost:3002',
         JWT_ACCESS_EXPIRES: 900,
         REFRESH_TOKEN_EXPIRES_DAYS: 30,
         LOG_LEVEL: 'info',
@@ -63,6 +64,13 @@ describe('envSchema', () => {
         const { error } = envSchema.validate(withoutCookieSecure);
 
         expect(error?.message).toContain('COOKIE_SECURE');
+    });
+
+    it('rejects an env without MCP_PUBLIC_URL', () => {
+        const { MCP_PUBLIC_URL, ...withoutMcpUrl } = validEnv;
+        const { error } = envSchema.validate(withoutMcpUrl);
+
+        expect(error?.message).toContain('MCP_PUBLIC_URL');
     });
 
     it('coerces COOKIE_SECURE to a boolean', () => {
