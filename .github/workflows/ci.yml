@@ -22,16 +22,21 @@ jobs:
                   node-version-file: .nvmrc
                   cache: pnpm
             # Restores turbo's local cache so unchanged packages skip their build.
-            # Both jobs read the same prefix, so whichever runs first warms the other.
-            - uses: actions/cache@v4
+            # Read-only here; only pushes to main write it, so a pull request can
+            # never leave a cache entry behind for later runs to pick up.
+            - uses: actions/cache/restore@v4
               with:
                   path: .turbo/cache
                   key: turbo-${{ runner.os }}-lint-${{ github.sha }}
                   restore-keys: |
                       turbo-${{ runner.os }}-lint-
-                      turbo-${{ runner.os }}-
             - run: pnpm install --frozen-lockfile --prefer-offline
             - run: pnpm exec turbo run lint
+            - uses: actions/cache/save@v4
+              if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+              with:
+                  path: .turbo/cache
+                  key: turbo-${{ runner.os }}-lint-${{ github.sha }}
 
     test:
         runs-on: ubuntu-latest
@@ -55,12 +60,16 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - uses: actions/cache@v4
+            - uses: actions/cache/restore@v4
               with:
                   path: .turbo/cache
                   key: turbo-${{ runner.os }}-test-${{ github.sha }}
                   restore-keys: |
                       turbo-${{ runner.os }}-test-
-                      turbo-${{ runner.os }}-
             - run: pnpm install --frozen-lockfile --prefer-offline
             - run: pnpm exec turbo run test
+            - uses: actions/cache/save@v4
+              if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+              with:
+                  path: .turbo/cache
+                  key: turbo-${{ runner.os }}-test-${{ github.sha }}
