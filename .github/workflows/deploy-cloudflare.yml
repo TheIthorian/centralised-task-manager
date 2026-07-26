@@ -25,8 +25,49 @@ jobs:
     ci:
         uses: ./.github/workflows/ci.yml
 
+    # A push that only touches one app should not redeploy the other two.
+    changes:
+        runs-on: ubuntu-latest
+        outputs:
+            web: ${{ steps.filter.outputs.web }}
+            landing: ${{ steps.filter.outputs.landing }}
+            docs: ${{ steps.filter.outputs.docs }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - id: filter
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  BEFORE: ${{ github.event.before }}
+              run: |
+                  set -euo pipefail
+
+                  # A manual run is an explicit "deploy everything".
+                  if [ "$EVENT_NAME" != 'push' ]; then
+                      printf 'web=true\nlanding=true\ndocs=true\n' >> "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+
+                  # A force-push or a first push leaves a base commit we cannot diff.
+                  if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+                      printf 'web=true\nlanding=true\ndocs=true\n' >> "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+
+                  changed=$(git diff --name-only "$BEFORE" HEAD)
+                  echo "$changed"
+
+                  shared='^(packages/|pnpm-lock\.yaml|\.github/workflows/(deploy-cloudflare|ci)\.yml)'
+                  matches() { echo "$changed" | grep -qE "$1"; }
+
+                  matches "$shared|^apps/web/" && echo 'web=true' >> "$GITHUB_OUTPUT" || echo 'web=false' >> "$GITHUB_OUTPUT"
+                  matches "$shared|^apps/landing/" && echo 'landing=true' >> "$GITHUB_OUTPUT" || echo 'landing=false' >> "$GITHUB_OUTPUT"
+                  matches "$shared|^apps/docs/|^apps/main/src/" && echo 'docs=true' >> "$GITHUB_OUTPUT" || echo 'docs=false' >> "$GITHUB_OUTPUT"
+
     web:
-        needs: ci
+        needs: [ci, changes]
+        if: needs.changes.outputs.web == 'true'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -35,13 +76,15 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
+            # Only this app's subtree is needed; the rest of the workspace is dead weight here.
+            - run: pnpm install --frozen-lockfile --prefer-offline --filter '@ctm/web...'
             - run: pnpm exec turbo run build --filter=@ctm/web
             - run: pnpm exec wrangler pages deploy --branch=main
               working-directory: apps/web
 
     landing:
-        needs: ci
+        needs: [ci, changes]
+        if: needs.changes.outputs.landing == 'true'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -50,12 +93,13 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
+            - run: pnpm install --frozen-lockfile --prefer-offline --filter '@ctm/landing...'
             - run: pnpm exec turbo run build --filter=@ctm/landing
             - run: pnpm exec wrangler pages deploy apps/landing/dist --project-name=ctm-landing --branch=main
 
     docs:
-        needs: ci
+        needs: [ci, changes]
+        if: needs.changes.outputs.docs == 'true'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -64,8 +108,8 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
-            # The spec is generated from apps/main first; the docs build only renders it.
+            # The spec is generated from apps/main, so its subtree is needed too.
+            - run: pnpm install --frozen-lockfile --prefer-offline --filter '@ctm/docs...' --filter '@ctm/main...'
             - run: pnpm exec turbo run generate-openapi --filter=@ctm/main
             - run: pnpm exec turbo run build --filter=@ctm/docs
               env:
