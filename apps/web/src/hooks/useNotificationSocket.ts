@@ -17,9 +17,13 @@ export function useNotificationSocket(api: WebApiClient): void {
 
         if (!token) return;
 
-        const baseUrl = api.getBaseUrl();
-
-        const socket = io(`${baseUrl}/notifications`, {
+        // Namespace, not just transport path — socket.io derives the namespace from the
+        // URI's pathname. With a same-origin `/api` base, `io(\`${baseUrl}/notifications\`)`
+        // would ask for namespace `/api/notifications`, which the server does not
+        // declare (the gateway is on `/notifications`). Passing the namespace alone
+        // resolves against the current origin, giving the correct namespace while
+        // `path` still carries the handshake through the proxy.
+        const socket = io('/notifications', {
             path: '/api/socket.io',
             transports: ['websocket'],
             auth: { token },

@@ -8,7 +8,6 @@ import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 import { NotionSetupModal } from '../components/sources/NotionSetupModal.js';
-import config from '../config.js';
 
 /** Settings sub-page: connected task sources. */
 export function SourcesPage(): React.JSX.Element {
@@ -43,7 +42,12 @@ export function SourcesPage(): React.JSX.Element {
     // renders (memoised in AuthProvider), so this effect does not tear down and
     // reconnect the socket on every render.
     useEffect(() => {
-        const socket = io(config.apiUrl, {
+        // No URI argument — socket.io derives the namespace from a URI's pathname, and
+        // `io(config.apiUrl)` (`/api`) would ask for namespace `/api`, which does not
+        // exist (`SyncGateway` is on the default `/`). Omitting the URI connects to the
+        // current origin's default namespace; `path` still routes the handshake through
+        // the proxy.
+        const socket = io({
             path: '/api/socket.io',
             auth: { token: api.getAccessToken() },
             transports: ['websocket'],
