@@ -6,14 +6,14 @@ describe('OAuthResourceService', () => {
     const config = {
         getOrThrow: vi.fn((key: string): string => {
             if (key === 'MCP_PUBLIC_URL') return 'http://localhost:3002';
-            if (key === 'CTM_API_BASE_URL') return 'http://localhost:3000/';
+            if (key === 'CTM_PUBLIC_URL') return 'http://localhost:3000/';
             throw new Error(`unexpected key: ${key}`);
         }),
     } as unknown as ConfigService;
 
     const service = new OAuthResourceService(config);
 
-    it('returns protected resource metadata pointing at apps/main', () => {
+    it('advertises the public API origin, never the private one it calls', () => {
         expect(service.getMetadata()).toEqual({
             resource: 'http://localhost:3002/mcp',
             authorization_servers: ['http://localhost:3000'],
