@@ -26,8 +26,6 @@ jobs:
         uses: ./.github/workflows/ci.yml
 
     # A push that only touches one app should not redeploy the other two.
-    # `turbo ls --affected` walks the workspace graph, so a change to packages/ui
-    # marks @ctm/web affected without anyone maintaining a path list by hand.
     changes:
         runs-on: ubuntu-latest
         outputs:
@@ -36,38 +34,8 @@ jobs:
             - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
-            - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
-              with:
-                  node-version-file: .nvmrc
-                  cache: pnpm
-            # Only the root package, which is where turbo itself lives.
-            - run: pnpm install --frozen-lockfile --prefer-offline --filter ctm
             - id: affected
-              env:
-                  EVENT_NAME: ${{ github.event_name }}
-                  BEFORE: ${{ github.event.before }}
-              run: |
-                  set -euo pipefail
-
-                  # A manual run, or a base commit we cannot diff against (force-push,
-                  # first push), tells us nothing — deploy everything.
-                  if [ "$EVENT_NAME" != 'push' ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
-                      echo 'packages=["*"]' >> "$GITHUB_OUTPUT"
-                      exit 0
-                  fi
-
-                  # Workflow changes belong to no package, so turbo cannot see them.
-                  if git diff --name-only "$BEFORE" HEAD | grep -q '^\.github/workflows/'; then
-                      echo 'packages=["*"]' >> "$GITHUB_OUTPUT"
-                      exit 0
-                  fi
-
-                  packages=$(TURBO_SCM_BASE="$BEFORE" pnpm exec turbo ls --affected --output=json |
-                      jq -c '[.packages.items[].name]')
-
-                  echo "affected: $packages"
-                  echo "packages=$packages" >> "$GITHUB_OUTPUT"
+              uses: ./.github/actions/affected-packages
 
     web:
         needs: [ci, changes]
