@@ -1,3 +1,10 @@
+// @vitest-environment node
+//
+// The Pages Function this file tests runs in Cloudflare's Workers runtime, not a
+// browser/DOM — its `fetch`/`Request` semantics match Node's (undici), not jsdom's.
+// jsdom's `Request` polyfill drops `method` when constructing `new Request(url,
+// otherRequest)` (verified against plain Node/undici, where it is preserved
+// correctly), so this suite opts out of the package's default jsdom environment.
 import { describe, expect, it } from 'vitest';
 import { buildProxyRequest } from './proxy.js';
 
@@ -73,5 +80,23 @@ describe('buildProxyRequest', () => {
         expect(proxied.method).toBe('POST');
         expect(proxied.headers.get('Cookie')).toBe('ctm_refresh=abc');
         expect(await proxied.text()).toBe('{}');
+    });
+
+    it('forwards a WebSocket upgrade request with its Upgrade/Connection headers intact', () => {
+        const request = new Request('https://ctm-web.pages.dev/api/socket.io/?EIO=4&transport=websocket', {
+            headers: {
+                Upgrade: 'websocket',
+                Connection: 'Upgrade',
+                'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+                'Sec-WebSocket-Version': '13',
+            },
+        });
+        const proxied = buildProxyRequest({ request, apiOrigin });
+
+        expect(proxied.url).toBe('https://api.example.com/socket.io/?EIO=4&transport=websocket');
+        expect(proxied.headers.get('Upgrade')).toBe('websocket');
+        expect(proxied.headers.get('Connection')).toBe('Upgrade');
+        expect(proxied.headers.get('Sec-WebSocket-Key')).toBe('dGhlIHNhbXBsZSBub25jZQ==');
+        expect(proxied.headers.get('Sec-WebSocket-Version')).toBe('13');
     });
 });
