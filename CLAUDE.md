@@ -101,11 +101,12 @@ Docusaurus site. **This directory is for compiled/generated user-facing document
 
 ### TypeScript
 
-- **Never use `any`.** Avoid `unknown` where possible. When the type is not statically known, perform runtime validation (e.g. Zod, class-validator, or a type guard) rather than casting.
+- **Never use `any`.** Not in source, not in tests, and never with an `eslint-disable` for `no-explicit-any`. Avoid `unknown` where possible. When the type is not statically known, perform runtime validation (e.g. Zod, class-validator, or a type guard) rather than casting. When a cast is genuinely unavoidable (e.g. a third-party plugin type that does not line up), use `as unknown as X` — never `as any`.
 - **Prefer `type` over `interface`.** Use `type` aliases by default; only use `interface` when a class must implement it.
 - **Explicit return types** — every function and method must have an explicit return type annotation.
 - **Object arguments** — when a function has two or more parameters, use a single object argument instead of positional params.
 - **Docstrings** — add a JSDoc comment to every public method on a class or interface, and every exported module-level function. Keep them concise: only document parameters, return value, or thrown errors when it genuinely adds information beyond the name.
+- **Comments explain why, not how.** The code already says what it does. Comment only what the code cannot: the reason for a non-obvious choice, a constraint from outside the file, a trap someone would otherwise reintroduce. Keep it to a line or two — if a comment needs a paragraph, the reasoning belongs in the spec or the commit message.
 - **Trailing commas** — always include trailing commas on the last item of multi-line objects, arrays, and parameter lists.
 - **Logging** — always place a blank line before and after a log statement, and a blank line after a closing scope brace (where the formatter allows).
 

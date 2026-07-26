@@ -13,8 +13,7 @@ describe('POST /auth/register + /auth/login', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await app.register(cookie as any);
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -80,8 +79,7 @@ describe('POST /auth/refresh', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await app.register(cookie as any);
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -167,8 +165,7 @@ describe('DELETE /users/me', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await app.register(cookie as any);
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -221,8 +218,7 @@ describe('POST /auth/register — input validation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await app.register(cookie as any);
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -312,8 +308,7 @@ describe('POST /auth/register — persistence', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await app.register(cookie as any);
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -389,8 +384,7 @@ describe('JWT signed with a mismatched key', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await app.register(cookie as any);
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -433,8 +427,7 @@ describe('Cookie mode for web clients', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await app.register(cookie as any);
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();

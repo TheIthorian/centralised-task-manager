@@ -11,11 +11,8 @@ import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 
 /**
- * A JWT access token paired with a long-lived refresh token, before
- * `AuthController` decides whether the refresh token travels in the body or an
- * HttpOnly cookie. Built on the api-client wire type — `refreshToken` is
- * optional there because it is omitted for web clients, but every token pair
- * has one at the point `AuthService` issues it.
+ * A newly issued token pair. `refreshToken` is optional on the wire type because
+ * `AuthController` omits it for web clients, but is always present here.
  */
 export type TokenPair = TokenPairDto & { refreshToken: string };
 

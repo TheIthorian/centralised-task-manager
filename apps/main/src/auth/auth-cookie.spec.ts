@@ -40,10 +40,8 @@ describe('buildRefreshCookieOptions', () => {
 });
 
 describe('COOKIE_PATH path-match invariant', () => {
-    // app.inject() sets the Cookie header directly and ignores Path entirely, so it
-    // cannot catch a COOKIE_PATH that is too narrow for the logout route. A real
-    // browser only sends a cookie when its Path is a path-prefix of the request path
-    // (RFC 6265 §5.1.4). Assert that invariant here against the configured value.
+    // Browsers only send a cookie whose Path is a prefix of the request path
+    // (RFC 6265 §5.1.4). app.inject() sets Cookie by hand, so no route test catches this.
     it('is a path-prefix of both /api/auth/refresh and /api/auth/logout', () => {
         const configuredPath = process.env['COOKIE_PATH'];
 

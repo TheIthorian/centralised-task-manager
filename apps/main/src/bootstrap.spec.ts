@@ -28,8 +28,7 @@ describe('createApp plugin registration', () => {
         const app = await createApp();
         const instance = app.getHttpAdapter().getInstance();
 
-        // @fastify/compress only decorates the reply (not the fastify instance), so
-        // `hasReplyDecorator` is the genuine way to confirm it registered.
+        // @fastify/compress decorates the reply, not the instance.
         expect(instance.hasReplyDecorator('compress')).toBe(true);
         expect(typeof instance.parseCookie).toBe('function');
 

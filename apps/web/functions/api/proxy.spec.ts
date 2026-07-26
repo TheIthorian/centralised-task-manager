@@ -1,10 +1,7 @@
 // @vitest-environment node
 //
-// The Pages Function this file tests runs in Cloudflare's Workers runtime, not a
-// browser/DOM — its `fetch`/`Request` semantics match Node's (undici), not jsdom's.
-// jsdom's `Request` polyfill drops `method` when constructing `new Request(url,
-// otherRequest)` (verified against plain Node/undici, where it is preserved
-// correctly), so this suite opts out of the package's default jsdom environment.
+// Workers matches undici, not jsdom — whose `Request` drops `method` in
+// `new Request(url, otherRequest)`.
 import { describe, expect, it } from 'vitest';
 import { buildProxyRequest } from './proxy.js';
 

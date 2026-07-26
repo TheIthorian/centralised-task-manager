@@ -24,8 +24,6 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     // consumers that need the value read it via `api.getAccessToken()`.
     const [, setAccessToken] = useState<string | null>(null);
     const { showToast } = useToast();
-    // See the bootstrap effect below for why these are refs rather than plain closure
-    // variables.
     const bootstrapRef = useRef<Promise<void> | null>(null);
     const isMountedRef = useRef(false);
 
@@ -35,8 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
         window.location.href = '/login';
     };
 
-    // Constructed once and mutated in place by setTokens; recreating it per render would
-    // both defeat the mount-only bootstrap effect below and drop in-flight refresh state.
+    // Recreating this per render would drop in-flight refresh state and re-run the
+    // bootstrap effect below.
     const api = useMemo(
         () =>
             new WebApiClient({
@@ -58,16 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     );
 
     useEffect(() => {
-        // React 18 StrictMode double-invokes this effect in dev (mount → cleanup →
-        // mount) within the same tick. Without this guard, each invocation calls
-        // `api.refresh()` independently; the second rotates the cookie the first one
-        // already consumed and comes back 401, logging out a session that was actually
-        // valid. `bootstrapRef` shares one in-flight promise across every invocation —
-        // combined with `WebApiClient`'s own single-flight in `refreshOnce`, this is
-        // belt-and-braces against starting a second HTTP request. `isMountedRef` tracks
-        // *current* mount state (not the mount state at the time the promise was
-        // created), so the result is applied by whichever invocation is live when it
-        // resolves.
+        // Refresh tokens rotate, so two bootstraps would 401 the second one and log out a
+        // valid session — which StrictMode's double-invoke causes in dev. `bootstrapRef`
+        // shares one in-flight promise; `isMountedRef` lets whichever invocation is live
+        // when it resolves apply the result.
         isMountedRef.current = true;
 
         if (!bootstrapRef.current) {
@@ -115,11 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
         try {
             await api.logout();
         } catch {
-            // Server-side revocation failed (network error, 5xx, etc). We still drop the
-            // local session below — staying visually logged in after a failed logout is
-            // worse than a stale server-side token, and `api.logout()` already suppresses
-            // its own toast (toastOnError: false), so we swallow silently here too rather
-            // than surface a toast on the way out the door.
+            // Looking logged in after clicking logout is worse than a stale server token.
         } finally {
             api.clearTokens();
             setUser(null);
