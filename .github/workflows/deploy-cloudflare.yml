@@ -26,48 +26,52 @@ jobs:
         uses: ./.github/workflows/ci.yml
 
     # A push that only touches one app should not redeploy the other two.
+    # `turbo ls --affected` walks the workspace graph, so a change to packages/ui
+    # marks @ctm/web affected without anyone maintaining a path list by hand.
     changes:
         runs-on: ubuntu-latest
         outputs:
-            web: ${{ steps.filter.outputs.web }}
-            landing: ${{ steps.filter.outputs.landing }}
-            docs: ${{ steps.filter.outputs.docs }}
+            affected: ${{ steps.affected.outputs.packages }}
         steps:
             - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
-            - id: filter
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            # Only the root package, which is where turbo itself lives.
+            - run: pnpm install --frozen-lockfile --prefer-offline --filter ctm
+            - id: affected
               env:
                   EVENT_NAME: ${{ github.event_name }}
                   BEFORE: ${{ github.event.before }}
               run: |
                   set -euo pipefail
 
-                  # A manual run is an explicit "deploy everything".
-                  if [ "$EVENT_NAME" != 'push' ]; then
-                      printf 'web=true\nlanding=true\ndocs=true\n' >> "$GITHUB_OUTPUT"
+                  # A manual run, or a base commit we cannot diff against (force-push,
+                  # first push), tells us nothing — deploy everything.
+                  if [ "$EVENT_NAME" != 'push' ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+                      echo 'packages=["*"]' >> "$GITHUB_OUTPUT"
                       exit 0
                   fi
 
-                  # A force-push or a first push leaves a base commit we cannot diff.
-                  if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
-                      printf 'web=true\nlanding=true\ndocs=true\n' >> "$GITHUB_OUTPUT"
+                  # Workflow changes belong to no package, so turbo cannot see them.
+                  if git diff --name-only "$BEFORE" HEAD | grep -q '^\.github/workflows/'; then
+                      echo 'packages=["*"]' >> "$GITHUB_OUTPUT"
                       exit 0
                   fi
 
-                  changed=$(git diff --name-only "$BEFORE" HEAD)
-                  echo "$changed"
+                  packages=$(TURBO_SCM_BASE="$BEFORE" pnpm exec turbo ls --affected --output=json |
+                      jq -c '[.packages.items[].name]')
 
-                  shared='^(packages/|pnpm-lock\.yaml|\.github/workflows/(deploy-cloudflare|ci)\.yml)'
-                  matches() { echo "$changed" | grep -qE "$1"; }
-
-                  matches "$shared|^apps/web/" && echo 'web=true' >> "$GITHUB_OUTPUT" || echo 'web=false' >> "$GITHUB_OUTPUT"
-                  matches "$shared|^apps/landing/" && echo 'landing=true' >> "$GITHUB_OUTPUT" || echo 'landing=false' >> "$GITHUB_OUTPUT"
-                  matches "$shared|^apps/docs/|^apps/main/src/" && echo 'docs=true' >> "$GITHUB_OUTPUT" || echo 'docs=false' >> "$GITHUB_OUTPUT"
+                  echo "affected: $packages"
+                  echo "packages=$packages" >> "$GITHUB_OUTPUT"
 
     web:
         needs: [ci, changes]
-        if: needs.changes.outputs.web == 'true'
+        if: contains(fromJSON(needs.changes.outputs.affected), '*') || contains(fromJSON(needs.changes.outputs.affected), '@ctm/web')
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -84,7 +88,7 @@ jobs:
 
     landing:
         needs: [ci, changes]
-        if: needs.changes.outputs.landing == 'true'
+        if: contains(fromJSON(needs.changes.outputs.affected), '*') || contains(fromJSON(needs.changes.outputs.affected), '@ctm/landing')
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -99,7 +103,10 @@ jobs:
 
     docs:
         needs: [ci, changes]
-        if: needs.changes.outputs.docs == 'true'
+        if: >-
+            contains(fromJSON(needs.changes.outputs.affected), '*')
+            || contains(fromJSON(needs.changes.outputs.affected), '@ctm/docs')
+            || contains(fromJSON(needs.changes.outputs.affected), '@ctm/main')
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
