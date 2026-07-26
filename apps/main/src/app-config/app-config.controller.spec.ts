@@ -9,11 +9,11 @@ function makeController(mcpPublicUrl: string): AppConfigController {
 }
 
 describe('AppConfigController', () => {
-    it('returns the configured MCP url', () => {
-        expect(makeController('https://mcp.example.com').get()).toEqual({ mcpUrl: 'https://mcp.example.com' });
+    it('returns the Streamable HTTP endpoint, not the bare base url', () => {
+        expect(makeController('https://mcp.example.com').get()).toEqual({ mcpUrl: 'https://mcp.example.com/mcp' });
     });
 
-    it('strips a trailing slash so clients can append paths', () => {
-        expect(makeController('https://mcp.example.com/').get()).toEqual({ mcpUrl: 'https://mcp.example.com' });
+    it('tolerates a trailing slash on MCP_PUBLIC_URL', () => {
+        expect(makeController('https://mcp.example.com/').get()).toEqual({ mcpUrl: 'https://mcp.example.com/mcp' });
     });
 });

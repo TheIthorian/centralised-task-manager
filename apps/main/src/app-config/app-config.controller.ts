@@ -13,8 +13,10 @@ export class AppConfigController {
     @ApiOperation({ summary: 'Public client configuration' })
     @ApiResponse({ status: 200, description: 'Client configuration' })
     get(): AppConfigDto {
+        // MCP_PUBLIC_URL is the server's base; clients must be given the Streamable
+        // HTTP endpoint itself, which apps/mcp serves at /mcp.
         return {
-            mcpUrl: this.config.getOrThrow<string>('MCP_PUBLIC_URL').replace(/\/$/, ''),
+            mcpUrl: `${this.config.getOrThrow<string>('MCP_PUBLIC_URL').replace(/\/$/, '')}/mcp`,
         };
     }
 }
