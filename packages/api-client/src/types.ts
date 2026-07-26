@@ -197,6 +197,8 @@ export type UpdateUserDto = {
 /** Access/refresh token pair returned after login or refresh. */
 export type TokenPair = {
     accessToken: string;
+    /** Lifetime of `accessToken` in seconds, so clients can refresh before it expires. */
+    expiresIn: number;
     /** Omitted for web clients — the refresh token is returned as an HttpOnly cookie instead. */
     refreshToken?: string;
     user: UserDto;

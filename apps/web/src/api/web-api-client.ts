@@ -44,6 +44,9 @@ import type {
     WebUpdateTaskParams,
 } from './web-api-client.types.js';
 
+/** Refresh this long before the access token expires, to cover latency and clock drift. */
+const EXPIRY_SKEW_MS = 15_000;
+
 /** Web-only API wrapper with refresh, redirect, and toast behavior. */
 export class WebApiClient {
     private readonly baseUrl: string;
@@ -51,6 +54,7 @@ export class WebApiClient {
     private readonly onUnauthorized: () => void;
     private readonly onError: (error: WebApiError) => void;
     private accessToken: string | null;
+    private expiresAt: number | null = null;
     private apiClient: CtmApiClient;
     private pendingRefresh: Promise<TokenPair> | null = null;
 
@@ -71,7 +75,7 @@ export class WebApiClient {
             toastOnError: false,
         });
 
-        this.setTokens({ accessToken: tokens.accessToken });
+        this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
 
         return tokens;
     }
@@ -84,7 +88,7 @@ export class WebApiClient {
             toastOnError: false,
         });
 
-        this.setTokens({ accessToken: tokens.accessToken });
+        this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
 
         return tokens;
     }
@@ -303,7 +307,7 @@ export class WebApiClient {
     async refresh(): Promise<TokenPair> {
         const tokens = await this.refreshOnce();
 
-        this.setTokens({ accessToken: tokens.accessToken });
+        this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
 
         return tokens;
     }
@@ -339,10 +343,21 @@ export class WebApiClient {
         });
     }
 
-    private setTokens({ accessToken }: WebAuthTokens): void {
+    private setTokens({ accessToken, expiresIn }: WebAuthTokens & { expiresIn?: number }): void {
         this.accessToken = accessToken;
+        this.expiresAt = accessToken && expiresIn ? Date.now() + expiresIn * 1000 : null;
         this.apiClient = this.createApiClient();
         this.onTokens({ accessToken });
+    }
+
+    /**
+     * Whether the access token is within {@link EXPIRY_SKEW_MS} of expiring. Unknown
+     * expiry counts as fresh — the 401 retry is the backstop.
+     */
+    private isAccessTokenExpiring(): boolean {
+        if (!this.accessToken || this.expiresAt === null) return false;
+
+        return Date.now() >= this.expiresAt - EXPIRY_SKEW_MS;
     }
 
     /**
@@ -368,6 +383,18 @@ export class WebApiClient {
         retryOnUnauthorized?: boolean;
         toastOnError?: boolean;
     }): Promise<T> {
+        // Access tokens live ~2 minutes, so without this most requests after a short idle
+        // would spend a round trip getting a 401 first. Failures fall through to that path.
+        if (retryOnUnauthorized && this.isAccessTokenExpiring()) {
+            try {
+                const tokens = await this.refreshOnce();
+
+                this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
+            } catch {
+                this.expiresAt = null;
+            }
+        }
+
         try {
             return await request();
         } catch (error) {
@@ -397,7 +424,7 @@ export class WebApiClient {
         try {
             const tokens = await this.refreshOnce();
 
-            this.setTokens({ accessToken: tokens.accessToken });
+            this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
 
             return await request();
         } catch (refreshError) {

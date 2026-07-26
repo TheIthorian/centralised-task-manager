@@ -6,6 +6,7 @@ const mockApiClient = {
     register: vi.fn(),
     refresh: vi.fn(),
     logout: vi.fn(),
+    listTasks: vi.fn(),
 };
 
 vi.mock('@ctm/api-client', async (importOriginal) => {
@@ -118,5 +119,73 @@ describe('WebApiClient', () => {
 
         expect(mockApiClient.refresh).toHaveBeenCalledTimes(2);
         expect(client.getAccessToken()).toBe('second-token');
+    });
+
+    describe('proactive refresh', () => {
+        it('refreshes before the request when the access token is about to expire', async () => {
+            mockApiClient.login.mockResolvedValueOnce({
+                accessToken: 'short-lived',
+                expiresIn: 10,
+                user: { id: '1', email: 'a@b.com' },
+            });
+            mockApiClient.refresh.mockResolvedValueOnce({
+                accessToken: 'renewed',
+                expiresIn: 120,
+                user: { id: '1', email: 'a@b.com' },
+            });
+            mockApiClient.listTasks.mockResolvedValueOnce([]);
+
+            const client = buildClient();
+
+            await client.login({ email: 'a@b.com', password: 'pw' });
+            await client.listTasks();
+
+            expect(mockApiClient.refresh).toHaveBeenCalledTimes(1);
+            expect(client.getAccessToken()).toBe('renewed');
+        });
+
+        it('does not refresh while the access token is still fresh', async () => {
+            mockApiClient.login.mockResolvedValueOnce({
+                accessToken: 'fresh',
+                expiresIn: 120,
+                user: { id: '1', email: 'a@b.com' },
+            });
+            mockApiClient.listTasks.mockResolvedValueOnce([]);
+
+            const client = buildClient();
+
+            await client.login({ email: 'a@b.com', password: 'pw' });
+            await client.listTasks();
+
+            expect(mockApiClient.refresh).not.toHaveBeenCalled();
+            expect(client.getAccessToken()).toBe('fresh');
+        });
+
+        it('falls through to the request when the proactive refresh fails', async () => {
+            mockApiClient.login.mockResolvedValueOnce({
+                accessToken: 'short-lived',
+                expiresIn: 10,
+                user: { id: '1', email: 'a@b.com' },
+            });
+            mockApiClient.refresh.mockRejectedValueOnce(new Error('network down'));
+            mockApiClient.listTasks.mockResolvedValueOnce([]);
+
+            const client = buildClient();
+
+            await client.login({ email: 'a@b.com', password: 'pw' });
+
+            await expect(client.listTasks()).resolves.toEqual([]);
+            expect(mockApiClient.listTasks).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not refresh proactively when no expiry is known', async () => {
+            mockApiClient.listTasks.mockResolvedValueOnce([]);
+
+            const client = buildClient();
+
+            await client.listTasks();
+
+            expect(mockApiClient.refresh).not.toHaveBeenCalled();
+        });
     });
 });

@@ -449,6 +449,7 @@ describe('Cookie mode for web clients', () => {
         const body = JSON.parse(res.body);
 
         expect(typeof body.refreshToken).toBe('string');
+        expect(body.expiresIn).toBe(Number(process.env['JWT_ACCESS_EXPIRES']));
         expect(res.headers['set-cookie']).toBeUndefined();
     });
 
@@ -466,6 +467,7 @@ describe('Cookie mode for web clients', () => {
 
         expect(body.refreshToken).toBeUndefined();
         expect(typeof body.accessToken).toBe('string');
+        expect(body.expiresIn).toBe(Number(process.env['JWT_ACCESS_EXPIRES']));
 
         const setCookie = res.headers['set-cookie'];
         const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : setCookie;

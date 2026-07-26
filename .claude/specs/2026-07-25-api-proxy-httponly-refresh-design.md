@@ -178,6 +178,12 @@ Same-origin requests send cookies without `withCredentials`, so
   profile comes from the refresh response.
 - `WebApiClient` drops its `refreshToken` field; `retryWithRefresh` calls the refresh
   endpoint with no token argument and relies on the cookie.
+- **Proactive refresh**: `TokenPair` carries `expiresIn` (seconds, from
+  `JWT_ACCESS_EXPIRES`). `WebApiClient` turns it into a deadline and refreshes
+  pre-flight once the token is within 15s of expiring. Access tokens live 120s, so
+  without this nearly every request after a short idle would spend a round trip
+  collecting a 401 first. The 401-then-retry path stays as the backstop for clock
+  skew and server-side revocation; both share the `refreshOnce` single-flight.
 - **socket.io**: `useNotificationSocket.ts` and `SourcesPage.tsx` need
   `path: '/api/socket.io'`. socket.io ignores the base URL for its handshake path and
   would otherwise hit `/socket.io` at the origin root, which the proxy does not match.
