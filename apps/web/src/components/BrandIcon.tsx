@@ -25,6 +25,24 @@ export function BrandIcon({ brand, size = 16, className = '' }: BrandIconProps):
         );
     }
 
+    if (icon.kind === 'multipath') {
+        return (
+            <svg
+                viewBox="0 0 24 24"
+                width={size}
+                height={size}
+                style={{ width: size, height: size }}
+                className={box}
+                aria-hidden="true"
+                focusable="false"
+            >
+                {icon.paths.map((part) => (
+                    <path key={part.color} d={part.d} fill={part.color} />
+                ))}
+            </svg>
+        );
+    }
+
     return (
         <svg
             viewBox="0 0 24 24"

@@ -1,5 +1,6 @@
 import type { DiscordStatusDto } from '@ctm/api-client';
 import { Button } from '@ctm/ui';
+import { BrandIcon } from '../BrandIcon.js';
 
 type DiscordCardProps = {
     status: DiscordStatusDto;
@@ -22,7 +23,10 @@ export function DiscordCard({
     return (
         <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex items-center justify-between gap-4">
             <div>
-                <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide">Discord</p>
+                <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide flex items-center gap-2">
+                    <BrandIcon brand="discord" />
+                    Discord
+                </p>
                 {status.connected ? (
                     <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 mt-0.5">
                         Connected{status.discordUserId ? ` (${status.discordUserId})` : ''}
