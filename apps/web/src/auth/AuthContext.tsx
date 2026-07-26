@@ -96,9 +96,18 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     };
 
     const logout = async (): Promise<void> => {
-        await api.logout();
-        setAccessToken(null);
-        setUser(null);
+        try {
+            await api.logout();
+        } catch {
+            // Server-side revocation failed (network error, 5xx, etc). We still drop the
+            // local session below — staying visually logged in after a failed logout is
+            // worse than a stale server-side token, and `api.logout()` already suppresses
+            // its own toast (toastOnError: false), so we swallow silently here too rather
+            // than surface a toast on the way out the door.
+        } finally {
+            setAccessToken(null);
+            setUser(null);
+        }
     };
 
     const updateUser = (nextUser: UserDto): void => {

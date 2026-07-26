@@ -116,4 +116,29 @@ describe('AuthContext', () => {
         expect(mockApi.logout).toHaveBeenCalledTimes(1);
         await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('none'));
     });
+
+    it('clears the local session even when the logout call fails', async () => {
+        const user = userEvent.setup();
+
+        mockApi.refresh.mockResolvedValueOnce({
+            accessToken: 'acc',
+            user: { id: '1', email: 'a@b.com' },
+        });
+        mockApi.logout.mockRejectedValueOnce(new Error('network error'));
+
+        render(
+            <ToastProvider>
+                <AuthProvider>
+                    <TestConsumer />
+                </AuthProvider>
+            </ToastProvider>,
+        );
+
+        expect(await screen.findByText('a@b.com')).toBeInTheDocument();
+
+        await user.click(screen.getByText('Logout'));
+
+        expect(mockApi.logout).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('none'));
+    });
 });

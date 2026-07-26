@@ -65,20 +65,28 @@ export class WebApiClient {
 
     /** Login with email and password. */
     async login({ email, password }: WebLoginParams): Promise<TokenPair> {
-        return this.execute({
+        const tokens = await this.execute({
             request: () => this.apiClient.login({ email, password }),
             retryOnUnauthorized: false,
             toastOnError: false,
         });
+
+        this.setTokens({ accessToken: tokens.accessToken });
+
+        return tokens;
     }
 
     /** Register a new account. */
     async register({ name, email, password }: WebRegisterParams): Promise<TokenPair> {
-        return this.execute({
+        const tokens = await this.execute({
             request: () => this.apiClient.register({ name, email, password }),
             retryOnUnauthorized: false,
             toastOnError: false,
         });
+
+        this.setTokens({ accessToken: tokens.accessToken });
+
+        return tokens;
     }
 
     /** Get a single task by ID. */
