@@ -24,15 +24,21 @@ Vite + React SPA. The main user-facing task management interface. In production 
 ## Setup
 
 ```bash
-cp .env.example .env.local   # set VITE_API_URL if needed
+cp .env.example .env.local   # set API_ORIGIN if needed
 pnpm --filter @ctm/web dev
 ```
 
+The SPA always talks to the same-origin `/api` path (`apps/web/src/config.ts`) —
+there is no build-time API URL to configure. In dev, the Vite proxy forwards
+`/api/*` to `API_ORIGIN`; in production, the Cloudflare Pages Function
+(`functions/api/[[path]].ts`) does the same, reading `API_ORIGIN` from the Pages
+project's environment variables at request time.
+
 ### Environment Variables
 
-| Variable       | Description                                                   |
-| -------------- | ------------------------------------------------------------- |
-| `VITE_API_URL` | Base URL of `apps/main` (defaults to `http://localhost:3000`) |
+| Variable      | Description                                                     |
+| ------------- | ---------------------------------------------------------------- |
+| `API_ORIGIN`  | Origin of `apps/main`, used by the dev proxy (no default — required) |
 
 ## Commands
 

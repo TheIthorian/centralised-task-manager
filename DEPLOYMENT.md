@@ -46,6 +46,14 @@ separate worker service (`apps/sync` is an unimplemented stub).
 - Generate a public domain for the service; that URL is `REDIRECT_BASE_URL`.
 - Add `${REDIRECT_BASE_URL}/connectors/oauth/callback/<todoist|google_tasks|notion|discord>`
   as a redirect URI in each OAuth app.
+- Also set `COOKIE_PATH=/api/auth/refresh` and `COOKIE_SECURE=true`. `COOKIE_PATH`
+  carries the `/api` prefix because it is the browser-visible path — the SPA reaches
+  `apps/main` through the Cloudflare Pages Function proxy at `/api/*`, not directly.
+- `REDIRECT_BASE_URL` is `https://ctm-web.pages.dev/api` — the `/api` suffix is
+  correct and must stay. Before the Pages Function proxy existed this was broken
+  (the SPA's catch-all route just returned `index.html` for `/api/...`), but the
+  proxy now forwards `/api/*` on the Pages origin to this service, so the redirect
+  resolves correctly. Do not "fix" this back to a bare origin.
 
 ## 3. Railway — `mcp` service
 
@@ -70,10 +78,26 @@ GitHub repo **secrets**:
 
 GitHub repo **variables**:
 
-| Name           | Value                                    |
-| -------------- | ---------------------------------------- |
-| `VITE_API_URL` | the Railway `main` public URL            |
-| `DOCS_URL`     | the public origin of the docs Pages site |
+| Name       | Value                                    |
+| ---------- | ---------------------------------------- |
+| `DOCS_URL` | the public origin of the docs Pages site |
+
+`ctm-web` (the Pages **project**, not the GitHub repo) needs its own environment
+variable, set in the Cloudflare dashboard under Pages → `ctm-web` → Settings →
+Environment variables:
+
+| Name          | Value                                              |
+| ------------- | --------------------------------------------------- |
+| `API_ORIGIN`  | `https://main-production-be0e.up.railway.app` (the Railway `main` public URL) |
+
+`API_ORIGIN` is read at **request time** by the Pages Function
+(`apps/web/functions/api/[[path]].ts`) that proxies `/api/*` to `apps/main` — it is
+not a build-time/Vite variable and is not baked into the JS bundle, so it does not
+go in GitHub Actions and a redeploy is not needed to change it.
+
+`VITE_API_URL` is retired — the SPA now always talks to the same-origin `/api`
+path (see `apps/web/src/config.ts`), and the GitHub repo variable of that name is
+no longer read by the workflow.
 
 Then set `CORS_ORIGIN` and `WEB_URL` on the Railway `main` service to the Pages
 origin of the SPA.
@@ -85,7 +109,8 @@ curl https://<main>.up.railway.app/health   # {"status":"ok","database":"up",...
 curl https://<mcp>.up.railway.app/health    # {"status":"ok",...}
 ```
 
-Then load the SPA and log in — the network tab should hit `VITE_API_URL`.
+Then load the SPA and log in — the network tab should hit same-origin `/api/...`
+requests, which the Pages Function forwards to `API_ORIGIN`.
 
 ---
 
