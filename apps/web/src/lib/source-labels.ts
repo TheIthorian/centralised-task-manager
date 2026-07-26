@@ -9,6 +9,7 @@ const SOURCES: Record<string, SourceMeta> = {
     todoist: { label: 'Todoist', brand: 'todoist' },
     google_tasks: { label: 'Google Tasks', brand: 'google_tasks' },
     notion: { label: 'Notion', brand: 'notion' },
+    discord: { label: 'Discord', brand: 'discord' },
 };
 
 /** Get a human-readable label for a connector source. */
