@@ -24,7 +24,7 @@ Vite + React SPA. The main user-facing task management interface. In production 
 ## Setup
 
 ```bash
-cp .env.example .env.local   # set API_ORIGIN if needed
+cp .env.example .env.local   # set API_ORIGIN — required, the dev server throws without it
 pnpm --filter @ctm/web dev
 ```
 
@@ -36,9 +36,9 @@ project's environment variables at request time.
 
 ### Environment Variables
 
-| Variable      | Description                                                     |
-| ------------- | ---------------------------------------------------------------- |
-| `API_ORIGIN`  | Origin of `apps/main`, used by the dev proxy (no default — required) |
+| Variable     | Description                                                                                                                                                                                                                       |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `API_ORIGIN` | Origin of `apps/main` (no default — required). Read by the Vite dev proxy locally, **and** by the Cloudflare Pages Function in production, where it is a Pages project environment variable (Dashboard → Settings), not a build-time/`VITE_*` variable. |
 
 ## Commands
 
