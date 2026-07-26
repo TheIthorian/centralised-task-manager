@@ -13,7 +13,11 @@ export type NotionOAuthConnectorConfig = {
     logger?: Logger;
 };
 
-const DEFAULT_EXPIRY_SECONDS = 3600;
+// Notion only returns refresh_token/expires_in for integrations with token
+// refresh enabled. Plain integrations get a non-expiring access token, so we
+// park the expiry far in the future rather than inventing a 1h TTL we cannot
+// honour (that made every sync attempt a doomed refresh).
+const NON_EXPIRING_TTL_SECONDS = 100 * 365 * 24 * 3600;
 
 export class NotionOAuthConnector implements OAuthConnector {
     readonly name = ConnectorName.Notion;
@@ -76,7 +80,7 @@ export class NotionOAuthConnector implements OAuthConnector {
         return `https://api.notion.com/v1/oauth/authorize?${params.toString()}`;
     }
 
-    /** Exchange authorization code for OAuth tokens. Notion does not return expires_in; default to 1 hour. */
+    /** Exchange authorization code for OAuth tokens. */
     async exchangeCode(code: string): Promise<OAuthTokens> {
         const res = await this.http.post<NotionTokenResponse>(
             '/v1/oauth/token',
@@ -84,26 +88,44 @@ export class NotionOAuthConnector implements OAuthConnector {
             { Authorization: `Basic ${this.basicAuth()}`, 'Content-Type': 'application/json' },
         );
 
-        return {
-            accessToken: res.access_token,
-            refreshToken: res.refresh_token ?? '',
-            expiresAt: new Date(Date.now() + DEFAULT_EXPIRY_SECONDS * 1000),
-        };
+        return this.toTokens({ res, previousRefreshToken: '' });
     }
 
-    /** Refresh an expired Notion access token. */
+    /**
+     * Refresh a Notion access token. Connections made without token refresh have
+     * no refresh token and a non-expiring access token, so the existing token is
+     * returned with its expiry pushed out instead of calling Notion.
+     */
     async refreshToken(tokens: OAuthTokens): Promise<OAuthTokens> {
+        if (!tokens.refreshToken) {
+            return { ...tokens, expiresAt: this.expiryFrom(undefined) };
+        }
+
         const res = await this.http.post<NotionTokenResponse>(
             '/v1/oauth/token',
             { grant_type: 'refresh_token', refresh_token: tokens.refreshToken },
             { Authorization: `Basic ${this.basicAuth()}`, 'Content-Type': 'application/json' },
         );
 
+        return this.toTokens({ res, previousRefreshToken: tokens.refreshToken });
+    }
+
+    private toTokens({
+        res,
+        previousRefreshToken,
+    }: {
+        res: NotionTokenResponse;
+        previousRefreshToken: string;
+    }): OAuthTokens {
         return {
             accessToken: res.access_token,
-            refreshToken: res.refresh_token ?? tokens.refreshToken,
-            expiresAt: new Date(Date.now() + DEFAULT_EXPIRY_SECONDS * 1000),
+            refreshToken: res.refresh_token ?? previousRefreshToken,
+            expiresAt: this.expiryFrom(res.expires_in),
         };
+    }
+
+    private expiryFrom(expiresInSeconds: number | undefined): Date {
+        return new Date(Date.now() + (expiresInSeconds ?? NON_EXPIRING_TTL_SECONDS) * 1000);
     }
 
     private basicAuth(): string {

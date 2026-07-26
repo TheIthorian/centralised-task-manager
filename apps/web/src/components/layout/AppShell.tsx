@@ -8,7 +8,9 @@ export function AppShell(): React.JSX.Element {
     return (
         <div className="flex min-h-dvh">
             <Sidebar />
-            <main className="flex-1 pb-16 md:pb-0 overflow-y-auto">
+            {/* pt on mobile reserves room for the fixed notification bell, which would
+                otherwise sit on top of page headers. */}
+            <main className="flex-1 pt-12 md:pt-0 pb-16 md:pb-0 overflow-y-auto">
                 <Outlet />
             </main>
             <TopBar />

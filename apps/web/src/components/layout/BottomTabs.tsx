@@ -7,7 +7,7 @@ const tabs = [
     { label: 'Tasks', path: '/tasks', icon: '☑' },
     { label: 'Calendar', path: '/calendar', icon: '📅' },
     { label: 'Timeline', path: '/timeline', icon: '↔' },
-    { label: 'Profile', path: '/settings/profile', icon: '👤' },
+    { label: 'Settings', path: '/settings', icon: '⚙' },
 ];
 
 /** Mobile bottom tab bar. Hidden on desktop via md:hidden in AppShell. */

@@ -6,6 +6,7 @@ import multipart from '@fastify/multipart';
 import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
 import { AppModule } from './app.module.js';
+import { PinoLoggerService } from './logging/pino-logger.service.js';
 
 interface CorsOptions {
     origin: true | string[];
@@ -26,7 +27,9 @@ export function buildCorsOptions(env: NodeJS.ProcessEnv): CorsOptions {
 
 /** Create and configure the Nest Fastify application. */
 export async function createApp(): Promise<NestFastifyApplication> {
-    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
+        logger: new PinoLoggerService(),
+    });
 
     await app.register(compress, {
         global: true,
