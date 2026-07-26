@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { UserDto } from '@ctm/api-client';
 import { WebApiClient } from '../api/web-api-client.js';
 import { useToast } from '../toast/ToastContext.js';
@@ -24,9 +24,13 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     // consumers that need the value read it via `api.getAccessToken()`.
     const [, setAccessToken] = useState<string | null>(null);
     const { showToast } = useToast();
+    // See the bootstrap effect below for why these are refs rather than plain closure
+    // variables.
+    const bootstrapRef = useRef<Promise<void> | null>(null);
+    const isMountedRef = useRef(false);
 
     const handleUnauthorized = (): void => {
-        setAccessToken(null);
+        api.clearTokens();
         setUser(null);
         window.location.href = '/login';
     };
@@ -54,30 +58,42 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     );
 
     useEffect(() => {
-        let cancelled = false;
+        // React 18 StrictMode double-invokes this effect in dev (mount → cleanup →
+        // mount) within the same tick. Without this guard, each invocation calls
+        // `api.refresh()` independently; the second rotates the cookie the first one
+        // already consumed and comes back 401, logging out a session that was actually
+        // valid. `bootstrapRef` shares one in-flight promise across every invocation —
+        // combined with `WebApiClient`'s own single-flight in `refreshOnce`, this is
+        // belt-and-braces against starting a second HTTP request. `isMountedRef` tracks
+        // *current* mount state (not the mount state at the time the promise was
+        // created), so the result is applied by whichever invocation is live when it
+        // resolves.
+        isMountedRef.current = true;
 
-        const bootstrap = async (): Promise<void> => {
-            try {
-                const result = await api.refresh();
+        if (!bootstrapRef.current) {
+            bootstrapRef.current = (async (): Promise<void> => {
+                try {
+                    const result = await api.refresh();
 
-                if (cancelled) return;
+                    if (isMountedRef.current) {
+                        setAccessToken(result.accessToken);
+                        setUser(result.user);
+                    }
+                } catch {
+                    if (isMountedRef.current) {
+                        setAccessToken(null);
+                        setUser(null);
+                    }
+                } finally {
+                    if (isMountedRef.current) setIsLoading(false);
 
-                setAccessToken(result.accessToken);
-                setUser(result.user);
-            } catch {
-                if (cancelled) return;
-
-                setAccessToken(null);
-                setUser(null);
-            } finally {
-                if (!cancelled) setIsLoading(false);
-            }
-        };
-
-        void bootstrap();
+                    bootstrapRef.current = null;
+                }
+            })();
+        }
 
         return () => {
-            cancelled = true;
+            isMountedRef.current = false;
         };
     }, [api]);
 
@@ -105,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
             // its own toast (toastOnError: false), so we swallow silently here too rather
             // than surface a toast on the way out the door.
         } finally {
-            setAccessToken(null);
+            api.clearTokens();
             setUser(null);
         }
     };

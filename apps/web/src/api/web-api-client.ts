@@ -52,7 +52,7 @@ export class WebApiClient {
     private readonly onError: (error: WebApiError) => void;
     private accessToken: string | null;
     private apiClient: CtmApiClient;
-    private pendingRefresh: Promise<WebAuthTokens> | null = null;
+    private pendingRefresh: Promise<TokenPair> | null = null;
 
     constructor({ baseUrl, accessToken, onTokens, onUnauthorized, onError }: WebApiClientOptions) {
         this.baseUrl = baseUrl;
@@ -294,13 +294,23 @@ export class WebApiClient {
      * Deliberately bypasses `execute` — a 401 here means "not logged in", which is
      * the normal case for an anonymous visitor and must not trigger the
      * `onUnauthorized` redirect (that would loop on /login).
+     *
+     * Shares the single-flight in {@link refreshOnce} with {@link retryWithRefresh},
+     * so concurrent callers (a React 18 StrictMode double-mount, several tabs replaying
+     * the same effect) collapse onto one HTTP request instead of each rotating the
+     * cookie and invalidating the others.
      */
     async refresh(): Promise<TokenPair> {
-        const tokens = await this.apiClient.refresh();
+        const tokens = await this.refreshOnce();
 
         this.setTokens({ accessToken: tokens.accessToken });
 
         return tokens;
+    }
+
+    /** Clear the held access token — used on logout and when a request comes back unauthorized. */
+    clearTokens(): void {
+        this.setTokens({ accessToken: null });
     }
 
     /** Revoke the current session server-side. */
@@ -333,6 +343,20 @@ export class WebApiClient {
         this.accessToken = accessToken;
         this.apiClient = this.createApiClient();
         this.onTokens({ accessToken });
+    }
+
+    /**
+     * Single-flight around the underlying refresh call. `refreshTokens` rotates the
+     * cookie server-side (the old record is deleted), so a second overlapping call
+     * would send the now-stale cookie and get a 401. Every caller within the overlap
+     * window awaits the same promise and gets the same result.
+     */
+    private refreshOnce(): Promise<TokenPair> {
+        if (!this.pendingRefresh) {
+            this.pendingRefresh = this.apiClient.refresh().finally(() => (this.pendingRefresh = null));
+        }
+
+        return this.pendingRefresh;
     }
 
     private async execute<T>({
@@ -371,16 +395,9 @@ export class WebApiClient {
         toastOnError: boolean;
     }): Promise<T> {
         try {
-            if (!this.pendingRefresh) {
-                this.pendingRefresh = this.apiClient
-                    .refresh()
-                    .then((tokens) => ({ accessToken: tokens.accessToken }))
-                    .finally(() => (this.pendingRefresh = null));
-            }
+            const tokens = await this.refreshOnce();
 
-            const nextTokens = await this.pendingRefresh;
-
-            this.setTokens(nextTokens);
+            this.setTokens({ accessToken: tokens.accessToken });
 
             return await request();
         } catch (refreshError) {

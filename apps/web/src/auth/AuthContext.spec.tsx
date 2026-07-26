@@ -9,6 +9,8 @@ const mockApi = {
     register: vi.fn(),
     refresh: vi.fn(),
     logout: vi.fn(),
+    clearTokens: vi.fn(),
+    getAccessToken: vi.fn(),
 };
 
 vi.mock('../api/web-api-client.js', () => ({
@@ -115,6 +117,7 @@ describe('AuthContext', () => {
 
         expect(mockApi.logout).toHaveBeenCalledTimes(1);
         await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('none'));
+        expect(mockApi.clearTokens).toHaveBeenCalledTimes(1);
     });
 
     it('clears the local session even when the logout call fails', async () => {
@@ -140,5 +143,6 @@ describe('AuthContext', () => {
 
         expect(mockApi.logout).toHaveBeenCalledTimes(1);
         await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('none'));
+        expect(mockApi.clearTokens).toHaveBeenCalledTimes(1);
     });
 });
