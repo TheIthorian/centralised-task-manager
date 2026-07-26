@@ -125,12 +125,19 @@ App auth uses `@nestjs/passport` + `passport-local` (login) + `passport-jwt` (pr
 
 All controller request and response types must be defined in `packages/api-client/src/types.ts` and exported from its `index.ts`. Never define inline response shapes in controllers.
 
-**Response types** — controller methods declare their return type using the api-client type:
+**Response types** — controller methods return a DTO **class** that `implements` the api-client type, never the bare type alias. Type aliases are erased at runtime, so `@nestjs/swagger` cannot see them and the API reference renders an empty Responses section:
 
 ```ts
-import type { TaskDto } from '@ctm/api-client';
+// apps/main/src/tasks/dto/task-response.dto.ts
+import type { TaskDto as ITaskDto } from '@ctm/api-client';
+export class TaskDto implements ITaskDto { ... }
+
+// apps/main/src/tasks/tasks.controller.ts
+import { TaskDto } from './dto/task-response.dto.js';
 async findOne(...): Promise<TaskDto> { ... }
 ```
+
+`@nestjs/swagger/plugin` derives `@ApiProperty` from the class's TS types during OpenAPI generation, so response fields need no decorators — add one only to override (enums, `Record<string, unknown>`). If a handler carries an explicit `@ApiResponse({ status })`, the plugin leaves it alone: pass `type:` yourself.
 
 **Request DTOs** — NestJS DTO classes live in `apps/main/src/**/dto/*.ts` and must `implements` the corresponding api-client type (aliased to avoid name clash):
 

@@ -24,7 +24,8 @@ import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 import type { TaskDocument } from './schemas/task.schema.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { AddReminderDto } from './dto/add-reminder.dto.js';
-import type { TaskDto, ReminderDto, OkDto } from '@ctm/api-client';
+import { TaskDto, ReminderDto } from './dto/task-response.dto.js';
+import { OkDto } from '../common/dto/ok.dto.js';
 
 type AuthRequest = {
     user: JwtPayload;
@@ -183,7 +184,7 @@ export class TasksController {
 
     /** Remove a reminder from a task by index. */
     @ApiOperation({ summary: 'Remove a reminder from a task' })
-    @ApiResponse({ status: 200 })
+    @ApiResponse({ status: 200, type: OkDto })
     @Delete(':id/reminders/:index')
     async removeReminder(
         @Request() req: AuthRequest,

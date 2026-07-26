@@ -5,7 +5,7 @@ import { AuthService } from '../auth/auth.service.js';
 import { UsersService } from './users.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
-import type { UserDto } from '@ctm/api-client';
+import { UserDto } from './dto/user.dto.js';
 
 interface AuthRequest {
     user: JwtPayload;

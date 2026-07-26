@@ -7,7 +7,6 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from '../src/app.module.js';
-import { attachResponseSchemas } from './attach-response-schemas.js';
 
 async function generate(): Promise<void> {
     // preview: true builds the module graph without instantiating providers, which is
@@ -24,7 +23,7 @@ async function generate(): Promise<void> {
         .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'jwt')
         .build();
 
-    const document = attachResponseSchemas({ document: SwaggerModule.createDocument(app, config) });
+    const document = SwaggerModule.createDocument(app, config);
 
     writeFileSync('openapi.json', JSON.stringify(document, null, 2));
     console.info('openapi.json written');

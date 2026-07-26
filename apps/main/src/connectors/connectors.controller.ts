@@ -20,14 +20,14 @@ import { ConfigService } from '@nestjs/config';
 import { ConnectorName, TaskConnectorName, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
 import Ajv from 'ajv';
 import type { NotionTaskSource } from '@ctm/connectors';
-import type {
+import {
     ConnectorAuthUrlDto,
     ConnectorHealthDto,
     ConnectorStatusDto,
     NotionDatabaseDto,
-    OkDto,
     UpdateConnectorResponseDto,
-} from '@ctm/api-client';
+} from './dto/connector-response.dto.js';
+import { OkDto } from '../common/dto/ok.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
