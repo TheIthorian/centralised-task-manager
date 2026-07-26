@@ -21,7 +21,16 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
+            # Restores turbo's local cache so unchanged packages skip their build.
+            # Both jobs read the same prefix, so whichever runs first warms the other.
+            - uses: actions/cache@v4
+              with:
+                  path: .turbo/cache
+                  key: turbo-${{ runner.os }}-lint-${{ github.sha }}
+                  restore-keys: |
+                      turbo-${{ runner.os }}-lint-
+                      turbo-${{ runner.os }}-
+            - run: pnpm install --frozen-lockfile --prefer-offline
             - run: pnpm exec turbo run lint
 
     test:
@@ -31,11 +40,14 @@ jobs:
                 image: mongo:7
                 ports:
                     - 27017:27017
+                # Mongo is ready in a couple of seconds; the default 10s interval
+                # means the job idles waiting for the first probe.
                 options: >-
                     --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
-                    --health-interval 10s
+                    --health-start-period 2s
+                    --health-interval 3s
                     --health-timeout 5s
-                    --health-retries 10
+                    --health-retries 20
         steps:
             - uses: actions/checkout@v4
             - uses: pnpm/action-setup@v4
@@ -43,5 +55,12 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
+            - uses: actions/cache@v4
+              with:
+                  path: .turbo/cache
+                  key: turbo-${{ runner.os }}-test-${{ github.sha }}
+                  restore-keys: |
+                      turbo-${{ runner.os }}-test-
+                      turbo-${{ runner.os }}-
+            - run: pnpm install --frozen-lockfile --prefer-offline
             - run: pnpm exec turbo run test
