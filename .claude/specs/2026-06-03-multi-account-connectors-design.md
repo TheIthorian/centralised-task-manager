@@ -28,13 +28,13 @@ each task remembers which account it came from.
 
 ## Decisions
 
-| Topic | Decision |
-| --- | --- |
-| Account key | Provider's stable **external account id**, with email/label captured for display. |
-| Task linkage | Task stores **`externalAccountId`** (provider id string), not internal FK. |
-| Push (write-back) | **Out of scope** for this spec. |
-| Migration | **Lazy backfill on next sync** — no migration script. |
-| Re-auth same account | **Update in place**, deduped by `externalAccountId`. No duplicate row. |
+| Topic                | Decision                                                                          |
+| -------------------- | --------------------------------------------------------------------------------- |
+| Account key          | Provider's stable **external account id**, with email/label captured for display. |
+| Task linkage         | Task stores **`externalAccountId`** (provider id string), not internal FK.        |
+| Push (write-back)    | **Out of scope** for this spec.                                                   |
+| Migration            | **Lazy backfill on next sync** — no migration script.                             |
+| Re-auth same account | **Update in place**, deduped by `externalAccountId`. No duplicate row.            |
 
 ## Data Model Changes
 
