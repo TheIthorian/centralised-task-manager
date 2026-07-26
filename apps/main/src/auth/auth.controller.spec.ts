@@ -480,7 +480,7 @@ describe('Cookie mode for web clients', () => {
         expect(cookieHeader).toContain('ctm_refresh=');
         expect(cookieHeader).toContain('HttpOnly');
         expect(cookieHeader).toContain('SameSite=Lax');
-        expect(cookieHeader).toContain('Path=/api/auth/refresh');
+        expect(cookieHeader).toContain('Path=/api/auth');
     });
 
     it('refreshes from the cookie with no request body', async () => {

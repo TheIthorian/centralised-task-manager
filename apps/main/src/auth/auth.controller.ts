@@ -4,8 +4,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { UnauthorizedError, ValidationError } from '@ctm/errors';
-import { AuthService } from './auth.service.js';
-import type { TokenPair, AuthorizedAppDto } from '@ctm/api-client';
+import { AuthService, type TokenPair } from './auth.service.js';
+import type { TokenPair as TokenPairDto, AuthorizedAppDto } from '@ctm/api-client';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
@@ -40,10 +40,10 @@ export class AuthController {
         request,
         reply,
     }: {
-        tokens: TokenPair & { refreshToken: string };
+        tokens: TokenPair;
         request: FastifyRequest;
         reply: FastifyReply;
-    }): TokenPair {
+    }): TokenPairDto {
         if (!isWebClient({ headers: request.headers })) return tokens;
 
         reply.setCookie(
@@ -69,7 +69,7 @@ export class AuthController {
         @Body() dto: RegisterDto,
         @Req() request: FastifyRequest,
         @Res({ passthrough: true }) reply: FastifyReply,
-    ): Promise<TokenPair> {
+    ): Promise<TokenPairDto> {
         const tokens = await this.auth.register({ email: dto.email, password: dto.password, name: dto.name });
 
         return this.applyRefreshTransport({ tokens, request, reply });
@@ -85,7 +85,7 @@ export class AuthController {
         @Request() req: AuthRequest,
         @Req() request: FastifyRequest,
         @Res({ passthrough: true }) reply: FastifyReply,
-    ): Promise<TokenPair> {
+    ): Promise<TokenPairDto> {
         const tokens = await this.auth.issueTokens(req.user);
 
         return this.applyRefreshTransport({ tokens, request, reply });
@@ -100,7 +100,7 @@ export class AuthController {
         @Body() dto: RefreshDto,
         @Req() request: FastifyRequest,
         @Res({ passthrough: true }) reply: FastifyReply,
-    ): Promise<TokenPair> {
+    ): Promise<TokenPairDto> {
         const token = request.cookies[REFRESH_COOKIE_NAME] ?? dto.refreshToken;
 
         if (!token) {

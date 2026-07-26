@@ -4,16 +4,20 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { createHash, randomBytes } from 'node:crypto';
+import type { TokenPair as TokenPairDto } from '@ctm/api-client';
 import { UsersService } from '../users/users.service.js';
 import { RefreshToken, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 
-/** A JWT access token paired with a long-lived refresh token. */
-export interface TokenPair {
-    accessToken: string;
-    refreshToken: string;
-}
+/**
+ * A JWT access token paired with a long-lived refresh token, before
+ * `AuthController` decides whether the refresh token travels in the body or an
+ * HttpOnly cookie. Built on the api-client wire type — `refreshToken` is
+ * optional there because it is omitted for web clients, but every token pair
+ * has one at the point `AuthService` issues it.
+ */
+export type TokenPair = TokenPairDto & { refreshToken: string };
 
 @Injectable()
 export class AuthService {
@@ -33,14 +37,14 @@ export class AuthService {
         email: string;
         password: string;
         name?: string;
-    }): Promise<TokenPair & { user: { id: string; email: string } }> {
+    }): Promise<TokenPair> {
         const user = await this.users.create({ email, password, name });
 
         return this.issueTokens(user);
     }
 
     /** Issue a new access + refresh token pair for a validated user. */
-    async issueTokens(user: UserDocument): Promise<TokenPair & { user: { id: string; email: string } }> {
+    async issueTokens(user: UserDocument): Promise<TokenPair> {
         const payload: JwtPayload = { sub: String(user._id), email: user.email };
         const accessToken = this.jwt.sign(payload);
 
@@ -59,7 +63,7 @@ export class AuthService {
     }
 
     /** Validate a refresh token and issue a new token pair. Old token is deleted (rotation). */
-    async refreshTokens(rawRefreshToken: string): Promise<TokenPair & { user: { id: string; email: string } }> {
+    async refreshTokens(rawRefreshToken: string): Promise<TokenPair> {
         const tokenHash = this.hashToken(rawRefreshToken);
         const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash });
 

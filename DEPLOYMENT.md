@@ -46,9 +46,18 @@ separate worker service (`apps/sync` is an unimplemented stub).
 - Generate a public domain for the service; that URL is `REDIRECT_BASE_URL`.
 - Add `${REDIRECT_BASE_URL}/connectors/oauth/callback/<todoist|google_tasks|notion|discord>`
   as a redirect URI in each OAuth app.
-- Also set `COOKIE_PATH=/api/auth/refresh` and `COOKIE_SECURE=true`. `COOKIE_PATH`
+- Also set `COOKIE_PATH=/api/auth` and `COOKIE_SECURE=true`. `COOKIE_PATH`
   carries the `/api` prefix because it is the browser-visible path — the SPA reaches
   `apps/main` through the Cloudflare Pages Function proxy at `/api/*`, not directly.
+  It is scoped to `/api/auth`, not `/api/auth/refresh` — per RFC 6265 §5.1.4 a
+  cookie's path must be a prefix of a route for the browser to send it, and
+  `/api/auth/refresh` is not a prefix of `/api/auth/logout`. Scoping to
+  `/api/auth/refresh` silently breaks logout: the browser never sends the
+  cookie to `/auth/logout`, so the DB refresh-token record is never revoked.
+- **Ordering hazard**: `COOKIE_PATH` and `COOKIE_SECURE` are `Joi…required()` in
+  `env.schema.ts` — the API crash-loops on boot if they are unset. Existing
+  deployments must set both variables on Railway BEFORE merging/deploying this
+  change, not after.
 - `REDIRECT_BASE_URL` is `https://ctm-web.pages.dev/api` — the `/api` suffix is
   correct and must stay. Before the Pages Function proxy existed this was broken
   (the SPA's catch-all route just returned `index.html` for `/api/...`), but the
