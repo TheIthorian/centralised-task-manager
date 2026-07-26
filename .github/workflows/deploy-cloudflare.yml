@@ -25,8 +25,21 @@ jobs:
     ci:
         uses: ./.github/workflows/ci.yml
 
+    # A push that only touches one app should not redeploy the other two.
+    changes:
+        runs-on: ubuntu-latest
+        outputs:
+            affected: ${{ steps.affected.outputs.packages }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - id: affected
+              uses: ./.github/actions/affected-packages
+
     web:
-        needs: ci
+        needs: [ci, changes]
+        if: contains(fromJSON(needs.changes.outputs.affected), '*') || contains(fromJSON(needs.changes.outputs.affected), '@ctm/web')
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -35,13 +48,15 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
+            # Only this app's subtree is needed; the rest of the workspace is dead weight here.
+            - run: pnpm install --frozen-lockfile --prefer-offline --filter '@ctm/web...'
             - run: pnpm exec turbo run build --filter=@ctm/web
             - run: pnpm exec wrangler pages deploy --branch=main
               working-directory: apps/web
 
     landing:
-        needs: ci
+        needs: [ci, changes]
+        if: contains(fromJSON(needs.changes.outputs.affected), '*') || contains(fromJSON(needs.changes.outputs.affected), '@ctm/landing')
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -50,12 +65,16 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
+            - run: pnpm install --frozen-lockfile --prefer-offline --filter '@ctm/landing...'
             - run: pnpm exec turbo run build --filter=@ctm/landing
             - run: pnpm exec wrangler pages deploy apps/landing/dist --project-name=ctm-landing --branch=main
 
     docs:
-        needs: ci
+        needs: [ci, changes]
+        if: >-
+            contains(fromJSON(needs.changes.outputs.affected), '*')
+            || contains(fromJSON(needs.changes.outputs.affected), '@ctm/docs')
+            || contains(fromJSON(needs.changes.outputs.affected), '@ctm/main')
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -64,8 +83,8 @@ jobs:
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - run: pnpm install --frozen-lockfile
-            # The spec is generated from apps/main first; the docs build only renders it.
+            # The spec is generated from apps/main, so its subtree is needed too.
+            - run: pnpm install --frozen-lockfile --prefer-offline --filter '@ctm/docs...' --filter '@ctm/main...'
             - run: pnpm exec turbo run generate-openapi --filter=@ctm/main
             - run: pnpm exec turbo run build --filter=@ctm/docs
               env:
