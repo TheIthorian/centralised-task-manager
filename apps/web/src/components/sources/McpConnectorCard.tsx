@@ -54,7 +54,7 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
                         aria-label="MCP client"
                         value={clientId}
                         onChange={(e) => setClientId(e.target.value)}
-                        className="border-2 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-800 text-nb-black dark:text-white font-bold text-xs uppercase px-2 py-1.5"
+                        className="w-32 border-2 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-800 text-nb-black dark:text-white font-bold text-xs uppercase px-2 py-1.5"
                     >
                         {MCP_CLIENTS.map(({ id, label }) => (
                             <option key={id} value={id}>
@@ -62,7 +62,10 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
                             </option>
                         ))}
                     </select>
-                    <Button onClick={() => void add()}>Add to {client.label}</Button>
+                    {/* Label stays fixed — a per-client label resizes the row on every change. */}
+                    <Button onClick={() => void add()} aria-label={`Add to ${client.label}`}>
+                        Add
+                    </Button>
                 </div>
             </div>
 
@@ -78,8 +81,9 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
                 </Button>
             </div>
 
-            <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 flex items-center gap-1.5">
-                <img src={client.favicon} alt="" width={12} height={12} className="inline-block shrink-0" />
+            {/* Fixed height: hints differ in length and would otherwise resize the card. */}
+            <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 flex items-start gap-1.5 min-h-8">
+                <img src={client.favicon} alt="" width={12} height={12} className="inline-block shrink-0 mt-0.5" />
                 {client.hint}
             </p>
         </div>
