@@ -63,9 +63,9 @@ function AccountRow({
 
     return (
         <div className="flex flex-col gap-2 border-t-2 border-nb-black/10 dark:border-white/10 pt-3">
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                    <p className="font-bold text-sm text-nb-black dark:text-white">{accountName}</p>
+            <div className="flex flex-col items-stretch gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
+                <div className="min-w-0">
+                    <p className="font-bold text-sm text-nb-black dark:text-white break-words">{accountName}</p>
                     {lastSynced && !isSyncing && (
                         <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 mt-0.5">
                             Last synced: {new Date(lastSynced).toLocaleDateString()}
@@ -73,7 +73,7 @@ function AccountRow({
                     )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:shrink-0">
                     {setupRequired && onConfigure && (
                         <Button variant="secondary" onClick={() => onConfigure(connectionId)} disabled={isPending}>
                             Configure
