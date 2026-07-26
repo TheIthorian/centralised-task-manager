@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@ctm/ui';
 import { MCP_CLIENTS } from '../../lib/mcp-clients.js';
+import { BrandIcon } from '../BrandIcon.js';
 
 type McpConnectorCardProps = {
     mcpUrl: string;
@@ -40,8 +41,8 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
         <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide flex items-center gap-1.5">
-                        <img src="/favicons/mcp.png" alt="" width={14} height={14} className="inline-block" />
+                    <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide flex items-center gap-2">
+                        <BrandIcon brand="mcp" />
                         MCP
                     </p>
                     <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 mt-0.5">
@@ -82,8 +83,8 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
             </div>
 
             {/* Fixed height: hints differ in length and would otherwise resize the card. */}
-            <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 flex items-start gap-1.5 min-h-8">
-                <img src={client.favicon} alt="" width={12} height={12} className="inline-block shrink-0 mt-0.5" />
+            <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 flex items-start gap-2 min-h-8">
+                <BrandIcon brand={client.brand} size={14} className="mt-px" />
                 {client.hint}
             </p>
         </div>

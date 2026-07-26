@@ -1,12 +1,15 @@
+import type { BrandKey } from './brand-icons.js';
+
 type SourceMeta = {
     label: string;
-    favicon: string;
+    brand: BrandKey;
 };
 
 const SOURCES: Record<string, SourceMeta> = {
-    todoist: { label: 'Todoist', favicon: '/favicons/todoist.png' },
-    google_tasks: { label: 'Google Tasks', favicon: '/favicons/google_tasks.png' },
-    notion: { label: 'Notion', favicon: '/favicons/notion.png' },
+    todoist: { label: 'Todoist', brand: 'todoist' },
+    google_tasks: { label: 'Google Tasks', brand: 'google_tasks' },
+    notion: { label: 'Notion', brand: 'notion' },
+    discord: { label: 'Discord', brand: 'discord' },
 };
 
 /** Get a human-readable label for a connector source. */
@@ -15,8 +18,8 @@ export function getSourceLabel(source: string | null | undefined): string {
     return SOURCES[source]?.label ?? source.toUpperCase();
 }
 
-/** Get a favicon URL for a connector source, or null if unknown. */
-export function getSourceFaviconUrl(source: string | null | undefined): string | null {
+/** Get the brand mark for a connector source, or null if unknown. */
+export function getSourceBrand(source: string | null | undefined): BrandKey | null {
     if (!source) return null;
-    return SOURCES[source]?.favicon ?? null;
+    return SOURCES[source]?.brand ?? null;
 }
