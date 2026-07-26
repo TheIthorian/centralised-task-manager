@@ -22,7 +22,7 @@
 - Tests co-located as `*.spec.ts`. Integration tests use the real MongoDB via `process.env['MONGODB_URI']`. No cleanup; use `Date.now()` for unique identifiers.
 - No config defaults or silent fallbacks. Missing required env fails loudly at startup.
 - Conventional Commits.
-- `COOKIE_PATH` = `/api/auth/refresh` in dev and prod. Cookie name `ctm_refresh`. Header name `X-Ctm-Client`, value `web`.
+- `COOKIE_PATH` = `/api/auth` in dev and prod. Cookie name `ctm_refresh`. Header name `X-Ctm-Client`, value `web`.
 - `@fastify/compress` v9. `zstd` stays disabled.
 
 ---
@@ -204,8 +204,9 @@ In `apps/main/src/config/env.schema.ts`, after the `WEB_URL` line:
 
 ```
 # Path the refresh cookie is scoped to, as the BROWSER sees it. With the /api
-# proxy in front of this service that is /api/auth/refresh, not /auth/refresh.
-COOKIE_PATH=/api/auth/refresh
+# proxy in front of this service that is /api/auth, not /auth. Must cover both
+# /api/auth/refresh AND /api/auth/logout (RFC 6265 path-match rules).
+COOKIE_PATH=/api/auth
 # Must be true in production. false locally, because http://localhost drops Secure cookies.
 COOKIE_SECURE=false
 ```
@@ -213,14 +214,14 @@ COOKIE_SECURE=false
 In the production block further down the same file, alongside `WEB_URL` and `CORS_ORIGIN`:
 
 ```
-#   COOKIE_PATH=/api/auth/refresh
+#   COOKIE_PATH=/api/auth
 #   COOKIE_SECURE=true
 ```
 
 `apps/main/.env.test` — add:
 
 ```
-COOKIE_PATH=/api/auth/refresh
+COOKIE_PATH=/api/auth
 COOKIE_SECURE=false
 ```
 
@@ -282,7 +283,7 @@ describe('isWebClient', () => {
 
 describe('buildRefreshCookieOptions', () => {
     it('builds a locked-down cookie', () => {
-        const options = buildRefreshCookieOptions({ path: '/api/auth/refresh', secure: true, maxAgeDays: 30 });
+        const options = buildRefreshCookieOptions({ path: '/api/auth', secure: true, maxAgeDays: 30 });
 
         expect(options).toEqual({
             httpOnly: true,
@@ -294,7 +295,7 @@ describe('buildRefreshCookieOptions', () => {
     });
 
     it('allows insecure cookies for local http development', () => {
-        const options = buildRefreshCookieOptions({ path: '/api/auth/refresh', secure: false, maxAgeDays: 1 });
+        const options = buildRefreshCookieOptions({ path: '/api/auth', secure: false, maxAgeDays: 1 });
 
         expect(options.secure).toBe(false);
     });
@@ -428,7 +429,7 @@ Add to `apps/main/src/auth/auth.controller.spec.ts`, following the existing suit
         expect(cookie).toContain('ctm_refresh=');
         expect(cookie).toContain('HttpOnly');
         expect(cookie).toContain('SameSite=Lax');
-        expect(cookie).toContain('Path=/api/auth/refresh');
+        expect(cookie).toContain('Path=/api/auth');
     });
 
     it('refreshes from the cookie with no request body', async () => {
@@ -1304,7 +1305,7 @@ In `.github/workflows/deploy-cloudflare.yml`, the `web` job: drop the `env:` blo
 
 - [ ] **Step 2: Update DEPLOYMENT.md**
 
-In the Cloudflare Pages section, document that `ctm-web` needs an `API_ORIGIN` environment variable set to the Railway `main` URL, that it is read at request time by the Pages Function (not baked into the bundle), and that `VITE_API_URL` is retired. In the Railway `main` section, add `COOKIE_PATH=/api/auth/refresh` and `COOKIE_SECURE=true`. Note that `REDIRECT_BASE_URL` stays `https://ctm-web.pages.dev/api` and now resolves through the proxy.
+In the Cloudflare Pages section, document that `ctm-web` needs an `API_ORIGIN` environment variable set to the Railway `main` URL, that it is read at request time by the Pages Function (not baked into the bundle), and that `VITE_API_URL` is retired. In the Railway `main` section, add `COOKIE_PATH=/api/auth` and `COOKIE_SECURE=true`. Note that `REDIRECT_BASE_URL` stays `https://ctm-web.pages.dev/api` and now resolves through the proxy.
 
 - [ ] **Step 3: Update apps/web/README.md**
 
@@ -1343,7 +1344,7 @@ gh pr create --title "feat: same-origin API proxy and HttpOnly refresh cookie" -
 The PR body must list the manual deploy steps that are **not** covered by the merge, because the deploy will half-break without them:
 
 1. Set `API_ORIGIN=https://main-production-be0e.up.railway.app` on the `ctm-web` Cloudflare Pages project.
-2. Set `COOKIE_PATH=/api/auth/refresh` and `COOKIE_SECURE=true` on the Railway `main` service.
+2. Set `COOKIE_PATH=/api/auth` and `COOKIE_SECURE=true` on the Railway `main` service.
 3. Delete the `VITE_API_URL` GitHub repo variable.
 4. Note that existing users are logged out once and must sign in again.
 

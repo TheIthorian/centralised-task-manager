@@ -32,7 +32,7 @@ built. This design builds it.
   proxy entirely (this is how `picstack` works). Rejected here because it means buying a
   domain. If one is bought later, the Pages Function can be deleted and `API_ORIGIN`
   dropped; the cookie logic in `apps/main` stays as-is apart from `COOKIE_PATH`
-  becoming `/auth/refresh`.
+  becoming `/auth`.
 - Changing the access-token model. Bearer stays for every client, web included.
 - Session/server-state auth. The API stays stateless.
 
@@ -149,7 +149,15 @@ the proxies pass `Set-Cookie` and `Cookie` through unmodified — their only edi
 
 The browser sees `/api/auth/refresh`; Nest sees `/auth/refresh`. Rather than have the
 proxies rewrite the `Set-Cookie` path, Nest emits the browser-visible path directly
-from `COOKIE_PATH` (`/api/auth/refresh` in both dev and prod).
+from `COOKIE_PATH` (`/api/auth` in both dev and prod).
+
+`COOKIE_PATH` is `/api/auth`, not `/api/auth/refresh`. Per RFC 6265 §5.1.4 a cookie's
+`Path` attribute must be a path-prefix of a request's path for the browser to send the
+cookie. `/api/auth/refresh` is not a prefix of `/api/auth/logout`, so scoping to the
+narrower path means the browser never sends `ctm_refresh` to `POST /api/auth/logout` —
+logout never revokes the token server-side even though the UI appears to log out.
+Scoping to `/api/auth` covers both `/api/auth/refresh` and `/api/auth/logout` (and any
+future sibling auth route) without over-widening past the auth namespace.
 
 #### CSRF
 
@@ -211,7 +219,7 @@ a compressed response body.
 | Variable        | Where                          | Value                                                                   |
 | --------------- | ------------------------------ | ----------------------------------------------------------------------- |
 | `API_ORIGIN`    | Pages env var; `apps/web/.env` | `https://main-production-be0e.up.railway.app` / `http://127.0.0.1:3000` |
-| `COOKIE_PATH`   | Railway `main`                 | `/api/auth/refresh`                                                     |
+| `COOKIE_PATH`   | Railway `main`                 | `/api/auth`                                                             |
 | `COOKIE_SECURE` | Railway `main`                 | `true` (prod), `false` (dev)                                            |
 
 Both `main` variables are required in `env.schema.ts` — no defaults, per the
