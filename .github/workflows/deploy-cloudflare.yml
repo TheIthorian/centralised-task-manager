@@ -21,7 +21,12 @@ env:
     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
 jobs:
+    # Deployments only proceed if lint and tests are green.
+    ci:
+        uses: ./.github/workflows/ci.yml
+
     web:
+        needs: ci
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -36,6 +41,7 @@ jobs:
               working-directory: apps/web
 
     landing:
+        needs: ci
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -49,6 +55,7 @@ jobs:
             - run: pnpm exec wrangler pages deploy apps/landing/dist --project-name=ctm-landing --branch=main
 
     docs:
+        needs: ci
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
