@@ -127,7 +127,7 @@ export function NotificationsPage(): React.JSX.Element {
                                             <span className="text-nb-black/40 dark:text-white/30">{label}</span>
 
                                             <Link
-                                                to="/settings/sources"
+                                                to="/settings/connectors"
                                                 className="text-nb-black/50 dark:text-white/40 underline font-bold text-xs normal-case"
                                             >
                                                 Connect →

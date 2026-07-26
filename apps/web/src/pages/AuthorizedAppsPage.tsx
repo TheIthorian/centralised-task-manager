@@ -123,7 +123,7 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
             {confirming && (
                 <div className="flex flex-col gap-2 border-t-2 border-nb-black/20 dark:border-white/10 pt-2">
                     <p className="text-sm font-bold text-nb-black dark:text-white">
-                        Revoke access for {app.clientName}? This cannot be undone.
+                        Revoke access for {app.clientName}?
                     </p>
 
                     {revokeMutation.isError && (

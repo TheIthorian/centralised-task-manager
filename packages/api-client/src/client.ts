@@ -1,5 +1,6 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
 import type {
+    AppConfigDto,
     AuthorizedAppDto,
     ConnectorHealthDto,
     ConnectorStatusDto,
@@ -195,6 +196,11 @@ export class CtmApiClient {
     /** Remove a reminder from a task by its index in the reminders array. */
     async removeReminder({ id, index }: RemoveReminderParams): Promise<OkDto> {
         return this.request<OkDto>({ method: 'DELETE', path: `/tasks/${id}/reminders/${index}` });
+    }
+
+    /** Fetch public client configuration, such as the advertised MCP server URL. */
+    async getAppConfig(): Promise<AppConfigDto> {
+        return this.request<AppConfigDto>({ method: 'GET', path: '/config' });
     }
 
     /** List all connector statuses for the current user. */

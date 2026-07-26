@@ -77,4 +77,5 @@ export type {
     ImportSummaryDto,
     ImportResponseDto,
     HealthDto,
+    AppConfigDto,
 } from './types.js';

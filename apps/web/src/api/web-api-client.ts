@@ -1,6 +1,7 @@
 import {
     ApiClientError,
     CtmApiClient,
+    type AppConfigDto,
     type AuthorizedAppDto,
     type ConnectorHealthDto,
     type ConnectorStatusDto,
@@ -151,6 +152,11 @@ export class WebApiClient {
     /** Delete a task for the current user. */
     async deleteTask({ id }: WebDeleteTaskParams): Promise<void> {
         await this.execute({ request: () => this.apiClient.deleteTask({ id }) });
+    }
+
+    /** Fetch public client configuration, such as the advertised MCP server URL. */
+    async getAppConfig(): Promise<AppConfigDto> {
+        return this.execute({ request: () => this.apiClient.getAppConfig() });
     }
 
     /** List connector statuses for the current user. */

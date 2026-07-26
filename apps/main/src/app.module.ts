@@ -6,6 +6,7 @@ import { InternalError } from '@ctm/errors';
 import { envSchema } from './config/env.schema.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
+import { AppConfigModule } from './app-config/app-config.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ConnectorsModule } from './connectors/connectors.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
@@ -35,6 +36,7 @@ if (skipEnvValidation && process.env['NODE_ENV'] === 'production') {
         ScheduleModule.forRoot(),
         DatabaseModule,
         HealthModule,
+        AppConfigModule,
         AuthModule,
         ConnectorsModule,
         TasksModule,

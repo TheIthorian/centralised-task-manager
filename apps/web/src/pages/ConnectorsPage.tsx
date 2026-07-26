@@ -8,9 +8,10 @@ import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 import { NotionSetupModal } from '../components/sources/NotionSetupModal.js';
+import { McpConnectorCard } from '../components/sources/McpConnectorCard.js';
 
 /** Settings sub-page: connected task sources. */
-export function SourcesPage(): React.JSX.Element {
+export function ConnectorsPage(): React.JSX.Element {
     const qc = useQueryClient();
     const { api } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -26,6 +27,12 @@ export function SourcesPage(): React.JSX.Element {
     } = useQuery({
         queryKey: ['connectors'],
         queryFn: () => api.listConnectors(),
+    });
+
+    const { data: appConfig } = useQuery({
+        queryKey: ['app-config'],
+        queryFn: () => api.getAppConfig(),
+        staleTime: Infinity,
     });
 
     const { data: healthResults = [], isLoading: isHealthLoading } = useQuery({
@@ -154,7 +161,7 @@ export function SourcesPage(): React.JSX.Element {
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
                 <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">
-                    Connected Sources
+                    Task Connectors
                 </h1>
                 <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
                     Connect external task managers to sync your tasks here.
@@ -257,6 +264,19 @@ export function SourcesPage(): React.JSX.Element {
                             isPending={isPending}
                         />
                     ))}
+            </div>
+
+            <div className="mt-8 mb-6">
+                <h2 className="text-lg font-black uppercase tracking-tight text-nb-black dark:text-white">
+                    Data Connectors
+                </h2>
+                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
+                    Let AI clients read and manage your tasks over MCP.
+                </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+                {appConfig && <McpConnectorCard mcpUrl={appConfig.mcpUrl} />}
             </div>
 
             {setupConnectionId && (

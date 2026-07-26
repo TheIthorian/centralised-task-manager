@@ -8,6 +8,7 @@ export const envSchema = Joi.object({
     NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
     REDIRECT_BASE_URL: Joi.string().uri().required(),
     WEB_URL: Joi.string().uri().required(),
+    MCP_PUBLIC_URL: Joi.string().uri().required(),
     RSA_PRIVATE_KEY: Joi.string().required(),
     RSA_PUBLIC_KEY: Joi.string().required(),
     JWT_ACCESS_EXPIRES: Joi.number().integer().min(30).required(),
