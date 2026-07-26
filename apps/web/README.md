@@ -31,14 +31,14 @@ pnpm --filter @ctm/web dev
 The SPA always talks to the same-origin `/api` path (`apps/web/src/config.ts`) —
 there is no build-time API URL to configure. In dev, the Vite proxy forwards
 `/api/*` to `API_ORIGIN`; in production, the Cloudflare Pages Function
-(`functions/api/[[path]].ts`) does the same, reading `API_ORIGIN` from the Pages
-project's environment variables at request time.
+(`functions/api/[[path]].ts`) does the same, reading `API_ORIGIN` at request time from
+the `[vars]` block in `wrangler.toml`.
 
 ### Environment Variables
 
 | Variable     | Description                                                                                                                                                                                                                       |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `API_ORIGIN` | Origin of `apps/main` (no default — required). Read by the Vite dev proxy locally, **and** by the Cloudflare Pages Function in production, where it is a Pages project environment variable (Dashboard → Settings), not a build-time/`VITE_*` variable. |
+| `API_ORIGIN` | Origin of `apps/main` (no default — required). Locally it comes from `.env` and is read by the Vite dev proxy; in production it comes from `[vars]` in `wrangler.toml` and is read by the Pages Function. Never a build-time/`VITE_*` variable. |
 
 ## Commands
 

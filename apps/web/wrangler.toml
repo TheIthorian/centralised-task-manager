@@ -1,3 +1,8 @@
 name = "ctm-web"
 compatibility_date = "2026-07-25"
 pages_build_output_dir = "dist"
+
+# Read at request time by functions/api/[[path]].ts, not baked into the SPA bundle.
+# Not a secret — this URL was already public in the pre-proxy bundle.
+[vars]
+API_ORIGIN = "https://main-production-be0e.up.railway.app"

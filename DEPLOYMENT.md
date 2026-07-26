@@ -91,18 +91,13 @@ GitHub repo **variables**:
 | ---------- | ---------------------------------------- |
 | `DOCS_URL` | the public origin of the docs Pages site |
 
-`ctm-web` (the Pages **project**, not the GitHub repo) needs its own environment
-variable, set in the Cloudflare dashboard under Pages → `ctm-web` → Settings →
-Environment variables:
-
-| Name          | Value                                              |
-| ------------- | --------------------------------------------------- |
-| `API_ORIGIN`  | `https://main-production-be0e.up.railway.app` (the Railway `main` public URL) |
-
-`API_ORIGIN` is read at **request time** by the Pages Function
-(`apps/web/functions/api/[[path]].ts`) that proxies `/api/*` to `apps/main` — it is
-not a build-time/Vite variable and is not baked into the JS bundle, so it does not
-go in GitHub Actions and a redeploy is not needed to change it.
+`API_ORIGIN` — the origin the `/api` proxy forwards to — lives in
+`apps/web/wrangler.toml` under `[vars]`, so it deploys with the project and needs no
+dashboard step. It is read at **request time** by the Pages Function
+(`apps/web/functions/api/[[path]].ts`), not baked into the JS bundle, so it is not a
+build-time/Vite variable and does not belong in GitHub Actions. It is not a secret:
+the same URL was public in the pre-proxy bundle. To point the SPA at a different API,
+edit that file and redeploy.
 
 `VITE_API_URL` is retired — the SPA now always talks to the same-origin `/api`
 path (see `apps/web/src/config.ts`), and the GitHub repo variable of that name is
