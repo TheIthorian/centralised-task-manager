@@ -147,6 +147,70 @@ describe('CtmApiClient', () => {
         expect(result).toEqual(summary);
     });
 
+    it('posts an empty body to refresh when no token is held', async () => {
+        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
+        const payload = { accessToken: 'acc', user: { id: '1', email: 'a@b.com' } };
+
+        mockInstance.request.mockResolvedValueOnce({ data: payload });
+
+        const result = await client.refresh();
+
+        expect(mockInstance.request).toHaveBeenCalledWith({
+            method: 'POST',
+            url: '/auth/refresh',
+            data: {},
+            params: undefined,
+        });
+        expect(result).toEqual(payload);
+    });
+
+    it('posts the refresh token when one is held', async () => {
+        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000', refreshToken: 'rt' });
+
+        mockInstance.request.mockResolvedValueOnce({
+            data: { accessToken: 'acc', refreshToken: 'rt2', user: { id: '1', email: 'a@b.com' } },
+        });
+
+        await client.refresh();
+
+        expect(mockInstance.request).toHaveBeenCalledWith({
+            method: 'POST',
+            url: '/auth/refresh',
+            data: { refreshToken: 'rt' },
+            params: undefined,
+        });
+    });
+
+    it('posts the held token to logout', async () => {
+        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000', refreshToken: 'rt' });
+
+        mockInstance.request.mockResolvedValueOnce({ data: undefined });
+
+        await client.logout();
+
+        expect(mockInstance.request).toHaveBeenCalledWith({
+            method: 'POST',
+            url: '/auth/logout',
+            data: { refreshToken: 'rt' },
+            params: undefined,
+        });
+    });
+
+    it('posts an empty body to logout when no token is held', async () => {
+        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
+
+        mockInstance.request.mockResolvedValueOnce({ data: undefined });
+
+        await client.logout();
+
+        expect(mockInstance.request).toHaveBeenCalledWith({
+            method: 'POST',
+            url: '/auth/logout',
+            data: {},
+            params: undefined,
+        });
+    });
+
     it('throws a structured error on failed requests', async () => {
         const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
         const error = {

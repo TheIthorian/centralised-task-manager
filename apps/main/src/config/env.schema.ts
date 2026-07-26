@@ -14,6 +14,8 @@ export const envSchema = Joi.object({
     REFRESH_TOKEN_EXPIRES_DAYS: Joi.number().integer().min(1).required(),
     LOG_LEVEL: Joi.string().valid('trace', 'debug', 'info', 'warn', 'error', 'fatal').required(),
     EXPORT_DIR: Joi.string().required(),
+    COOKIE_PATH: Joi.string().required(),
+    COOKIE_SECURE: Joi.boolean().required(),
     CORS_ORIGIN: Joi.string().optional(),
     TODOIST_CLIENT_ID: Joi.string().allow('').optional(),
     TODOIST_CLIENT_SECRET: Joi.string().allow('').optional(),

@@ -19,11 +19,11 @@ import {
     type TokenPair,
     type UserDto,
 } from '@ctm/api-client';
-import type { StoredAuthTokens } from '../auth/auth-storage.js';
 import type {
     WebAddReminderParams,
     WebApiClientOptions,
     WebApiError,
+    WebAuthTokens,
     WebCancelSyncJobParams,
     WebConnectorParams,
     WebCreateTaskParams,
@@ -44,21 +44,23 @@ import type {
     WebUpdateTaskParams,
 } from './web-api-client.types.js';
 
+/** Refresh this long before the access token expires, to cover latency and clock drift. */
+const EXPIRY_SKEW_MS = 15_000;
+
 /** Web-only API wrapper with refresh, redirect, and toast behavior. */
 export class WebApiClient {
     private readonly baseUrl: string;
-    private readonly onTokens: (tokens: StoredAuthTokens) => void;
+    private readonly onTokens: (tokens: WebAuthTokens) => void;
     private readonly onUnauthorized: () => void;
     private readonly onError: (error: WebApiError) => void;
     private accessToken: string | null;
-    private refreshToken: string | null;
+    private expiresAt: number | null = null;
     private apiClient: CtmApiClient;
-    private pendingRefresh: Promise<StoredAuthTokens> | null = null;
+    private pendingRefresh: Promise<TokenPair> | null = null;
 
-    constructor({ baseUrl, accessToken, refreshToken, onTokens, onUnauthorized, onError }: WebApiClientOptions) {
+    constructor({ baseUrl, accessToken, onTokens, onUnauthorized, onError }: WebApiClientOptions) {
         this.baseUrl = baseUrl;
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
         this.onTokens = onTokens;
         this.onUnauthorized = onUnauthorized;
         this.onError = onError;
@@ -67,20 +69,28 @@ export class WebApiClient {
 
     /** Login with email and password. */
     async login({ email, password }: WebLoginParams): Promise<TokenPair> {
-        return this.execute({
+        const tokens = await this.execute({
             request: () => this.apiClient.login({ email, password }),
             retryOnUnauthorized: false,
             toastOnError: false,
         });
+
+        this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
+
+        return tokens;
     }
 
     /** Register a new account. */
     async register({ name, email, password }: WebRegisterParams): Promise<TokenPair> {
-        return this.execute({
+        const tokens = await this.execute({
             request: () => this.apiClient.register({ name, email, password }),
             retryOnUnauthorized: false,
             toastOnError: false,
         });
+
+        this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
+
+        return tokens;
     }
 
     /** Get a single task by ID. */
@@ -283,6 +293,39 @@ export class WebApiClient {
         await this.execute({ request: () => this.apiClient.revokeAuthorizedApp({ clientId }) });
     }
 
+    /**
+     * Exchange the HttpOnly refresh cookie for a new access token.
+     * Deliberately bypasses `execute` — a 401 here means "not logged in", which is
+     * the normal case for an anonymous visitor and must not trigger the
+     * `onUnauthorized` redirect (that would loop on /login).
+     *
+     * Shares the single-flight in {@link refreshOnce} with {@link retryWithRefresh},
+     * so concurrent callers (a React 18 StrictMode double-mount, several tabs replaying
+     * the same effect) collapse onto one HTTP request instead of each rotating the
+     * cookie and invalidating the others.
+     */
+    async refresh(): Promise<TokenPair> {
+        const tokens = await this.refreshOnce();
+
+        this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
+
+        return tokens;
+    }
+
+    /** Clear the held access token — used on logout and when a request comes back unauthorized. */
+    clearTokens(): void {
+        this.setTokens({ accessToken: null });
+    }
+
+    /** Revoke the current session server-side. */
+    async logout(): Promise<void> {
+        await this.execute({
+            request: () => this.apiClient.logout(),
+            retryOnUnauthorized: false,
+            toastOnError: false,
+        });
+    }
+
     /** Return the current access token (used for WebSocket authentication). */
     getAccessToken(): string | null {
         return this.accessToken;
@@ -297,15 +340,38 @@ export class WebApiClient {
         return new CtmApiClient({
             baseUrl: this.baseUrl,
             accessToken: this.accessToken,
-            refreshToken: this.refreshToken,
         });
     }
 
-    private setTokens({ accessToken, refreshToken }: StoredAuthTokens): void {
+    private setTokens({ accessToken, expiresIn }: WebAuthTokens & { expiresIn?: number }): void {
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
+        this.expiresAt = accessToken && expiresIn ? Date.now() + expiresIn * 1000 : null;
         this.apiClient = this.createApiClient();
-        this.onTokens({ accessToken, refreshToken });
+        this.onTokens({ accessToken });
+    }
+
+    /**
+     * Whether the access token is within {@link EXPIRY_SKEW_MS} of expiring. Unknown
+     * expiry counts as fresh — the 401 retry is the backstop.
+     */
+    private isAccessTokenExpiring(): boolean {
+        if (!this.accessToken || this.expiresAt === null) return false;
+
+        return Date.now() >= this.expiresAt - EXPIRY_SKEW_MS;
+    }
+
+    /**
+     * Single-flight around the underlying refresh call. `refreshTokens` rotates the
+     * cookie server-side (the old record is deleted), so a second overlapping call
+     * would send the now-stale cookie and get a 401. Every caller within the overlap
+     * window awaits the same promise and gets the same result.
+     */
+    private refreshOnce(): Promise<TokenPair> {
+        if (!this.pendingRefresh) {
+            this.pendingRefresh = this.apiClient.refresh().finally(() => (this.pendingRefresh = null));
+        }
+
+        return this.pendingRefresh;
     }
 
     private async execute<T>({
@@ -317,11 +383,23 @@ export class WebApiClient {
         retryOnUnauthorized?: boolean;
         toastOnError?: boolean;
     }): Promise<T> {
+        // Access tokens live ~2 minutes, so without this most requests after a short idle
+        // would spend a round trip getting a 401 first. Failures fall through to that path.
+        if (retryOnUnauthorized && this.isAccessTokenExpiring()) {
+            try {
+                const tokens = await this.refreshOnce();
+
+                this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
+            } catch {
+                this.expiresAt = null;
+            }
+        }
+
         try {
             return await request();
         } catch (error) {
             if (error instanceof ApiClientError && error.statusCode === 401 && retryOnUnauthorized) {
-                return this.retryWithRefresh({ request, error, toastOnError });
+                return this.retryWithRefresh({ request, toastOnError });
             }
 
             const normalizedError = this.normalizeError(error);
@@ -338,31 +416,15 @@ export class WebApiClient {
 
     private async retryWithRefresh<T>({
         request,
-        error,
         toastOnError,
     }: {
         request: () => Promise<T>;
-        error: ApiClientError;
         toastOnError: boolean;
     }): Promise<T> {
-        if (!this.refreshToken) {
-            const normalizedError = this.normalizeError(error);
-            this.onUnauthorized();
-            throw normalizedError;
-        }
-
         try {
-            if (!this.pendingRefresh) {
-                const refreshToken = this.refreshToken;
-                this.pendingRefresh = new CtmApiClient({ baseUrl: this.baseUrl, refreshToken })
-                    .refresh()
-                    .then((tokens) => ({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }))
-                    .finally(() => (this.pendingRefresh = null));
-            }
+            const tokens = await this.refreshOnce();
 
-            const nextTokens = await this.pendingRefresh;
-
-            this.setTokens(nextTokens);
+            this.setTokens({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
 
             return await request();
         } catch (refreshError) {

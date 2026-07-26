@@ -46,6 +46,23 @@ separate worker service (`apps/sync` is an unimplemented stub).
 - Generate a public domain for the service; that URL is `REDIRECT_BASE_URL`.
 - Add `${REDIRECT_BASE_URL}/connectors/oauth/callback/<todoist|google_tasks|notion|discord>`
   as a redirect URI in each OAuth app.
+- Also set `COOKIE_PATH=/api/auth` and `COOKIE_SECURE=true`. `COOKIE_PATH`
+  carries the `/api` prefix because it is the browser-visible path — the SPA reaches
+  `apps/main` through the Cloudflare Pages Function proxy at `/api/*`, not directly.
+  It is scoped to `/api/auth`, not `/api/auth/refresh` — per RFC 6265 §5.1.4 a
+  cookie's path must be a prefix of a route for the browser to send it, and
+  `/api/auth/refresh` is not a prefix of `/api/auth/logout`. Scoping to
+  `/api/auth/refresh` silently breaks logout: the browser never sends the
+  cookie to `/auth/logout`, so the DB refresh-token record is never revoked.
+- **Ordering hazard**: `COOKIE_PATH` and `COOKIE_SECURE` are `Joi…required()` in
+  `env.schema.ts` — the API crash-loops on boot if they are unset. Existing
+  deployments must set both variables on Railway BEFORE merging/deploying this
+  change, not after.
+- `REDIRECT_BASE_URL` is `https://ctm-web.pages.dev/api` — the `/api` suffix is
+  correct and must stay. Before the Pages Function proxy existed this was broken
+  (the SPA's catch-all route just returned `index.html` for `/api/...`), but the
+  proxy now forwards `/api/*` on the Pages origin to this service, so the redirect
+  resolves correctly. Do not "fix" this back to a bare origin.
 
 ## 3. Railway — `mcp` service
 
@@ -70,10 +87,21 @@ GitHub repo **secrets**:
 
 GitHub repo **variables**:
 
-| Name           | Value                                    |
-| -------------- | ---------------------------------------- |
-| `VITE_API_URL` | the Railway `main` public URL            |
-| `DOCS_URL`     | the public origin of the docs Pages site |
+| Name       | Value                                    |
+| ---------- | ---------------------------------------- |
+| `DOCS_URL` | the public origin of the docs Pages site |
+
+`API_ORIGIN` — the origin the `/api` proxy forwards to — lives in
+`apps/web/wrangler.toml` under `[vars]`, so it deploys with the project and needs no
+dashboard step. It is read at **request time** by the Pages Function
+(`apps/web/functions/api/[[path]].ts`), not baked into the JS bundle, so it is not a
+build-time/Vite variable and does not belong in GitHub Actions. It is not a secret:
+the same URL was public in the pre-proxy bundle. To point the SPA at a different API,
+edit that file and redeploy.
+
+`VITE_API_URL` is retired — the SPA now always talks to the same-origin `/api`
+path (see `apps/web/src/config.ts`), and the GitHub repo variable of that name is
+no longer read by the workflow.
 
 Then set `CORS_ORIGIN` and `WEB_URL` on the Railway `main` service to the Pages
 origin of the SPA.
@@ -85,7 +113,8 @@ curl https://<main>.up.railway.app/health   # {"status":"ok","database":"up",...
 curl https://<mcp>.up.railway.app/health    # {"status":"ok",...}
 ```
 
-Then load the SPA and log in — the network tab should hit `VITE_API_URL`.
+Then load the SPA and log in — the network tab should hit same-origin `/api/...`
+requests, which the Pages Function forwards to `API_ORIGIN`.
 
 ---
 

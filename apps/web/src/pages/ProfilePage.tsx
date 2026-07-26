@@ -44,7 +44,7 @@ export function ProfilePage(): React.JSX.Element {
     const deleteMutation = useMutation({
         mutationFn: () => api.deleteMe(),
         onSuccess: () => {
-            logout();
+            void logout();
         },
     });
 

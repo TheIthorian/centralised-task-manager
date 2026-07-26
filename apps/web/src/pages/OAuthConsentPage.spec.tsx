@@ -4,13 +4,10 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { OAuthConsentPage } from './OAuthConsentPage.js';
 
 const mockUser = { id: '1', email: 'user@example.com', name: 'Test User' };
+const mockApi = { getAccessToken: vi.fn(() => 'mock-token') };
 
 vi.mock('../auth/AuthContext.js', () => ({
-    useAuth: vi.fn(() => ({ user: mockUser, isLoading: false })),
-}));
-
-vi.mock('../auth/auth-storage.js', () => ({
-    readTokens: vi.fn(() => ({ accessToken: 'mock-token', refreshToken: null })),
+    useAuth: vi.fn(() => ({ user: mockUser, isLoading: false, api: mockApi })),
 }));
 
 function renderConsentPage(search: string): ReturnType<typeof render> {

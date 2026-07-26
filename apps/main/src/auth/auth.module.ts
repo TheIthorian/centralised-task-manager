@@ -25,7 +25,7 @@ import { AuthorizedAppsService } from './authorized-apps.service.js';
                 publicKey: Buffer.from(config.getOrThrow<string>('RSA_PUBLIC_KEY'), 'base64').toString('utf8'),
                 signOptions: {
                     algorithm: 'RS256' as const,
-                    expiresIn: config.get<number>('JWT_ACCESS_EXPIRES', 120),
+                    expiresIn: config.getOrThrow<number>('JWT_ACCESS_EXPIRES'),
                 },
             }),
         }),

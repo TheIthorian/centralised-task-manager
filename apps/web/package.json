@@ -5,9 +5,10 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "tsc -p tsconfig.build.json && vite build",
+        "build": "tsc -p tsconfig.build.json && tsc -p functions/tsconfig.json && vite build",
         "preview": "vite preview",
         "test": "vitest run",
+        "typecheck:functions": "tsc -p functions/tsconfig.json",
         "lint": "oxlint .",
         "format": "oxfmt --config ../../.oxfmtrc.json . '**/*.md'"
     },
@@ -16,19 +17,18 @@
         "@ctm/ui": "workspace:*",
         "@tanstack/react-query": "5.101.4",
         "clsx": "2.1.1",
-        "js-cookie": "3.0.8",
         "react": "19.2.8",
         "react-dom": "19.2.8",
         "react-router": "8.3.0",
         "socket.io-client": "4.8.3"
     },
     "devDependencies": {
+        "@cloudflare/workers-types": "^5.20260724.1",
         "@ctm/tsconfig": "workspace:*",
         "@tailwindcss/vite": "4.3.3",
         "@testing-library/jest-dom": "7.0.0",
         "@testing-library/react": "16.3.2",
         "@testing-library/user-event": "14.6.1",
-        "@types/js-cookie": "3.0.6",
         "@types/react": "19.2.17",
         "@types/react-dom": "19.2.3",
         "@vitejs/plugin-react": "6.0.4",

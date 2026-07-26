@@ -17,3 +17,4 @@ apps/main/openapi.json
 .playwright-mcp/
 .superpowers/
 .astro/
+.wrangler/

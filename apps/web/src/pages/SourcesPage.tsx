@@ -6,10 +6,8 @@ import { ConnectorType } from '@ctm/api-client';
 import type { ConnectorStatusDto, ConnectorHealthDto, TaskSyncJobDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
-import { readTokens } from '../auth/auth-storage.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 import { NotionSetupModal } from '../components/sources/NotionSetupModal.js';
-import config from '../config.js';
 
 /** Settings sub-page: connected task sources. */
 export function SourcesPage(): React.JSX.Element {
@@ -40,13 +38,18 @@ export function SourcesPage(): React.JSX.Element {
         healthResults.map((h: ConnectorHealthDto) => [h.connectionId, h]),
     );
 
-    // WebSocket connection — opens once, cleans up on unmount
+    // WebSocket connection — opens once, cleans up on unmount. `api` is stable across
+    // renders (memoised in AuthProvider), so this effect does not tear down and
+    // reconnect the socket on every render.
     useEffect(() => {
-        const baseUrl = config.apiUrl;
-        const { accessToken } = readTokens();
-
-        const socket = io(baseUrl, {
-            auth: { token: accessToken },
+        // No URI argument — socket.io derives the namespace from a URI's pathname, and
+        // `io(config.apiUrl)` (`/api`) would ask for namespace `/api`, which does not
+        // exist (`SyncGateway` is on the default `/`). Omitting the URI connects to the
+        // current origin's default namespace; `path` still routes the handshake through
+        // the proxy.
+        const socket = io({
+            path: '/api/socket.io',
+            auth: { token: api.getAccessToken() },
             transports: ['websocket'],
         });
 
@@ -64,7 +67,7 @@ export function SourcesPage(): React.JSX.Element {
         return () => {
             socket.disconnect();
         };
-    }, []);
+    }, [api]);
 
     const connectMutation = useMutation({
         mutationFn: async (source: string) => {

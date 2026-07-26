@@ -56,7 +56,7 @@ export function Sidebar(): React.JSX.Element {
                 >
                     {theme === 'dark' ? '☀ Light' : '☾ Dark'}
                 </button>
-                <Button variant="secondary" onClick={logout} className="w-full text-xs py-1">
+                <Button variant="secondary" onClick={() => void logout()} className="w-full text-xs py-1">
                     Logout
                 </Button>
             </div>

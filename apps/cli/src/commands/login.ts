@@ -61,6 +61,11 @@ async function passwordLogin(baseUrl: string): Promise<void> {
     try {
         const tokens = await client.login({ email, password: pwd });
 
+        if (!tokens.refreshToken) {
+            console.error('Login failed: server did not return a refresh token');
+            process.exit(1);
+        }
+
         writeConfig({
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,

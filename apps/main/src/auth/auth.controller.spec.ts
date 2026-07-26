@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import cookie from '@fastify/cookie';
 import { AppModule } from '../app.module.js';
 
 describe('POST /auth/register + /auth/login', () => {
@@ -12,6 +13,7 @@ describe('POST /auth/register + /auth/login', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -77,6 +79,7 @@ describe('POST /auth/refresh', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -162,6 +165,7 @@ describe('DELETE /users/me', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -214,6 +218,7 @@ describe('POST /auth/register — input validation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -303,6 +308,7 @@ describe('POST /auth/register — persistence', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -378,6 +384,7 @@ describe('JWT signed with a mismatched key', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
+        await app.register(cookie);
         app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
@@ -408,5 +415,166 @@ describe('JWT signed with a mismatched key', () => {
         });
 
         expect(res.statusCode).toBe(401);
+    });
+});
+
+// ─── Cookie mode for web clients ──────────────────────────────────────────────
+
+describe('Cookie mode for web clients', () => {
+    let app: NestFastifyApplication;
+
+    beforeAll(async () => {
+        const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
+
+        app = module.createNestApplication(new FastifyAdapter());
+        await app.register(cookie);
+        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        await app.init();
+        await app.getHttpAdapter().getInstance().ready();
+    });
+
+    afterAll(async () => {
+        await app.close();
+    });
+
+    it('returns the refresh token in the body for bearer clients', async () => {
+        const email = `bearer-${Date.now()}@example.com`;
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { email, password: 'password123', name: 'Bearer' },
+        });
+
+        expect(res.statusCode).toBe(201);
+        const body = JSON.parse(res.body);
+
+        expect(typeof body.refreshToken).toBe('string');
+        expect(body.expiresIn).toBe(Number(process.env['JWT_ACCESS_EXPIRES']));
+        expect(res.headers['set-cookie']).toBeUndefined();
+    });
+
+    it('returns an HttpOnly cookie and no body token for web clients', async () => {
+        const email = `web-${Date.now()}@example.com`;
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            headers: { 'x-ctm-client': 'web' },
+            payload: { email, password: 'password123', name: 'Web' },
+        });
+
+        expect(res.statusCode).toBe(201);
+        const body = JSON.parse(res.body);
+
+        expect(body.refreshToken).toBeUndefined();
+        expect(typeof body.accessToken).toBe('string');
+        expect(body.expiresIn).toBe(Number(process.env['JWT_ACCESS_EXPIRES']));
+
+        const setCookie = res.headers['set-cookie'];
+        const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : setCookie;
+
+        expect(cookieHeader).toContain('ctm_refresh=');
+        expect(cookieHeader).toContain('HttpOnly');
+        expect(cookieHeader).toContain('SameSite=Lax');
+        expect(cookieHeader).toContain('Path=/api/auth');
+    });
+
+    it('refreshes from the cookie with no request body', async () => {
+        const email = `web-refresh-${Date.now()}@example.com`;
+        const registerRes = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            headers: { 'x-ctm-client': 'web' },
+            payload: { email, password: 'password123', name: 'Web Refresh' },
+        });
+
+        const setCookie = registerRes.headers['set-cookie'];
+        const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : setCookie;
+        const cookieValue = (cookieHeader as string).split(';')[0];
+
+        const refreshRes = await app.inject({
+            method: 'POST',
+            url: '/auth/refresh',
+            headers: { 'x-ctm-client': 'web', cookie: cookieValue },
+            payload: {},
+        });
+
+        expect(refreshRes.statusCode).toBe(200);
+        const body = JSON.parse(refreshRes.body);
+
+        expect(body.refreshToken).toBeUndefined();
+        expect(typeof body.accessToken).toBe('string');
+
+        const refreshedSetCookie = refreshRes.headers['set-cookie'];
+        const refreshedCookieHeader = Array.isArray(refreshedSetCookie) ? refreshedSetCookie[0] : refreshedSetCookie;
+
+        expect(refreshedCookieHeader).toContain('ctm_refresh=');
+    });
+
+    it('rejects a web refresh with no cookie and no body token', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/refresh',
+            headers: { 'x-ctm-client': 'web' },
+            payload: {},
+        });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it('rejects a bearer refresh with an empty body with 400, not 401', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/refresh',
+            payload: {},
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('clears the cookie and revokes the token on logout', async () => {
+        const email = `web-logout-${Date.now()}@example.com`;
+        const registerRes = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            headers: { 'x-ctm-client': 'web' },
+            payload: { email, password: 'password123', name: 'Web Logout' },
+        });
+
+        const setCookie = registerRes.headers['set-cookie'];
+        const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : setCookie;
+        const cookieValue = (cookieHeader as string).split(';')[0];
+
+        const logoutRes = await app.inject({
+            method: 'POST',
+            url: '/auth/logout',
+            headers: { 'x-ctm-client': 'web', cookie: cookieValue },
+            payload: {},
+        });
+
+        expect(logoutRes.statusCode).toBe(204);
+
+        const logoutSetCookie = logoutRes.headers['set-cookie'];
+        const logoutCookieHeader = Array.isArray(logoutSetCookie) ? logoutSetCookie[0] : logoutSetCookie;
+
+        expect(logoutCookieHeader).toContain('ctm_refresh=;');
+
+        const refreshAfterLogout = await app.inject({
+            method: 'POST',
+            url: '/auth/refresh',
+            headers: { 'x-ctm-client': 'web', cookie: cookieValue },
+            payload: {},
+        });
+
+        expect(refreshAfterLogout.statusCode).toBe(401);
+    });
+
+    it('logout is idempotent for a bearer client with an empty body (204, no revoke attempted)', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/auth/logout',
+            payload: {},
+        });
+
+        expect(res.statusCode).toBe(204);
     });
 });

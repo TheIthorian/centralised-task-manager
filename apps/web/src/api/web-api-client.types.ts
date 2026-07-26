@@ -7,7 +7,11 @@ import type {
     UpdateTaskDto,
     UpdateUserDto,
 } from '@ctm/api-client';
-import type { StoredAuthTokens } from '../auth/auth-storage.js';
+
+/** Access token returned by the auth endpoints. The refresh token lives in an HttpOnly cookie. */
+export type WebAuthTokens = {
+    accessToken: string | null;
+};
 
 /** Normalized API error surfaced to UI consumers. */
 export type WebApiError = {
@@ -21,9 +25,8 @@ export type WebApiError = {
 export type WebApiClientOptions = {
     baseUrl: string;
     accessToken: string | null;
-    refreshToken: string | null;
     /** Called whenever tokens are refreshed so the caller can persist them. */
-    onTokens: (tokens: StoredAuthTokens) => void;
+    onTokens: (tokens: WebAuthTokens) => void;
     /** Called when the session is no longer valid (redirect to login). */
     onUnauthorized: () => void;
     /** Called on non-auth errors so the caller can show a toast. */

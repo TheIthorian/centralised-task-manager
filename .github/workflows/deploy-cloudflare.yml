@@ -32,9 +32,8 @@ jobs:
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
             - run: pnpm exec turbo run build --filter=@ctm/web
-              env:
-                  VITE_API_URL: ${{ vars.VITE_API_URL }}
-            - run: pnpm exec wrangler pages deploy apps/web/dist --project-name=ctm-web --branch=main
+            - run: pnpm exec wrangler pages deploy --branch=main
+              working-directory: apps/web
 
     landing:
         runs-on: ubuntu-latest
