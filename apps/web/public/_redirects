@@ -1,0 +1,5 @@
+# The API's issuer is https://<host>/api, so RFC 8414 clients (Cursor, Claude, …) fetch
+# metadata at /.well-known/<doc>/api rather than /api/.well-known/<doc>. Without these the
+# SPA's index.html is returned and clients fail parsing HTML as JSON.
+/.well-known/oauth-authorization-server/api  /api/.well-known/oauth-authorization-server  302
+/.well-known/openid-configuration/api        /api/.well-known/openid-configuration        302
