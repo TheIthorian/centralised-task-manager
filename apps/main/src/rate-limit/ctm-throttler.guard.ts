@@ -11,7 +11,7 @@ import {
 } from '@nestjs/throttler';
 import { createHash } from 'node:crypto';
 import { RateLimitError } from '@ctm/errors';
-import { isStrictRateLimited } from './is-strict-rate-limited.js';
+import { resolveRateLimitProfile } from './resolve-rate-limit-profile.js';
 
 const BEARER_PREFIX = 'Bearer ';
 
@@ -41,13 +41,14 @@ export class CtmThrottlerGuard extends ThrottlerGuard {
     }
 
     /**
-     * Anonymous abuse surfaces get their own per-route bucket; everything else shares one
+     * Routes with their own profile get a per-route bucket; everything else shares one
      * account-wide bucket, so the quota is a real budget rather than a per-endpoint allowance.
      */
     protected override generateKey(context: ExecutionContext, suffix: string, name: string): string {
-        const scope = isStrictRateLimited(context)
-            ? `${context.getClass().name}.${context.getHandler().name}`
-            : 'global';
+        const scope =
+            resolveRateLimitProfile(context) === 'general'
+                ? 'global'
+                : `${context.getClass().name}.${context.getHandler().name}`;
 
         return createHash('sha256').update(`${name}-${scope}-${suffix}`).digest('hex');
     }

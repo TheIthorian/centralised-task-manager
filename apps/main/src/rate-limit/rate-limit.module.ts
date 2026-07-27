@@ -4,8 +4,14 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CtmThrottlerGuard } from './ctm-throttler.guard.js';
-import { isStrictRateLimited } from './is-strict-rate-limited.js';
-import { BURST_THROTTLER, BURST_WINDOW_MS, SUSTAINED_THROTTLER, SUSTAINED_WINDOW_MS } from './rate-limit.constants.js';
+import { resolveRateLimitProfile } from './resolve-rate-limit-profile.js';
+import {
+    BURST_THROTTLER,
+    BURST_WINDOW_MS,
+    type RateLimitProfile,
+    SUSTAINED_THROTTLER,
+    SUSTAINED_WINDOW_MS,
+} from './rate-limit.constants.js';
 
 /**
  * Fair-usage rate limiting for the whole HTTP surface: a burst limit per minute and a
@@ -24,10 +30,16 @@ import { BURST_THROTTLER, BURST_WINDOW_MS, SUSTAINED_THROTTLER, SUSTAINED_WINDOW
         ThrottlerModule.forRootAsync({
             inject: [ConfigService],
             useFactory: (config: ConfigService) => {
-                const burst = config.getOrThrow<number>('RATE_LIMIT_BURST_PER_MINUTE');
-                const sustained = config.getOrThrow<number>('RATE_LIMIT_SUSTAINED_PER_HOUR');
-                const strictBurst = config.getOrThrow<number>('RATE_LIMIT_STRICT_BURST_PER_MINUTE');
-                const strictSustained = config.getOrThrow<number>('RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR');
+                const burstByProfile: Record<RateLimitProfile, number> = {
+                    general: config.getOrThrow<number>('RATE_LIMIT_BURST_PER_MINUTE'),
+                    strict: config.getOrThrow<number>('RATE_LIMIT_STRICT_BURST_PER_MINUTE'),
+                    refresh: config.getOrThrow<number>('RATE_LIMIT_REFRESH_BURST_PER_MINUTE'),
+                };
+                const sustainedByProfile: Record<RateLimitProfile, number> = {
+                    general: config.getOrThrow<number>('RATE_LIMIT_SUSTAINED_PER_HOUR'),
+                    strict: config.getOrThrow<number>('RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR'),
+                    refresh: config.getOrThrow<number>('RATE_LIMIT_REFRESH_SUSTAINED_PER_HOUR'),
+                };
 
                 return {
                     throttlers: [
@@ -35,13 +47,13 @@ import { BURST_THROTTLER, BURST_WINDOW_MS, SUSTAINED_THROTTLER, SUSTAINED_WINDOW
                             name: BURST_THROTTLER,
                             ttl: BURST_WINDOW_MS,
                             limit: (context: ExecutionContext): number =>
-                                isStrictRateLimited(context) ? strictBurst : burst,
+                                burstByProfile[resolveRateLimitProfile(context)],
                         },
                         {
                             name: SUSTAINED_THROTTLER,
                             ttl: SUSTAINED_WINDOW_MS,
                             limit: (context: ExecutionContext): number =>
-                                isStrictRateLimited(context) ? strictSustained : sustained,
+                                sustainedByProfile[resolveRateLimitProfile(context)],
                         },
                     ],
                 };

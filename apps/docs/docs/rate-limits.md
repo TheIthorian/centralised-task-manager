@@ -24,9 +24,16 @@ draw on it, and extra API tokens do not buy more.
 
 ## Stricter limits on the sign-in surface
 
-`POST /auth/register`, `POST /auth/login`, `POST /auth/refresh` and `POST /oauth/token` get
-a tighter budget of their own (`RATE_LIMIT_STRICT_BURST_PER_MINUTE`, default 10, and
+`POST /auth/register`, `POST /auth/login` and `POST /oauth/token` get a tighter budget of
+their own (`RATE_LIMIT_STRICT_BURST_PER_MINUTE`, default 10, and
 `RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR`, default 100), counted separately for each endpoint.
+
+## Token refresh
+
+`POST /auth/refresh` has its own separate budget (`RATE_LIMIT_REFRESH_BURST_PER_MINUTE`,
+default 30, and `RATE_LIMIT_REFRESH_SUSTAINED_PER_HOUR`, default 600). Refreshes are paced
+by expiring access tokens rather than by anything you do, so they neither spend your request
+budget nor compete with sign-in attempts.
 
 ## Account lockout
 

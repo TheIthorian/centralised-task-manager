@@ -20,7 +20,7 @@ import { OAuthClientService, isRedirectUriPermitted } from '../auth/oauth-client
 import { OAuthService } from './oauth.service.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { filterScopes } from './scopes.js';
-import { StrictRateLimit } from '../rate-limit/strict-rate-limit.decorator.js';
+import { StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 
 interface AuthorizeQuery {
     client_id?: string;

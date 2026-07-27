@@ -24,6 +24,8 @@ export const envSchema = Joi.object({
     RATE_LIMIT_SUSTAINED_PER_HOUR: Joi.number().integer().min(1).default(1000),
     RATE_LIMIT_STRICT_BURST_PER_MINUTE: Joi.number().integer().min(1).default(10),
     RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR: Joi.number().integer().min(1).default(100),
+    RATE_LIMIT_REFRESH_BURST_PER_MINUTE: Joi.number().integer().min(1).default(30),
+    RATE_LIMIT_REFRESH_SUSTAINED_PER_HOUR: Joi.number().integer().min(1).default(600),
     LOGIN_MAX_FAILED_ATTEMPTS: Joi.number().integer().min(1).default(5),
     LOGIN_LOCKOUT_MINUTES: Joi.number().integer().min(1).default(15),
     MAX_CONNECTIONS_PER_CONNECTOR: Joi.number().integer().min(1).default(5),

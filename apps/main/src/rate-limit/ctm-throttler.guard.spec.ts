@@ -7,12 +7,25 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppErrorFilter } from '../common/filters/app-error.filter.js';
 import { CtmThrottlerGuard } from './ctm-throttler.guard.js';
-import { isStrictRateLimited } from './is-strict-rate-limited.js';
-import { BURST_THROTTLER, BURST_WINDOW_MS, SUSTAINED_THROTTLER, SUSTAINED_WINDOW_MS } from './rate-limit.constants.js';
-import { StrictRateLimit } from './strict-rate-limit.decorator.js';
+import { resolveRateLimitProfile } from './resolve-rate-limit-profile.js';
+import {
+    BURST_THROTTLER,
+    BURST_WINDOW_MS,
+    type RateLimitProfile,
+    SUSTAINED_THROTTLER,
+    SUSTAINED_WINDOW_MS,
+} from './rate-limit.constants.js';
+import { RefreshRateLimit, StrictRateLimit } from './rate-limit.decorators.js';
 
 const OPEN_LIMIT = 3;
 const STRICT_LIMIT = 1;
+const REFRESH_LIMIT = 5;
+
+const LIMIT_BY_PROFILE: Record<RateLimitProfile, number> = {
+    general: OPEN_LIMIT,
+    strict: STRICT_LIMIT,
+    refresh: REFRESH_LIMIT,
+};
 
 @Controller('probe')
 class ProbeController {
@@ -29,6 +42,12 @@ class ProbeController {
     @Get('strict')
     @StrictRateLimit()
     strict(): string {
+        return 'ok';
+    }
+
+    @Get('refresh')
+    @RefreshRateLimit()
+    refresh(): string {
         return 'ok';
     }
 }
@@ -62,7 +81,7 @@ describe('CtmThrottlerGuard', () => {
                             name: BURST_THROTTLER,
                             ttl: BURST_WINDOW_MS,
                             limit: (context: ExecutionContext): number =>
-                                isStrictRateLimited(context) ? STRICT_LIMIT : OPEN_LIMIT,
+                                LIMIT_BY_PROFILE[resolveRateLimitProfile(context)],
                         },
                         { name: SUSTAINED_THROTTLER, ttl: SUSTAINED_WINDOW_MS, limit: 1000 },
                     ],
@@ -155,5 +174,30 @@ describe('CtmThrottlerGuard', () => {
 
         // The strict route's own limit must not eat into the general budget.
         expect((await call({ path: '/probe/open', ip })).statusCode).toBe(200);
+    });
+
+    it('gives token refresh its own bucket, separate from both other budgets', async () => {
+        const ip = '10.0.0.7';
+
+        // Exhausting the general budget must not block a refresh…
+        for (let i = 0; i < OPEN_LIMIT; i++) {
+            expect((await call({ path: '/probe/open', ip })).statusCode).toBe(200);
+        }
+
+        expect((await call({ path: '/probe/open', ip })).statusCode).toBe(429);
+        expect((await call({ path: '/probe/refresh', ip })).statusCode).toBe(200);
+
+        // …nor may refreshes eat the sign-in budget.
+        expect((await call({ path: '/probe/strict', ip })).statusCode).toBe(200);
+    });
+
+    it('still bounds refreshes at their own limit', async () => {
+        const ip = '10.0.0.8';
+
+        for (let i = 0; i < REFRESH_LIMIT; i++) {
+            expect((await call({ path: '/probe/refresh', ip })).statusCode).toBe(200);
+        }
+
+        expect((await call({ path: '/probe/refresh', ip })).statusCode).toBe(429);
     });
 });
