@@ -7,6 +7,10 @@ export const BURST_THROTTLER = 'default';
 /** Name of the per-hour throttler. Emits `X-RateLimit-*-sustained` headers. */
 export const SUSTAINED_THROTTLER = 'sustained';
 
+/** Names of the per-(user, client) fences that sit under the account ceiling. */
+export const CLIENT_BURST_THROTTLER = 'client';
+export const CLIENT_SUSTAINED_THROTTLER = 'client-sustained';
+
 export const BURST_WINDOW_MS = 60_000;
 export const SUSTAINED_WINDOW_MS = 60 * 60_000;
 

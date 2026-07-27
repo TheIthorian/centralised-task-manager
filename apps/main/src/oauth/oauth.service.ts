@@ -9,6 +9,7 @@ import { RefreshToken, type RefreshTokenDocument } from '../auth/schemas/refresh
 import { UsersService } from '../users/users.service.js';
 import { ConfigService } from '@nestjs/config';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import { UNREGISTERED_CLIENT } from '../rate-limit/principal-resolver.js';
 
 /** Token set returned from the OAuth token endpoint. */
 export interface TokenResponse {
@@ -118,7 +119,11 @@ export class OAuthService {
 
         const signOptions = { expiresIn: expiresInSeconds };
 
-        const accessToken = this.jwt.sign(payload, signOptions);
+        // client_id rides on the access token so rate limiting can fence one client's traffic
+        // off from the same user's other clients (RFC 9068 §2.2). The claim is always set:
+        // /oauth/authorize accepts callers that do not identify themselves, and without it
+        // their tokens would be indistinguishable from first-party ones and share that fence.
+        const accessToken = this.jwt.sign({ ...payload, client_id: clientId ?? UNREGISTERED_CLIENT }, signOptions);
         const idToken = this.jwt.sign(payload, signOptions);
 
         const rawRefresh = `rt_${randomBytes(32).toString('hex')}`;

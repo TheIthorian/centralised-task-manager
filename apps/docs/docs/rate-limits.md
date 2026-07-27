@@ -22,6 +22,17 @@ There are two windows, and both must have budget left for a request to be served
 One budget covers your whole account: the web app, the CLI, MCP and direct API calls all
 draw on it, and extra API tokens do not buy more.
 
+## Per-client fence
+
+Under the account ceiling, each app you have authorised gets its own smaller allowance
+(`RATE_LIMIT_CLIENT_BURST_PER_MINUTE`, default 40, and `RATE_LIMIT_CLIENT_SUSTAINED_PER_HOUR`,
+default 700). This is not extra quota — the account limits still apply on top. It exists so
+a busy script cannot spend your whole budget and lock your browser session out; the noisy
+client gets the `429` and everything else keeps working.
+
+A response rejected by this layer says `This client is sending too many requests`, rather
+than the account-level message.
+
 ## Stricter limits on the sign-in surface
 
 `POST /auth/register`, `POST /auth/login` and `POST /oauth/token` get a tighter budget of
@@ -52,7 +63,11 @@ X-RateLimit-Remaining: 58
 X-RateLimit-Reset: 41
 X-RateLimit-Limit-sustained: 1000
 X-RateLimit-Remaining-sustained: 934
+X-RateLimit-Limit-client: 40
+X-RateLimit-Remaining-client: 38
 ```
+
+The `-client` pair reports the calling app's own allowance.
 
 `X-RateLimit-Reset` is the number of seconds until the window rolls over.
 
