@@ -19,27 +19,20 @@ There are two windows, and both must have budget left for a request to be served
 | Burst     | `RATE_LIMIT_BURST_PER_MINUTE`   | 60      |
 | Sustained | `RATE_LIMIT_SUSTAINED_PER_HOUR` | 1000    |
 
-Requests are counted **per account** when authenticated, so the budget follows you across
-devices, networks and tokens — minting extra API tokens does not buy more quota. Anonymous
-requests are counted per client IP instead.
-
-The web app, the CLI and MCP all draw on the same account budget.
+One budget covers your whole account: the web app, the CLI, MCP and direct API calls all
+draw on it, and extra API tokens do not buy more.
 
 ## Stricter limits on the sign-in surface
 
-`POST /auth/register`, `POST /auth/login`, `POST /auth/refresh` and `POST /oauth/token` are
-the brute-force surface, so they get their own tighter per-IP budget
-(`RATE_LIMIT_STRICT_BURST_PER_MINUTE`, default 10, and
-`RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR`, default 100) counted separately for each endpoint.
+`POST /auth/register`, `POST /auth/login`, `POST /auth/refresh` and `POST /oauth/token` get
+a tighter budget of their own (`RATE_LIMIT_STRICT_BURST_PER_MINUTE`, default 10, and
+`RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR`, default 100), counted separately for each endpoint.
 
 ## Account lockout
 
 After `LOGIN_MAX_FAILED_ATTEMPTS` (default 5) consecutive failed logins, an account is locked for
 `LOGIN_LOCKOUT_MINUTES` (default 15). During the lockout every login attempt is rejected with `429`,
 including one with the correct password. The counter resets on a successful login.
-
-Because the lock is keyed on the account rather than the IP, a password spray spread over
-many addresses is still stopped.
 
 ## Response headers
 
