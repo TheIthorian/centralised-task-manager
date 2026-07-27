@@ -91,5 +91,6 @@ try {
 Connecting an additional account beyond the connector cap returns `403` with code
 `QUOTA_EXCEEDED`; re-authorising an account you have already connected is always allowed.
 Creating a task beyond the task cap returns the same error. A sync that would push you over
-the task cap stops inserting new tasks and reports them as skipped — tasks already stored
-keep syncing.
+the task cap stops inserting new tasks rather than failing, so tasks already stored keep
+syncing; the job reports how many were left out in `droppedOverQuota`, and the app shows
+that on the connection once the sync finishes.

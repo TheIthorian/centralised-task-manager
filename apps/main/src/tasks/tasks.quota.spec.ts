@@ -52,7 +52,7 @@ describe('TasksService task cap', () => {
         ).rejects.toBeInstanceOf(QuotaExceededError);
     });
 
-    it('stops inserting new tasks from a sync at the cap and reports them as skipped', async () => {
+    it('stops inserting new tasks from a sync at the cap and reports how many were dropped', async () => {
         const userId = new Types.ObjectId().toString();
         const stamp = Date.now();
 
@@ -63,7 +63,7 @@ describe('TasksService task cap', () => {
             remoteTasks: Array.from({ length: MAX_TASKS + 2 }, (_unused, i) => remoteTask(`r-${stamp}-${i}`)),
         });
 
-        expect(result).toEqual({ synced: MAX_TASKS, skipped: 2 });
+        expect(result).toEqual({ synced: MAX_TASKS, skipped: 0, droppedOverQuota: 2 });
         expect(await taskModel.countDocuments({ userId: new Types.ObjectId(userId) })).toBe(MAX_TASKS);
     });
 
@@ -88,7 +88,7 @@ describe('TasksService task cap', () => {
             remoteTasks: renamed,
         });
 
-        expect(result).toEqual({ synced: MAX_TASKS, skipped: 0 });
+        expect(result).toEqual({ synced: MAX_TASKS, skipped: 0, droppedOverQuota: 0 });
 
         const stored = await taskModel.findOne({ userId: new Types.ObjectId(userId), sourceId: sourceIds[0] });
 

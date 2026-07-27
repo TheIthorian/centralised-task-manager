@@ -183,6 +183,8 @@ export type TaskSyncJobDto = {
     stage: 'fetching' | 'upserting' | null;
     synced: number;
     skipped: number;
+    /** Remote tasks left unimported because the account hit its task cap. */
+    droppedOverQuota: number;
     error: string | null;
     completedAt: string | null;
 };

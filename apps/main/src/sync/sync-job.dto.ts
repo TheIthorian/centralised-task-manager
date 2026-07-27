@@ -12,6 +12,7 @@ export function toSyncJobDto(job: TaskSyncJobDocument): TaskSyncJobDto {
         stage: job.stage,
         synced: job.synced,
         skipped: job.skipped,
+        droppedOverQuota: job.droppedOverQuota,
         error: job.error,
         completedAt: job.completedAt?.toISOString() ?? null,
     };

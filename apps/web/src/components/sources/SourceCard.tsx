@@ -142,10 +142,19 @@ function AccountRow({
             )}
 
             {syncJob?.status === 'done' && (
-                <p className="text-xs font-bold text-green-700 dark:text-green-400">
-                    Synced {syncJob.synced} task{syncJob.synced !== 1 ? 's' : ''}
-                    {syncJob.skipped > 0 ? `, skipped ${syncJob.skipped} (local changes preserved)` : ''}
-                </p>
+                <>
+                    <p className="text-xs font-bold text-green-700 dark:text-green-400">
+                        Synced {syncJob.synced} task{syncJob.synced !== 1 ? 's' : ''}
+                        {syncJob.skipped > 0 ? `, skipped ${syncJob.skipped} (local changes preserved)` : ''}
+                    </p>
+                    {syncJob.droppedOverQuota > 0 && (
+                        <p className="text-xs font-bold text-nb-red">
+                            Task limit reached — {syncJob.droppedOverQuota} task
+                            {syncJob.droppedOverQuota !== 1 ? 's' : ''} not imported. Delete some tasks, then sync
+                            again.
+                        </p>
+                    )}
+                </>
             )}
         </div>
     );
