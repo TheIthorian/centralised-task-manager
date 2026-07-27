@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { InternalError } from '@ctm/errors';
+import { InternalError, QuotaExceededError } from '@ctm/errors';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model, Types } from 'mongoose';
@@ -17,6 +18,7 @@ export class ConnectorsService {
         private readonly registry: OAuthConnectorRegistry,
         private readonly encryption: EncryptionService,
         private readonly jwt: JwtService,
+        private readonly config: ConfigService,
     ) {}
 
     /** List all available connector source names. */
@@ -62,6 +64,8 @@ export class ConnectorsService {
         const identity = await connector.resolveAccountIdentity(tokens);
         const extra = (await connector.resolveConnectionSettings?.(tokens)) ?? {};
 
+        await this.assertConnectionAllowed({ userId, source, externalAccountId: identity.externalAccountId });
+
         const doc = await this.configModel.findOneAndUpdate(
             { userId: new Types.ObjectId(userId), source, externalAccountId: identity.externalAccountId },
             {
@@ -81,6 +85,35 @@ export class ConnectorsService {
         if (!doc) throw new InternalError('Upsert failed unexpectedly');
 
         return doc;
+    }
+
+    /**
+     * Guard the per-source connection cap. Reconnecting an account that is already linked
+     * is always allowed — only adding a new account can push a user over the limit.
+     */
+    private async assertConnectionAllowed({
+        userId,
+        source,
+        externalAccountId,
+    }: {
+        userId: string;
+        source: ConnectorName;
+        externalAccountId: string;
+    }): Promise<void> {
+        const existing = await this.configModel.findOne({
+            userId: new Types.ObjectId(userId),
+            source,
+            externalAccountId,
+        });
+
+        if (existing) return;
+
+        const max = this.config.getOrThrow<number>('MAX_CONNECTIONS_PER_CONNECTOR');
+        const count = await this.configModel.countDocuments({ userId: new Types.ObjectId(userId), source });
+
+        if (count >= max) {
+            throw new QuotaExceededError(`You can connect at most ${max} ${source} accounts. Remove one first.`);
+        }
     }
 
     /** List all of a user's connection rows for one source. */

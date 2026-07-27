@@ -2,6 +2,7 @@ import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { InjectConnection } from '@nestjs/mongoose';
 import type { Connection } from 'mongoose';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { HealthDto } from '@ctm/api-client';
 
 /** Mongoose `readyState` value for an established connection. */
@@ -9,6 +10,9 @@ const CONNECTED = 1;
 
 @ApiTags('Health')
 @Controller('health')
+// The platform healthcheck polls this constantly from a single address; throttling it
+// would make the service look down under load.
+@SkipThrottle()
 export class HealthController {
     constructor(@InjectConnection() private readonly connection: Connection) {}
 

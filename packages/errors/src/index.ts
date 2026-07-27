@@ -53,6 +53,23 @@ export class OAuthError extends AppError {
     }
 }
 
+/** Thrown when a client exceeds a rate limit (HTTP 429). */
+export class RateLimitError extends AppError {
+    readonly retryAfterSeconds: number;
+
+    constructor({ message, retryAfterSeconds }: { message: string; retryAfterSeconds: number }) {
+        super(message, 'RATE_LIMIT_EXCEEDED', 429);
+        this.retryAfterSeconds = retryAfterSeconds;
+    }
+}
+
+/** Thrown when an account has reached a hard resource cap (HTTP 403). */
+export class QuotaExceededError extends AppError {
+    constructor(message: string) {
+        super(message, 'QUOTA_EXCEEDED', 403);
+    }
+}
+
 /** Thrown when an unexpected internal error occurs (HTTP 500). */
 export class InternalError extends AppError {
     constructor(message: string) {

@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { QuotaExceededError } from '@ctm/errors';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
@@ -14,7 +16,18 @@ const LOCAL_SOURCE = 'local';
 
 @Injectable()
 export class TasksService {
-    constructor(@InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>) {}
+    constructor(
+        @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
+        private readonly config: ConfigService,
+    ) {}
+
+    /** How many more tasks this user may store before hitting the per-account cap. */
+    private async remainingTaskCapacity(userId: string): Promise<number> {
+        const max = this.config.getOrThrow<number>('MAX_TASKS_PER_USER');
+        const count = await this.taskModel.countDocuments({ userId: new Types.ObjectId(userId) });
+
+        return Math.max(0, max - count);
+    }
 
     /** List tasks for a user with optional filters. */
     async list(userId: string, query: ListTasksQueryDto): Promise<TaskDocument[]> {
@@ -174,6 +187,12 @@ export class TasksService {
     /** Create a task via write-through: call connector, then persist locally.
      *  When source is 'local', skip the connector and store the task directly in CTM. */
     async create({ userId, dto }: { userId: string; dto: CreateTaskDto }): Promise<TaskDocument> {
+        if ((await this.remainingTaskCapacity(userId)) === 0) {
+            const max = this.config.getOrThrow<number>('MAX_TASKS_PER_USER');
+
+            throw new QuotaExceededError(`Task limit of ${max} reached. Delete some tasks before creating more.`);
+        }
+
         const { due, deadlineDate } = this.parseDueFields(dto);
 
         // Outbound sync (CTM → external source) is disabled; all creates are local-only.
@@ -321,6 +340,8 @@ export class TasksService {
 
         const existingBySourceId = new Map(existingTasks.map((t) => [t.sourceId, t]));
         const now = new Date();
+
+        let insertBudget = await this.remainingTaskCapacity(userId);
         let synced = 0;
         let skipped = 0;
 
@@ -392,6 +413,15 @@ export class TasksService {
             const existing = existingBySourceId.get(remote.sourceId);
 
             if (!existing) {
+                // A runaway import must not be able to fill the database: existing tasks keep
+                // syncing, new ones stop at the cap.
+                if (insertBudget === 0) {
+                    skipped++;
+                    continue;
+                }
+
+                insertBudget--;
+
                 const id = newIdBySourceId.get(remote.sourceId)!;
 
                 ops.push({ insertOne: { document: buildInsert(remote, id) } });

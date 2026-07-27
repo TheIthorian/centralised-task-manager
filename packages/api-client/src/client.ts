@@ -54,20 +54,30 @@ import type {
     ListNotionDatabasesParams,
 } from './client.types.js';
 
+const RATE_LIMITED_STATUS = 429;
+
 /** Structured HTTP error returned by the REST wrapper. */
 export class ApiClientError extends Error {
     readonly statusCode: number;
     readonly method: string;
     readonly path: string;
     readonly responseBody?: unknown;
+    /** Seconds to wait before retrying, from the `Retry-After` header of a 429. */
+    readonly retryAfterSeconds?: number;
 
-    constructor({ message, statusCode, method, path, responseBody }: ApiClientErrorOptions) {
+    constructor({ message, statusCode, method, path, responseBody, retryAfterSeconds }: ApiClientErrorOptions) {
         super(message);
         this.name = 'ApiClientError';
         this.statusCode = statusCode;
         this.method = method;
         this.path = path;
         this.responseBody = responseBody;
+        this.retryAfterSeconds = retryAfterSeconds;
+    }
+
+    /** Whether the request was rejected by a rate limit rather than failing outright. */
+    get isRateLimited(): boolean {
+        return this.statusCode === RATE_LIMITED_STATUS;
     }
 }
 
@@ -435,12 +445,19 @@ export class CtmApiClient {
         path: string;
     }): ApiClientError {
         if (axios.isAxiosError(error)) {
+            const statusCode = error.response?.status ?? 0;
+            const retryAfterSeconds = this.extractRetryAfterSeconds(error);
+
             return new ApiClientError({
-                message: this.extractMessage(error),
-                statusCode: error.response?.status ?? 0,
+                message:
+                    statusCode === RATE_LIMITED_STATUS
+                        ? this.rateLimitMessage({ error, retryAfterSeconds })
+                        : this.extractMessage(error),
+                statusCode,
                 method,
                 path,
                 responseBody: error.response?.data,
+                ...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {}),
             });
         }
 
@@ -460,6 +477,26 @@ export class CtmApiClient {
             path,
             responseBody: error,
         });
+    }
+
+    private extractRetryAfterSeconds(error: AxiosError): number | undefined {
+        const header = error.response?.headers?.['retry-after'];
+        const seconds = Number(header);
+
+        return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : undefined;
+    }
+
+    /** Rate-limit responses are actionable, so say how long to wait rather than just "429". */
+    private rateLimitMessage({
+        error,
+        retryAfterSeconds,
+    }: {
+        error: AxiosError;
+        retryAfterSeconds: number | undefined;
+    }): string {
+        const wait = retryAfterSeconds === undefined ? '' : ` Retry in ${retryAfterSeconds}s.`;
+
+        return `${this.extractMessage(error)}${wait}`;
     }
 
     private extractMessage(error: AxiosError): string {

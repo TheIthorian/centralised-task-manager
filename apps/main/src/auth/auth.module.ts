@@ -13,6 +13,8 @@ import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema
 import { OAuthClient, OAuthClientSchema } from './schemas/oauth-client.schema.js';
 import { OAuthClientService } from './oauth-client.service.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
+import { LoginAttempt, LoginAttemptSchema } from './schemas/login-attempt.schema.js';
+import { LoginAttemptsService } from './login-attempts.service.js';
 
 @Module({
     imports: [
@@ -32,10 +34,18 @@ import { AuthorizedAppsService } from './authorized-apps.service.js';
         MongooseModule.forFeature([
             { name: RefreshToken.name, schema: RefreshTokenSchema },
             { name: OAuthClient.name, schema: OAuthClientSchema },
+            { name: LoginAttempt.name, schema: LoginAttemptSchema },
         ]),
     ],
     controllers: [AuthController, WellKnownController],
-    providers: [AuthService, LocalStrategy, JwtStrategy, OAuthClientService, AuthorizedAppsService],
+    providers: [
+        AuthService,
+        LocalStrategy,
+        JwtStrategy,
+        OAuthClientService,
+        AuthorizedAppsService,
+        LoginAttemptsService,
+    ],
     exports: [AuthService, JwtModule, OAuthClientService, AuthorizedAppsService],
 })
 export class AuthModule {}

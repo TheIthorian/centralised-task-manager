@@ -13,6 +13,7 @@ import { AuthorizedAppsService } from './authorized-apps.service.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
+import { StrictRateLimit } from '../rate-limit/strict-rate-limit.decorator.js';
 
 interface AuthRequest {
     user: UserDocument;
@@ -65,6 +66,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Register a new account' })
     @ApiResponse({ status: 201, description: 'Token pair + user info' })
     @Post('register')
+    @StrictRateLimit()
     async register(
         @Body() dto: RegisterDto,
         @Req() request: FastifyRequest,
@@ -80,6 +82,7 @@ export class AuthController {
     @ApiResponse({ status: 200, description: 'Token pair + user info' })
     @Post('login')
     @HttpCode(200)
+    @StrictRateLimit()
     @UseGuards(AuthGuard('local'))
     async login(
         @Request() req: AuthRequest,
@@ -96,6 +99,7 @@ export class AuthController {
     @ApiResponse({ status: 200, description: 'New token pair + user info' })
     @Post('refresh')
     @HttpCode(200)
+    @StrictRateLimit()
     async refresh(
         @Body() dto: RefreshDto,
         @Req() request: FastifyRequest,

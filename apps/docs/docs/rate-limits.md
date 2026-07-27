@@ -1,0 +1,95 @@
+---
+id: rate-limits
+title: Rate limits
+sidebar_position: 7
+---
+
+# Rate limits
+
+The API is rate limited to keep one misbehaving client from degrading the service for
+everyone. The limits are set for fair use — normal interactive use, CLI use and MCP use
+stay well inside them.
+
+## Request limits
+
+There are two windows, and both must have budget left for a request to be served:
+
+| Window    | Limit                           |
+| --------- | ------------------------------- |
+| Burst     | `RATE_LIMIT_BURST_PER_MINUTE`   |
+| Sustained | `RATE_LIMIT_SUSTAINED_PER_HOUR` |
+
+Requests are counted **per account** when authenticated, so the budget follows you across
+devices, networks and tokens — minting extra API tokens does not buy more quota. Anonymous
+requests are counted per client IP instead.
+
+The web app, the CLI and MCP all draw on the same account budget.
+
+## Stricter limits on the sign-in surface
+
+`POST /auth/register`, `POST /auth/login`, `POST /auth/refresh` and `POST /oauth/token` are
+the brute-force surface, so they get their own tighter per-IP budget
+(`RATE_LIMIT_STRICT_BURST_PER_MINUTE` and `RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR`) counted
+separately for each endpoint.
+
+## Account lockout
+
+After `LOGIN_MAX_FAILED_ATTEMPTS` consecutive failed logins, an account is locked for
+`LOGIN_LOCKOUT_MINUTES`. During the lockout every login attempt is rejected with `429`,
+including one with the correct password. The counter resets on a successful login.
+
+Because the lock is keyed on the account rather than the IP, a password spray spread over
+many addresses is still stopped.
+
+## Response headers
+
+Every response carries the state of the burst window, and the sustained window is reported
+alongside it with a `-sustained` suffix:
+
+```http
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 58
+X-RateLimit-Reset: 41
+X-RateLimit-Limit-sustained: 1000
+X-RateLimit-Remaining-sustained: 934
+```
+
+`X-RateLimit-Reset` is the number of seconds until the window rolls over.
+
+## Handling a 429
+
+A throttled request returns `429 Too Many Requests` with a `Retry-After` header and a body of:
+
+```json
+{
+    "statusCode": 429,
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Rate limit exceeded. Slow down and retry later."
+}
+```
+
+Wait for `Retry-After` seconds before retrying, and back off rather than retrying in a
+tight loop. The `@ctm/api-client` package exposes this directly:
+
+```ts
+try {
+    await client.listTasks({});
+} catch (error) {
+    if (error instanceof ApiClientError && error.isRateLimited) {
+        await sleep((error.retryAfterSeconds ?? 60) * 1000);
+    }
+}
+```
+
+## Account caps
+
+| Cap                         | Setting                         |
+| --------------------------- | ------------------------------- |
+| Accounts per connector type | `MAX_CONNECTIONS_PER_CONNECTOR` |
+| Tasks stored                | `MAX_TASKS_PER_USER`            |
+
+Connecting an additional account beyond the connector cap returns `403` with code
+`QUOTA_EXCEEDED`; re-authorising an account you have already connected is always allowed.
+Creating a task beyond the task cap returns the same error. A sync that would push you over
+the task cap stops inserting new tasks and reports them as skipped — tasks already stored
+keep syncing.

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
+import { QuotaExceededError } from '@ctm/errors';
 import { Test } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorsService } from './connectors.service.js';
@@ -40,8 +42,15 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
     };
     const mockRegistry = { get: vi.fn().mockReturnValue(mockConnector) };
     const mockJwt = { sign: vi.fn(), verify: vi.fn() };
+    const mockConfig = { getOrThrow: vi.fn(() => 5) };
 
-    const service = new ConnectorsService(mockModel as any, mockRegistry as any, mockEncryption as any, mockJwt as any);
+    const service = new ConnectorsService(
+        mockModel as any,
+        mockRegistry as any,
+        mockEncryption as any,
+        mockJwt as any,
+        mockConfig as any,
+    );
 
     return { service, mockModel, mockConnector, mockEncryption };
 }
@@ -114,6 +123,7 @@ describe('ConnectorsService connections (real DB)', () => {
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ isGlobal: true }),
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
                 MongooseModule.forFeature([{ name: ConnectorConfig.name, schema: ConnectorConfigSchema }]),
             ],
@@ -155,6 +165,32 @@ describe('ConnectorsService connections (real DB)', () => {
 
         const rows = await service.listConnectionsForSource({ userId, source });
         expect(rows.map((r) => r.externalAccountId).sort()).toEqual([extA, extB].sort());
+    });
+
+    it('caps the number of accounts per connector but still allows re-auth', async () => {
+        const userId = new Types.ObjectId().toString();
+        const source = ConnectorName.GoogleTasks;
+        const max = Number(process.env['MAX_CONNECTIONS_PER_CONNECTOR']);
+        const stamp = Date.now();
+
+        for (let i = 0; i < max; i++) {
+            externalAccountId = `ext-cap-${stamp}-${i}`;
+            await service.handleCallback({ source, code: `c${i}`, userId });
+        }
+
+        externalAccountId = `ext-cap-${stamp}-overflow`;
+        await expect(service.handleCallback({ source, code: 'overflow', userId })).rejects.toBeInstanceOf(
+            QuotaExceededError,
+        );
+
+        externalAccountId = `ext-cap-${stamp}-0`;
+        await expect(service.handleCallback({ source, code: 'reauth', userId })).resolves.toBeDefined();
+
+        // The cap is per connector type, so a different source is unaffected.
+        externalAccountId = `ext-cap-${stamp}-other`;
+        await expect(
+            service.handleCallback({ source: ConnectorName.Todoist, code: 'other', userId }),
+        ).resolves.toBeDefined();
     });
 
     void model;

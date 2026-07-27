@@ -19,6 +19,14 @@ describe('envSchema', () => {
         EXPORT_DIR: '/tmp/exports',
         COOKIE_PATH: '/api/auth/refresh',
         COOKIE_SECURE: false,
+        RATE_LIMIT_BURST_PER_MINUTE: 60,
+        RATE_LIMIT_SUSTAINED_PER_HOUR: 1000,
+        RATE_LIMIT_STRICT_BURST_PER_MINUTE: 10,
+        RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR: 100,
+        LOGIN_MAX_FAILED_ATTEMPTS: 5,
+        LOGIN_LOCKOUT_MINUTES: 15,
+        MAX_CONNECTIONS_PER_CONNECTOR: 5,
+        MAX_TASKS_PER_USER: 10000,
     };
 
     it('accepts valid env', () => {
@@ -71,6 +79,19 @@ describe('envSchema', () => {
         const { error } = envSchema.validate(withoutMcpUrl);
 
         expect(error?.message).toContain('MCP_PUBLIC_URL');
+    });
+
+    it('rejects an env without RATE_LIMIT_BURST_PER_MINUTE', () => {
+        const { RATE_LIMIT_BURST_PER_MINUTE, ...withoutBurst } = validEnv;
+        const { error } = envSchema.validate(withoutBurst);
+
+        expect(error?.message).toContain('RATE_LIMIT_BURST_PER_MINUTE');
+    });
+
+    it('rejects a zero MAX_TASKS_PER_USER', () => {
+        const { error } = envSchema.validate({ ...validEnv, MAX_TASKS_PER_USER: 0 });
+
+        expect(error?.message).toContain('MAX_TASKS_PER_USER');
     });
 
     it('coerces COOKIE_SECURE to a boolean', () => {
