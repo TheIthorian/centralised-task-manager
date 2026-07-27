@@ -18,13 +18,13 @@ import { Channel, NotificationsService } from './notifications.service.js';
 import { ListNotificationsQueryDto } from './dto/list-notifications-query.dto.js';
 import type { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
-import type {
+import {
     MarkAllReadResultDto,
     MarkReadResultDto,
     NotificationDto,
     NotificationPreferencesDto,
     TestChannelResultDto,
-} from '@ctm/api-client';
+} from './dto/notification-response.dto.js';
 
 type AuthRequest = { user: JwtPayload };
 
