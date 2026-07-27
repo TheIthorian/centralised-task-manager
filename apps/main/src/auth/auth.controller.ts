@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { UnauthorizedError, ValidationError } from '@ctm/errors';
 import { AuthService, type TokenPair } from './auth.service.js';
-import type { TokenPair as TokenPairDto, AuthorizedAppDto } from '@ctm/api-client';
+import { TokenPairDto, AuthorizedAppDto } from './dto/auth-response.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
@@ -64,7 +64,7 @@ export class AuthController {
 
     /** Register a new account. Returns token pair + user. */
     @ApiOperation({ summary: 'Register a new account' })
-    @ApiResponse({ status: 201, description: 'Token pair + user info' })
+    @ApiResponse({ status: 201, description: 'Token pair + user info', type: TokenPairDto })
     @Post('register')
     @StrictRateLimit()
     async register(
@@ -79,7 +79,7 @@ export class AuthController {
 
     /** Login with email + password. Returns token pair + user. */
     @ApiOperation({ summary: 'Login with email + password' })
-    @ApiResponse({ status: 200, description: 'Token pair + user info' })
+    @ApiResponse({ status: 200, description: 'Token pair + user info', type: TokenPairDto })
     @Post('login')
     @HttpCode(200)
     @StrictRateLimit()
@@ -96,7 +96,7 @@ export class AuthController {
 
     /** Exchange a refresh token for a new token pair. */
     @ApiOperation({ summary: 'Exchange a refresh token for a new token pair' })
-    @ApiResponse({ status: 200, description: 'New token pair + user info' })
+    @ApiResponse({ status: 200, description: 'New token pair + user info', type: TokenPairDto })
     @Post('refresh')
     @HttpCode(200)
     @StrictRateLimit()

@@ -2,7 +2,7 @@ import { Controller, Delete, Get, HttpCode, Param, Post, Request, UseGuards } fr
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
-import type { TaskSyncJobDto } from '@ctm/api-client';
+import { TaskSyncJobDto } from './dto/task-sync-job.dto.js';
 import { SyncService } from './sync.service.js';
 import { toSyncJobDto } from './sync-job.dto.js';
 

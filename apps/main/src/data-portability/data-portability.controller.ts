@@ -10,7 +10,8 @@ import { Export, type ExportDocument } from './schemas/export.schema.js';
 import { ExportService } from './export.service.js';
 import { ImportService } from './import.service.js';
 import { FilesService } from '../files/files.service.js';
-import type { ExportEnvelopeDto, ExportResponseDto, ImportResponseDto } from '@ctm/api-client';
+import type { ExportEnvelopeDto } from '@ctm/api-client';
+import { ExportResponseDto, ImportResponseDto } from './dto/data-portability-response.dto.js';
 
 type AuthRequest = FastifyRequest & { user: JwtPayload };
 
