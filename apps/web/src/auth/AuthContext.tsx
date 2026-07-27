@@ -45,6 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
                 },
                 onUnauthorized: handleUnauthorized,
                 onError: (error) => {
+                    if (error.code === 'rate_limited') {
+                        showToast({
+                            title: 'Slow Down',
+                            description: error.retryAfterSeconds
+                                ? `Too many requests. Try again in ${error.retryAfterSeconds}s.`
+                                : 'Too many requests. Try again shortly.',
+                            dedupeKey: 'rate_limited',
+                        });
+
+                        return;
+                    }
+
                     showToast({
                         title: 'Request Failed',
                         description: error.message,

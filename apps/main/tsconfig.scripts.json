@@ -8,25 +8,14 @@
                 "transform": "./scripts/swagger-plugin.cjs",
                 "type": "program",
                 "options": {
-                    "dtoFileNameSuffix": [
-                        ".dto.ts"
-                    ],
-                    "controllerFileNameSuffix": [
-                        ".controller.ts"
-                    ],
+                    "dtoFileNameSuffix": [".dto.ts"],
+                    "controllerFileNameSuffix": [".controller.ts"],
                     "introspectComments": true,
                     "classValidatorShim": true
                 }
             }
         ]
     },
-    "include": [
-        "src/**/*.ts",
-        "scripts/**/*.ts"
-    ],
-    "exclude": [
-        "src/**/*.spec.ts",
-        "vitest.config.ts",
-        "vitest.setup.ts"
-    ]
+    "include": ["src/**/*.ts", "scripts/**/*.ts"],
+    "exclude": ["src/**/*.spec.ts", "vitest.config.ts", "vitest.setup.ts"]
 }

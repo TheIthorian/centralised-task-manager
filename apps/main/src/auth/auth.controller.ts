@@ -13,6 +13,7 @@ import { AuthorizedAppsService } from './authorized-apps.service.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
+import { RefreshRateLimit, StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 
 interface AuthRequest {
     user: UserDocument;
@@ -65,6 +66,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Register a new account' })
     @ApiResponse({ status: 201, description: 'Token pair + user info', type: TokenPairDto })
     @Post('register')
+    @StrictRateLimit()
     async register(
         @Body() dto: RegisterDto,
         @Req() request: FastifyRequest,
@@ -80,6 +82,7 @@ export class AuthController {
     @ApiResponse({ status: 200, description: 'Token pair + user info', type: TokenPairDto })
     @Post('login')
     @HttpCode(200)
+    @StrictRateLimit()
     @UseGuards(AuthGuard('local'))
     async login(
         @Request() req: AuthRequest,
@@ -96,6 +99,10 @@ export class AuthController {
     @ApiResponse({ status: 200, description: 'New token pair + user info', type: TokenPairDto })
     @Post('refresh')
     @HttpCode(200)
+    // Its own bucket: access tokens are short-lived, so refreshes are machine-paced rather
+    // than user-paced. Counting them with the sign-in attempts would throttle tabs behind one
+    // NAT address out of their sessions.
+    @RefreshRateLimit()
     async refresh(
         @Body() dto: RefreshDto,
         @Req() request: FastifyRequest,

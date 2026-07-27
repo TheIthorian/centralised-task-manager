@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TasksService } from './tasks.service.js';
@@ -22,6 +23,7 @@ describe('TasksService relations', () => {
     beforeAll(async () => {
         const moduleRef = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot({ isGlobal: true }),
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
                 MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
             ],

@@ -15,12 +15,10 @@ const userId = new Types.ObjectId().toHexString();
 const authReq = { user: { sub: userId, email: 'test@test.com' } };
 
 const mockExportService = {
-    export: vi
-        .fn()
-        .mockResolvedValue({
-            exportId: 'uuid-1',
-            files: [{ filename: 'export-part-1.json', sizeBytes: 100, contentType: 'application/json', sha256: 'abc' }],
-        }),
+    export: vi.fn().mockResolvedValue({
+        exportId: 'uuid-1',
+        files: [{ filename: 'export-part-1.json', sizeBytes: 100, contentType: 'application/json', sha256: 'abc' }],
+    }),
 };
 
 const mockImportService = {

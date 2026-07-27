@@ -68,6 +68,30 @@ describe('SourceCard', () => {
         expect(onDisconnect).toHaveBeenCalledWith('c1');
     });
 
+    it('tells the user when the task cap left some tasks unimported', () => {
+        const connector = { ...base, accounts: [account('c1', 'a@x.com')] };
+        const job: TaskSyncJobDto = {
+            id: 'j1',
+            type: 'task-sync',
+            status: 'done',
+            source: 'todoist',
+            connectionId: 'c1',
+            stage: null,
+            synced: 4,
+            skipped: 0,
+            droppedOverQuota: 7,
+            error: null,
+            completedAt: new Date().toISOString(),
+        };
+
+        render(
+            <SourceCard connector={connector} {...noopProps} syncJobs={new Map([['c1', job]])} />,
+        );
+
+        expect(screen.getByText(/task limit reached/i)).toBeInTheDocument();
+        expect(screen.getByText(/7 tasks not imported/i)).toBeInTheDocument();
+    });
+
     it('calls onSync with the connectionId when Sync is clicked', async () => {
         const onSync = vi.fn();
         const connector = { ...base, accounts: [account('c1', 'a@x.com')] };

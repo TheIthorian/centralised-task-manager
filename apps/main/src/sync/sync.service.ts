@@ -34,6 +34,7 @@ export class SyncService {
             stage: null,
             synced: 0,
             skipped: 0,
+            droppedOverQuota: 0,
         });
 
         void this.runSync(String(job._id), userId, connectionId);
@@ -94,7 +95,7 @@ export class SyncService {
 
             this.gateway.emitProgress(userId, job);
 
-            const { synced, skipped } = await this.tasks.upsertFromRemote({
+            const { synced, skipped, droppedOverQuota } = await this.tasks.upsertFromRemote({
                 userId,
                 source: source as unknown as TaskConnectorName,
                 externalAccountId: connection.externalAccountId ?? '',
@@ -110,7 +111,7 @@ export class SyncService {
 
             const finalJob = await this.taskSyncModel.findByIdAndUpdate(
                 jobId,
-                { status: 'done', stage: null, synced, skipped, completedAt: new Date() },
+                { status: 'done', stage: null, synced, skipped, droppedOverQuota, completedAt: new Date() },
                 { new: true },
             );
 

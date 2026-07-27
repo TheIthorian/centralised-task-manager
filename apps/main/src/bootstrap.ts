@@ -27,7 +27,9 @@ export function buildCorsOptions(env: NodeJS.ProcessEnv): CorsOptions {
 
 /** Create and configure the Nest Fastify application. */
 export async function createApp(): Promise<NestFastifyApplication> {
-    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
+    // trustProxy: the service always runs behind a proxy in production, so without it every
+    // request reports the proxy's address and IP-keyed rate limits bucket all clients together.
+    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ trustProxy: true }), {
         logger: new PinoLoggerService(),
     });
 

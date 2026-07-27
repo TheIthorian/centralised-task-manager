@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { QuotaExceededError } from '@ctm/errors';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
@@ -12,9 +14,27 @@ import type { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 /** Source name reserved for tasks stored only in CTM (no external connector). */
 const LOCAL_SOURCE = 'local';
 
+/** Outcome of a pull-sync. `droppedOverQuota` counts remote tasks left unimported at the cap. */
+export type UpsertFromRemoteResult = {
+    synced: number;
+    skipped: number;
+    droppedOverQuota: number;
+};
+
 @Injectable()
 export class TasksService {
-    constructor(@InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>) {}
+    constructor(
+        @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
+        private readonly config: ConfigService,
+    ) {}
+
+    /** How many more tasks this user may store before hitting the per-account cap. */
+    private async remainingTaskCapacity(userId: string): Promise<number> {
+        const max = this.config.getOrThrow<number>('MAX_TASKS_PER_USER');
+        const count = await this.taskModel.countDocuments({ userId: new Types.ObjectId(userId) });
+
+        return Math.max(0, max - count);
+    }
 
     /** List tasks for a user with optional filters. */
     async list(userId: string, query: ListTasksQueryDto): Promise<TaskDocument[]> {
@@ -174,6 +194,12 @@ export class TasksService {
     /** Create a task via write-through: call connector, then persist locally.
      *  When source is 'local', skip the connector and store the task directly in CTM. */
     async create({ userId, dto }: { userId: string; dto: CreateTaskDto }): Promise<TaskDocument> {
+        if ((await this.remainingTaskCapacity(userId)) === 0) {
+            const max = this.config.getOrThrow<number>('MAX_TASKS_PER_USER');
+
+            throw new QuotaExceededError(`Task limit of ${max} reached. Delete some tasks before creating more.`);
+        }
+
         const { due, deadlineDate } = this.parseDueFields(dto);
 
         // Outbound sync (CTM → external source) is disabled; all creates are local-only.
@@ -306,8 +332,8 @@ export class TasksService {
         source: TaskConnectorName;
         externalAccountId: string;
         remoteTasks: RemoteTask[];
-    }): Promise<{ synced: number; skipped: number }> {
-        if (remoteTasks.length === 0) return { synced: 0, skipped: 0 };
+    }): Promise<UpsertFromRemoteResult> {
+        if (remoteTasks.length === 0) return { synced: 0, skipped: 0, droppedOverQuota: 0 };
 
         const userObjectId = new Types.ObjectId(userId);
         const sourceIds = remoteTasks.map((r) => r.sourceId);
@@ -321,8 +347,11 @@ export class TasksService {
 
         const existingBySourceId = new Map(existingTasks.map((t) => [t.sourceId, t]));
         const now = new Date();
+
+        let insertBudget = await this.remainingTaskCapacity(userId);
         let synced = 0;
         let skipped = 0;
+        let droppedOverQuota = 0;
 
         // Pre-generate _ids for root inserts so child tasks can reference them in the same batch
         const newIdBySourceId = new Map<string, Types.ObjectId>();
@@ -392,6 +421,16 @@ export class TasksService {
             const existing = existingBySourceId.get(remote.sourceId);
 
             if (!existing) {
+                // A runaway import must not be able to fill the database: existing tasks keep
+                // syncing, new ones stop at the cap. Counted separately from `skipped` so the
+                // caller can tell the user their account is full rather than silently losing tasks.
+                if (insertBudget === 0) {
+                    droppedOverQuota++;
+                    continue;
+                }
+
+                insertBudget--;
+
                 const id = newIdBySourceId.get(remote.sourceId)!;
 
                 ops.push({ insertOne: { document: buildInsert(remote, id) } });
@@ -425,7 +464,7 @@ export class TasksService {
             >[1]);
         }
 
-        return { synced, skipped };
+        return { synced, skipped, droppedOverQuota };
     }
 
     /** Append a reminder to a task. Returns the new ReminderDto. */

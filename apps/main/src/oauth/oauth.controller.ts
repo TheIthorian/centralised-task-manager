@@ -20,6 +20,7 @@ import { OAuthClientService, isRedirectUriPermitted } from '../auth/oauth-client
 import { OAuthService } from './oauth.service.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { filterScopes } from './scopes.js';
+import { StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 
 interface AuthorizeQuery {
     client_id?: string;
@@ -150,6 +151,7 @@ export class OAuthController {
     })
     @Post('token')
     @HttpCode(200)
+    @StrictRateLimit()
     async token(@Body() body: TokenBody): Promise<object> {
         if (body.grant_type === 'refresh_token') {
             if (!body.refresh_token) throw new BadRequestException('refresh_token is required');

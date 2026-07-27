@@ -173,6 +173,24 @@ types: feat | fix | chore | test | docs | refactor | style | perf | build | ci
 scope: optional, e.g. main | web | auth | connectors
 ```
 
+### Pull Requests — What / Why / How
+
+PR descriptions use exactly three headings, in this order, and stay concise:
+
+```markdown
+## What
+
+## Why
+
+## How
+```
+
+- **What** — the change, in a line or two.
+- **Why** — the problem it solves.
+- **How** — the approach, and any non-obvious decision or deployment hazard.
+
+No other headings. Keep each section short; the diff carries the detail.
+
 ## Environment Variables
 
 Key variables (see `.env.example` for full list):

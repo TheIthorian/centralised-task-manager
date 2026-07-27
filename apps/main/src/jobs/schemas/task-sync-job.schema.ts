@@ -15,6 +15,7 @@ export type TaskSyncJobDocument = JobDocument & {
     stage: SyncStage | null;
     synced: number;
     skipped: number;
+    droppedOverQuota: number;
 };
 
 export const TaskSyncJobSchema = new Schema({
@@ -23,4 +24,5 @@ export const TaskSyncJobSchema = new Schema({
     stage: { type: String, enum: ['fetching', 'upserting'], default: null },
     synced: { type: Number, default: 0 },
     skipped: { type: Number, default: 0 },
+    droppedOverQuota: { type: Number, default: 0 },
 });

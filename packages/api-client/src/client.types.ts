@@ -167,6 +167,7 @@ export type ApiClientErrorOptions = {
     method: string;
     path: string;
     responseBody?: unknown;
+    retryAfterSeconds?: number;
 };
 
 /** Parameters for {@link CtmApiClient.getTask}. */

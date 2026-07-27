@@ -235,4 +235,47 @@ describe('CtmApiClient', () => {
             }),
         );
     });
+
+    it('surfaces a rate limit with its retry delay', async () => {
+        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
+        const error = {
+            isAxiosError: true,
+            message: 'Request failed with status code 429',
+            response: {
+                status: 429,
+                headers: { 'retry-after': '42' },
+                data: { message: 'Rate limit exceeded. Slow down and retry later.' },
+            },
+        };
+
+        mockedAxios.isAxiosError.mockReturnValue(true);
+        mockInstance.request.mockRejectedValueOnce(error);
+
+        const thrown = await client.getMe().catch((caught: unknown) => caught);
+
+        expect(thrown).toBeInstanceOf(ApiClientError);
+
+        const apiError = thrown as ApiClientError;
+
+        expect(apiError.isRateLimited).toBe(true);
+        expect(apiError.retryAfterSeconds).toBe(42);
+        expect(apiError.message).toBe('Rate limit exceeded. Slow down and retry later. Retry in 42s.');
+    });
+
+    it('leaves retryAfterSeconds unset when the server sends no Retry-After', async () => {
+        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
+
+        mockedAxios.isAxiosError.mockReturnValue(true);
+        mockInstance.request.mockRejectedValueOnce({
+            isAxiosError: true,
+            message: 'Request failed with status code 429',
+            response: { status: 429, headers: {}, data: { message: 'Too many requests' } },
+        });
+
+        const apiError = (await client.getMe().catch((caught: unknown) => caught)) as ApiClientError;
+
+        expect(apiError.isRateLimited).toBe(true);
+        expect(apiError.retryAfterSeconds).toBeUndefined();
+        expect(apiError.message).toBe('Too many requests');
+    });
 });

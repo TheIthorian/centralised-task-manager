@@ -10,6 +10,7 @@ export class TaskSyncJobDto implements ITaskSyncJobDto {
     stage!: 'fetching' | 'upserting' | null;
     synced!: number;
     skipped!: number;
+    droppedOverQuota!: number;
     error!: string | null;
     completedAt!: string | null;
 }
