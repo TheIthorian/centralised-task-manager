@@ -16,8 +16,10 @@ export type WebAuthTokens = {
 /** Normalized API error surfaced to UI consumers. */
 export type WebApiError = {
     statusCode: number;
-    code: 'unauthorized' | 'forbidden' | 'validation' | 'server' | 'network' | 'unknown';
+    code: 'unauthorized' | 'forbidden' | 'validation' | 'rate_limited' | 'server' | 'network' | 'unknown';
     message: string;
+    /** Seconds to wait before retrying, present on `rate_limited` errors. */
+    retryAfterSeconds?: number;
     cause?: unknown;
 };
 

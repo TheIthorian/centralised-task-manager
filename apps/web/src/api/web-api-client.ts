@@ -452,6 +452,7 @@ export class WebApiClient {
                 statusCode: error.statusCode,
                 code: this.statusToCode(error.statusCode),
                 message: this.normalizeMessage(error),
+                ...(error.retryAfterSeconds !== undefined ? { retryAfterSeconds: error.retryAfterSeconds } : {}),
                 cause: error,
             };
         }
@@ -477,6 +478,7 @@ export class WebApiClient {
         if (statusCode === 401) return 'unauthorized';
         if (statusCode === 403) return 'forbidden';
         if (statusCode === 400 || statusCode === 422) return 'validation';
+        if (statusCode === 429) return 'rate_limited';
         if (statusCode >= 500) return 'server';
         if (statusCode === 0) return 'network';
 

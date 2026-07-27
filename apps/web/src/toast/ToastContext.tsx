@@ -4,10 +4,18 @@ export type ToastMessage = {
     id: number;
     title: string;
     description: string;
+    dedupeKey?: string;
+};
+
+type ShowToastParams = {
+    title: string;
+    description: string;
+    /** When set, the toast is dropped if one with the same key is already on screen. */
+    dedupeKey?: string;
 };
 
 type ToastContextValue = {
-    showToast: ({ title, description }: { title: string; description: string }) => void;
+    showToast: (params: ShowToastParams) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -17,9 +25,16 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     const nextId = useRef(1);
 
-    const showToast = ({ title, description }: { title: string; description: string }): void => {
+    const showToast = ({ title, description, dedupeKey }: ShowToastParams): void => {
         const id = nextId.current++;
-        setToasts((current) => [...current, { id, title, description }]);
+
+        setToasts((current) => {
+            // One rate-limited page can fail a dozen requests at once; stacking a toast per
+            // failure buries the app under identical boxes.
+            if (dedupeKey !== undefined && current.some((toast) => toast.dedupeKey === dedupeKey)) return current;
+
+            return [...current, { id, title, description, dedupeKey }];
+        });
 
         window.setTimeout(() => {
             setToasts((current) => current.filter((toast) => toast.id !== id));
