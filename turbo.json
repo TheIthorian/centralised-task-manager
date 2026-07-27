@@ -11,7 +11,7 @@
             "outputs": ["dist/**", "build/**", ".docusaurus/**"]
         },
         "@ctm/docs#build": {
-            "dependsOn": ["^build"],
+            "dependsOn": ["^build", "@ctm/main#generate-openapi"],
             "outputs": ["build/**", ".docusaurus/**"],
             "env": ["DOCS_URL"]
         },
@@ -22,6 +22,11 @@
         "format": {},
         "dev": {
             "dependsOn": ["^build"],
+            "cache": false,
+            "persistent": true
+        },
+        "@ctm/docs#dev": {
+            "dependsOn": ["@ctm/main#generate-openapi"],
             "cache": false,
             "persistent": true
         }

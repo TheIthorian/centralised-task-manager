@@ -37,6 +37,8 @@ packages/
 ```bash
 pnpm install                        # Install all workspace dependencies
 pnpm dev                            # Start all apps in dev mode (via Turbo)
+pnpm turbo run dev --filter=@ctm/docs  # Docs only — regenerates openapi.json first
+                                    # (`pnpm --filter @ctm/docs dev` skips Turbo, so the spec goes stale)
 pnpm build                          # Build all apps
 pnpm lint                           # Run oxlint across workspace
 pnpm format                         # Run oxfmt across workspace
