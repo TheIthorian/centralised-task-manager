@@ -41,11 +41,14 @@ describe('createApp plugin registration', () => {
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
-        const response = await app.getHttpAdapter().getInstance().inject({
-            method: 'GET',
-            url: '/health',
-            headers: { 'accept-encoding': 'gzip, br' },
-        });
+        const response = await app
+            .getHttpAdapter()
+            .getInstance()
+            .inject({
+                method: 'GET',
+                url: '/health',
+                headers: { 'accept-encoding': 'gzip, br' },
+            });
 
         expect(response.statusCode).toBe(200);
         expect(response.headers['content-encoding']).toBeUndefined();

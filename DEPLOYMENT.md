@@ -58,10 +58,9 @@ separate worker service (`apps/sync` is an unimplemented stub).
   `env.schema.ts` — the API crash-loops on boot if they are unset. Existing
   deployments must set both variables on Railway BEFORE merging/deploying this
   change, not after.
-- **Ordering hazard**: the same applies to the rate-limit variables
-  (`RATE_LIMIT_*`, `LOGIN_MAX_FAILED_ATTEMPTS`, `LOGIN_LOCKOUT_MINUTES`,
-  `MAX_CONNECTIONS_PER_CONNECTOR`, `MAX_TASKS_PER_USER`) — all `required()`, so set
-  them on Railway before deploying.
+- The rate-limit variables (`RATE_LIMIT_*`, `LOGIN_MAX_FAILED_ATTEMPTS`,
+  `LOGIN_LOCKOUT_MINUTES`, `MAX_CONNECTIONS_PER_CONNECTOR`, `MAX_TASKS_PER_USER`)
+  default in `env.schema.ts`; set them on Railway only to override.
 - Rate-limit counters are held **in process**. Keep `main` on a single replica, or the
   effective limit multiplies by the replica count.
 - `REDIRECT_BASE_URL` is `https://ctm-web.pages.dev/api` — the `/api` suffix is

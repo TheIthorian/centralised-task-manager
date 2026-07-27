@@ -81,11 +81,21 @@ describe('envSchema', () => {
         expect(error?.message).toContain('MCP_PUBLIC_URL');
     });
 
-    it('rejects an env without RATE_LIMIT_BURST_PER_MINUTE', () => {
-        const { RATE_LIMIT_BURST_PER_MINUTE, ...withoutBurst } = validEnv;
-        const { error } = envSchema.validate(withoutBurst);
+    it('falls back to the default abuse limits when they are unset', () => {
+        const {
+            RATE_LIMIT_BURST_PER_MINUTE,
+            RATE_LIMIT_SUSTAINED_PER_HOUR,
+            LOGIN_MAX_FAILED_ATTEMPTS,
+            MAX_TASKS_PER_USER,
+            ...withoutLimits
+        } = validEnv;
+        const { error, value } = envSchema.validate(withoutLimits);
 
-        expect(error?.message).toContain('RATE_LIMIT_BURST_PER_MINUTE');
+        expect(error).toBeUndefined();
+        expect(value.RATE_LIMIT_BURST_PER_MINUTE).toBe(60);
+        expect(value.RATE_LIMIT_SUSTAINED_PER_HOUR).toBe(1000);
+        expect(value.LOGIN_MAX_FAILED_ATTEMPTS).toBe(5);
+        expect(value.MAX_TASKS_PER_USER).toBe(10000);
     });
 
     it('rejects a zero MAX_TASKS_PER_USER', () => {

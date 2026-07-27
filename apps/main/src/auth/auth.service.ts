@@ -26,15 +26,7 @@ export class AuthService {
     ) {}
 
     /** Register a new user and return a token pair. */
-    async register({
-        email,
-        password,
-        name,
-    }: {
-        email: string;
-        password: string;
-        name?: string;
-    }): Promise<TokenPair> {
+    async register({ email, password, name }: { email: string; password: string; name?: string }): Promise<TokenPair> {
         const user = await this.users.create({ email, password, name });
 
         return this.issueTokens(user);

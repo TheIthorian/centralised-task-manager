@@ -13,11 +13,7 @@ export const WEB_CLIENT_VALUE = 'web';
  * Whether the request arrived through the web proxy and should get a cookie
  * instead of a refresh token in the response body.
  */
-export function isWebClient({
-    headers,
-}: {
-    headers: Record<string, string | string[] | undefined>;
-}): boolean {
+export function isWebClient({ headers }: { headers: Record<string, string | string[] | undefined> }): boolean {
     return headers[WEB_CLIENT_HEADER] === WEB_CLIENT_VALUE;
 }
 

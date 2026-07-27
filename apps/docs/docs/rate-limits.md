@@ -14,10 +14,10 @@ stay well inside them.
 
 There are two windows, and both must have budget left for a request to be served:
 
-| Window    | Limit                           |
-| --------- | ------------------------------- |
-| Burst     | `RATE_LIMIT_BURST_PER_MINUTE`   |
-| Sustained | `RATE_LIMIT_SUSTAINED_PER_HOUR` |
+| Window    | Setting                         | Default |
+| --------- | ------------------------------- | ------- |
+| Burst     | `RATE_LIMIT_BURST_PER_MINUTE`   | 60      |
+| Sustained | `RATE_LIMIT_SUSTAINED_PER_HOUR` | 1000    |
 
 Requests are counted **per account** when authenticated, so the budget follows you across
 devices, networks and tokens — minting extra API tokens does not buy more quota. Anonymous
@@ -29,13 +29,13 @@ The web app, the CLI and MCP all draw on the same account budget.
 
 `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh` and `POST /oauth/token` are
 the brute-force surface, so they get their own tighter per-IP budget
-(`RATE_LIMIT_STRICT_BURST_PER_MINUTE` and `RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR`) counted
-separately for each endpoint.
+(`RATE_LIMIT_STRICT_BURST_PER_MINUTE`, default 10, and
+`RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR`, default 100) counted separately for each endpoint.
 
 ## Account lockout
 
-After `LOGIN_MAX_FAILED_ATTEMPTS` consecutive failed logins, an account is locked for
-`LOGIN_LOCKOUT_MINUTES`. During the lockout every login attempt is rejected with `429`,
+After `LOGIN_MAX_FAILED_ATTEMPTS` (default 5) consecutive failed logins, an account is locked for
+`LOGIN_LOCKOUT_MINUTES` (default 15). During the lockout every login attempt is rejected with `429`,
 including one with the correct password. The counter resets on a successful login.
 
 Because the lock is keyed on the account rather than the IP, a password spray spread over
@@ -83,10 +83,10 @@ try {
 
 ## Account caps
 
-| Cap                         | Setting                         |
-| --------------------------- | ------------------------------- |
-| Accounts per connector type | `MAX_CONNECTIONS_PER_CONNECTOR` |
-| Tasks stored                | `MAX_TASKS_PER_USER`            |
+| Cap                         | Setting                         | Default |
+| --------------------------- | ------------------------------- | ------- |
+| Accounts per connector type | `MAX_CONNECTIONS_PER_CONNECTOR` | 5       |
+| Tasks stored                | `MAX_TASKS_PER_USER`            | 10000   |
 
 Connecting an additional account beyond the connector cap returns `403` with code
 `QUOTA_EXCEEDED`; re-authorising an account you have already connected is always allowed.
