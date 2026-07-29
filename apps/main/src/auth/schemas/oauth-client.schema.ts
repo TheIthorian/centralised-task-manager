@@ -32,6 +32,19 @@ export class OAuthClient {
 
     @Prop({ type: Date, default: () => new Date() })
     issuedAt!: Date;
+
+    /** Set the first time the client completes an authorization. Absent until then. */
+    @Prop({ type: Date })
+    lastUsedAt?: Date;
+
+    /** Reaping deadline for a client that has never been used. Unset on first use. */
+    @Prop({ type: Date })
+    unusedExpiresAt?: Date;
 }
 
 export const OAuthClientSchema = SchemaFactory.createForClass(OAuthClient);
+
+// Reaps anonymously registered clients that were never used. MongoDB's TTL monitor skips
+// documents where the indexed field is absent, so clients that have been used are never
+// collected: `markUsed` unsets the field.
+OAuthClientSchema.index({ unusedExpiresAt: 1 }, { expireAfterSeconds: 0 });

@@ -127,6 +127,8 @@ export class OAuthController {
             clientId: query.client_id,
         });
 
+        if (query.client_id) await this.oauthClient.markUsed({ clientId: query.client_id });
+
         const redirectUrl = new URL(query.redirect_uri);
         redirectUrl.searchParams.set('code', code);
 

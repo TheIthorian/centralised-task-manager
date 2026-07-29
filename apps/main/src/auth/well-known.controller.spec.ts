@@ -75,6 +75,53 @@ describe('WellKnownController', () => {
         expect(body.scopes).toEqual(['openid', 'tasks:read']);
     });
 
+    it('POST /.well-known/oauth-client ignores unrecognised RFC 7591 metadata', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/.well-known/oauth-client',
+            payload: {
+                client_name: 'Metadata Client',
+                redirect_uris: ['https://example.com/cb'],
+                logo_uri: 'https://example.com/logo.png',
+                contacts: ['ops@example.com'],
+                token_endpoint_auth_method: 'none',
+            },
+        });
+
+        expect(res.statusCode).toBe(201);
+        expect(JSON.parse(res.body).client_name).toBe('Metadata Client');
+    });
+
+    it.each([
+        ['no redirect_uris', {}],
+        ['empty redirect_uris', { redirect_uris: [] }],
+        ['redirect_uris not an array', { redirect_uris: 'https://example.com/cb' }],
+        ['javascript scheme', { redirect_uris: ['javascript:alert(1)'] }],
+        ['data scheme', { redirect_uris: ['data:text/html,hi'] }],
+        ['http on a non-loopback host', { redirect_uris: ['http://evil.example.com/cb'] }],
+        ['a fragment', { redirect_uris: ['https://example.com/cb#frag'] }],
+        ['a relative uri', { redirect_uris: ['/callback'] }],
+        ['too many redirect_uris', { redirect_uris: Array.from({ length: 9 }, (_, i) => `https://e.com/${i}`) }],
+        ['an unsupported grant_type', { redirect_uris: ['https://e.com/cb'], grant_types: ['client_credentials'] }],
+        ['an unsupported response_type', { redirect_uris: ['https://e.com/cb'], response_types: ['token'] }],
+        ['a control character in client_name', { redirect_uris: ['https://e.com/cb'], client_name: 'bad\u0000name' }],
+        ['an over-long client_name', { redirect_uris: ['https://e.com/cb'], client_name: 'x'.repeat(101) }],
+    ])('POST /.well-known/oauth-client rejects %s', async (_label, payload) => {
+        const res = await app.inject({ method: 'POST', url: '/.well-known/oauth-client', payload });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('POST /.well-known/oauth-client accepts http on loopback hosts', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/.well-known/oauth-client',
+            payload: { redirect_uris: ['http://127.0.0.1:8976/callback', 'http://localhost:1234/cb'] },
+        });
+
+        expect(res.statusCode).toBe(201);
+    });
+
     it('each registration produces a unique client_id and client_secret', async () => {
         const makeClient = (): Promise<{ client_id: string; client_secret: string }> =>
             app
