@@ -18,3 +18,5 @@ apps/main/openapi.json
 .superpowers/
 .astro/
 .wrangler/
+
+apps/storybook/storybook-static

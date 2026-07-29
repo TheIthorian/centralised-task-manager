@@ -38,13 +38,12 @@ export function Modal({
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
-            <div className="absolute inset-0 bg-nb-black/60" onClick={onClose} aria-hidden="true" />
+            <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px]" onClick={onClose} aria-hidden="true" />
             <div
                 className={clsx(
                     'relative z-10 w-full',
                     widthClassName,
-                    'bg-white dark:bg-neutral-900 border-t-4 md:border-4 border-nb-black dark:border-white/20',
-                    'md:shadow-[5px_5px_0px_#111] dark:md:shadow-none',
+                    'border border-line bg-panel text-fg md:rounded-ctm md:shadow-overlay',
                     'p-6',
                 )}
                 role="dialog"
@@ -52,12 +51,11 @@ export function Modal({
             >
                 {title && (
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-black uppercase tracking-tight text-nb-black dark:text-white">
-                            {title}
-                        </h2>
+                        <h2 className="text-lg font-semibold tracking-tight text-fg">{title}</h2>
                         <button
                             onClick={onClose}
-                            className="font-black text-nb-black dark:text-white hover:text-nb-red text-lg leading-none"
+                            type="button"
+                            className="cursor-pointer text-lg leading-none text-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                             aria-label="Close"
                         >
                             ✕

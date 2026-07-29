@@ -7,25 +7,26 @@ type CheckboxProps = {
     disabled?: boolean;
 };
 
-/** Square neobrutalist checkbox. */
+/** Square checkbox. Accent fill when checked, hairline border when not. */
 export function Checkbox({ checked, onChange, label, disabled }: CheckboxProps): React.JSX.Element {
     return (
         <button
+            type="button"
             role="checkbox"
             aria-checked={checked}
             aria-label={label}
             disabled={disabled}
             onClick={() => onChange(!checked)}
             className={clsx(
-                'w-5 h-5 border-2 border-nb-black dark:border-white/30 flex-shrink-0',
-                'flex items-center justify-center',
-                'transition-colors duration-100 cursor-pointer',
-                checked ? 'bg-nb-black dark:bg-white' : 'bg-white dark:bg-neutral-800',
-                disabled && 'opacity-50 cursor-not-allowed',
+                'flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px]',
+                'cursor-pointer transition-colors duration-press',
+                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+                checked ? 'border-accent bg-accent' : 'border-muted bg-panel',
+                disabled && 'cursor-not-allowed opacity-50',
             )}
         >
             {checked && (
-                <svg width="12" height="10" viewBox="0 0 12 10" fill="none" className="text-white dark:text-nb-black">
+                <svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true" className="text-accent-fg">
                     <path
                         d="M1 5L4.5 8.5L11 1"
                         stroke="currentColor"
