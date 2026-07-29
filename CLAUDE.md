@@ -15,7 +15,9 @@ apps/
   cli/              # Node.js CLI (`ctm`) — task and connector management
   docs/             # Docusaurus site — compiled user-facing docs + OpenAPI reference
                     # (do NOT store internal markdown here)
+  storybook/        # Storybook harness for @ctm/ui — dev tool only, never deployed
 packages/
+  ui/               # Design tokens + presentational React components
   connectors/       # TaskConnector interface + Todoist + Google Tasks adapters
   logger/           # Shared Pino logger
   errors/           # Shared error types
@@ -47,6 +49,8 @@ pnpm test                           # Run all tests
 # Scoped to a single package
 pnpm --filter @ctm/main dev
 pnpm --filter @ctm/main test
+pnpm --filter @ctm/ui test              # Component tests (jsdom + testing-library + axe)
+pnpm --filter @ctm/storybook dev        # Storybook on :6006, theme + density toolbars
 ```
 
 ## Docker (Development)
@@ -94,6 +98,19 @@ NestJS background worker. No HTTP server. Polls connected sources every 15 minut
 Vite + React SPA. No SSR. Deployed to Cloudflare Pages (see `DEPLOYMENT.md`).
 
 **Stack:** Vite · React · React Router · Tailwind CSS v4 · TypeScript (strict, `moduleResolution: bundler`)
+
+### packages/ui
+
+Design tokens and presentational components. A component belongs here if it can be described without mentioning the API; `apps/web` keeps routing, queries, URL state and side effects.
+
+- Tokens live in `packages/ui/src/styles/tokens.css` (Quiet Slate, both themes) and are imported by `apps/web/src/index.css` and the Storybook preview.
+- Every component ships three co-located files: `Name.tsx`, `Name.spec.tsx`, `Name.stories.tsx`. No story means not finished.
+- Specs assert behaviour only — role, accessible name, ARIA state, keyboard, callbacks, plus `expect(await axe(container)).toHaveNoViolations()`. **Never assert Tailwind class strings or DOM snapshots:** those change with every design pass. Token correctness is judged in Storybook.
+- `packages/ui` never imports i18next. Copy arrives as props.
+
+### apps/storybook
+
+`@storybook/react-vite` harness that renders `packages/ui`. Stories live next to their component in `packages/ui/src`; this app is only the configuration. It has no `build` script and no deploy target on purpose.
 
 ### apps/docs
 
@@ -202,6 +219,26 @@ export class CreateTaskDto extends createZodDto<ICreateTaskDto>({
 - `packages/api-client` must remain a pure typed REST wrapper with no UI/browser concerns (no cookies, redirects, toasts, or window usage); it should be safe for web, CLI, and MCP consumers.
 - UI-specific API behavior lives in `apps/web`, including auth token persistence, refresh handling, redirect-on-unauthenticated flows, and surfacing structured errors to the user.
 - API clients should be class-based; pass access/refresh tokens into the client constructor instead of relying on shared mutable singleton state.
+
+### UI Text and Translations
+
+- All user-visible text in `apps/web` comes from `t('key')` via `react-i18next`. No string literals in JSX, including copy passed as props into `@ctm/ui`.
+- Keys live in `apps/web/src/i18n/en.json`, namespaced by surface and named for meaning. English only for now; `fallbackLng` is off so a missing key is a visible bug rather than a rendered key path.
+- Counts and dates are interpolated (`t('tasks.openCount', { count })`) and formatted with `Intl`, never assembled by concatenation.
+
+### Data Fetching and Writes
+
+- **No optimistic writes.** TanStack Query offers them via `onMutate` plus rollback; we decline. A mutation posts, `onSuccess` invalidates, and the row re-renders from server data. The moment the client patches its own cache it can show a state the backend never agreed to.
+- A row with a write in flight uses `isPending`: dimmed, `aria-disabled`, held in place, never struck through. Undo is a real second call inside the toast window.
+- Toasts are only for things the user did. System failures are inline banners, because a toast disappears before it can be acted on.
+
+### Accessibility
+
+- Real interactive elements only, never a click handler on a `div`. Visible 2px accent focus ring everywhere; `outline: none` is never acceptable.
+- `aria-label` on icon-only controls, `aria-hidden="true"` on decorative marks, correct ARIA state (`aria-pressed`, `aria-checked`, `aria-current`, `aria-selected`, `aria-disabled`), `aria-live="polite"` on counts and status that change asynchronously.
+- WCAG 2.2 AA contrast in both themes. Meaning is never carried by colour alone.
+- 44px minimum touch targets below 768px, whatever the density setting says.
+- `prefers-reduced-motion` collapses motion to an instant state change.
 
 ### Error Handling
 

@@ -44,7 +44,7 @@ Quiet Slate, light:
 | `--color-bg`        | `#fbfbfa` | page ground                      |
 | `--color-panel`     | `#ffffff` | lists, cards, sheets             |
 | `--color-fg`        | `#1c1f1e` | body text                        |
-| `--color-muted`     | `#7b817e` | secondary text, metadata         |
+| `--color-muted`     | `#6b716e` | secondary text, metadata         |
 | `--color-line`      | `#e2e4e1` | container borders                |
 | `--color-hair`      | `#eceeeb` | row separators                   |
 | `--color-accent`    | `#2f5d50` | primary action, selection, today |
@@ -63,7 +63,7 @@ Quiet Slate, dark (same hue family, accent lifts so it stays legible):
 | `--color-bg`        | `#121614` |
 | `--color-panel`     | `#191e1b` |
 | `--color-fg`        | `#e4e8e5` |
-| `--color-muted`     | `#8b938e` |
+| `--color-muted`     | `#98a09b` |
 | `--color-line`      | `#262c29` |
 | `--color-hair`      | `#1f2522` |
 | `--color-accent`    | `#7fbfa9` |
@@ -71,7 +71,7 @@ Quiet Slate, dark (same hue family, accent lifts so it stays legible):
 | `--color-warn`      | `#e8917a` |
 | `--color-warn-bg`   | `#2a1c19` |
 | `--color-nav-bg`    | `#0d100f` |
-| `--color-nav-fg`    | `#8b938e` |
+| `--color-nav-fg`    | `#98a09b` |
 | `--color-nav-on-bg` | `#1f2724` |
 | `--color-nav-on-fg` | `#e4e8e5` |
 
@@ -364,8 +364,9 @@ mid-sentence.
 
 **Contrast.** WCAG 2.2 AA as the floor: 4.5:1 for body text, 3:1 for large text and for
 the boundary of any control that carries meaning. Both themes are checked, not just light.
-`--color-muted` on `--color-panel` is the pair most at risk, so it is measured rather than
-eyeballed. Meaning is never carried by colour alone: overdue has a word, connector health
+`--color-muted` on `--color-panel` was the pair most at risk, which is why muted is
+`#6b716e` in light and `#98a09b` in dark rather than the first values drafted: both clear
+4.5:1 on their own ground. Meaning is never carried by colour alone: overdue has a word, connector health
 has a label as well as a pill.
 
 **Motion and zoom.** `prefers-reduced-motion` collapses every transition to an instant
