@@ -7,6 +7,7 @@ import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
 import { AppModule } from './app.module.js';
 import { PinoLoggerService } from './logging/pino-logger.service.js';
+import { ZodValidationPipe } from './common/zod/zod-validation.pipe.js';
 
 interface CorsOptions {
     origin: true | string[];
@@ -43,7 +44,12 @@ export async function createApp(): Promise<NestFastifyApplication> {
 
     await app.register(multipart, { limits: { fileSize: 60 * 1024 * 1024 } });
 
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
+    // ZodValidationPipe runs first and passes non-Zod metatypes straight through, so DTOs still
+    // using class-validator keep working while they are migrated.
+    app.useGlobalPipes(
+        new ZodValidationPipe(),
+        new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }),
+    );
     app.enableCors(buildCorsOptions(process.env));
     app.useWebSocketAdapter(new IoAdapter(app));
 
