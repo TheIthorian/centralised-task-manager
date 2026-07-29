@@ -26,6 +26,9 @@ import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { AddReminderDto } from './dto/add-reminder.dto.js';
 import { TaskDto, ReminderDto } from './dto/task-response.dto.js';
 import { OkDto } from '../common/dto/ok.dto.js';
+import { ZodParam } from '../common/zod/zod-validation.pipe.js';
+import { objectIdSchema } from '../common/zod/param-schemas.js';
+import { z } from 'zod';
 
 type AuthRequest = {
     user: JwtPayload;
@@ -82,7 +85,7 @@ export class TasksController {
     @ApiOperation({ summary: 'Get a task by id' })
     @ApiResponse({ status: 404, description: 'Task not found' })
     @Get(':id')
-    async findOne(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskDto> {
+    async findOne(@Request() req: AuthRequest, @Param('id', ZodParam(objectIdSchema)) id: string): Promise<TaskDto> {
         const t = await this.tasks.findOne({ taskId: id, userId: req.user.sub });
         return this.toResponse(t);
     }
@@ -98,7 +101,7 @@ export class TasksController {
     /** Update a task (write-through to source). */
     @ApiOperation({ summary: 'Update a task' })
     @Patch(':id')
-    async update(@Request() req: AuthRequest, @Param('id') id: string, @Body() dto: UpdateTaskDto): Promise<TaskDto> {
+    async update(@Request() req: AuthRequest, @Param('id', ZodParam(objectIdSchema)) id: string, @Body() dto: UpdateTaskDto): Promise<TaskDto> {
         const t = await this.tasks.update({ taskId: id, userId: req.user.sub, dto });
         return this.toResponse(t);
     }
@@ -108,7 +111,7 @@ export class TasksController {
     @Put(':id/status')
     async setStatus(
         @Request() req: AuthRequest,
-        @Param('id') id: string,
+        @Param('id', ZodParam(objectIdSchema)) id: string,
         @Body() dto: SetTaskStatusDto,
     ): Promise<TaskDto> {
         const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, dto });
@@ -120,7 +123,7 @@ export class TasksController {
     @Patch(':id/fuzzy-deadline')
     async setFuzzyDeadline(
         @Request() req: AuthRequest,
-        @Param('id') id: string,
+        @Param('id', ZodParam(objectIdSchema)) id: string,
         @Body() dto: SetFuzzyDeadlineDto,
     ): Promise<TaskDto> {
         const t = await this.tasks.setFuzzyDeadline({ taskId: id, userId: req.user.sub, dto });
@@ -130,7 +133,7 @@ export class TasksController {
     /** Remove the fuzzy deadline from a task. */
     @ApiOperation({ summary: 'Remove a fuzzy deadline' })
     @Delete(':id/fuzzy-deadline')
-    async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id') id: string): Promise<TaskDto> {
+    async removeFuzzyDeadline(@Request() req: AuthRequest, @Param('id', ZodParam(objectIdSchema)) id: string): Promise<TaskDto> {
         const t = await this.tasks.removeFuzzyDeadline({ taskId: id, userId: req.user.sub });
         return this.toResponse(t);
     }
@@ -140,7 +143,7 @@ export class TasksController {
     @Post(':id/relations')
     async addRelation(
         @Request() req: AuthRequest,
-        @Param('id') id: string,
+        @Param('id', ZodParam(objectIdSchema)) id: string,
         @Body() dto: TaskRelationDto,
     ): Promise<TaskDto> {
         const t = await this.tasks.addRelation({
@@ -158,7 +161,7 @@ export class TasksController {
     @Delete(':id/relations')
     async removeRelation(
         @Request() req: AuthRequest,
-        @Param('id') id: string,
+        @Param('id', ZodParam(objectIdSchema)) id: string,
         @Body() dto: TaskRelationDto,
     ): Promise<TaskDto> {
         const t = await this.tasks.removeRelation({
@@ -176,7 +179,7 @@ export class TasksController {
     @Post(':id/reminders')
     async addReminder(
         @Request() req: AuthRequest,
-        @Param('id') id: string,
+        @Param('id', ZodParam(objectIdSchema)) id: string,
         @Body() dto: AddReminderDto,
     ): Promise<ReminderDto> {
         return this.tasks.addReminder({ taskId: id, userId: req.user.sub, dto });
@@ -188,10 +191,10 @@ export class TasksController {
     @Delete(':id/reminders/:index')
     async removeReminder(
         @Request() req: AuthRequest,
-        @Param('id') id: string,
-        @Param('index') index: string,
+        @Param('id', ZodParam(objectIdSchema)) id: string,
+        @Param('index', ZodParam(z.coerce.number().int().min(0))) index: number,
     ): Promise<OkDto> {
-        await this.tasks.removeReminder({ taskId: id, userId: req.user.sub, index: Number(index) });
+        await this.tasks.removeReminder({ taskId: id, userId: req.user.sub, index });
         return { ok: true };
     }
 
@@ -200,7 +203,7 @@ export class TasksController {
     @ApiResponse({ status: 204 })
     @Delete(':id')
     @HttpCode(204)
-    async remove(@Request() req: AuthRequest, @Param('id') id: string): Promise<void> {
+    async remove(@Request() req: AuthRequest, @Param('id', ZodParam(objectIdSchema)) id: string): Promise<void> {
         await this.tasks.remove({ taskId: id, userId: req.user.sub });
     }
 }

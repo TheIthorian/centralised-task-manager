@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Types } from 'mongoose';
@@ -8,6 +7,7 @@ import { ExternalTaskSourceRegistry } from '@ctm/connectors';
 import type { ExternalTaskSource, OAuthTokens, RemoteTask, CreateTaskDto, UpdateTaskDto } from '@ctm/connectors';
 import { AppModule } from '../app.module.js';
 import { EncryptionService } from '../connectors/encryption.service.js';
+import { registerGlobalPipes } from '../bootstrap.js';
 
 class StubTaskSource implements ExternalTaskSource {
     readonly name = 'stub';
@@ -64,7 +64,7 @@ describe('TasksModule', () => {
             .compile();
 
         app = moduleRef.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -370,7 +370,7 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
+        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -932,7 +932,7 @@ describe('Tasks — user isolation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

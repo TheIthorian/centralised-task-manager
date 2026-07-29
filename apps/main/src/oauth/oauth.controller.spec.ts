@@ -1,10 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
 import { createHash, randomBytes } from 'crypto';
 import { SCOPE_REGISTRY, filterScopes, groupScopesByResource } from './scopes.js';
+import { registerGlobalPipes } from '../bootstrap.js';
 
 function makeCodeVerifier(): string {
     return randomBytes(32).toString('base64url');
@@ -23,7 +23,7 @@ describe('OAuth endpoints', () => {
     beforeAll(async () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

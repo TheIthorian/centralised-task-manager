@@ -9,6 +9,8 @@ import { TokenPairDto, AuthorizedAppDto } from './dto/auth-response.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+import { ZodParam } from '../common/zod/zod-validation.pipe.js';
+import { boundedString } from '../common/zod/param-schemas.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
@@ -162,7 +164,7 @@ export class AuthController {
     @Delete('me/authorized-apps/:clientId')
     @HttpCode(204)
     @UseGuards(JwtAuthGuard)
-    async revokeAuthorizedApp(@Request() req: JwtRequest, @Param('clientId') clientId: string): Promise<void> {
+    async revokeAuthorizedApp(@Request() req: JwtRequest, @Param('clientId', ZodParam(boundedString({ maxLength: 128 }))) clientId: string): Promise<void> {
         await this.authorizedApps.revokeAuthorizedApp({ userId: req.user.sub, clientId });
     }
 }

@@ -141,7 +141,23 @@ async findOne(...): Promise<TaskDto> { ... }
 
 `@nestjs/swagger/plugin` derives `@ApiProperty` from the class's TS types during OpenAPI generation, so response fields need no decorators — add one only to override (enums, `Record<string, unknown>`). If a handler carries an explicit `@ApiResponse({ status })`, the plugin leaves it alone: pass `type:` yourself.
 
-**Request DTOs** — NestJS DTO classes live in `apps/main/src/**/dto/*.ts` and must `implements` the corresponding api-client type (aliased to avoid name clash):
+**Every handler argument must be validated at runtime.** A TS type or interface is erased at
+compile time, so `@Body() body: SomeType` validates nothing and the value reaches the handler
+unchecked. This applies to `@Body`, `@Query`, `@Param` and `@Headers` alike.
+
+- **Objects** — define a Zod schema and wrap it with `createZodDto` (`common/zod/create-zod-dto.ts`). The global `ZodValidationPipe` parses it, and the helper derives `@ApiProperty` metadata from the schema so the OpenAPI reference stays populated.
+- **Primitives** — a bare `@Param('id') id: string` is unvalidated, because the global pipes skip primitive metatypes. Wrap a schema with `ZodParam`: use `objectIdSchema` for Mongo ids (an unchecked id becomes a Mongoose CastError, which surfaces as a 500), `z.enum` for enums, and `boundedString` for anything else.
+- **Bound every string.** Give each string a `max`, and each array a `max` length.
+- **Unknown keys are stripped, not rejected**, which is the Zod object default. Do not use `.strict()` on a public protocol endpoint: OAuth and MCP clients legitimately send parameters this server does not implement.
+- **Ajv, not Zod, for schemas that arrive as data** — connector connection details compile JSON Schema at runtime, which Zod cannot do.
+- Never hand a handler argument to a service, a DB query, or an outbound request before it has been through a schema.
+
+New DTOs use Zod. The `apps/main/src/**/dto/*.ts` classes still using class-validator are being
+migrated; `ClassValidatorPipe` and `ZodValidationPipe` each ignore the other's DTOs so both work
+meanwhile. Tests must configure their app with `registerGlobalPipes` from `bootstrap.ts` rather
+than calling `useGlobalPipes` directly, or they will not exercise the production pipeline.
+
+**Request DTOs** — NestJS DTO classes still on class-validator live in `apps/main/src/**/dto/*.ts` and must `implements` the corresponding api-client type (aliased to avoid name clash):
 
 ```ts
 import type { CreateTaskDto as ICreateTaskDto } from '@ctm/api-client';

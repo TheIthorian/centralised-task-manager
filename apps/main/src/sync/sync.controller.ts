@@ -5,6 +5,8 @@ import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { TaskSyncJobDto } from './dto/task-sync-job.dto.js';
 import { SyncService } from './sync.service.js';
 import { toSyncJobDto } from './sync-job.dto.js';
+import { ZodParam } from '../common/zod/zod-validation.pipe.js';
+import { objectIdSchema } from '../common/zod/param-schemas.js';
 
 type AuthRequest = {
     user: JwtPayload;
@@ -20,7 +22,7 @@ export class SyncController {
     /** Start a pull-sync job for a connection. */
     @ApiOperation({ summary: 'Start a pull-sync job for a connection' })
     @Post()
-    async createJob(@Request() req: AuthRequest, @Param('connectionId') connectionId: string): Promise<TaskSyncJobDto> {
+    async createJob(@Request() req: AuthRequest, @Param('connectionId', ZodParam(objectIdSchema)) connectionId: string): Promise<TaskSyncJobDto> {
         const job = await this.sync.createJob({ userId: req.user.sub, connectionId });
 
         return toSyncJobDto(job);
@@ -29,7 +31,7 @@ export class SyncController {
     /** Get the status of a sync job. */
     @ApiOperation({ summary: 'Get status of a sync job' })
     @Get(':jobId')
-    async getJob(@Request() req: AuthRequest, @Param('jobId') jobId: string): Promise<TaskSyncJobDto> {
+    async getJob(@Request() req: AuthRequest, @Param('jobId', ZodParam(objectIdSchema)) jobId: string): Promise<TaskSyncJobDto> {
         const job = await this.sync.getJob({ userId: req.user.sub, jobId });
 
         return toSyncJobDto(job);
@@ -40,7 +42,7 @@ export class SyncController {
     @ApiResponse({ status: 204 })
     @Delete(':jobId')
     @HttpCode(204)
-    async cancelJob(@Request() req: AuthRequest, @Param('jobId') jobId: string): Promise<void> {
+    async cancelJob(@Request() req: AuthRequest, @Param('jobId', ZodParam(objectIdSchema)) jobId: string): Promise<void> {
         await this.sync.cancelJob({ userId: req.user.sub, jobId });
     }
 }

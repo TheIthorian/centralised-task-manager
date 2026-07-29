@@ -32,6 +32,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import { ZodParam } from '../common/zod/zod-validation.pipe.js';
+import { objectIdSchema, boundedString } from '../common/zod/param-schemas.js';
+import { z } from 'zod';
 
 interface AuthRequest {
     user: JwtPayload;
@@ -135,7 +138,7 @@ export class ConnectorsController {
     @UseGuards(JwtAuthGuard)
     async listNotionDatabases(
         @Request() req: AuthRequest,
-        @Param('connectionId') connectionId: string,
+        @Param('connectionId', ZodParam(objectIdSchema)) connectionId: string,
     ): Promise<NotionDatabaseDto[]> {
         const source = await this.connectors.getConnectionSource({ userId: req.user.sub, connectionId });
 
@@ -156,7 +159,7 @@ export class ConnectorsController {
     @HttpCode(200)
     async setConnectionDetails(
         @Request() req: AuthRequest,
-        @Param('connectionId') connectionId: string,
+        @Param('connectionId', ZodParam(objectIdSchema)) connectionId: string,
         @Body() body: Record<string, unknown>,
     ): Promise<OkDto> {
         const source = await this.connectors.getConnectionSource({ userId: req.user.sub, connectionId });
@@ -199,7 +202,7 @@ export class ConnectorsController {
     @UseGuards(JwtAuthGuard)
     async getOAuthUrl(
         @Request() req: AuthRequest,
-        @Param('connectorName') connectorName: ConnectorName,
+        @Param('connectorName', ZodParam(z.enum(ConnectorName))) connectorName: ConnectorName,
     ): Promise<ConnectorAuthUrlDto> {
         const url = await this.connectors.getOAuthUrl({ userId: req.user.sub, source: connectorName });
         return { url };
@@ -212,7 +215,7 @@ export class ConnectorsController {
     @Delete('connections/:connectionId')
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
-    async removeConnection(@Request() req: AuthRequest, @Param('connectionId') connectionId: string): Promise<void> {
+    async removeConnection(@Request() req: AuthRequest, @Param('connectionId', ZodParam(objectIdSchema)) connectionId: string): Promise<void> {
         await this.connectors.removeConnection({ userId: req.user.sub, connectionId });
     }
 
@@ -223,9 +226,9 @@ export class ConnectorsController {
     })
     @Get('oauth/callback/:connectorName')
     async oauthCallback(
-        @Param('connectorName') connectorName: ConnectorName,
-        @Query('code') code: string,
-        @Query('state') state: string,
+        @Param('connectorName', ZodParam(z.enum(ConnectorName))) connectorName: ConnectorName,
+        @Query('code', ZodParam(boundedString({ maxLength: 2048 }))) code: string,
+        @Query('state', ZodParam(boundedString({ maxLength: 512 }))) state: string,
         @Res() res: FastifyReply,
     ): Promise<void> {
         this.logger.log(`oauthCallback connectorName=${connectorName} state=${state} hasCode=${!!code}`);
@@ -265,7 +268,7 @@ export class ConnectorsController {
     @UseGuards(JwtAuthGuard)
     async update(
         @Request() req: AuthRequest,
-        @Param('id') id: string,
+        @Param('id', ZodParam(objectIdSchema)) id: string,
         @Body() dto: UpdateConnectorDto,
     ): Promise<UpdateConnectorResponseDto> {
         const doc = await this.connectors.update({ configId: id, userId: req.user.sub, patch: dto });

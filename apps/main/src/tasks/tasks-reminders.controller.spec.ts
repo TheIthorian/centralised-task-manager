@@ -53,7 +53,7 @@ describe('TasksController – reminder endpoints', () => {
     it('DELETE /tasks/:id/reminders/:index delegates to service and returns ok', async () => {
         mockService.removeReminder.mockResolvedValue(undefined);
 
-        const result: OkDto = await controller.removeReminder(req as never, 'task-1', '0');
+        const result: OkDto = await controller.removeReminder(req as never, 'task-1', 0);
 
         expect(mockService.removeReminder).toHaveBeenCalledWith({
             taskId: 'task-1',

@@ -1,13 +1,13 @@
 // apps/main/src/sync/sync.controller.spec.ts
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AppModule } from '../app.module.js';
 import { ConnectorConfig, type ConnectorConfigDocument } from '../connectors/schemas/connector-config.schema.js';
+import { registerGlobalPipes } from '../bootstrap.js';
 
 describe('SyncController', () => {
     let app: NestFastifyApplication;
@@ -18,7 +18,7 @@ describe('SyncController', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        registerGlobalPipes(app);
         app.useWebSocketAdapter(new IoAdapter(app));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();

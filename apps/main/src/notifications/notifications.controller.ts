@@ -25,6 +25,9 @@ import {
     NotificationPreferencesDto,
     TestChannelResultDto,
 } from './dto/notification-response.dto.js';
+import { ZodParam } from '../common/zod/zod-validation.pipe.js';
+import { objectIdSchema } from '../common/zod/param-schemas.js';
+import { z } from 'zod';
 
 type AuthRequest = { user: JwtPayload };
 
@@ -45,7 +48,7 @@ export class NotificationsController {
     @Post('channels/:channel/test')
     async testNotificationChannel(
         @Request() req: AuthRequest,
-        @Param('channel') channel: Channel,
+        @Param('channel', ZodParam(z.enum(Channel))) channel: Channel,
     ): Promise<TestChannelResultDto> {
         return this.notificationsService.testChannel({ userId: req.user.sub, channel });
     }
@@ -69,7 +72,7 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Mark a notification as read' })
     @Patch(':id/read')
-    async markRead(@Request() req: AuthRequest, @Param('id') id: string): Promise<MarkReadResultDto> {
+    async markRead(@Request() req: AuthRequest, @Param('id', ZodParam(objectIdSchema)) id: string): Promise<MarkReadResultDto> {
         return this.notificationsService.markRead({ userId: req.user.sub, id });
     }
 

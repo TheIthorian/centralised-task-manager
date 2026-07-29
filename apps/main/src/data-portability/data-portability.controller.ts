@@ -3,6 +3,8 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { NotFoundError, ValidationError } from '@ctm/errors';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { ZodParam } from '../common/zod/zod-validation.pipe.js';
+import { boundedString } from '../common/zod/param-schemas.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -38,8 +40,8 @@ export class DataPortabilityController {
     @Get('exports/:exportId/:filename')
     async downloadFile(
         @Req() req: AuthRequest,
-        @Param('exportId') exportId: string,
-        @Param('filename') filename: string,
+        @Param('exportId', ZodParam(boundedString({ maxLength: 128 }))) exportId: string,
+        @Param('filename', ZodParam(boundedString({ maxLength: 256 }))) filename: string,
         @Res() reply: FastifyReply,
     ): Promise<void> {
         const doc = await this.exportModel.findOne({

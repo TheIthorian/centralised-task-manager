@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
+import { registerGlobalPipes } from '../bootstrap.js';
 
 describe('WellKnownController', () => {
     let app: NestFastifyApplication;
@@ -11,7 +11,7 @@ describe('WellKnownController', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });
