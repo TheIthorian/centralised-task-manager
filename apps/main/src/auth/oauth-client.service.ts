@@ -13,6 +13,12 @@ export type RegisterClientInput = {
     grant_types?: string[];
     response_types?: string[];
     scopes?: string[];
+    logo_uri?: string;
+    client_uri?: string;
+    tos_uri?: string;
+    policy_uri?: string;
+    contacts?: string[];
+    software_id?: string;
 };
 
 /** Response returned after successful dynamic client registration. */
@@ -25,6 +31,12 @@ export type RegisterClientOutput = {
     response_types: string[];
     scopes: string[];
     issued_at: string;
+    logo_uri?: string;
+    client_uri?: string;
+    tos_uri?: string;
+    policy_uri?: string;
+    contacts?: string[];
+    software_id?: string;
 };
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '[::1]', 'localhost']);
@@ -87,6 +99,12 @@ export class OAuthClientService {
             scopes: input.scopes ?? ['openid', 'email', 'profile'],
             issuedAt,
             unusedExpiresAt: new Date(issuedAt.getTime() + UNUSED_CLIENT_TTL_DAYS * 24 * 60 * 60 * 1000),
+            logoUri: input.logo_uri,
+            clientUri: input.client_uri,
+            tosUri: input.tos_uri,
+            policyUri: input.policy_uri,
+            contacts: input.contacts,
+            softwareId: input.software_id,
         });
 
         await doc.save();
@@ -100,6 +118,13 @@ export class OAuthClientService {
             response_types: doc.responseTypes,
             scopes: doc.scopes,
             issued_at: doc.issuedAt.toISOString(),
+            // RFC 7591 §3.2.1: the response repeats the metadata that was actually registered.
+            logo_uri: doc.logoUri,
+            client_uri: doc.clientUri,
+            tos_uri: doc.tosUri,
+            policy_uri: doc.policyUri,
+            contacts: doc.contacts,
+            software_id: doc.softwareId,
         };
     }
 

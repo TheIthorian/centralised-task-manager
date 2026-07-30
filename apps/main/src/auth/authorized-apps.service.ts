@@ -44,6 +44,11 @@ export class AuthorizedAppsService {
                 scopes: token.scopes,
                 authorizedAt: token.createdAt.toISOString(),
                 type: 'oauth',
+                clientUri: client.clientUri,
+                tosUri: client.tosUri,
+                policyUri: client.policyUri,
+                contacts: client.contacts,
+                softwareId: client.softwareId,
             });
         }
 

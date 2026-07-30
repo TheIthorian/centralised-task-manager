@@ -64,6 +64,42 @@ describe('AuthorizedAppsService', () => {
         expect(oauthResult[0]!.type).toBe('oauth');
     });
 
+    it('getAuthorizedApps returns declared client metadata but never the logo', async () => {
+        const userId = new Types.ObjectId().toHexString();
+        const clientId = `client_meta_${Date.now()}`;
+
+        await oauthClientModel.create({
+            clientId,
+            clientSecretHash: 'hash',
+            clientName: 'Metadata App',
+            redirectUris: ['https://example.com/cb'],
+            isDynamic: true,
+            logoUri: 'https://example.com/logo.png',
+            clientUri: 'https://example.com',
+            tosUri: 'https://example.com/tos',
+            policyUri: 'https://example.com/privacy',
+            contacts: ['ops@example.com'],
+            softwareId: 'example-client',
+        });
+
+        await refreshTokenModel.create({
+            tokenHash: `hash_meta_${Date.now()}`,
+            userId,
+            clientId,
+            scopes: ['openid'],
+            expiresAt: new Date(Date.now() + 86400_000),
+        });
+
+        const [app] = await service.getAuthorizedApps(userId);
+
+        expect(app!.clientUri).toBe('https://example.com');
+        expect(app!.tosUri).toBe('https://example.com/tos');
+        expect(app!.policyUri).toBe('https://example.com/privacy');
+        expect(app!.contacts).toEqual(['ops@example.com']);
+        expect(app!.softwareId).toBe('example-client');
+        expect(JSON.stringify(app)).not.toContain('logo.png');
+    });
+
     it('getAuthorizedApps ignores OAuth tokens with no clientId', async () => {
         const userId = new Types.ObjectId().toHexString();
 
