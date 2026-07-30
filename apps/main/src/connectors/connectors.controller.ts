@@ -16,7 +16,6 @@ import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ConnectorName, TaskConnectorName, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
-import Ajv from 'ajv';
 import type { NotionTaskSource } from '@ctm/connectors';
 import {
     ConnectorAuthUrlDto,
@@ -28,6 +27,7 @@ import {
 import { OkDto } from '../common/dto/ok.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
+import { ConnectionDetailsValidator } from './connection-details-validator.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { objectIdSchema } from '../common/zod/param-schemas.js';
@@ -43,13 +43,13 @@ interface AuthRequest {
 @Controller('connectors')
 export class ConnectorsController {
     private readonly logger = new Logger(ConnectorsController.name);
-    private readonly ajv = new Ajv();
 
     constructor(
         private readonly connectors: ConnectorsService,
         private readonly oAuthConnectorRegistry: OAuthConnectorRegistry,
         private readonly externalTaskSourceRegistry: ExternalTaskSourceRegistry,
         private readonly config: ConfigService,
+        private readonly connectionDetailsValidator: ConnectionDetailsValidator,
     ) {}
 
     /** List connectors with connection state for the current user. */
@@ -156,35 +156,15 @@ export class ConnectorsController {
     @Post('connections/:connectionId/connection-details')
     @UseGuards(JwtAuthGuard)
     @HttpCode(200)
-    @UnvalidatedInput('the connector supplies its own JSON Schema, compiled by Ajv below')
+    @UnvalidatedInput('the connector supplies its own JSON Schema, checked by ConnectionDetailsValidator')
     async setConnectionDetails(
         @Request() req: AuthRequest,
         @ValidatedParam({ name: 'connectionId', schema: objectIdSchema }) connectionId: string,
         @Body() body: Record<string, unknown>,
     ): Promise<OkDto> {
         const source = await this.connectors.getConnectionSource({ userId: req.user.sub, connectionId });
-        const connector = this.oAuthConnectorRegistry.get(source as ConnectorName);
-        const schema = connector.connectionDetailsSchema;
 
-        if (Object.keys(schema).length > 0) {
-            const ajvSchema = {
-                type: 'object',
-                properties: Object.fromEntries(
-                    Object.entries(schema).map(([key, field]) => [key, field.validationSchema]),
-                ),
-                required: Object.entries(schema)
-                    .filter(([, f]) => f.inputDefinition.required)
-                    .map(([k]) => k),
-                additionalProperties: false,
-            };
-
-            const validate = this.ajv.compile(ajvSchema);
-
-            if (!validate(body)) {
-                const message = this.ajv.errorsText(validate.errors);
-                throw new BadRequestException(`Invalid connection details: ${message}`);
-            }
-        }
+        this.connectionDetailsValidator.validate({ connectorName: source as ConnectorName, details: body });
 
         await this.connectors.update({
             configId: connectionId,

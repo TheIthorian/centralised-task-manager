@@ -17,6 +17,7 @@ import { ConnectorConfig, ConnectorConfigSchema } from './schemas/connector-conf
 import { ConnectorsService } from './connectors.service.js';
 import { ConnectorsController } from './connectors.controller.js';
 import { EncryptionService } from './encryption.service.js';
+import { ConnectionDetailsValidator } from './connection-details-validator.service.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
 
@@ -30,6 +31,7 @@ import { UsersModule } from '../users/users.module.js';
     providers: [
         ConnectorsService,
         EncryptionService,
+        ConnectionDetailsValidator,
         {
             provide: OAuthConnectorRegistry,
             inject: [ConfigService],
