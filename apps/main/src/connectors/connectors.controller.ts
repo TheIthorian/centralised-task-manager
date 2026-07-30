@@ -34,6 +34,7 @@ import { UpdateConnectorDto } from './dto/update-connector.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { ZodParam } from '../common/zod/zod-validation.pipe.js';
 import { objectIdSchema, boundedString } from '../common/zod/param-schemas.js';
+import { UnvalidatedInput } from '../common/validation/unvalidated-input.decorator.js';
 import { z } from 'zod';
 
 interface AuthRequest {
@@ -157,6 +158,7 @@ export class ConnectorsController {
     @Post('connections/:connectionId/connection-details')
     @UseGuards(JwtAuthGuard)
     @HttpCode(200)
+    @UnvalidatedInput('the connector supplies its own JSON Schema, compiled by Ajv below')
     async setConnectionDetails(
         @Request() req: AuthRequest,
         @Param('connectionId', ZodParam(objectIdSchema)) connectionId: string,
@@ -215,7 +217,10 @@ export class ConnectorsController {
     @Delete('connections/:connectionId')
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
-    async removeConnection(@Request() req: AuthRequest, @Param('connectionId', ZodParam(objectIdSchema)) connectionId: string): Promise<void> {
+    async removeConnection(
+        @Request() req: AuthRequest,
+        @Param('connectionId', ZodParam(objectIdSchema)) connectionId: string,
+    ): Promise<void> {
         await this.connectors.removeConnection({ userId: req.user.sub, connectionId });
     }
 

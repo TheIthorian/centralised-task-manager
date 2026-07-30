@@ -161,7 +161,15 @@ unchecked. This applies to `@Body`, `@Query`, `@Param` and `@Headers` alike.
 - **Bound every string.** Give each string a `max`, and each array a `max` length.
 - **Unknown keys are stripped, not rejected**, which is the Zod object default. Do not use `.strict()` on a public protocol endpoint: OAuth and MCP clients legitimately send parameters this server does not implement.
 - **Ajv, not Zod, for schemas that arrive as data** — connector connection details compile JSON Schema at runtime, which Zod cannot do.
+- **Import DTO classes as values, never `import type`** — a type-only import is erased from the emitted JS, so the pipe sees a bare `Object` metatype and validates nothing even though the DTO is a real decorated class.
 - Never hand a handler argument to a service, a DB query, or an outbound request before it has been through a schema.
+
+This is enforced, not just documented: `HandlerValidationModule` audits every controller's route
+metadata on `onApplicationBootstrap` and refuses to start when an argument is unvalidated, so the
+mistake is a failed deploy rather than an open endpoint. A handler that genuinely validates its own
+input by a route the audit cannot see is marked `@UnvalidatedInput(reason)`, and the reason is
+required. `@Headers` is outside the audit because Nest's decorator accepts no pipes; treat anything
+read from a header as untrusted text inside the handler.
 
 New DTOs use Zod. The `apps/main/src/**/dto/*.ts` classes still using class-validator are being
 migrated; `ClassValidatorPipe` and `ZodValidationPipe` each ignore the other's DTOs so both work

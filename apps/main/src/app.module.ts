@@ -18,6 +18,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { DataPortabilityModule } from './data-portability/data-portability.module.js';
 import { RateLimitModule } from './rate-limit/rate-limit.module.js';
 import { AppErrorFilter } from './common/filters/app-error.filter.js';
+import { HandlerValidationModule } from './common/validation/handler-validation.module.js';
 
 /**
  * The OpenAPI generator boots this module in Nest preview mode, where no provider is
@@ -49,6 +50,8 @@ if (skipEnvValidation && process.env['NODE_ENV'] === 'production') {
         SyncModule,
         NotificationsModule,
         DataPortabilityModule,
+        // Last, so it audits every controller the modules above registered.
+        HandlerValidationModule,
     ],
     providers: [{ provide: APP_FILTER, useClass: AppErrorFilter }],
 })

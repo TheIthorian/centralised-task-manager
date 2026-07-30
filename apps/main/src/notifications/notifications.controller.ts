@@ -16,7 +16,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { UsersService } from '../users/users.service.js';
 import { Channel, NotificationsService } from './notifications.service.js';
 import { ListNotificationsQueryDto } from './dto/list-notifications-query.dto.js';
-import type { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
+// Value import, not `import type`: a type-only import is erased, so the pipe would see a bare
+// Object metatype and validate nothing.
+import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import {
     MarkAllReadResultDto,
@@ -72,7 +74,10 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Mark a notification as read' })
     @Patch(':id/read')
-    async markRead(@Request() req: AuthRequest, @Param('id', ZodParam(objectIdSchema)) id: string): Promise<MarkReadResultDto> {
+    async markRead(
+        @Request() req: AuthRequest,
+        @Param('id', ZodParam(objectIdSchema)) id: string,
+    ): Promise<MarkReadResultDto> {
         return this.notificationsService.markRead({ userId: req.user.sub, id });
     }
 
