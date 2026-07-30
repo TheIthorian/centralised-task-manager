@@ -13,6 +13,8 @@ import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema
 import { OAuthClient, OAuthClientSchema } from './schemas/oauth-client.schema.js';
 import { OAuthClientService } from './oauth-client.service.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
+import { AuthorizedClient, AuthorizedClientSchema } from './schemas/authorized-client.schema.js';
+import { AuthorizedClientService } from './authorized-client.service.js';
 import { LoginAttempt, LoginAttemptSchema } from './schemas/login-attempt.schema.js';
 import { LoginAttemptsService } from './login-attempts.service.js';
 
@@ -35,6 +37,7 @@ import { LoginAttemptsService } from './login-attempts.service.js';
             { name: RefreshToken.name, schema: RefreshTokenSchema },
             { name: OAuthClient.name, schema: OAuthClientSchema },
             { name: LoginAttempt.name, schema: LoginAttemptSchema },
+            { name: AuthorizedClient.name, schema: AuthorizedClientSchema },
         ]),
     ],
     controllers: [AuthController, WellKnownController],
@@ -44,8 +47,9 @@ import { LoginAttemptsService } from './login-attempts.service.js';
         JwtStrategy,
         OAuthClientService,
         AuthorizedAppsService,
+        AuthorizedClientService,
         LoginAttemptsService,
     ],
-    exports: [AuthService, JwtModule, OAuthClientService, AuthorizedAppsService],
+    exports: [AuthService, JwtModule, OAuthClientService, AuthorizedAppsService, AuthorizedClientService],
 })
 export class AuthModule {}
