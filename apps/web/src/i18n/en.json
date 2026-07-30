@@ -63,6 +63,13 @@
                 "todoist": "Todoist",
                 "google": "Google Tasks"
             },
+            "menuLabel": "Filter",
+            "clear": "Clear filters",
+            "groups": {
+                "due": "Due",
+                "field": "Missing",
+                "source": "Source"
+            },
             "removeView": "Remove view {{name}}",
             "viewName": "Name this view",
             "all": "All",

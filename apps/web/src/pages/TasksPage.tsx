@@ -245,6 +245,7 @@ export function TasksPage(): React.JSX.Element {
                     onFilterChange={(next) => setSearchParams({ filter: next })}
                     conditions={conditions}
                     onToggleCondition={(condition) => applyConditions(toggleCondition({ conditions, condition }))}
+                    onClearConditions={() => applyConditions([])}
                     sources={[...new Set(loadedTasks.map((task) => task.source))]}
                     search={searchParams.toString()}
                     onApplySearch={(search) => setSearchParams(new URLSearchParams(search))}

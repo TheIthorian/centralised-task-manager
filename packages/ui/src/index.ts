@@ -10,6 +10,8 @@ export { CommandPalette } from './CommandPalette.js';
 export type { CommandGroup, CommandItem, CommandPaletteLabels } from './CommandPalette.js';
 export { DensityPreview } from './DensityPreview.js';
 export { EmptyState } from './EmptyState.js';
+export { FilterMenu } from './FilterMenu.js';
+export type { FilterGroup, FilterOption } from './FilterMenu.js';
 export { Input } from './Input.js';
 export { Kbd } from './Kbd.js';
 export { Modal } from './Modal.js';
