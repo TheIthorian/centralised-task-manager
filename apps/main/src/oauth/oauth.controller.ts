@@ -1,17 +1,4 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Query,
-    Body,
-    Res,
-    Headers,
-    HttpCode,
-    BadRequestException,
-    UseGuards,
-    Request,
-    Logger,
-} from '@nestjs/common';
+import { Controller, Get, Post, Res, HttpCode, BadRequestException, UseGuards, Request, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
@@ -23,6 +10,8 @@ import { filterScopes } from './scopes.js';
 import { StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 import { AuthorizeQueryDto } from './dto/authorize-query.dto.js';
 import { ConsentBodyDto, TokenBodyDto } from './dto/token-body.dto.js';
+import { ValidatedBody, ValidatedHeader, ValidatedQuery } from '../common/validation/validated.decorators.js';
+import { acceptHeaderSchema } from '../common/zod/param-schemas.js';
 
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
@@ -41,7 +30,7 @@ export class OAuthController {
      */
     @ApiExcludeEndpoint()
     @Get('authorize')
-    authorizeGet(@Query() query: AuthorizeQueryDto, @Res() res: FastifyReply): void {
+    authorizeGet(@ValidatedQuery(AuthorizeQueryDto) query: AuthorizeQueryDto, @Res() res: FastifyReply): void {
         const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173');
 
         const consentParams = new URLSearchParams({
@@ -66,11 +55,11 @@ export class OAuthController {
     @HttpCode(302)
     @UseGuards(JwtAuthGuard)
     async authorizePost(
-        @Query() query: AuthorizeQueryDto,
-        @Body() body: ConsentBodyDto,
+        @ValidatedQuery(AuthorizeQueryDto) query: AuthorizeQueryDto,
+        @ValidatedBody(ConsentBodyDto) body: ConsentBodyDto,
         @Request() req: { user: JwtPayload },
         @Res() res: FastifyReply,
-        @Headers('accept') accept: string = '',
+        @ValidatedHeader({ name: 'accept', schema: acceptHeaderSchema }) accept: string,
     ): Promise<void> {
         this.logger.log(
             `authorizePost client_id=${query.client_id ?? 'none'} redirect_uri=${query.redirect_uri} user=${req.user?.sub ?? 'unauthenticated'}`,
@@ -130,7 +119,7 @@ export class OAuthController {
     @Post('token')
     @HttpCode(200)
     @StrictRateLimit()
-    async token(@Body() body: TokenBodyDto): Promise<object> {
+    async token(@ValidatedBody(TokenBodyDto) body: TokenBodyDto): Promise<object> {
         if (body.grant_type === 'refresh_token') {
             if (!body.refresh_token) throw new BadRequestException('refresh_token is required');
 

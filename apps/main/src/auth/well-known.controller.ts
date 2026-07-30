@@ -1,9 +1,10 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OAuthClientService } from './oauth-client.service.js';
 import { RegisterClientDto } from './dto/register-client.dto.js';
 import { RegisterClientResponseDto } from './dto/auth-response.dto.js';
 import { StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
+import { ValidatedBody } from '../common/validation/validated.decorators.js';
 
 @Controller('.well-known')
 export class WellKnownController {
@@ -24,7 +25,7 @@ export class WellKnownController {
     @Post('oauth-client')
     @HttpCode(201)
     @StrictRateLimit()
-    async registerClient(@Body() dto: RegisterClientDto): Promise<RegisterClientResponseDto> {
+    async registerClient(@ValidatedBody(RegisterClientDto) dto: RegisterClientDto): Promise<RegisterClientResponseDto> {
         return this.oauthClient.register(dto);
     }
 }

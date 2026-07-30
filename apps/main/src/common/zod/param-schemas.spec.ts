@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 import { ValidationError } from '@ctm/errors';
 import { z } from 'zod';
 import { boundedString, objectIdSchema } from './param-schemas.js';
-import { ZodParam } from './zod-validation.pipe.js';
+import { ZodParam } from './zod-param.js';
 import { createZodDto, zodSchemaOf } from './create-zod-dto.js';
 
 describe('objectIdSchema', () => {

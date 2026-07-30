@@ -3,7 +3,6 @@ import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fa
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import cookie from '@fastify/cookie';
 import { AppModule } from '../app.module.js';
-import { registerGlobalPipes } from '../bootstrap.js';
 
 const MAX_ATTEMPTS = Number(process.env['LOGIN_MAX_FAILED_ATTEMPTS']);
 
@@ -20,7 +19,6 @@ describe('login lockout', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

@@ -3,7 +3,6 @@ import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fa
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import cookie from '@fastify/cookie';
 import { AppModule } from '../app.module.js';
-import { registerGlobalPipes } from '../bootstrap.js';
 
 describe('POST /auth/register + /auth/login', () => {
     let app: NestFastifyApplication;
@@ -14,7 +13,6 @@ describe('POST /auth/register + /auth/login', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });
@@ -80,7 +78,6 @@ describe('POST /auth/refresh', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -166,7 +163,6 @@ describe('DELETE /users/me', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });
@@ -219,7 +215,6 @@ describe('POST /auth/register — input validation', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });
@@ -309,7 +304,6 @@ describe('POST /auth/register — persistence', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });
@@ -385,7 +379,6 @@ describe('JWT signed with a mismatched key', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });
@@ -428,7 +421,6 @@ describe('Cookie mode for web clients', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });

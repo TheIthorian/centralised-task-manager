@@ -1,5 +1,4 @@
 import { NestFactory } from '@nestjs/core';
-import type { INestApplication } from '@nestjs/common';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import multipart from '@fastify/multipart';
@@ -7,8 +6,6 @@ import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
 import { AppModule } from './app.module.js';
 import { PinoLoggerService } from './logging/pino-logger.service.js';
-import { ZodValidationPipe } from './common/zod/zod-validation.pipe.js';
-import { ClassValidatorPipe } from './common/zod/class-validator.pipe.js';
 
 interface CorsOptions {
     origin: true | string[];
@@ -25,19 +22,6 @@ export function buildCorsOptions(env: NodeJS.ProcessEnv): CorsOptions {
         credentials: corsOrigin !== '*',
         methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     };
-}
-
-/**
- * Registers the validation pipes every entrypoint needs.
- *
- * Exported so tests configure their app exactly as production does: the two pipes each ignore
- * the other's DTOs, and a spec that registers only one silently strips fields the handler needs.
- */
-export function registerGlobalPipes(app: INestApplication): void {
-    app.useGlobalPipes(
-        new ZodValidationPipe(),
-        new ClassValidatorPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }),
-    );
 }
 
 /** Create and configure the Nest Fastify application. */
@@ -58,7 +42,6 @@ export async function createApp(): Promise<NestFastifyApplication> {
 
     await app.register(multipart, { limits: { fileSize: 60 * 1024 * 1024 } });
 
-    registerGlobalPipes(app);
     app.enableCors(buildCorsOptions(process.env));
     app.useWebSocketAdapter(new IoAdapter(app));
 

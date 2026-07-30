@@ -1,9 +1,8 @@
-import { Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { NotFoundError, ValidationError } from '@ctm/errors';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { ZodParam } from '../common/zod/zod-validation.pipe.js';
 import { boundedString } from '../common/zod/param-schemas.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { InjectModel } from '@nestjs/mongoose';
@@ -14,6 +13,7 @@ import { ImportService } from './import.service.js';
 import { FilesService } from '../files/files.service.js';
 import type { ExportEnvelopeDto } from '@ctm/api-client';
 import { ExportResponseDto, ImportResponseDto } from './dto/data-portability-response.dto.js';
+import { ValidatedParam } from '../common/validation/validated.decorators.js';
 
 type AuthRequest = FastifyRequest & { user: JwtPayload };
 
@@ -40,8 +40,8 @@ export class DataPortabilityController {
     @Get('exports/:exportId/:filename')
     async downloadFile(
         @Req() req: AuthRequest,
-        @Param('exportId', ZodParam(boundedString({ maxLength: 128 }))) exportId: string,
-        @Param('filename', ZodParam(boundedString({ maxLength: 256 }))) filename: string,
+        @ValidatedParam({ name: 'exportId', schema: boundedString({ maxLength: 128 }) }) exportId: string,
+        @ValidatedParam({ name: 'filename', schema: boundedString({ maxLength: 256 }) }) filename: string,
         @Res() reply: FastifyReply,
     ): Promise<void> {
         const doc = await this.exportModel.findOne({

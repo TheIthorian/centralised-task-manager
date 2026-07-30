@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, Patch, Body, Request, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, Patch, Request, UseGuards, NotFoundException } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { AuthService } from '../auth/auth.service.js';
@@ -6,6 +6,7 @@ import { UsersService } from './users.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { UserDto } from './dto/user.dto.js';
+import { ValidatedBody } from '../common/validation/validated.decorators.js';
 
 interface AuthRequest {
     user: JwtPayload;
@@ -33,7 +34,7 @@ export class UsersController {
     /** Update the current user's email or password. */
     @ApiOperation({ summary: 'Update current user' })
     @Patch('me')
-    async update(@Request() req: AuthRequest, @Body() dto: UpdateUserDto): Promise<UserDto> {
+    async update(@Request() req: AuthRequest, @ValidatedBody(UpdateUserDto) dto: UpdateUserDto): Promise<UserDto> {
         const user = await this.users.update({ id: req.user.sub, dto });
 
         return { id: String(user._id), email: user.email };

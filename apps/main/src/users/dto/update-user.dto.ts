@@ -1,21 +1,15 @@
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { z } from 'zod';
 import type { UpdateUserDto as IUpdateUserDto } from '@ctm/api-client';
+import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { emailSchema, optionalOrNull, passwordSchema } from '../../common/zod/param-schemas.js';
 
-export class UpdateUserDto implements IUpdateUserDto {
-    @IsOptional()
-    @IsEmail()
-    @MaxLength(320)
-    email?: string;
+export const updateUserSchema = z.strictObject({
+    email: optionalOrNull(emailSchema),
+    currentPassword: optionalOrNull(passwordSchema),
+    newPassword: optionalOrNull(passwordSchema),
+});
 
-    @IsOptional()
-    @IsString()
-    @MinLength(8)
-    @MaxLength(255)
-    currentPassword?: string;
-
-    @IsOptional()
-    @IsString()
-    @MinLength(8)
-    @MaxLength(255)
-    newPassword?: string;
-}
+export class UpdateUserDto extends createZodDto<IUpdateUserDto>({
+    schema: updateUserSchema,
+    name: 'UpdateUserDto',
+}) {}

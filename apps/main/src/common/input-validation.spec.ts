@@ -4,9 +4,6 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createHash, randomBytes } from 'crypto';
 import { AppModule } from '../app.module.js';
 import { AppErrorFilter } from './filters/app-error.filter.js';
-import { ZodValidationPipe } from './zod/zod-validation.pipe.js';
-import { ClassValidatorPipe } from './zod/class-validator.pipe.js';
-import { registerGlobalPipes } from '../bootstrap.js';
 
 /**
  * Malformed path, query and body input must produce a 4xx, never a 500. A CastError escaping
@@ -22,7 +19,6 @@ describe('handler input validation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        registerGlobalPipes(app);
         app.useGlobalFilters(new AppErrorFilter());
         await app.init();
         await app.getHttpAdapter().getInstance().ready();

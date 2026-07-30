@@ -6,7 +6,6 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
 import { ConnectorName } from '@ctm/connectors';
 import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
-import { registerGlobalPipes } from '../bootstrap.js';
 
 describe('ConnectorsModule', () => {
     let app: NestFastifyApplication;
@@ -18,7 +17,6 @@ describe('ConnectorsModule', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -159,7 +157,6 @@ describe('Connectors — auth guards and user isolation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

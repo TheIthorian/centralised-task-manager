@@ -7,7 +7,6 @@ import { ExternalTaskSourceRegistry } from '@ctm/connectors';
 import type { ExternalTaskSource, OAuthTokens, RemoteTask, CreateTaskDto, UpdateTaskDto } from '@ctm/connectors';
 import { AppModule } from '../app.module.js';
 import { EncryptionService } from '../connectors/encryption.service.js';
-import { registerGlobalPipes } from '../bootstrap.js';
 
 class StubTaskSource implements ExternalTaskSource {
     readonly name = 'stub';
@@ -64,7 +63,6 @@ describe('TasksModule', () => {
             .compile();
 
         app = moduleRef.createNestApplication(new FastifyAdapter());
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -370,7 +368,6 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -932,7 +929,6 @@ describe('Tasks — user isolation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        registerGlobalPipes(app);
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

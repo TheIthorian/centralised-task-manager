@@ -1,9 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsIn } from 'class-validator';
+import { z } from 'zod';
 import type { SetTaskStatusDto as ISetTaskStatusDto } from '@ctm/api-client';
+import { createZodDto } from '../../common/zod/create-zod-dto.js';
 
-export class SetTaskStatusDto implements ISetTaskStatusDto {
-    @ApiProperty({ enum: ['open', 'done'], description: 'Target status for the task.' })
-    @IsIn(['open', 'done'])
-    status!: 'open' | 'done';
-}
+export const setTaskStatusSchema = z.strictObject({
+    status: z.enum(['open', 'done']).describe('Target status for the task.'),
+});
+
+export class SetTaskStatusDto extends createZodDto<ISetTaskStatusDto>({
+    schema: setTaskStatusSchema,
+    name: 'SetTaskStatusDto',
+}) {}

@@ -1,77 +1,68 @@
 import { Body, Controller, Get, Headers, Param, Post, Query, Request } from '@nestjs/common';
-import { IsString } from 'class-validator';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createZodDto } from '../zod/create-zod-dto.js';
 import { objectIdSchema } from '../zod/param-schemas.js';
-import { ZodParam } from '../zod/zod-validation.pipe.js';
 import { auditHandlerInputs, type ControllerClass } from './audit-handler-inputs.js';
 import { UnvalidatedInput } from './unvalidated-input.decorator.js';
+import {
+    ValidatedBody,
+    ValidatedHeader,
+    ValidatedParam,
+    ValidatedQuery,
+    ValidatedQueryValue,
+} from './validated.decorators.js';
 
-type ErasedBody = { name: string };
-
-class ZodBodyDto extends createZodDto({ schema: z.object({ name: z.string().max(10) }), name: 'ZodBodyDto' }) {}
-
-class ClassValidatorBodyDto {
-    @IsString()
-    name!: string;
-}
+class BodyDto extends createZodDto({ schema: z.object({ name: z.string().max(10) }), name: 'BodyDto' }) {}
 
 function audit(controller: ControllerClass): string[] {
     return auditHandlerInputs({ controllers: [controller] });
 }
 
 describe('auditHandlerInputs', () => {
-    it('accepts a body typed as a Zod DTO', () => {
+    it('accepts every source when read through a Validated decorator', () => {
         @Controller()
         class Ok {
-            @Post()
-            create(@Body() _body: ZodBodyDto): void {}
+            @Post(':id')
+            create(
+                @ValidatedBody(BodyDto) _body: BodyDto,
+                @ValidatedQuery(BodyDto) _query: BodyDto,
+                @ValidatedParam({ name: 'id', schema: objectIdSchema }) _id: string,
+                @ValidatedQueryValue({ name: 'cursor', schema: z.string().max(64).optional() }) _cursor?: string,
+            ): void {}
         }
 
         expect(audit(Ok)).toEqual([]);
     });
 
-    it('accepts a body typed as a class-validator DTO', () => {
+    it('accepts a validated header', () => {
         @Controller()
         class Ok {
-            @Post()
-            create(@Body() _body: ClassValidatorBodyDto): void {}
+            @Get()
+            list(@ValidatedHeader({ name: 'accept', schema: z.string().max(64).default('') }) _accept: string): void {}
         }
 
         expect(audit(Ok)).toEqual([]);
     });
 
-    it('flags a body typed as an erased type alias', () => {
+    it('flags a bare body even when it is typed as a Zod DTO', () => {
         @Controller()
         class Bad {
             @Post()
-            create(@Body() _body: ErasedBody): void {}
+            create(@Body() _body: BodyDto): void {}
         }
 
-        expect(audit(Bad)).toEqual([
-            'Bad.create: @Body() is typed a plain object type, which is erased at runtime — use a createZodDto class',
-        ]);
+        expect(audit(Bad)).toEqual(['Bad.create: @Body() has no validation pipe — use ValidatedBody']);
     });
 
-    it('flags a body typed as Record<string, unknown>', () => {
-        @Controller()
-        class Bad {
-            @Post()
-            create(@Body() _body: Record<string, unknown>): void {}
-        }
-
-        expect(audit(Bad)).toHaveLength(1);
-    });
-
-    it('flags a query object with no DTO', () => {
+    it('flags a bare query object', () => {
         @Controller()
         class Bad {
             @Get()
-            list(@Query() _query: ErasedBody): void {}
+            list(@Query() _query: BodyDto): void {}
         }
 
-        expect(audit(Bad)[0]).toContain('@Query() is typed a plain object type');
+        expect(audit(Bad)[0]).toContain('@Query() has no validation pipe');
     });
 
     it('flags a named param with no pipe', () => {
@@ -81,34 +72,24 @@ describe('auditHandlerInputs', () => {
             findOne(@Param('id') _id: string): void {}
         }
 
-        expect(audit(Bad)).toEqual(["Bad.findOne: @Param('id') has no validation pipe — wrap a schema with ZodParam"]);
+        expect(audit(Bad)).toEqual(["Bad.findOne: @Param('id') has no validation pipe — use ValidatedParam"]);
     });
 
-    it('accepts a named param carrying a pipe', () => {
+    it('flags a bare header, which Nest cannot attach a pipe to', () => {
         @Controller()
-        class Ok {
-            @Get(':id')
-            findOne(@Param('id', ZodParam(objectIdSchema)) _id: string): void {}
+        class Bad {
+            @Get()
+            list(@Headers('accept') _accept: string): void {}
         }
 
-        expect(audit(Ok)).toEqual([]);
+        expect(audit(Bad)).toEqual(["Bad.list: @Headers('accept') has no validation pipe — use ValidatedHeader"]);
     });
 
-    it('accepts a named query value carrying a pipe', () => {
+    it('ignores arguments that carry no request data', () => {
         @Controller()
         class Ok {
             @Get()
-            list(@Query('cursor', ZodParam(z.string().max(64).optional())) _cursor?: string): void {}
-        }
-
-        expect(audit(Ok)).toEqual([]);
-    });
-
-    it('ignores sources that cannot carry a pipe or a schema', () => {
-        @Controller()
-        class Ok {
-            @Get()
-            list(@Request() _req: unknown, @Headers('accept') _accept: string): void {}
+            list(@Request() _req: unknown): void {}
         }
 
         expect(audit(Ok)).toEqual([]);
@@ -139,7 +120,7 @@ describe('auditHandlerInputs', () => {
         @Controller()
         class First {
             @Post()
-            create(@Body() _body: ErasedBody): void {}
+            create(@Body() _body: BodyDto): void {}
         }
 
         @Controller()
