@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input } from '@ctm/ui';
 import type { LocationDto } from '@ctm/api-client';
-import { DetailSection } from './DetailSection.js';
+import { DetailSection, FIELD_HEIGHT_CLASS } from './DetailSection.js';
 import type { FieldOwnership } from './field-ownership.js';
 
 type LocationSectionProps = {
@@ -47,7 +47,7 @@ export function LocationSection({
                                 disabled={disabled}
                                 aria-label={t('taskDetail.locations.removeLabel', { name: location.name })}
                                 onClick={() => onChange(locations.filter((_, position) => position !== index))}
-                                className="min-h-11 md:min-h-0"
+                                className={FIELD_HEIGHT_CLASS}
                             >
                                 {t('taskDetail.locations.remove')}
                             </Button>
@@ -63,7 +63,7 @@ export function LocationSection({
                         value={name}
                         disabled={disabled}
                         onChange={(event) => setName(event.target.value)}
-                        className="min-h-11 md:min-h-0"
+                        className={FIELD_HEIGHT_CLASS}
                     />
                 </div>
                 <div className="flex-1">
@@ -73,7 +73,7 @@ export function LocationSection({
                         value={url}
                         disabled={disabled}
                         onChange={(event) => setUrl(event.target.value)}
-                        className="min-h-11 md:min-h-0"
+                        className={FIELD_HEIGHT_CLASS}
                     />
                 </div>
                 <Button
@@ -85,7 +85,7 @@ export function LocationSection({
                         setName('');
                         setUrl('');
                     }}
-                    className="min-h-11 md:min-h-0"
+                    className={FIELD_HEIGHT_CLASS}
                 >
                     {t('taskDetail.locations.add')}
                 </Button>

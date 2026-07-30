@@ -49,6 +49,19 @@
     --color-nav-on-fg: #e4e8e5;
 }
 
+/*
+ * Native date pickers, selects and scrollbars are drawn by the browser, and only
+ * color-scheme tells it which palette to use. The dark rule needs a class rather than
+ * :where, or it loses to :root and the pickers stay white on a dark panel.
+ */
+:root {
+    color-scheme: light;
+}
+
+.dark {
+    color-scheme: dark;
+}
+
 /* Row density is a user preference. Mobile pins targets to 44px whatever it says. */
 :root {
     --ctm-row-y: 10px;

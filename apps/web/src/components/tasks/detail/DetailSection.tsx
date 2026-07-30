@@ -4,12 +4,26 @@ import type { FieldOwnership } from './field-ownership.js';
 /** The label voice of the panel, shared so a field and a section title read the same. */
 export const FIELD_LABEL_CLASS = 'text-[11px] uppercase tracking-[0.12em] text-muted';
 
-/** Controls stay at the 44px touch target below the tablet breakpoint, whatever the density is. */
+/** One height for every control in the panel, so a field and the button beside it line up. */
+export const FIELD_HEIGHT_CLASS = 'h-11 md:h-9';
+
 export const FIELD_CONTROL_CLASS = [
-    'min-h-11 w-full rounded-ctm border border-line bg-panel px-3 py-2 text-sm text-fg md:min-h-0',
+    FIELD_HEIGHT_CLASS,
+    'w-full rounded-ctm border border-line bg-panel px-3 text-sm text-fg',
     'placeholder:text-muted',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
     'disabled:cursor-not-allowed disabled:opacity-50',
+].join(' ');
+
+/**
+ * The browser draws the calendar button itself. Left alone it is a hard black glyph that
+ * ignores the theme, so it is tinted to the muted token and lit on hover like any other control.
+ */
+export const DATE_FIELD_CLASS = [
+    FIELD_HEIGHT_CLASS,
+    '[&::-webkit-calendar-picker-indicator]:cursor-pointer',
+    '[&::-webkit-calendar-picker-indicator]:opacity-55',
+    'hover:[&::-webkit-calendar-picker-indicator]:opacity-100',
 ].join(' ');
 
 type DetailSectionProps = {

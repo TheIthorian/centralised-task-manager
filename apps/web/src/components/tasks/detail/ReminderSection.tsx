@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@ctm/ui';
 import type { ReminderDto } from '@ctm/api-client';
 import { useAuth } from '../../../auth/AuthContext.js';
-import { DetailSection, FIELD_CONTROL_CLASS, FIELD_LABEL_CLASS } from './DetailSection.js';
+import { DATE_FIELD_CLASS, DetailSection, FIELD_CONTROL_CLASS, FIELD_HEIGHT_CLASS, FIELD_LABEL_CLASS } from './DetailSection.js';
 import type { FieldOwnership } from './field-ownership.js';
 
 type ReminderSectionProps = {
@@ -64,7 +64,7 @@ export function ReminderSection({
                                     disabled={busy}
                                     aria-label={t('taskDetail.reminders.removeLabel', { when })}
                                     onClick={() => removeMutation.mutate(index)}
-                                    className="min-h-11 md:min-h-0"
+                                    className={FIELD_HEIGHT_CLASS}
                                 >
                                     {t('taskDetail.reminders.remove')}
                                 </Button>
@@ -85,7 +85,7 @@ export function ReminderSection({
                         value={remindAt}
                         disabled={busy}
                         onChange={(event) => setRemindAt(event.target.value)}
-                        className={FIELD_CONTROL_CLASS}
+                        className={`${FIELD_CONTROL_CLASS} ${DATE_FIELD_CLASS}`}
                     />
                 </div>
                 <Button
@@ -93,7 +93,7 @@ export function ReminderSection({
                     variant="secondary"
                     disabled={!remindAt || busy}
                     onClick={() => addMutation.mutate(new Date(remindAt).toISOString())}
-                    className="min-h-11 md:min-h-0"
+                    className={FIELD_HEIGHT_CLASS}
                 >
                     {t('taskDetail.reminders.add')}
                 </Button>

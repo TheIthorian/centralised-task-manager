@@ -8,7 +8,7 @@ import { getErrorMessage } from '../../api/error-message.js';
 import { useToast } from '../../toast/ToastContext.js';
 import { useAuth } from '../../auth/AuthContext.js';
 import { SourceBadge } from './SourceBadge.js';
-import { DetailSection, FIELD_CONTROL_CLASS, FIELD_LABEL_CLASS } from './detail/DetailSection.js';
+import { DATE_FIELD_CLASS, DetailSection, FIELD_CONTROL_CLASS, FIELD_HEIGHT_CLASS, FIELD_LABEL_CLASS } from './detail/DetailSection.js';
 import { DetailSelect } from './detail/DetailSelect.js';
 import { ReminderSection } from './detail/ReminderSection.js';
 import { RelationSection } from './detail/RelationSection.js';
@@ -196,7 +196,7 @@ export function TaskDetailPanel({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={headingId}
-                className="relative z-10 flex h-full w-full flex-col bg-panel text-fg md:w-[460px] md:border-l md:border-line md:shadow-overlay motion-safe:animate-[ctm-slide-in_var(--duration-surface)_ease-out]"
+                className="relative z-10 flex h-full w-full flex-col bg-panel text-fg md:w-[690px] md:border-l md:border-line md:shadow-overlay motion-safe:animate-[ctm-slide-in_var(--duration-surface)_ease-out]"
             >
                 <header className="flex items-center gap-3 border-b border-line px-4 py-3 md:px-6">
                     <h2 id={headingId} className="flex-1 text-base font-semibold tracking-tight text-fg">
@@ -208,7 +208,7 @@ export function TaskDetailPanel({
                         variant="ghost"
                         onClick={onClose}
                         aria-label={t('taskDetail.close')}
-                        className="min-h-11 md:min-h-0"
+                        className={FIELD_HEIGHT_CLASS}
                     >
                         <span aria-hidden="true">✕</span>
                     </Button>
@@ -223,7 +223,7 @@ export function TaskDetailPanel({
                                 onChange={(event) => setTitle(event.target.value)}
                                 disabled={busy}
                                 required
-                                className="min-h-11 md:min-h-0"
+                                className={FIELD_HEIGHT_CLASS}
                             />
                             <div className="flex flex-col gap-1.5">
                                 <label htmlFor={descriptionId} className={FIELD_LABEL_CLASS}>
@@ -259,7 +259,7 @@ export function TaskDetailPanel({
                                     value={dueDate}
                                     disabled={busy}
                                     onChange={(event) => setDueDate(event.target.value)}
-                                    className="min-h-11 md:min-h-0"
+                                    className={DATE_FIELD_CLASS}
                                 />
                                 <Input
                                     label={t('taskDetail.fields.deadline')}
@@ -267,7 +267,7 @@ export function TaskDetailPanel({
                                     value={deadlineDate}
                                     disabled={busy}
                                     onChange={(event) => setDeadlineDate(event.target.value)}
-                                    className="min-h-11 md:min-h-0"
+                                    className={DATE_FIELD_CLASS}
                                 />
                             </div>
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -291,7 +291,7 @@ export function TaskDetailPanel({
                                             disabled={busy}
                                             placeholder={t('taskDetail.fields.durationPlaceholder')}
                                             onChange={(event) => setDurationAmount(event.target.value)}
-                                            className="min-h-11 md:min-h-0"
+                                            className={FIELD_HEIGHT_CLASS}
                                         />
                                     </div>
                                     <DetailSelect
@@ -348,7 +348,7 @@ export function TaskDetailPanel({
                     </div>
 
                     <div className="mt-auto flex items-center gap-2 border-t border-line px-4 py-3 md:px-6">
-                        <Button type="submit" disabled={busy} className="min-h-11 md:min-h-0">
+                        <Button type="submit" disabled={busy} className={FIELD_HEIGHT_CLASS}>
                             {isSaving ? t('taskDetail.actions.saving') : t('common.save')}
                         </Button>
                         <Button
@@ -356,7 +356,7 @@ export function TaskDetailPanel({
                             variant="secondary"
                             onClick={onClose}
                             disabled={busy}
-                            className="min-h-11 md:min-h-0"
+                            className={FIELD_HEIGHT_CLASS}
                         >
                             {t('common.cancel')}
                         </Button>
@@ -365,7 +365,7 @@ export function TaskDetailPanel({
                             variant="danger"
                             onClick={handleDelete}
                             disabled={busy}
-                            className="ml-auto min-h-11 md:min-h-0"
+                            className={`ml-auto ${FIELD_HEIGHT_CLASS}`}
                         >
                             {deleteLabel}
                         </Button>

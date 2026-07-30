@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge, Button } from '@ctm/ui';
 import type { RelationType, TaskDto, TaskRelationDto } from '@ctm/api-client';
 import { useAuth } from '../../../auth/AuthContext.js';
-import { DetailSection, FIELD_CONTROL_CLASS, FIELD_LABEL_CLASS } from './DetailSection.js';
+import { DetailSection, FIELD_CONTROL_CLASS, FIELD_HEIGHT_CLASS, FIELD_LABEL_CLASS } from './DetailSection.js';
 import { DetailSelect } from './DetailSelect.js';
 import type { FieldOwnership } from './field-ownership.js';
 
@@ -79,7 +79,7 @@ export function RelationSection({
                                     disabled={busy}
                                     aria-label={t('taskDetail.relations.removeLabel', { title })}
                                     onClick={() => removeMutation.mutate(relation)}
-                                    className="min-h-11 md:min-h-0"
+                                    className={FIELD_HEIGHT_CLASS}
                                 >
                                     {t('taskDetail.relations.remove')}
                                 </Button>
@@ -160,7 +160,7 @@ export function RelationSection({
                     variant="secondary"
                     disabled={!targetTaskId || busy}
                     onClick={() => addMutation.mutate({ type, targetTaskId })}
-                    className="min-h-11 md:min-h-0"
+                    className={FIELD_HEIGHT_CLASS}
                 >
                     {t('taskDetail.relations.add')}
                 </Button>
