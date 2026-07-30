@@ -80,7 +80,7 @@ NestJS application. Responsibilities:
 - User auth (JWT via `@nestjs/passport` + `passport-local` + `passport-jwt`)
 - Task aggregation API
 - Connector OAuth flow + token storage
-- API token issuance (for CLI and MCP)
+- OAuth 2.1 authorization server (issues tokens to CLI, MCP, and third-party clients)
 - Scheduled sync + reminder jobs (`@nestjs/schedule`)
 
 Modules follow NestJS conventions: `*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.schema.ts` (Mongoose schemas).
@@ -121,7 +121,17 @@ Docusaurus site. **This directory is for compiled/generated user-facing document
 
 ### Auth
 
-App auth uses `@nestjs/passport` + `passport-local` (login) + `passport-jwt` (protected routes). Long-lived API tokens (for CLI and MCP) are issued via `POST /auth/tokens` and stored hashed in MongoDB.
+App auth uses `@nestjs/passport` + `passport-local` (login) + `passport-jwt` (protected routes). `POST /auth/login` returns an RS256 access token plus a refresh token; refresh tokens are stored hashed in MongoDB (`auth/schemas/refresh-token.schema.ts`) and rotated via `POST /auth/refresh`.
+
+CLI and MCP clients do not use a separate API-token endpoint. `apps/main/src/oauth` runs a full OAuth 2.1 authorization server:
+
+- `POST /.well-known/oauth-client` — dynamic client registration
+- `GET`/`POST /oauth/authorize` — consent screen, `code_challenge` (PKCE) required
+- `POST /oauth/token` — `authorization_code` grant, returns access + id + refresh tokens
+- `GET /oauth/userinfo`
+- `GET /.well-known/openid-configuration`, `/oauth-authorization-server`, `/jwks.json`
+
+All access tokens are RS256, signed with the `RSA_PRIVATE_KEY` keypair (`oauth/oauth-key.service.ts`) and verified by the single `JwtStrategy`. Scopes live in `oauth/scopes.ts`; users revoke clients via `DELETE /auth/me/authorized-apps/:clientId`.
 
 ### Request / Response Types
 
