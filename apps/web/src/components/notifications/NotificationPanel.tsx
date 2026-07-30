@@ -115,13 +115,13 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
                 {/* List */}
                 <div className="flex-1 overflow-y-auto">
                     {isLoading && (
-                        <p className="text-center text-xs font-bold text-muted py-8">
+                        <p className="text-center text-xs font-medium text-muted py-8">
                             Loading…
                         </p>
                     )}
 
                     {!isLoading && notifications.length === 0 && (
-                        <p className="text-center text-xs font-bold text-muted py-8">
+                        <p className="text-center text-xs font-medium text-muted py-8">
                             No notifications
                         </p>
                     )}
@@ -139,7 +139,7 @@ export function NotificationPanel({ open, onClose }: Props): React.JSX.Element |
                             <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-xs text-fg truncate">{n.title}</p>
                                 {n.body && (
-                                    <p className="text-xs font-bold text-muted mt-0.5 line-clamp-2 whitespace-pre-line">
+                                    <p className="text-xs font-medium text-muted mt-0.5 line-clamp-2 whitespace-pre-line">
                                         {n.body}
                                     </p>
                                 )}

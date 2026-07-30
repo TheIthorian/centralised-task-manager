@@ -230,7 +230,7 @@ export function TaskModal({
                             id="description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="w-full h-32 border border-line bg-panel p-2 text-fg resize-none overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent placeholder:text-muted"
+                            className="w-full h-32 border border-line bg-panel p-2 text-fg resize-none overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent placeholder:text-muted rounded-ctm"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -247,7 +247,7 @@ export function TaskModal({
                                         className={`border border-line px-2 py-1 font-semibold text-xs ${
                                             priority === p
                                                 ? 'bg-accent text-accent-fg'
-                                                : 'bg-panel text-fg'
+                                                : 'bg-panel text-fg rounded-ctm'
                                         }`}
                                     >
                                         P{p}
@@ -278,7 +278,7 @@ export function TaskModal({
                             <select
                                 value={dueRecurrence}
                                 onChange={(e) => setDueRecurrence(e.target.value)}
-                                className="border border-line font-bold text-xs px-2 py-1 bg-panel text-fg"
+                                className="border border-line font-medium text-xs px-2 py-1 bg-panel text-fg rounded-ctm"
                                 disabled={busy}
                             >
                                 <option value="">None</option>
@@ -300,13 +300,13 @@ export function TaskModal({
                                     value={durationAmount}
                                     onChange={(e) => setDurationAmount(e.target.value)}
                                     placeholder="Amount"
-                                    className="border border-line font-bold text-xs px-2 py-1 bg-panel text-fg w-20"
+                                    className="border border-line font-medium text-xs px-2 py-1 bg-panel text-fg w-20 rounded-ctm"
                                     disabled={busy}
                                 />
                                 <select
                                     value={durationUnit}
                                     onChange={(e) => setDurationUnit(e.target.value as 'minute' | 'day')}
-                                    className="border border-line font-bold text-xs px-2 py-1 bg-panel text-fg"
+                                    className="border border-line font-medium text-xs px-2 py-1 bg-panel text-fg rounded-ctm"
                                     disabled={busy}
                                 >
                                     <option value="minute">min</option>
@@ -326,7 +326,7 @@ export function TaskModal({
                                 {reminders.map((r, i) => (
                                     <li key={i} className="flex items-center justify-between gap-2">
                                         <span
-                                            className={`text-xs font-bold ${r.firedAt ? 'text-muted line-through' : 'text-fg'}`}
+                                            className={`text-xs font-medium ${r.firedAt ? 'text-muted line-through' : 'text-fg'}`}
                                         >
                                             {new Date(r.remindAt).toLocaleString()}
                                         </span>
@@ -348,13 +348,13 @@ export function TaskModal({
                                 value={newRemindAt}
                                 onChange={(e) => setNewRemindAt(e.target.value)}
                                 disabled={busy}
-                                className="border border-line font-bold text-xs px-2 py-1 bg-panel text-fg flex-1"
+                                className="border border-line font-medium text-xs px-2 py-1 bg-panel text-fg flex-1 rounded-ctm"
                             />
                             <button
                                 type="button"
                                 disabled={!newRemindAt || busy}
                                 onClick={() => addReminderMutation.mutate(new Date(newRemindAt).toISOString())}
-                                className="border border-line font-semibold text-xs px-3 py-1 bg-panel text-fg disabled:opacity-40"
+                                className="border border-line font-semibold text-xs px-3 py-1 bg-panel text-fg disabled:opacity-40 rounded-ctm"
                             >
                                 Add
                             </button>
@@ -371,9 +371,9 @@ export function TaskModal({
                                 {relations.map((rel) => (
                                     <li
                                         key={`${rel.type}:${rel.targetTaskId}`}
-                                        className="flex items-center gap-2 text-xs font-bold"
+                                        className="flex items-center gap-2 text-xs font-medium"
                                     >
-                                        <span className="border border-line px-1.5 py-0.5 uppercase text-[10px] tracking-wide text-fg">
+                                        <span className="border border-line px-1.5 py-0.5 uppercase text-[10px] tracking-wide text-fg rounded-ctm">
                                             {RELATION_TYPE_LABELS[rel.type]}
                                         </span>
                                         <span className="text-fg truncate flex-1">
@@ -396,7 +396,7 @@ export function TaskModal({
                                 value={newRelationType}
                                 onChange={(e) => setNewRelationType(e.target.value as RelationType)}
                                 disabled={busy || addRelationMutation.isPending}
-                                className="border border-line font-bold text-xs px-2 py-1 bg-panel text-fg"
+                                className="border border-line font-medium text-xs px-2 py-1 bg-panel text-fg rounded-ctm"
                             >
                                 {RELATION_TYPES.map((t) => (
                                     <option key={t} value={t}>
@@ -417,7 +417,7 @@ export function TaskModal({
                                     }}
                                     onFocus={() => setRelationMenuOpen(true)}
                                     onBlur={() => setTimeout(() => setRelationMenuOpen(false), 150)}
-                                    className="w-full border border-line font-bold text-xs px-2 py-1 bg-panel text-fg"
+                                    className="w-full border border-line font-medium text-xs px-2 py-1 bg-panel text-fg rounded-ctm"
                                 />
                                 {relationMenuOpen &&
                                     (() => {
@@ -428,9 +428,9 @@ export function TaskModal({
                                             .slice(0, 8);
 
                                         return (
-                                            <ul className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto border border-line bg-panel">
+                                            <ul className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto border border-line bg-panel rounded-ctm">
                                                 {matches.length === 0 ? (
-                                                    <li className="px-2 py-1 text-xs font-bold text-muted">
+                                                    <li className="px-2 py-1 text-xs font-medium text-muted">
                                                         No matches
                                                     </li>
                                                 ) : (
@@ -444,7 +444,7 @@ export function TaskModal({
                                                                     setRelationSearch(t.title);
                                                                     setRelationMenuOpen(false);
                                                                 }}
-                                                                className="w-full text-left px-2 py-1 text-xs font-bold text-fg hover:bg-fg hover:text-white dark:hover:bg-white/20 truncate"
+                                                                className="w-full text-left px-2 py-1 text-xs font-medium text-fg hover:bg-fg hover:text-white dark:hover:bg-white/20 truncate"
                                                             >
                                                                 {t.title}
                                                             </button>
@@ -464,7 +464,7 @@ export function TaskModal({
                                         targetTaskId: newRelationTarget,
                                     })
                                 }
-                                className="border border-line px-3 py-1 font-semibold text-xs bg-panel text-fg disabled:opacity-40"
+                                className="border border-line px-3 py-1 font-semibold text-xs bg-panel text-fg disabled:opacity-40 rounded-ctm"
                             >
                                 Add
                             </button>
@@ -477,7 +477,7 @@ export function TaskModal({
                             Fuzzy Deadline
                         </p>
                         {task.fuzzyDeadline && (
-                            <p className="text-muted font-bold text-xs mb-2">
+                            <p className="text-muted font-medium text-xs mb-2">
                                 Current: {FUZZY_TYPE_LABELS[task.fuzzyDeadline.type]}
                                 {task.fuzzyDeadline.remindEvery ? ` · remind ${task.fuzzyDeadline.remindEvery}` : ''}
                             </p>
@@ -486,7 +486,7 @@ export function TaskModal({
                             <select
                                 value={fuzzyType}
                                 onChange={(e) => setFuzzyType(e.target.value as FuzzyDeadlineInfo['type'])}
-                                className="border border-line font-bold text-xs px-2 py-1 bg-panel text-fg"
+                                className="border border-line font-medium text-xs px-2 py-1 bg-panel text-fg rounded-ctm"
                                 disabled={busy}
                             >
                                 <option value="this_week">This Week</option>
@@ -496,7 +496,7 @@ export function TaskModal({
                             <select
                                 value={fuzzyRemindEvery}
                                 onChange={(e) => setFuzzyRemindEvery(e.target.value as 'daily' | 'weekly' | '')}
-                                className="border border-line font-bold text-xs px-2 py-1 bg-panel text-fg"
+                                className="border border-line font-medium text-xs px-2 py-1 bg-panel text-fg rounded-ctm"
                                 disabled={busy}
                             >
                                 <option value="">No reminder</option>
@@ -514,7 +514,7 @@ export function TaskModal({
                         {locations.length > 0 && (
                             <ul className="flex flex-col gap-1 mb-2">
                                 {locations.map((loc, i) => (
-                                    <li key={i} className="flex items-center gap-2 text-xs font-bold">
+                                    <li key={i} className="flex items-center gap-2 text-xs font-medium">
                                         <a
                                             href={loc.googleMapsUrl}
                                             target="_blank"
@@ -559,14 +559,14 @@ export function TaskModal({
                                     setNewLocName('');
                                     setNewLocUrl('');
                                 }}
-                                className="border border-line px-2 py-1 font-semibold text-xs bg-panel text-fg disabled:opacity-40 self-end"
+                                className="border border-line px-2 py-1 font-semibold text-xs bg-panel text-fg disabled:opacity-40 self-end rounded-ctm"
                             >
                                 Add
                             </button>
                         </div>
                     </div>
 
-                    {errorMessage && <p className="text-warn font-bold text-sm">{errorMessage}</p>}
+                    {errorMessage && <p className="text-warn font-medium text-sm">{errorMessage}</p>}
 
                     {/* Actions */}
                     <div className="flex gap-2 pt-2 border-t border-line/10">
@@ -587,7 +587,7 @@ export function TaskModal({
                         </div>
                     </div>
                     {confirmDelete && (
-                        <p className="text-xs font-bold text-warn -mt-2">
+                        <p className="text-xs font-medium text-warn -mt-2">
                             Click again to confirm permanent deletion.
                         </p>
                     )}

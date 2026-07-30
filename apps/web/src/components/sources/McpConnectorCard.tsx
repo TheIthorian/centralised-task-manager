@@ -37,14 +37,14 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
     };
 
     return (
-        <div className="bg-panel border border-line p-4 flex flex-col gap-3">
+        <div className="bg-panel border border-line p-4 flex flex-col gap-3 rounded-ctm">
             <div className="flex items-center justify-between gap-4">
                 <div>
                     <p className="font-semibold text-fg text-sm tracking-wide flex items-center gap-2">
                         <BrandIcon brand="mcp" />
                         MCP
                     </p>
-                    <p className="text-xs font-bold text-muted mt-0.5">
+                    <p className="text-xs font-medium text-muted mt-0.5">
                         Read and manage your tasks from any MCP client.
                     </p>
                 </div>
@@ -54,7 +54,7 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
                         aria-label="MCP client"
                         value={clientId}
                         onChange={(e) => setClientId(e.target.value)}
-                        className="w-32 border border-line bg-panel text-fg font-bold text-xs uppercase px-2 py-1.5"
+                        className="w-32 border border-line bg-panel text-fg font-medium text-xs uppercase px-2 py-1.5 rounded-ctm"
                     >
                         {MCP_CLIENTS.map(({ id, label }) => (
                             <option key={id} value={id}>
@@ -82,7 +82,7 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
             </div>
 
             {/* Fixed height: hints differ in length and would otherwise resize the card. */}
-            <p className="text-xs font-bold text-muted flex items-start gap-2 min-h-8">
+            <p className="text-xs font-medium text-muted flex items-start gap-2 min-h-8">
                 <BrandIcon brand={client.brand} size={14} className="mt-px" />
                 {client.hint}
             </p>

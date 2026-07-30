@@ -163,23 +163,23 @@ export function ConnectorsPage(): React.JSX.Element {
                 <h1 className="text-2xl font-semibold tracking-tight text-fg">
                     Task Connectors
                 </h1>
-                <p className="text-muted font-bold text-sm mt-1">
+                <p className="text-muted font-medium text-sm mt-1">
                     Connect external task managers to sync your tasks here.
                 </p>
             </div>
 
             {banner && (
                 <div
-                    className={`mb-4 border-2 p-3 flex items-center justify-between ${banner.type === 'success' ? 'border-green-600 bg-green-50 dark:bg-green-900/20' : 'border-warn bg-warn-bg'}`}
+                    className={`mb-4 border-2 p-3 flex items-center justify-between ${banner.type === 'success' ? 'border-green-600 bg-green-50 dark:bg-green-900/20' : 'border-warn bg-warn-bg rounded-ctm'}`}
                 >
                     <p
-                        className={`font-bold text-sm ${banner.type === 'success' ? 'text-green-700 dark:text-green-400' : 'text-warn'}`}
+                        className={`font-medium text-sm ${banner.type === 'success' ? 'text-green-700 dark:text-green-400' : 'text-warn'}`}
                     >
                         {banner.message}
                     </p>
                     <button
                         onClick={() => setBanner(null)}
-                        className="ml-4 text-xs font-bold opacity-60 hover:opacity-100"
+                        className="ml-4 text-xs font-medium opacity-60 hover:opacity-100"
                     >
                         ✕
                     </button>
@@ -187,14 +187,14 @@ export function ConnectorsPage(): React.JSX.Element {
             )}
 
             {isLoading && (
-                <p className="font-bold text-muted uppercase text-sm tracking-wide">
+                <p className="font-medium text-muted uppercase text-sm tracking-wide">
                     Loading…
                 </p>
             )}
 
             {isError && (
-                <div className="border border-warn bg-warn-bg p-3">
-                    <p className="text-warn font-bold text-sm">
+                <div className="border border-warn bg-warn-bg p-3 rounded-ctm">
+                    <p className="text-warn font-medium text-sm">
                         {getErrorMessage(error, 'Failed to load sources. Is the API running?')}
                     </p>
                 </div>
@@ -203,9 +203,9 @@ export function ConnectorsPage(): React.JSX.Element {
             {!isLoading &&
                 !isError &&
                 connectors.filter((c) => c.connectorType === ConnectorType.TaskSync).length === 0 && (
-                    <div className="bg-accent border border-line p-6 text-center">
+                    <div className="bg-accent border border-line p-6 text-center rounded-ctm">
                         <p className="font-semibold text-fg text-lg">No Sources Available.</p>
-                        <p className="font-bold text-muted text-sm mt-1">
+                        <p className="font-medium text-muted text-sm mt-1">
                             No integrations are configured on this server.
                         </p>
                     </div>
@@ -241,7 +241,7 @@ export function ConnectorsPage(): React.JSX.Element {
                 <h2 className="text-lg font-semibold tracking-tight text-fg">
                     Notification Connectors
                 </h2>
-                <p className="text-muted font-bold text-sm mt-1">
+                <p className="text-muted font-medium text-sm mt-1">
                     Connect notification channels to receive alerts outside the app.
                 </p>
             </div>
@@ -270,7 +270,7 @@ export function ConnectorsPage(): React.JSX.Element {
                 <h2 className="text-lg font-semibold tracking-tight text-fg">
                     Data Connectors
                 </h2>
-                <p className="text-muted font-bold text-sm mt-1">
+                <p className="text-muted font-medium text-sm mt-1">
                     Let AI clients read and manage your tasks over MCP.
                 </p>
             </div>

@@ -75,7 +75,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                         onClick={() => setPriority(p)}
                         aria-pressed={priority === p}
                         className={`cursor-pointer rounded-full border px-2.5 py-1 text-[11px] transition-colors duration-press focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-                            priority === p ? 'border-accent bg-accent text-accent-fg' : 'border-line bg-panel text-muted'
+                            priority === p ? 'border-accent bg-accent text-accent-fg rounded-ctm' : 'border-line bg-panel text-muted rounded-ctm'
                         }`}
                     >
                         P{p}

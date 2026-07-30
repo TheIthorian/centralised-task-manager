@@ -13,7 +13,7 @@ export function ErrorPage(): React.JSX.Element {
 
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">
-            <div className="bg-panel border border-line shadow-[6px_6px_0px_#111] p-8 text-center max-w-sm w-full">
+            <div className="bg-panel border border-line shadow-[6px_6px_0px_#111] p-8 text-center max-w-sm w-full rounded-ctm">
                 <div className="text-6xl mb-4">⚠</div>
                 <h1 className="text-2xl font-semibold text-fg mb-2">
                     Something went wrong
@@ -36,13 +36,13 @@ export function ErrorPage(): React.JSX.Element {
                         type="button"
                         aria-label="Reload page"
                         onClick={() => window.location.reload()}
-                        className="inline-flex items-center justify-center gap-2 border border-line font-semibold uppercase tracking-[0.12em] text-sm px-4 py-2 bg-panel text-fg transition-all duration-100 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 border border-line font-semibold uppercase tracking-[0.12em] text-sm px-4 py-2 bg-panel text-fg transition-all duration-100 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none cursor-pointer rounded-ctm"
                     >
                         ↺ Reload
                     </button>
                     <Link
                         to="/tasks"
-                        className="inline-flex items-center justify-center gap-2 border border-line font-semibold uppercase tracking-[0.12em] text-sm px-4 py-2 bg-fg dark:bg-accent text-accent-fg transition-all duration-100 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
+                        className="inline-flex items-center justify-center gap-2 border border-line font-semibold uppercase tracking-[0.12em] text-sm px-4 py-2 bg-fg dark:bg-accent text-accent-fg transition-all duration-100 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none rounded-ctm"
                     >
                         Go to Tasks
                     </Link>

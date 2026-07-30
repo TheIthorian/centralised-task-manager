@@ -64,7 +64,7 @@ export function ProfilePage(): React.JSX.Element {
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
                 <h1 className="text-2xl font-semibold tracking-tight text-fg">Profile</h1>
-                <p className="text-muted font-bold text-sm mt-1">
+                <p className="text-muted font-medium text-sm mt-1">
                     Update your account details.
                 </p>
             </div>
@@ -76,7 +76,7 @@ export function ProfilePage(): React.JSX.Element {
             {/* Update form */}
             <form
                 onSubmit={handleSave}
-                className="bg-panel border border-line p-5 flex flex-col gap-4 mb-8"
+                className="bg-panel border border-line p-5 flex flex-col gap-4 mb-8 rounded-ctm"
             >
                 <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
@@ -104,12 +104,12 @@ export function ProfilePage(): React.JSX.Element {
                 </div>
 
                 {saveMutation.isError && (
-                    <p className="text-warn font-bold text-sm">
+                    <p className="text-warn font-medium text-sm">
                         {getErrorMessage(saveMutation.error, 'Failed to save changes. Please try again.')}
                     </p>
                 )}
 
-                {saveSuccess && <p className="text-accent font-bold text-sm">Changes saved!</p>}
+                {saveSuccess && <p className="text-accent font-medium text-sm">Changes saved!</p>}
 
                 <div>
                     <Button type="submit" disabled={busy}>
@@ -122,7 +122,7 @@ export function ProfilePage(): React.JSX.Element {
             <DataSection />
 
             {/* Danger zone */}
-            <div className="border border-warn p-5">
+            <div className="border border-warn p-5 rounded-ctm">
                 <h2 className="font-semibold text-warn text-sm tracking-wide mb-3">Danger Zone</h2>
 
                 {!showDeleteConfirm && (
@@ -133,7 +133,7 @@ export function ProfilePage(): React.JSX.Element {
 
                 {showDeleteConfirm && (
                     <div className="flex flex-col gap-3">
-                        <p className="font-bold text-sm text-fg">
+                        <p className="font-medium text-sm text-fg">
                             This will permanently delete your account and all your data. Type your email to confirm.
                         </p>
                         <Input
@@ -145,7 +145,7 @@ export function ProfilePage(): React.JSX.Element {
                         />
 
                         {deleteMutation.isError && (
-                            <p className="text-warn font-bold text-sm">
+                            <p className="text-warn font-medium text-sm">
                                 {getErrorMessage(deleteMutation.error, 'Failed to delete account. Please try again.')}
                             </p>
                         )}
