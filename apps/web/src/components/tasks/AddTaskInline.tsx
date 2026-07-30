@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Button, Input } from '@ctm/ui';
 import type { CreateTaskDto } from '@ctm/api-client';
 import { useTranslation } from 'react-i18next';
+import { DATE_FIELD_CLASS } from './detail/DetailSection.js';
 
 type AddTaskInlineProps = {
     onAdd: (dto: CreateTaskDto) => Promise<void>;
@@ -81,6 +82,7 @@ export function AddTaskInline({ onAdd, isPending = false, open, onOpenChange }: 
             <Input
                 label={t('tasks.dueDateLabel')}
                 type="datetime-local"
+                className={DATE_FIELD_CLASS}
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
             />
