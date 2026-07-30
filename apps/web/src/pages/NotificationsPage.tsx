@@ -86,7 +86,7 @@ export function NotificationsPage(): React.JSX.Element {
     if (isLoading) {
         return (
             <div className="p-4 md:p-6 max-w-2xl">
-                <p className="font-bold text-sm text-nb-black/50 dark:text-white/40">Loading…</p>
+                <p className="font-bold text-sm text-muted">Loading…</p>
             </div>
         );
     }
@@ -94,7 +94,7 @@ export function NotificationsPage(): React.JSX.Element {
     if (isError || !prefs) {
         return (
             <div className="p-4 md:p-6 max-w-2xl">
-                <p className="text-nb-red font-bold text-sm">Failed to load notification preferences.</p>
+                <p className="text-warn font-bold text-sm">Failed to load notification preferences.</p>
             </div>
         );
     }
@@ -102,33 +102,33 @@ export function NotificationsPage(): React.JSX.Element {
     return (
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
-                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">
+                <h1 className="text-2xl font-semibold tracking-tight text-fg">
                     Notifications
                 </h1>
 
-                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
+                <p className="text-muted font-bold text-sm mt-1">
                     Choose how you receive notifications.
                 </p>
             </div>
 
-            <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none overflow-x-auto">
+            <div className="bg-panel border border-line overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-b-2 border-nb-black dark:border-white/20">
-                            <th className="text-left px-4 py-3 font-black uppercase text-xs tracking-wide text-nb-black dark:text-white" />
+                        <tr className="border-b border-line">
+                            <th className="text-left px-4 py-3 font-semibold text-xs tracking-wide text-fg" />
 
                             {CHANNELS.map(({ key, label }) => (
                                 <th
                                     key={key}
-                                    className="px-4 py-3 font-black uppercase text-xs tracking-wide text-nb-black dark:text-white text-center"
+                                    className="px-4 py-3 font-semibold text-xs tracking-wide text-fg text-center"
                                 >
                                     {key === 'discord' && !discordConnected ? (
                                         <span className="flex flex-col items-center gap-0.5">
-                                            <span className="text-nb-black/40 dark:text-white/30">{label}</span>
+                                            <span className="text-muted">{label}</span>
 
                                             <Link
                                                 to="/settings/connectors"
-                                                className="text-nb-black/50 dark:text-white/40 underline font-bold text-xs normal-case"
+                                                className="text-muted underline font-bold text-xs normal-case"
                                             >
                                                 Connect →
                                             </Link>
@@ -146,10 +146,10 @@ export function NotificationsPage(): React.JSX.Element {
                             <tr
                                 key={key}
                                 className={
-                                    i < ROWS.length - 1 ? 'border-b border-nb-black/10 dark:border-white/10' : ''
+                                    i < ROWS.length - 1 ? 'border-b border-line/10 ' : ''
                                 }
                             >
-                                <td className="px-4 py-3 font-bold text-sm text-nb-black dark:text-white">{label}</td>
+                                <td className="px-4 py-3 font-bold text-sm text-fg">{label}</td>
 
                                 {CHANNELS.map(({ key: channel }) => {
                                     const isDiscordDisabled = channel === 'discord' && !discordConnected;

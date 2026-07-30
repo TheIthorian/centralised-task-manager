@@ -63,8 +63,8 @@ export function ProfilePage(): React.JSX.Element {
     return (
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
-                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">Profile</h1>
-                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
+                <h1 className="text-2xl font-semibold tracking-tight text-fg">Profile</h1>
+                <p className="text-muted font-bold text-sm mt-1">
                     Update your account details.
                 </p>
             </div>
@@ -76,12 +76,12 @@ export function ProfilePage(): React.JSX.Element {
             {/* Update form */}
             <form
                 onSubmit={handleSave}
-                className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-5 flex flex-col gap-4 mb-8"
+                className="bg-panel border border-line p-5 flex flex-col gap-4 mb-8"
             >
                 <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
                 <div>
-                    <p className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white mb-2">
+                    <p className="font-semibold text-xs tracking-wide text-fg mb-2">
                         Change Password
                     </p>
                     <div className="flex flex-col gap-3">
@@ -104,12 +104,12 @@ export function ProfilePage(): React.JSX.Element {
                 </div>
 
                 {saveMutation.isError && (
-                    <p className="text-nb-red font-bold text-sm">
+                    <p className="text-warn font-bold text-sm">
                         {getErrorMessage(saveMutation.error, 'Failed to save changes. Please try again.')}
                     </p>
                 )}
 
-                {saveSuccess && <p className="text-nb-green font-bold text-sm">Changes saved!</p>}
+                {saveSuccess && <p className="text-accent font-bold text-sm">Changes saved!</p>}
 
                 <div>
                     <Button type="submit" disabled={busy}>
@@ -122,8 +122,8 @@ export function ProfilePage(): React.JSX.Element {
             <DataSection />
 
             {/* Danger zone */}
-            <div className="border-2 border-nb-red p-5">
-                <h2 className="font-black uppercase text-nb-red text-sm tracking-wide mb-3">Danger Zone</h2>
+            <div className="border border-warn p-5">
+                <h2 className="font-semibold text-warn text-sm tracking-wide mb-3">Danger Zone</h2>
 
                 {!showDeleteConfirm && (
                     <Button variant="danger" onClick={handleDeleteClick} disabled={busy}>
@@ -133,7 +133,7 @@ export function ProfilePage(): React.JSX.Element {
 
                 {showDeleteConfirm && (
                     <div className="flex flex-col gap-3">
-                        <p className="font-bold text-sm text-nb-black dark:text-white">
+                        <p className="font-bold text-sm text-fg">
                             This will permanently delete your account and all your data. Type your email to confirm.
                         </p>
                         <Input
@@ -145,7 +145,7 @@ export function ProfilePage(): React.JSX.Element {
                         />
 
                         {deleteMutation.isError && (
-                            <p className="text-nb-red font-bold text-sm">
+                            <p className="text-warn font-bold text-sm">
                                 {getErrorMessage(deleteMutation.error, 'Failed to delete account. Please try again.')}
                             </p>
                         )}
@@ -160,7 +160,7 @@ export function ProfilePage(): React.JSX.Element {
                                     setShowDeleteConfirm(false);
                                     setDeleteConfirmEmail('');
                                 }}
-                                className="font-black uppercase text-xs text-nb-black dark:text-white underline"
+                                className="font-semibold text-xs text-fg underline"
                             >
                                 Cancel
                             </button>
