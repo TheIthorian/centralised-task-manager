@@ -20,6 +20,7 @@ export type CommandPaletteLabels = {
     placeholder: string;
     noMatch: string;
     groups: Record<CommandGroup, string>;
+    hints: { move: string; run: string; close: string; prefixes: string };
 };
 
 export type CommandPaletteProps = {
@@ -28,7 +29,7 @@ export type CommandPaletteProps = {
     onClose: () => void;
     onRun: (item: CommandItem) => void;
     /** Called when the query matches nothing. The string goes to the agent unchanged. */
-    onAsk: (query: string) => void;
+    onAsk?: (query: string) => void;
     labels?: Partial<CommandPaletteLabels>;
 };
 
@@ -44,6 +45,7 @@ const DEFAULT_LABELS: CommandPaletteLabels = {
         do: 'Actions',
         ask: 'Ask',
     },
+    hints: { move: 'move', run: 'run', close: 'close', prefixes: '> actions · # views · @ accounts' },
 };
 
 const GROUP_ORDER: CommandGroup[] = ['views', 'task', 'acct', 'jump', 'do', 'ask'];
@@ -77,6 +79,7 @@ export function CommandPalette({
         ...DEFAULT_LABELS,
         ...labels,
         groups: { ...DEFAULT_LABELS.groups, ...labels?.groups },
+        hints: { ...DEFAULT_LABELS.hints, ...labels?.hints },
     };
 
     useEffect(() => {
@@ -149,7 +152,7 @@ export function CommandPalette({
         e.preventDefault();
 
         if (active) onRun(active);
-        else if (askQuery) onAsk(askQuery);
+        else if (askQuery && onAsk) onAsk(askQuery);
     };
 
     let lastGroup: CommandGroup | undefined;
@@ -162,7 +165,8 @@ export function CommandPalette({
             }}
             onKeyDown={handleKeyDown}
             className={clsx(
-                'fixed inset-0 z-50 grid justify-items-center pt-[12vh]',
+                // items-start, or the grid stretches the dialog to the bottom of the window.
+                'fixed inset-0 z-50 grid items-start justify-items-center pt-[12vh]',
                 // The blur is the point: the dialog floats above the app rather than being
                 // pasted onto it, and the app stays recognisable underneath. It survives
                 // reduced motion, because only the entry movement is motion.
@@ -238,10 +242,10 @@ export function CommandPalette({
                     {matches.length === 0 && <p className="px-3.5 py-4 text-xs text-muted">{copy.noMatch}</p>}
                 </div>
                 <div className="flex gap-3 border-t border-hair px-3.5 py-2 font-mono text-[10px] text-muted">
-                    <span>↑↓ move</span>
-                    <span>↵ run</span>
-                    <span>esc close</span>
-                    <span>&gt; actions · # views · @ accounts</span>
+                    <span>↑↓ {copy.hints.move}</span>
+                    <span>↵ {copy.hints.run}</span>
+                    <span>esc {copy.hints.close}</span>
+                    <span>{copy.hints.prefixes}</span>
                 </div>
             </div>
         </div>

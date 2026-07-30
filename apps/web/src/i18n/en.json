@@ -80,8 +80,9 @@
     },
     "palette": {
         "label": "Command palette",
-        "placeholder": "Search tasks, jump, or run a command",
-        "noMatch": "Nothing matches. Press Enter to hand it to your agent instead.",
+        "placeholder": "Jump to a view or run a command",
+        "noMatch": "Nothing matches.",
+        "open": "Open the command palette",
         "groups": {
             "jump": "Jump to",
             "views": "Views",
@@ -96,8 +97,22 @@
             "close": "close",
             "prefixes": "> actions · # views · @ accounts"
         },
-        "askAgent": "Ask your agent",
-        "handedToAgent": "Handed to your agent"
+        "commands": {
+            "tasks": "Tasks",
+            "calendar": "Calendar",
+            "timeline": "Timeline",
+            "connectors": "Connected apps",
+            "profile": "Profile",
+            "notificationPrefs": "Notification preferences",
+            "authorizedApps": "Authorised apps",
+            "lightMode": "Switch to light mode",
+            "darkMode": "Switch to dark mode",
+            "densityCompact": "Density: compact",
+            "densityComfortable": "Density: comfortable",
+            "densitySpacious": "Density: spacious",
+            "logout": "Log out",
+            "currentHint": "current"
+        }
     },
     "settings": {
         "appearance": {
