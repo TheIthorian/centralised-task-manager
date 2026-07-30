@@ -17,9 +17,9 @@ export function SettingsLayout(): React.JSX.Element {
 
     return (
         <div className="p-4 md:p-6">
-            <h1 className="text-2xl font-black uppercase text-nb-black dark:text-white mb-4">Settings</h1>
+            <h1 className="text-2xl font-semibold text-fg mb-4">Settings</h1>
 
-            <div className="grid grid-cols-2 gap-2 mb-6 md:flex md:border-b-2 md:border-nb-black md:dark:border-white/20 md:pb-2">
+            <div className="grid grid-cols-2 gap-2 mb-6 md:flex md:border-b md:border-line md:pb-2">
                 {tabs.map(({ label, shortLabel, icon, path }) => {
                     const active = pathname === path;
 
@@ -29,11 +29,11 @@ export function SettingsLayout(): React.JSX.Element {
                             to={path}
                             aria-current={active ? 'page' : undefined}
                             className={clsx(
-                                'flex items-center gap-2 min-h-11 px-3 font-black uppercase text-xs border-2 border-nb-black dark:border-white/20',
+                                'flex items-center gap-2 min-h-11 px-3 font-semibold text-xs border border-line rounded-ctm',
                                 'md:min-h-0 md:px-4 md:py-1.5 md:text-sm',
                                 active
-                                    ? 'bg-nb-black text-white dark:bg-white dark:text-nb-black'
-                                    : 'bg-white dark:bg-neutral-800 text-nb-black dark:text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-none hover:bg-nb-yellow/40 dark:hover:bg-nb-yellow/20',
+                                    ? 'border-accent bg-accent text-accent-fg rounded-ctm'
+                                    : 'bg-panel text-fg md:shadow-none hover:bg-accent/40 dark:hover:bg-accent/20 rounded-ctm',
                             )}
                         >
                             <span className="text-base leading-none md:hidden">{icon}</span>

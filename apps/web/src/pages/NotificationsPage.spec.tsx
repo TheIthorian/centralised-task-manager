@@ -98,7 +98,7 @@ describe('NotificationsPage', () => {
         });
     });
 
-    it('shows toast on mutation error', async () => {
+    it('says the write did not land, and leaves the control showing the saved state', async () => {
         mockApi.updateNotificationPreferences.mockRejectedValue(new Error('Save failed'));
         render(<NotificationsPage />, { wrapper });
 
@@ -111,12 +111,13 @@ describe('NotificationsPage', () => {
 
         await waitFor(() => {
             expect(mockShowToast).toHaveBeenCalledWith({
-                title: 'Error',
-                description: 'Failed to save preferences',
+                title: 'Not saved',
+                description: 'Your preferences did not reach the server. Try again.',
             });
         });
 
-        // Optimistic update should have been reverted
+        // The control never moved: it renders the server's state, so a failed write has
+        // nothing to roll back.
         expect(reminderInAppCheckbox).toHaveAttribute('aria-checked', 'false');
     });
 });

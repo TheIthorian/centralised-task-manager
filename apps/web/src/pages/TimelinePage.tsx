@@ -1,17 +1,22 @@
 import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import type { TaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { useAuth } from '../auth/AuthContext.js';
-import { TaskModal } from '../components/tasks/TaskModal.js';
+import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 
 const DAY_WIDTH_PX = 24;
 const LEFT_COL_PX = 180;
 
+/*
+ * Outlined rather than filled: bars overlap on a busy week, and two solid blocks on top of
+ * each other lose both titles. A tint with a coloured edge keeps every bar readable.
+ */
 const PRIORITY_BAR: Record<number, string> = {
-    1: 'bg-nb-red',
-    2: 'bg-nb-yellow',
-    3: 'bg-nb-black/20',
-    4: 'bg-nb-black/10',
+    1: 'border-warn bg-warn-bg text-warn',
+    2: 'border-accent bg-accent/15 text-fg',
+    3: 'border-line bg-panel text-fg',
+    4: 'border-line bg-panel text-muted',
 };
 
 function startOfDay(date: Date): Date {
@@ -28,6 +33,7 @@ function shortDate(d: Date): string {
 
 /** Horizontal scrollable timeline. Tasks shown as bars from createdAt to dueDate. */
 export function TimelinePage(): React.JSX.Element {
+    const { t } = useTranslation();
     const { api } = useAuth();
     const qc = useQueryClient();
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
@@ -86,10 +92,15 @@ export function TimelinePage(): React.JSX.Element {
     const rangeStart = new Date(minDate.getTime() - 7 * 86_400_000);
     const rangeEnd = new Date(maxDate.getTime() + 7 * 86_400_000);
     const totalDays = Math.max(diffDays(rangeStart, rangeEnd), 30);
-    const canvasWidth = totalDays * DAY_WIDTH_PX;
+
+    // The canvas is measured in percentages of the range and only falls back to a fixed
+    // day width once the range is long enough to need scrolling. A short range then fills
+    // the window instead of leaving the right half of the page blank.
+    const minCanvasWidth = totalDays * DAY_WIDTH_PX;
+    const percentOf = (days: number): string => `${(days / totalDays) * 100}%`;
 
     // Month tick marks for the axis
-    type MonthTick = { label: string; leftPx: number };
+    type MonthTick = { label: string; left: string };
     const monthTicks: MonthTick[] = [];
     const cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
 
@@ -98,44 +109,41 @@ export function TimelinePage(): React.JSX.Element {
         if (offsetDays >= 0) {
             monthTicks.push({
                 label: `${cursor.toLocaleString('en', { month: 'short' })} ${cursor.getFullYear()}`,
-                leftPx: offsetDays * DAY_WIDTH_PX,
+                left: percentOf(offsetDays),
             });
         }
         cursor.setMonth(cursor.getMonth() + 1);
     }
 
-    const todayOffsetPx = diffDays(rangeStart, today) * DAY_WIDTH_PX;
+    const todayOffsetDays = diffDays(rangeStart, today);
+    const todayVisible = todayOffsetDays >= 0 && todayOffsetDays <= totalDays;
 
     return (
         <div className="p-4 md:p-6 flex flex-col" style={{ height: 'calc(100dvh - 4rem)' }}>
-            <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-4">
-                Timeline
-            </h1>
+            <h1 className="mb-4 pr-24 text-2xl font-semibold tracking-tight text-fg">{t('timeline.title')}</h1>
 
             {isLoading && (
-                <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">
-                    Loading…
-                </p>
+                <p className="text-sm font-medium uppercase tracking-wide text-muted">{t('common.loading')}</p>
             )}
 
             {!isLoading && (
-                <div className="flex border-2 border-nb-black dark:border-white/20 overflow-hidden flex-1 min-h-0">
+                <div className="flex border border-line overflow-hidden flex-1 min-h-0 rounded-ctm">
                     {/* Left column — task titles */}
                     <div
                         style={{ width: LEFT_COL_PX, minWidth: LEFT_COL_PX }}
-                        className="border-r-2 border-nb-black dark:border-white/20 flex flex-col flex-shrink-0 overflow-y-auto"
+                        className="flex flex-shrink-0 flex-col overflow-y-auto border-r border-line"
                     >
-                        <div className="h-8 border-b-2 border-nb-black bg-nb-black flex-shrink-0" />
+                        <div className="h-8 flex-shrink-0 border-b border-line bg-nav-on-bg" />
                         {tasks.map((task) => (
                             <div
                                 key={task.id}
-                                className="h-9 flex-shrink-0 border-b border-nb-black/20 flex items-center px-2 overflow-hidden"
+                                className="h-9 flex-shrink-0 border-b border-line/20 flex items-center px-2 overflow-hidden"
                             >
                                 <span
-                                    className={`font-bold text-xs truncate ${
+                                    className={`truncate text-xs ${
                                         task.completed
-                                            ? 'line-through text-nb-black/40 dark:text-white/30'
-                                            : 'text-nb-black dark:text-white'
+                                            ? 'line-through text-muted'
+                                            : 'text-fg'
                                     }`}
                                 >
                                     {task.title}
@@ -146,25 +154,24 @@ export function TimelinePage(): React.JSX.Element {
 
                     {/* Right — scrollable canvas */}
                     <div ref={scrollRef} className="overflow-x-auto overflow-y-auto flex-1">
-                        <div style={{ width: canvasWidth, position: 'relative' }}>
+                        <div style={{ minWidth: minCanvasWidth, position: 'relative' }}>
                             {/* Time axis */}
                             <div
-                                className="h-8 border-b-2 border-nb-black relative bg-nb-black flex-shrink-0"
-                                style={{ width: canvasWidth }}
+                                className="relative h-8 flex-shrink-0 border-b border-line bg-nav-on-bg"
                             >
                                 {monthTicks.map((tick) => (
                                     <span
-                                        key={`${tick.label}-${tick.leftPx}`}
-                                        className="absolute top-0 h-full flex items-center text-nb-yellow font-black text-xs uppercase pl-1 pointer-events-none"
-                                        style={{ left: tick.leftPx }}
+                                        key={`${tick.label}-${tick.left}`}
+                                        className="pointer-events-none absolute top-0 flex h-full items-center pl-1 text-[10px] uppercase tracking-[0.1em] text-muted"
+                                        style={{ left: tick.left }}
                                     >
                                         {tick.label}
                                     </span>
                                 ))}
-                                {todayOffsetPx >= 0 && todayOffsetPx <= canvasWidth && (
+                                {todayVisible && (
                                     <div
-                                        className="absolute top-0 bottom-0 w-px bg-nb-red"
-                                        style={{ left: todayOffsetPx }}
+                                        className="absolute top-0 bottom-0 w-px bg-warn"
+                                        style={{ left: percentOf(todayOffsetDays) }}
                                     />
                                 )}
                             </div>
@@ -173,34 +180,33 @@ export function TimelinePage(): React.JSX.Element {
                             {tasks.map((task) => {
                                 const taskStart = startOfDay(new Date(task.createdAt));
                                 const taskEnd = task.due?.date ? startOfDay(new Date(task.due.date)) : taskStart;
-                                const leftPx = diffDays(rangeStart, taskStart) * DAY_WIDTH_PX;
                                 const widthDays = Math.max(diffDays(taskStart, taskEnd), 1);
-                                const widthPx = widthDays * DAY_WIDTH_PX;
                                 const barClass = PRIORITY_BAR[task.priority ?? 3];
 
                                 return (
                                     <div
                                         key={task.id}
-                                        className="h-9 border-b border-nb-black/20 relative"
-                                        style={{ width: canvasWidth }}
+                                        className="relative h-12 border-b border-line/20 md:h-9"
                                     >
-                                        {todayOffsetPx >= 0 && todayOffsetPx <= canvasWidth && (
+                                        {todayVisible && (
                                             <div
-                                                className="absolute top-0 bottom-0 w-px bg-nb-red/30 pointer-events-none"
-                                                style={{ left: todayOffsetPx }}
+                                                className="absolute top-0 bottom-0 w-px bg-warn/30 pointer-events-none"
+                                                style={{ left: percentOf(todayOffsetDays) }}
                                             />
                                         )}
                                         <button
                                             onClick={() => setEditTask(task)}
-                                            className={`absolute top-1.5 h-6 border-2 border-nb-black cursor-pointer ${barClass} ${
+                                            className={`absolute top-0.5 flex h-11 cursor-pointer items-center overflow-hidden rounded-[4px] border px-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:top-1.5 md:h-6 ${barClass} ${
                                                 task.completed ? 'opacity-40' : ''
-                                            } flex items-center px-1 overflow-hidden`}
-                                            style={{ left: leftPx, width: Math.max(widthPx, 8) }}
+                                            }`}
+                                            style={{
+                                                left: percentOf(diffDays(rangeStart, taskStart)),
+                                                width: percentOf(widthDays),
+                                                minWidth: 8,
+                                            }}
                                             title={`${task.title} · ${shortDate(taskStart)} → ${shortDate(taskEnd)}`}
                                         >
-                                            {widthPx > 40 && (
-                                                <span className="font-bold text-xs truncate">{task.title}</span>
-                                            )}
+                                            <span className="truncate text-xs font-medium">{task.title}</span>
                                         </button>
                                     </div>
                                 );
@@ -210,7 +216,7 @@ export function TimelinePage(): React.JSX.Element {
                 </div>
             )}
 
-            <TaskModal
+            <TaskDetailPanel
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}

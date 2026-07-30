@@ -1,0 +1,27 @@
+{
+    "name": "@ctm/storybook",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "storybook dev -p 6006 --no-open",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json . '**/*.md'"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "@storybook/react-vite": "10.5.5",
+        "@tailwindcss/vite": "4.3.3",
+        "@vitejs/plugin-react": "6.0.4",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
+        "storybook": "10.5.5",
+        "tailwindcss": "4.3.3",
+        "typescript": "6.0.3",
+        "vite": "8.1.5",
+        "vite-plugin-svgr": "5.2.0"
+    },
+    "dependencies": {
+        "@ctm/ui": "workspace:*"
+    }
+}

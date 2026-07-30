@@ -35,20 +35,20 @@ export class ErrorBoundary extends Component<Props, State> {
         return (
             <div
                 role="alert"
-                className="m-4 border-4 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-900 shadow-[4px_4px_0px_#111] dark:shadow-none p-6 max-w-lg"
+                className="m-4 border border-line bg-panel shadow-[4px_4px_0px_#111] p-6 max-w-lg rounded-ctm"
             >
-                <h2 className="text-xl font-black uppercase text-nb-black dark:text-white mb-2">
+                <h2 className="text-xl font-semibold text-fg mb-2">
                     Something went wrong
                 </h2>
-                <p className="text-nb-grey dark:text-neutral-400 mb-4 text-sm">
+                <p className="text-muted dark:text-neutral-400 mb-4 text-sm">
                     An unexpected error occurred in this section.
                 </p>
                 {config.isDev && (
                     <details className="mb-4 text-xs font-mono">
-                        <summary className="cursor-pointer text-nb-grey dark:text-neutral-400 mb-1">
+                        <summary className="cursor-pointer text-muted dark:text-neutral-400 mb-1">
                             Error details
                         </summary>
-                        <pre className="bg-neutral-100 dark:bg-neutral-800 p-3 overflow-auto text-nb-red whitespace-pre-wrap">
+                        <pre className="bg-neutral-100 dark:bg-neutral-800 p-3 overflow-auto text-warn whitespace-pre-wrap">
                             {error.message}
                             {'\n'}
                             {error.stack}
@@ -58,7 +58,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <button
                     type="button"
                     onClick={() => window.location.reload()}
-                    className="inline-flex items-center justify-center gap-2 border-2 border-nb-black dark:border-white/20 font-black uppercase tracking-wide text-sm px-4 py-2 bg-nb-black dark:bg-nb-yellow text-white dark:text-nb-black shadow-[3px_3px_0px_#111] dark:shadow-none transition-all duration-100 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none cursor-pointer"
+                    className="inline-flex items-center justify-center gap-2 border border-line font-semibold uppercase tracking-[0.12em] text-sm px-4 py-2 bg-fg dark:bg-accent text-accent-fg transition-all duration-100 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none cursor-pointer rounded-ctm"
                 >
                     Reload
                 </button>

@@ -1,6 +1,5 @@
-import { Badge } from '@ctm/ui';
+import { Badge, BrandIcon } from '@ctm/ui';
 import { getSourceLabel, getSourceBrand } from '../../lib/source-labels.js';
-import { BrandIcon } from '../BrandIcon.js';
 
 type SourceBadgeProps = {
     source: string | null | undefined;

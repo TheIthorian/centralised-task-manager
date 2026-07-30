@@ -4,6 +4,7 @@ import type { NotificationPreferencesDto, UpdateNotificationPreferencesDto, Chan
 import { useAuth } from '../auth/AuthContext.js';
 import { useToast } from '../toast/ToastContext.js';
 import { Checkbox } from '@ctm/ui';
+import { useTranslation } from 'react-i18next';
 
 type NotificationKey = keyof NotificationPreferencesDto;
 type ChannelKey = keyof ChannelPrefsDto;
@@ -23,6 +24,7 @@ const CHANNELS: { key: ChannelKey; label: string }[] = [
 
 /** Settings sub-page: notification preference grid (per-type × per-channel). */
 export function NotificationsPage(): React.JSX.Element {
+    const { t } = useTranslation();
     const { api } = useAuth();
     const { showToast } = useToast();
     const qc = useQueryClient();
@@ -45,37 +47,14 @@ export function NotificationsPage(): React.JSX.Element {
 
     const mutation = useMutation({
         mutationFn: (dto: UpdateNotificationPreferencesDto) => api.updateNotificationPreferences({ dto }),
-        onMutate: async (dto) => {
-            await qc.cancelQueries({ queryKey: ['notification-preferences'] });
-
-            const previous = qc.getQueryData<NotificationPreferencesDto>(['notification-preferences']);
-
-            qc.setQueryData<NotificationPreferencesDto>(['notification-preferences'], (old) => {
-                if (!old) return old;
-
-                const updated = { ...old };
-
-                for (const [k, v] of Object.entries(dto)) {
-                    updated[k as NotificationKey] = {
-                        ...old[k as NotificationKey],
-                        ...(v ?? {}),
-                    };
-                }
-
-                return updated;
-            });
-
-            return { previous };
-        },
+        // The response is the saved preferences, so the cache takes what the server agreed
+        // to rather than what the click assumed. Controls disable while the write is in
+        // flight, which is honest about the round trip instead of hiding it.
         onSuccess: (serverPrefs) => {
             qc.setQueryData(['notification-preferences'], serverPrefs);
         },
-        onError: (_err, _dto, context) => {
-            if (context?.previous) {
-                qc.setQueryData(['notification-preferences'], context.previous);
-            }
-
-            showToast({ title: 'Error', description: 'Failed to save preferences' });
+        onError: () => {
+            showToast({ title: t('notifications.saveFailed.title'), description: t('notifications.saveFailed.body') });
         },
     });
 
@@ -86,7 +65,7 @@ export function NotificationsPage(): React.JSX.Element {
     if (isLoading) {
         return (
             <div className="p-4 md:p-6 max-w-2xl">
-                <p className="font-bold text-sm text-nb-black/50 dark:text-white/40">Loading…</p>
+                <p className="font-medium text-sm text-muted">Loading…</p>
             </div>
         );
     }
@@ -94,7 +73,7 @@ export function NotificationsPage(): React.JSX.Element {
     if (isError || !prefs) {
         return (
             <div className="p-4 md:p-6 max-w-2xl">
-                <p className="text-nb-red font-bold text-sm">Failed to load notification preferences.</p>
+                <p className="text-warn font-medium text-sm">Failed to load notification preferences.</p>
             </div>
         );
     }
@@ -102,35 +81,35 @@ export function NotificationsPage(): React.JSX.Element {
     return (
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
-                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">
+                <h1 className="text-2xl font-semibold tracking-tight text-fg">
                     Notifications
                 </h1>
 
-                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
+                <p className="text-muted font-medium text-sm mt-1">
                     Choose how you receive notifications.
                 </p>
             </div>
 
-            <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none overflow-x-auto">
+            <div className="bg-panel border border-line overflow-x-auto rounded-ctm">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-b-2 border-nb-black dark:border-white/20">
-                            <th className="text-left px-4 py-3 font-black uppercase text-xs tracking-wide text-nb-black dark:text-white" />
+                        <tr className="border-b border-line">
+                            <th className="text-left px-4 py-3 font-semibold text-xs tracking-wide text-fg" />
 
                             {CHANNELS.map(({ key, label }) => (
                                 <th
                                     key={key}
-                                    className="px-4 py-3 font-black uppercase text-xs tracking-wide text-nb-black dark:text-white text-center"
+                                    className="px-4 py-3 font-semibold text-xs tracking-wide text-fg text-center"
                                 >
                                     {key === 'discord' && !discordConnected ? (
                                         <span className="flex flex-col items-center gap-0.5">
-                                            <span className="text-nb-black/40 dark:text-white/30">{label}</span>
+                                            <span className="text-muted">{label}</span>
 
                                             <Link
                                                 to="/settings/connectors"
-                                                className="text-nb-black/50 dark:text-white/40 underline font-bold text-xs normal-case"
+                                                className="inline-flex min-h-11 items-center text-xs font-medium normal-case text-muted underline md:min-h-0"
                                             >
-                                                Connect →
+                                                {t('notifications.connect')}
                                             </Link>
                                         </span>
                                     ) : (
@@ -146,10 +125,10 @@ export function NotificationsPage(): React.JSX.Element {
                             <tr
                                 key={key}
                                 className={
-                                    i < ROWS.length - 1 ? 'border-b border-nb-black/10 dark:border-white/10' : ''
+                                    i < ROWS.length - 1 ? 'border-b border-line/10 ' : ''
                                 }
                             >
-                                <td className="px-4 py-3 font-bold text-sm text-nb-black dark:text-white">{label}</td>
+                                <td className="px-4 py-3 font-medium text-sm text-fg">{label}</td>
 
                                 {CHANNELS.map(({ key: channel }) => {
                                     const isDiscordDisabled = channel === 'discord' && !discordConnected;
@@ -157,13 +136,15 @@ export function NotificationsPage(): React.JSX.Element {
                                     return (
                                         <td key={channel} className="px-4 py-3 text-center">
                                             <div
-                                                className={`flex justify-center ${isDiscordDisabled ? 'opacity-40' : ''}`}
+                                                className={`flex justify-center ${
+                                                    isDiscordDisabled || mutation.isPending ? 'opacity-40' : ''
+                                                }`}
                                             >
                                                 <Checkbox
                                                     checked={prefs[key][channel]}
                                                     onChange={(v) => handleToggle(key, channel, v)}
                                                     label={`${label} via ${channel}`}
-                                                    disabled={isDiscordDisabled}
+                                                    disabled={isDiscordDisabled || mutation.isPending}
                                                 />
                                             </div>
                                         </td>

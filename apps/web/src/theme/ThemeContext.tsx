@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { MissingProviderError } from '../lib/errors.js';
 
 type Theme = 'light' | 'dark';
 
@@ -26,7 +27,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
 export function useTheme(): ThemeContextValue {
     const ctx = useContext(ThemeContext);
 
-    if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+    if (!ctx) throw new MissingProviderError({ hook: 'useTheme', provider: 'ThemeProvider' });
 
     return ctx;
 }

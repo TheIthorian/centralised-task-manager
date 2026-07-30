@@ -1,0 +1,296 @@
+{
+    "common": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "undo": "Undo",
+        "syncNow": "Sync now",
+        "reconnect": "Reconnect",
+        "skipToContent": "Skip to content",
+        "loading": "Loading…"
+    },
+    "nav": {
+        "label": "Main",
+        "tasks": "Tasks",
+        "calendar": "Calendar",
+        "timeline": "Timeline",
+        "settings": "Settings",
+        "notifications": "Notifications",
+        "darkMode": "Dark",
+        "lightMode": "Light",
+        "logout": "Logout"
+    },
+    "tasks": {
+        "title": "Tasks",
+        "openCount_one": "{{count}} open",
+        "openCount_other": "{{count}} open",
+        "syncedAgo": "synced {{ago}}",
+        "newTask": "New task",
+        "searchOrRun": "Search or run",
+        "shownCount": "{{count}} shown",
+        "groups": {
+            "overdue": "Overdue",
+            "today": "Today",
+            "thisWeek": "This week",
+            "upcoming": "Upcoming",
+            "noDate": "No date",
+            "done": "Done"
+        },
+        "empty": {
+            "overdue": "Nothing overdue. Everything with a due date is still ahead of you.",
+            "today": "Nothing due today.",
+            "thisWeek": "Nothing due this week.",
+            "upcoming": "Nothing scheduled beyond this week.",
+            "noDate": "Every task has a date.",
+            "done": "Nothing completed yet."
+        },
+        "filters": {
+            "none": "No conditions, showing everything.",
+            "remove": "Remove {{kind}} {{value}}",
+            "due": {
+                "overdue": "Overdue",
+                "today": "Due today",
+                "week": "This week",
+                "none": "No date"
+            },
+            "field": {
+                "noDate": "No due date",
+                "noDuration": "No duration",
+                "hasReminder": "Has a reminder"
+            },
+            "sources": {
+                "local": "In app",
+                "todoist": "Todoist",
+                "google": "Google Tasks"
+            },
+            "menuLabel": "Filter",
+            "sliceLabel": "Which tasks",
+            "clear": "Clear filters",
+            "groups": {
+                "due": "Due",
+                "field": "Missing",
+                "source": "Source"
+            },
+            "all": "All",
+            "today": "Today",
+            "upcoming": "Upcoming",
+            "done": "Done"
+        },
+        "priority": "Priority {{level}}",
+        "localOnly": "In app",
+        "daysLate_one": "{{count}} day late",
+        "daysLate_other": "{{count}} days late",
+        "emptyAll": {
+            "title": "No tasks here",
+            "body": "Add one above, or change the filter."
+        },
+        "loadFailed": {
+            "title": "Could not load your tasks",
+            "body": "The API did not respond. Check that it is running, then try again."
+        },
+        "swipe": {
+            "snooze": "Tomorrow",
+            "delete": "Delete"
+        },
+        "snoozed": {
+            "title": "Snoozed",
+            "body": "Now due {{date}}."
+        },
+        "titleLabel": "Task title",
+        "descriptionLabel": "Description (optional)",
+        "dueDateLabel": "Due date (optional)",
+        "add": "Add",
+        "adding": "Adding…",
+        "titlePlaceholder": "What needs doing?",
+        "notesPlaceholder": "More detail…",
+        "priorityLabel": "Priority"
+    },
+    "taskDetail": {
+        "title": "Task detail",
+        "close": "Close",
+        "dragHandle": "Close task detail",
+        "sections": {
+            "details": "Details",
+            "schedule": "Schedule"
+        },
+        "fields": {
+            "title": "Title",
+            "description": "Description",
+            "priority": "Priority",
+            "priorityOption": "P{{level}}",
+            "dueDate": "Due date",
+            "deadline": "Deadline",
+            "recurrence": "Recurrence",
+            "duration": "Duration",
+            "durationPlaceholder": "Amount",
+            "durationUnit": "Duration unit"
+        },
+        "recurrences": {
+            "none": "None",
+            "daily": "Daily",
+            "weekday": "Every weekday",
+            "weekly": "Weekly",
+            "monthly": "Monthly",
+            "yearly": "Yearly"
+        },
+        "durationUnits": {
+            "minute": "Minutes",
+            "day": "Days"
+        },
+        "reminders": {
+            "title": "Reminders",
+            "empty": "No reminders.",
+            "newLabel": "New reminder",
+            "add": "Add",
+            "remove": "Remove",
+            "removeLabel": "Remove the reminder for {{when}}",
+            "sent": "{{when}} (sent)"
+        },
+        "relations": {
+            "title": "Relations",
+            "empty": "No related tasks.",
+            "typeLabel": "Relation",
+            "searchLabel": "Related task",
+            "searchPlaceholder": "Search a task…",
+            "noMatches": "No matches",
+            "add": "Add",
+            "remove": "Remove",
+            "removeLabel": "Remove the relation to {{title}}",
+            "types": {
+                "parent": "Parent",
+                "child": "Child",
+                "next": "Next",
+                "previous": "Previous",
+                "related": "Related"
+            }
+        },
+        "fuzzy": {
+            "title": "Fuzzy deadline",
+            "typeLabel": "Horizon",
+            "cadenceLabel": "Reminder",
+            "current": "Currently {{horizon}}",
+            "currentWithReminder": "Currently {{horizon}}, reminding {{cadence}}",
+            "types": {
+                "this_week": "This week",
+                "this_month": "This month",
+                "someday": "Someday"
+            },
+            "cadences": {
+                "none": "No reminder",
+                "daily": "Daily",
+                "weekly": "Weekly"
+            }
+        },
+        "locations": {
+            "title": "Locations",
+            "empty": "No locations.",
+            "nameLabel": "Name",
+            "urlLabel": "Google Maps URL",
+            "add": "Add",
+            "remove": "Remove",
+            "removeLabel": "Remove the location {{name}}"
+        },
+        "actions": {
+            "saving": "Saving…",
+            "delete": "Delete",
+            "deleting": "Deleting…",
+            "confirmDelete": "Confirm delete",
+            "confirmHint": "Press delete again to remove this task permanently."
+        },
+        "saved": {
+            "title": "Saved",
+            "body": "Your changes are on the server."
+        },
+        "saveFailed": {
+            "title": "Not saved",
+            "body": "Your changes did not reach the server. Try again."
+        },
+        "deleteFailed": {
+            "body": "The task was not deleted. Try again."
+        }
+    },
+    "timeline": {
+        "title": "Timeline"
+    },
+    "calendar": {
+        "title": "Calendar",
+        "today": "Today",
+        "previous": "Previous",
+        "next": "Next",
+        "rangeLabel": "Range",
+        "ranges": {
+            "month": "Month",
+            "week": "Week",
+            "threeDay": "3 days",
+            "day": "Day"
+        },
+        "more": "+{{count}} more",
+        "dayLabel_one": "{{date}}, {{count}} task",
+        "dayLabel_other": "{{date}}, {{count}} tasks",
+        "emptyDay": "Nothing due"
+    },
+    "palette": {
+        "label": "Command palette",
+        "placeholder": "Jump to a view or run a command",
+        "noMatch": "Nothing matches.",
+        "open": "Open the command palette",
+        "groups": {
+            "jump": "Jump to",
+            "views": "Views",
+            "task": "Tasks",
+            "acct": "Accounts",
+            "do": "Actions",
+            "ask": "Ask"
+        },
+        "hints": {
+            "move": "move",
+            "run": "run",
+            "close": "close",
+            "prefixes": "> actions · # views · @ accounts"
+        },
+        "commands": {
+            "tasks": "Tasks",
+            "calendar": "Calendar",
+            "timeline": "Timeline",
+            "connectors": "Connected apps",
+            "profile": "Profile",
+            "notificationPrefs": "Notification preferences",
+            "authorizedApps": "Authorised apps",
+            "lightMode": "Switch to light mode",
+            "darkMode": "Switch to dark mode",
+            "densityCompact": "Density: compact",
+            "densityComfortable": "Density: comfortable",
+            "densitySpacious": "Density: spacious",
+            "logout": "Log out",
+            "currentHint": "current"
+        }
+    },
+    "settings": {
+        "appearance": {
+            "title": "Appearance",
+            "theme": "Theme",
+            "density": "Density",
+            "densityHelp": "How much breathing room each row gets. Touch targets stay the same size on a phone.",
+            "compact": "Compact",
+            "comfortable": "Comfortable",
+            "spacious": "Spacious",
+            "previewLabel": "Preview",
+            "light": "Light",
+            "dark": "Dark",
+            "sample": {
+                "first": "Renew home insurance",
+                "firstMeta": "2 days late",
+                "second": "Review sync worker retry logic",
+                "secondMeta": "17:00",
+                "third": "Call the dentist back",
+                "thirdMeta": "18:30"
+            }
+        }
+    },
+    "notifications": {
+        "connect": "Connect →",
+        "saveFailed": {
+            "title": "Not saved",
+            "body": "Your preferences did not reach the server. Try again."
+        }
+    }
+}

@@ -36,7 +36,7 @@ export function ScrollSentinel({
 
     if (isLoading) {
         return (
-            <p className="font-bold text-nb-black/50 dark:text-white/40 uppercase text-xs tracking-wide text-center py-2">
+            <p className="py-2 text-center text-xs text-muted" aria-live="polite">
                 {loadingMessage}
             </p>
         );

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { EmptyState } from '@ctm/ui';
 import type { TaskDto } from '@ctm/api-client';
 import { TaskCard } from './TaskCard.js';
 import { ScrollSentinel } from './ScrollSentinel.js';
@@ -9,8 +11,12 @@ type LegacyProps = {
     groupedResults?: never;
     doneTasks?: never;
     highlightedTaskId?: string | null;
+    /** The task with a write in flight, if any. */
+    pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    onSnooze?: (task: TaskDto) => void;
+    onDelete?: (task: TaskDto) => void;
 };
 
 type PaginatedProps = {
@@ -20,76 +26,48 @@ type PaginatedProps = {
     /** Optimistic-only done tasks (from status mutations). No server pagination needed. */
     doneTasks?: TaskDto[];
     highlightedTaskId?: string | null;
+    /** The task with a write in flight, if any. */
+    pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    onSnooze?: (task: TaskDto) => void;
+    onDelete?: (task: TaskDto) => void;
 };
 
 type GroupedTaskListProps = LegacyProps | PaginatedProps;
 
-type SectionDef = {
-    key: keyof TaskBuckets;
-    label: string;
-    chipClass: string;
-};
-
-const SECTIONS: SectionDef[] = [
-    {
-        key: 'overdue',
-        label: '🔥 Overdue',
-        chipClass: 'border-red-600 bg-red-200 shadow-[2px_2px_0px_#dc2626] text-red-700',
-    },
-    {
-        key: 'today',
-        label: 'Today',
-        chipClass: 'border-blue-700 bg-blue-200 shadow-[2px_2px_0px_#1d4ed8] text-blue-800',
-    },
-    {
-        key: 'thisWeek',
-        label: 'This Week',
-        chipClass:
-            'border-nb-black bg-white shadow-[2px_2px_0px_#111] text-nb-black dark:border-white/20 dark:bg-neutral-800 dark:text-white dark:shadow-none',
-    },
-    {
-        key: 'upcoming',
-        label: 'Upcoming',
-        chipClass:
-            'border-nb-black bg-white shadow-[2px_2px_0px_#111] text-nb-black dark:border-white/20 dark:bg-neutral-800 dark:text-white dark:shadow-none',
-    },
-    {
-        key: 'noDate',
-        label: 'No Date',
-        chipClass:
-            'border-gray-400 bg-gray-100 shadow-[2px_2px_0px_#9ca3af] text-gray-500 dark:border-white/20 dark:bg-neutral-800 dark:text-white/50 dark:shadow-none',
-    },
-    {
-        key: 'done',
-        label: 'Done',
-        chipClass:
-            'border-gray-400 bg-gray-100 shadow-[2px_2px_0px_#9ca3af] text-gray-400 line-through dark:border-white/20 dark:bg-neutral-800 dark:text-white/30 dark:shadow-none',
-    },
-];
-
-const DONE_CHIP =
-    'border-gray-400 bg-gray-100 shadow-[2px_2px_0px_#9ca3af] text-gray-400 line-through dark:border-white/20 dark:bg-neutral-800 dark:text-white/30 dark:shadow-none';
+const SECTIONS = [
+    { key: 'overdue', labelKey: 'tasks.groups.overdue', emptyKey: 'tasks.empty.overdue' },
+    { key: 'today', labelKey: 'tasks.groups.today', emptyKey: 'tasks.empty.today' },
+    { key: 'thisWeek', labelKey: 'tasks.groups.thisWeek', emptyKey: 'tasks.empty.thisWeek' },
+    { key: 'upcoming', labelKey: 'tasks.groups.upcoming', emptyKey: 'tasks.empty.upcoming' },
+    { key: 'noDate', labelKey: 'tasks.groups.noDate', emptyKey: 'tasks.empty.noDate' },
+    { key: 'done', labelKey: 'tasks.groups.done', emptyKey: 'tasks.empty.done' },
+] as const satisfies readonly { key: keyof TaskBuckets; labelKey: string; emptyKey: string }[];
 
 function SectionBlock({
     label,
-    chipClass,
     tasks,
     highlightedTaskId,
+    pendingTaskId,
     onToggle,
     onEdit,
+    onSnooze,
+    onDelete,
     isLoading,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
 }: {
     label: string;
-    chipClass: string;
     tasks: TaskDto[];
     highlightedTaskId?: string | null;
+    /** The task with a write in flight, if any. */
+    pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    onSnooze?: (task: TaskDto) => void;
+    onDelete?: (task: TaskDto) => void;
     isLoading?: boolean;
     hasNextPage?: boolean;
     isFetchingNextPage?: boolean;
@@ -98,22 +76,23 @@ function SectionBlock({
     if (tasks.length === 0 && !isLoading && !isFetchingNextPage) return null;
 
     return (
-        <div>
-            <div
-                className={`inline-flex items-center gap-2 mb-2 border-2 px-2.5 py-0.5 font-black text-[11px] uppercase tracking-wide ${chipClass}`}
-            >
-                {label}
-                <span className="opacity-60 text-[10px]">{tasks.length}</span>
-            </div>
+        <section className="flex flex-col gap-1.5">
+            <header className="flex items-center gap-2 pt-1 text-[11px] uppercase tracking-[0.1em] text-muted">
+                <span>{label}</span>
+                <span className="tabular-nums">{tasks.length}</span>
+            </header>
 
-            <div className="flex flex-col gap-2">
+            <div className="overflow-hidden rounded-ctm border border-line bg-panel">
                 {tasks.map((task) => (
                     <TaskCard
                         key={task.id}
                         task={task}
                         highlighted={task.id === highlightedTaskId}
+                        pending={task.id === pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
+                        onSnooze={onSnooze}
+                        onDelete={onDelete}
                     />
                 ))}
 
@@ -125,19 +104,24 @@ function SectionBlock({
                     />
                 )}
             </div>
-        </div>
+        </section>
     );
 }
 
-/** Renders tasks grouped into due-date sections with neobrutalist chip headers. */
+/** Renders tasks grouped into due-state sections. */
 export function GroupedTaskList({
     tasks,
     groupedResults,
     doneTasks = [],
     highlightedTaskId,
+    pendingTaskId,
     onToggle,
     onEdit,
+    onSnooze,
+    onDelete,
 }: GroupedTaskListProps): React.JSX.Element {
+    const { t } = useTranslation();
+
     // Paginated mode: groupedResults provided
     if (groupedResults) {
         const anyLoading = Object.values(groupedResults).some((r) => r.isLoading);
@@ -147,12 +131,7 @@ export function GroupedTaskList({
             doneTasks.length === 0;
 
         if (allEmpty) {
-            return (
-                <div className="bg-nb-yellow border-2 border-nb-black shadow-[3px_3px_0px_#111] p-6 text-center">
-                    <p className="font-black uppercase text-nb-black text-lg">No Tasks Here.</p>
-                    <p className="font-bold text-nb-black/60 text-sm mt-1">Add one above or change the filter.</p>
-                </div>
-            );
+            return <EmptyState title={t('tasks.emptyAll.title')} body={t('tasks.emptyAll.body')} />;
         }
 
         const bucketKeys = ['overdue', 'today', 'thisWeek', 'upcoming', 'noDate'] as const;
@@ -166,12 +145,14 @@ export function GroupedTaskList({
                     return (
                         <SectionBlock
                             key={key}
-                            label={section.label}
-                            chipClass={section.chipClass}
+                            label={t(section.labelKey)}
                             tasks={result.tasks}
                             highlightedTaskId={highlightedTaskId}
+                        pendingTaskId={pendingTaskId}
                             onToggle={onToggle}
                             onEdit={onEdit}
+                            onSnooze={onSnooze}
+                            onDelete={onDelete}
                             isLoading={result.isLoading}
                             hasNextPage={result.hasNextPage}
                             isFetchingNextPage={result.isFetchingNextPage}
@@ -182,12 +163,14 @@ export function GroupedTaskList({
 
                 {doneTasks.length > 0 && (
                     <SectionBlock
-                        label="Done"
-                        chipClass={DONE_CHIP}
+                        label={t('tasks.groups.done')}
                         tasks={doneTasks}
                         highlightedTaskId={highlightedTaskId}
+                        pendingTaskId={pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
+                        onSnooze={onSnooze}
+                        onDelete={onDelete}
                     />
                 )}
             </div>
@@ -198,18 +181,11 @@ export function GroupedTaskList({
     const buckets = bucketTasks(tasks ?? []);
     const isEmpty = Object.values(buckets).every((arr) => arr.length === 0);
 
-    if (isEmpty) {
-        return (
-            <div className="bg-nb-yellow border-2 border-nb-black shadow-[3px_3px_0px_#111] p-6 text-center">
-                <p className="font-black uppercase text-nb-black text-lg">No Tasks Here.</p>
-                <p className="font-bold text-nb-black/60 text-sm mt-1">Add one above or change the filter.</p>
-            </div>
-        );
-    }
+    if (isEmpty) return <EmptyState title={t('tasks.emptyAll.title')} body={t('tasks.emptyAll.body')} />;
 
     return (
         <div className="flex flex-col gap-5">
-            {SECTIONS.map(({ key, label, chipClass }) => {
+            {SECTIONS.map(({ key, labelKey }) => {
                 const sectionTasks = buckets[key];
 
                 if (sectionTasks.length === 0) return null;
@@ -217,12 +193,14 @@ export function GroupedTaskList({
                 return (
                     <SectionBlock
                         key={key}
-                        label={label}
-                        chipClass={chipClass}
+                        label={t(labelKey)}
                         tasks={sectionTasks}
                         highlightedTaskId={highlightedTaskId}
+                        pendingTaskId={pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
+                        onSnooze={onSnooze}
+                        onDelete={onDelete}
                     />
                 );
             })}

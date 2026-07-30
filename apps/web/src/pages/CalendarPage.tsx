@@ -1,60 +1,23 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { Button, SegmentedControl } from '@ctm/ui';
 import type { TaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { useAuth } from '../auth/AuthContext.js';
-import { TaskModal } from '../components/tasks/TaskModal.js';
+import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
+import { CalendarColumns } from '../components/calendar/CalendarColumns.js';
+import { CalendarMonth } from '../components/calendar/CalendarMonth.js';
+import { buildDays, rangeLabel, shiftAnchor, toDateKey, CALENDAR_RANGES, type CalendarRange } from '../lib/calendar-range.js';
+import { useIsPhone } from '../hooks/useIsPhone.js';
 
-/** Returns YYYY-MM-DD string for a given year, 0-indexed month, and day. */
-function toDateKey(year: number, month: number, day: number): string {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
-/** Group tasks by their dueDate (YYYY-MM-DD). Tasks without dueDate are excluded. */
-function groupByDueDate(tasks: TaskDto[]): Map<string, TaskDto[]> {
-    const map = new Map<string, TaskDto[]>();
-
-    for (const task of tasks) {
-        if (!task.due?.date) continue;
-        const key = task.due.date.slice(0, 10);
-        const existing = map.get(key) ?? [];
-        existing.push(task);
-        map.set(key, existing);
-    }
-
-    return map;
-}
-
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-const MONTH_NAMES = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-];
-
-const PRIORITY_CHIP_CLASS: Record<number, string> = {
-    1: 'bg-nb-red text-white',
-    2: 'bg-nb-yellow text-nb-black',
-    3: 'bg-white text-nb-black',
-    4: 'bg-white text-nb-black',
-};
-
-/** Monthly calendar grid. Tasks appear on their due date. */
+/** Calendar over a month, a week, three days or one day. Tasks appear on their due date. */
 export function CalendarPage(): React.JSX.Element {
-    const today = new Date();
-    const [year, setYear] = useState(today.getFullYear());
-    const [month, setMonth] = useState(today.getMonth());
+    const { t, i18n } = useTranslation();
+    const [range, setRange] = useState<CalendarRange>('month');
+    const [anchor, setAnchor] = useState(() => new Date());
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
     const { api } = useAuth();
+    const isPhone = useIsPhone();
     const qc = useQueryClient();
 
     const { data: tasks = [] } = useQuery({
@@ -62,38 +25,14 @@ export function CalendarPage(): React.JSX.Element {
         queryFn: () => api.listTasks({ filter: 'all' }),
     });
 
+    const locale = i18n.language;
+    // Seven columns on a 375px screen is 47px per day, which is narrower than the text in
+    // them. The week range falls back to three days rather than growing a sideways scroller:
+    // a horizontal scroll area inside a vertically scrolling page fights the row swipe.
+    const effectiveRange: CalendarRange = isPhone && range === 'week' ? 'threeDay' : range;
+    const days = buildDays({ anchor, range: effectiveRange });
     const tasksByDate = groupByDueDate(tasks);
-
-    const firstDayOfWeek = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const todayKey = toDateKey(today.getFullYear(), today.getMonth(), today.getDate());
-
-    type GridCell = { day: number; key: string } | null;
-
-    const cells: GridCell[] = [
-        ...Array.from<GridCell>({ length: firstDayOfWeek }).fill(null),
-        ...Array.from(
-            { length: daysInMonth },
-            (_, i): GridCell => ({
-                day: i + 1,
-                key: toDateKey(year, month, i + 1),
-            }),
-        ),
-    ];
-
-    const prevMonth = (): void => {
-        if (month === 0) {
-            setMonth(11);
-            setYear((y) => y - 1);
-        } else setMonth((m) => m - 1);
-    };
-
-    const nextMonth = (): void => {
-        if (month === 11) {
-            setMonth(0);
-            setYear((y) => y + 1);
-        } else setMonth((m) => m + 1);
-    };
+    const todayKey = toDateKey(new Date());
 
     const saveMutation = useMutation({
         mutationFn: ({ id, dto }: { id: string; dto: UpdateTaskDto }) => api.updateTask({ id, dto }),
@@ -129,99 +68,85 @@ export function CalendarPage(): React.JSX.Element {
         },
     });
 
+    const step = useCallback(
+        (direction: 1 | -1): void => setAnchor((current) => shiftAnchor({ anchor: current, range: effectiveRange, direction })),
+        [effectiveRange],
+    );
+
+    useEffect(() => {
+        // A task is open, so the arrows belong to whatever is inside the dialog.
+        if (editTask !== null) return;
+
+        const onKeyDown = (event: KeyboardEvent): void => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+
+            // The same arrows move a caret, and move between the radios of the range
+            // switcher, so the page only claims them when no field has the keyboard.
+            if (isTyping(event.target)) return;
+
+            event.preventDefault();
+            step(event.key === 'ArrowRight' ? 1 : -1);
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [editTask, step]);
+
     return (
         <div className="p-4 md:p-6">
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-4">
-                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">Calendar</h1>
-                <div className="flex items-center gap-2 ml-auto">
-                    <button
-                        onClick={() => {
-                            setYear(today.getFullYear());
-                            setMonth(today.getMonth());
-                        }}
-                        className="border-2 border-nb-black dark:border-white/20 px-2 py-0.5 font-black text-xs uppercase cursor-pointer dark:text-white"
-                    >
-                        Today
-                    </button>
-                    <button
-                        onClick={prevMonth}
-                        className="border-2 border-nb-black dark:border-white/20 px-2 py-0.5 font-black text-sm cursor-pointer dark:text-white"
-                        aria-label="Previous month"
-                    >
+            <div className="mb-4 flex flex-wrap items-center gap-3 pr-24">
+                <h1 className="text-2xl font-semibold tracking-tight text-fg">{t('calendar.title')}</h1>
+
+                <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto md:flex-nowrap">
+                    <SegmentedControl
+                        label={t('calendar.rangeLabel')}
+                        value={range}
+                        onChange={setRange}
+                        options={CALENDAR_RANGES.map((option) => ({
+                            value: option,
+                            label: t(`calendar.ranges.${option}`),
+                        }))}
+                    />
+                    <Button variant="secondary" onClick={() => setAnchor(new Date())} className="text-xs">
+                        {t('calendar.today')}
+                    </Button>
+                    <Button variant="ghost" onClick={() => step(-1)} aria-label={t('calendar.previous')}>
                         ‹
-                    </button>
-                    <span className="font-black text-sm uppercase min-w-[120px] text-center dark:text-white">
-                        {MONTH_NAMES[month]} {year}
+                    </Button>
+                    <span className="min-w-[110px] flex-1 text-center text-sm font-semibold tracking-tight md:min-w-[150px] md:flex-none">
+                        {rangeLabel({ anchor, range: effectiveRange, locale })}
                     </span>
-                    <button
-                        onClick={nextMonth}
-                        className="border-2 border-nb-black dark:border-white/20 px-2 py-0.5 font-black text-sm cursor-pointer dark:text-white"
-                        aria-label="Next month"
-                    >
+                    <Button variant="ghost" onClick={() => step(1)} aria-label={t('calendar.next')}>
                         ›
-                    </button>
+                    </Button>
                 </div>
             </div>
 
-            {/* Day name headers */}
-            <div className="grid grid-cols-7 border-2 border-b-0 border-nb-black dark:border-white/20">
-                {DAY_NAMES.map((d) => (
-                    <div
-                        key={d}
-                        className="border-r-2 last:border-r-0 border-nb-black bg-nb-black text-nb-yellow font-black text-xs uppercase text-center py-1"
-                    >
-                        {d}
-                    </div>
-                ))}
-            </div>
+            {effectiveRange === 'month' ? (
+                <CalendarMonth
+                    days={days}
+                    tasksByDate={tasksByDate}
+                    todayKey={todayKey}
+                    locale={locale}
+                    onOpenTask={setEditTask}
+                    compact={isPhone}
+                    onSelectDay={(date) => {
+                        setAnchor(date);
+                        setRange('day');
+                    }}
+                />
+            ) : (
+                <CalendarColumns
+                    days={days}
+                    tasksByDate={tasksByDate}
+                    todayKey={todayKey}
+                    locale={locale}
+                    onOpenTask={setEditTask}
+                />
+            )}
 
-            {/* Calendar grid */}
-            <div className="grid grid-cols-7 border-2 border-nb-black dark:border-white/20">
-                {cells.map((cell, idx) => {
-                    const isToday = cell?.key === todayKey;
-                    const cellTasks = cell ? (tasksByDate.get(cell.key) ?? []) : [];
-
-                    return (
-                        <div
-                            key={idx}
-                            className="border-r-2 border-b-2 last-of-type:border-r-0 border-nb-black dark:border-white/10 min-h-[80px] p-1 flex flex-col"
-                        >
-                            {cell !== null && (
-                                <>
-                                    <span
-                                        className={`font-black text-xs self-start px-1 mb-1 ${
-                                            isToday ? 'bg-nb-black text-nb-yellow' : 'text-nb-black dark:text-white'
-                                        }`}
-                                    >
-                                        {cell.day}
-                                    </span>
-                                    <div className="flex flex-col gap-0.5 overflow-hidden">
-                                        {cellTasks.slice(0, 3).map((task) => (
-                                            <button
-                                                key={task.id}
-                                                onClick={() => setEditTask(task)}
-                                                className={`text-left text-xs font-bold px-1 truncate border border-nb-black cursor-pointer ${
-                                                    PRIORITY_CHIP_CLASS[task.priority ?? 3]
-                                                } ${task.completed ? 'line-through opacity-50' : ''}`}
-                                            >
-                                                {task.title}
-                                            </button>
-                                        ))}
-                                        {cellTasks.length > 3 && (
-                                            <span className="text-xs font-bold text-nb-black/60">
-                                                +{cellTasks.length - 3} more
-                                            </span>
-                                        )}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            <TaskModal
+            <TaskDetailPanel
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}
@@ -241,4 +166,26 @@ export function CalendarPage(): React.JSX.Element {
             />
         </div>
     );
+}
+
+/** True when the keyboard belongs to a field rather than the page. */
+function isTyping(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+
+    return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+}
+
+/** Groups tasks by the calendar day they are due. Tasks with no due date are left out. */
+function groupByDueDate(tasks: TaskDto[]): Map<string, TaskDto[]> {
+    const map = new Map<string, TaskDto[]>();
+
+    for (const task of tasks) {
+        if (!task.due?.date) continue;
+
+        const key = task.due.date.slice(0, 10);
+
+        map.set(key, [...(map.get(key) ?? []), task]);
+    }
+
+    return map;
 }

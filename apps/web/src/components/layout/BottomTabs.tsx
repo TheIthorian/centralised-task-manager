@@ -1,40 +1,48 @@
 import { Link, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import clsx from 'clsx';
 import { useAuth } from '../../auth/AuthContext.js';
 import { useNotificationSocket } from '../../hooks/useNotificationSocket.js';
-import clsx from 'clsx';
 
 const tabs = [
-    { label: 'Tasks', path: '/tasks', icon: '☑' },
-    { label: 'Calendar', path: '/calendar', icon: '📅' },
-    { label: 'Timeline', path: '/timeline', icon: '↔' },
-    { label: 'Settings', path: '/settings', icon: '⚙' },
-];
+    { key: 'tasks', path: '/tasks' },
+    { key: 'calendar', path: '/calendar' },
+    { key: 'timeline', path: '/timeline' },
+    { key: 'settings', path: '/settings' },
+] as const;
 
-/** Mobile bottom tab bar. Hidden on desktop via md:hidden in AppShell. */
+/**
+ * Mobile bottom tab bar. Rows stay at 44px and the bar carries safe-area padding so it
+ * clears the home indicator.
+ */
 export function BottomTabs(): React.JSX.Element {
+    const { t } = useTranslation();
     const { pathname } = useLocation();
     const { api } = useAuth();
 
     useNotificationSocket(api);
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-nb-black border-t-4 border-nb-black flex z-40">
-            {tabs.map(({ label, path, icon }) => {
+        <nav
+            aria-label={t('nav.label')}
+            className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-line bg-nav-bg pb-[env(safe-area-inset-bottom)] md:hidden"
+        >
+            {tabs.map(({ key, path }) => {
                 const active = pathname.startsWith(path);
 
                 return (
                     <Link
                         key={path}
                         to={path}
+                        aria-current={active ? 'page' : undefined}
                         className={clsx(
-                            'flex-1 flex flex-col items-center justify-center gap-0.5 py-2',
-                            'font-black text-xs uppercase tracking-wide',
-                            'transition-colors duration-100',
-                            active ? 'bg-nb-yellow text-nb-black' : 'text-white/70 hover:bg-white/10',
+                            'flex min-h-11 flex-1 items-center justify-center text-xs font-medium',
+                            'transition-colors duration-press',
+                            'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent',
+                            active ? 'bg-nav-on-bg text-nav-on-fg' : 'text-nav-fg',
                         )}
                     >
-                        <span className="text-base leading-none">{icon}</span>
-                        {label}
+                        {t(`nav.${key}`)}
                     </Link>
                 );
             })}

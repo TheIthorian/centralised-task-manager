@@ -37,9 +37,9 @@ describe('TaskCard', () => {
         expect(screen.queryByText('Unknown')).not.toBeInTheDocument();
     });
 
-    it('shows P1 priority badge', () => {
+    it('names the priority rather than abbreviating it', () => {
         render(<TaskCard task={baseTask} onToggle={vi.fn()} onEdit={vi.fn()} />);
-        expect(screen.getByText('P1')).toBeInTheDocument();
+        expect(screen.getByText('Priority 1')).toBeInTheDocument();
     });
 
     it('calls onToggle when checkbox clicked', async () => {

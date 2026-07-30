@@ -39,14 +39,14 @@ export function RegisterPage(): React.JSX.Element {
 
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-white dark:bg-neutral-900 border-4 border-nb-black dark:border-white/20 shadow-[6px_6px_0px_#111] dark:shadow-none p-8">
-                <h1 className="text-3xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-6">
+            <div className="w-full max-w-sm bg-panel border border-line shadow-[6px_6px_0px_#111] p-8 rounded-ctm">
+                <h1 className="text-3xl font-semibold tracking-tight text-fg mb-6">
                     Create Account
                 </h1>
 
                 {error && (
-                    <div className="border-2 border-nb-red bg-nb-red/10 p-3 mb-4">
-                        <p className="text-nb-red font-bold text-sm">{error}</p>
+                    <div className="border border-warn bg-warn-bg p-3 mb-4 rounded-ctm">
+                        <p className="text-warn font-medium text-sm">{error}</p>
                     </div>
                 )}
 
@@ -88,9 +88,9 @@ export function RegisterPage(): React.JSX.Element {
                     </Button>
                 </form>
 
-                <p className="mt-4 text-center text-sm font-bold text-nb-black dark:text-white">
+                <p className="mt-4 text-center text-sm font-medium text-fg">
                     Have an account?{' '}
-                    <Link to="/login" className="underline font-black">
+                    <Link to="/login" className="underline font-semibold">
                         Login →
                     </Link>
                 </p>

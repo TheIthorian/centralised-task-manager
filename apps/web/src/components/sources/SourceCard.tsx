@@ -1,8 +1,7 @@
 import { ConnectorType } from '@ctm/api-client';
 import type { ConnectorAccountDto, ConnectorStatusDto, ConnectorHealthDto, TaskSyncJobDto } from '@ctm/api-client';
-import { Button } from '@ctm/ui';
+import { BrandIcon, Button } from '@ctm/ui';
 import { getSourceLabel, getSourceBrand } from '../../lib/source-labels.js';
-import { BrandIcon } from '../BrandIcon.js';
 
 type SourceCardProps = {
     connector: ConnectorStatusDto;
@@ -62,12 +61,12 @@ function AccountRow({
     const accountName = account.email ?? account.label ?? account.externalAccountId;
 
     return (
-        <div className="flex flex-col gap-2 border-t-2 border-nb-black/10 dark:border-white/10 pt-3">
+        <div className="flex flex-col gap-2 border-t border-line/10 pt-3">
             <div className="flex flex-col items-stretch gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
                 <div className="min-w-0">
-                    <p className="font-bold text-sm text-nb-black dark:text-white break-words">{accountName}</p>
+                    <p className="font-medium text-sm text-fg break-words">{accountName}</p>
                     {lastSynced && !isSyncing && (
-                        <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 mt-0.5">
+                        <p className="text-xs font-medium text-muted mt-0.5">
                             Last synced: {new Date(lastSynced).toLocaleDateString()}
                         </p>
                     )}
@@ -115,40 +114,40 @@ function AccountRow({
             </div>
 
             {setupRequired && (
-                <p className="text-xs font-bold text-nb-red">
+                <p className="text-xs font-medium text-warn">
                     Setup incomplete — click Configure to finish connecting.
                 </p>
             )}
 
             {isUnhealthy && (
-                <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
                     Connection issue — reconnect to restore sync.
                 </p>
             )}
 
             {isSyncing && (
                 <div className="w-full">
-                    <p className="text-xs font-bold text-nb-black/60 dark:text-white/50 mb-1">
+                    <p className="text-xs font-medium text-muted mb-1">
                         {syncJob?.stage ? (STAGE_LABEL[syncJob.stage] ?? 'Working…') : 'Starting…'}
                     </p>
-                    <div className="w-full h-1.5 bg-nb-black/10 dark:bg-white/10 overflow-hidden">
-                        <div className="h-full bg-nb-black dark:bg-white animate-pulse w-full" />
+                    <div className="w-full h-1.5 bg-fg/10 dark:bg-white/10 overflow-hidden">
+                        <div className="h-full bg-accent animate-pulse w-full" />
                     </div>
                 </div>
             )}
 
             {syncFailed && (
-                <p className="text-xs font-bold text-nb-red">Sync failed: {syncJob?.error ?? 'Unknown error'}</p>
+                <p className="text-xs font-medium text-warn">Sync failed: {syncJob?.error ?? 'Unknown error'}</p>
             )}
 
             {syncJob?.status === 'done' && (
                 <>
-                    <p className="text-xs font-bold text-green-700 dark:text-green-400">
+                    <p className="text-xs font-medium text-green-700 dark:text-green-400">
                         Synced {syncJob.synced} task{syncJob.synced !== 1 ? 's' : ''}
                         {syncJob.skipped > 0 ? `, skipped ${syncJob.skipped} (local changes preserved)` : ''}
                     </p>
                     {syncJob.droppedOverQuota > 0 && (
-                        <p className="text-xs font-bold text-nb-red">
+                        <p className="text-xs font-medium text-warn">
                             Task limit reached — {syncJob.droppedOverQuota} task
                             {syncJob.droppedOverQuota !== 1 ? 's' : ''} not imported. Delete some tasks, then sync
                             again.
@@ -180,15 +179,15 @@ export function SourceCard({
     const hasAccounts = accounts.length > 0;
 
     return (
-        <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex flex-col gap-3">
+        <div className="bg-panel border border-line p-4 flex flex-col gap-3 rounded-ctm">
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <p className="font-black uppercase text-nb-black dark:text-white text-sm tracking-wide flex items-center gap-2">
+                    <p className="font-semibold text-fg text-sm tracking-wide flex items-center gap-2">
                         {brand && <BrandIcon brand={brand} />}
                         {sourceLabel}
                     </p>
                     {!hasAccounts && (
-                        <p className="text-xs font-bold text-nb-black/50 dark:text-white/40 mt-0.5">Not connected</p>
+                        <p className="text-xs font-medium text-muted mt-0.5">Not connected</p>
                     )}
                 </div>
 

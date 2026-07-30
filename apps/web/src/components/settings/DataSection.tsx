@@ -56,11 +56,11 @@ export function DataSection(): React.JSX.Element {
     });
 
     return (
-        <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-5 mb-8">
-            <h2 className="font-black uppercase text-sm tracking-wide text-nb-black dark:text-white mb-1">
+        <div className="bg-panel border border-line p-5 mb-8 rounded-ctm">
+            <h2 className="font-semibold text-sm tracking-wide text-fg mb-1">
                 Your Data
             </h2>
-            <p className="text-nb-black/60 dark:text-white/50 font-bold text-xs mb-4">
+            <p className="text-muted font-medium text-xs mb-4">
                 Export all your tasks, notifications, and profile as JSON, or import them back.
             </p>
 
@@ -71,21 +71,21 @@ export function DataSection(): React.JSX.Element {
                 </Button>
 
                 {exportMutation.isSuccess && (
-                    <p className="text-nb-green font-bold text-sm mt-2">
+                    <p className="text-accent font-medium text-sm mt-2">
                         Downloaded {exportMutation.data} file{exportMutation.data === 1 ? '' : 's'}.
                     </p>
                 )}
 
                 {exportMutation.isError && (
-                    <p className="text-nb-red font-bold text-sm mt-2">
+                    <p className="text-warn font-medium text-sm mt-2">
                         {getErrorMessage(exportMutation.error, 'Export failed. Please try again.')}
                     </p>
                 )}
             </div>
 
             {/* Import */}
-            <div className="border-t-2 border-nb-black/10 dark:border-white/10 pt-4">
-                <p className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white mb-2">
+            <div className="border-t border-line/10 pt-4">
+                <p className="font-semibold text-xs tracking-wide text-fg mb-2">
                     Import Data
                 </p>
 
@@ -95,17 +95,18 @@ export function DataSection(): React.JSX.Element {
                     accept="application/json,.json"
                     multiple
                     onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                    className="block w-full text-sm font-bold text-nb-black dark:text-white mb-3 file:mr-3 file:border-2 file:border-nb-black file:bg-white file:px-3 file:py-1 file:font-black file:uppercase file:text-xs dark:file:border-white/20 dark:file:bg-neutral-800 dark:file:text-white"
+                    className="block min-h-11 w-full text-sm font-medium text-fg mb-3 md:min-h-0 file:mr-3 file:border-2 file:border-line file:bg-white file:px-3 file:py-1 file:font-semibold file:uppercase file:text-xs dark:file:border-white/20 dark:file:bg-neutral-800 dark:file:text-white rounded-ctm"
                 />
 
                 <fieldset className="mb-3">
-                    <legend className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white mb-1">
+                    <legend className="font-semibold text-xs tracking-wide text-fg mb-1">
                         On Conflict
                     </legend>
                     <div className="flex gap-4">
-                        <label className="flex items-center gap-2 font-bold text-sm text-nb-black dark:text-white">
+                        <label className="flex min-h-11 items-center gap-2 font-medium text-sm text-fg md:min-h-0">
                             <input
                                 type="radio"
+                                className="h-5 w-5 md:h-auto md:w-auto"
                                 name="onConflict"
                                 value="ignore"
                                 checked={onConflict === 'ignore'}
@@ -113,9 +114,10 @@ export function DataSection(): React.JSX.Element {
                             />
                             Ignore existing
                         </label>
-                        <label className="flex items-center gap-2 font-bold text-sm text-nb-black dark:text-white">
+                        <label className="flex min-h-11 items-center gap-2 font-medium text-sm text-fg md:min-h-0">
                             <input
                                 type="radio"
+                                className="h-5 w-5 md:h-auto md:w-auto"
                                 name="onConflict"
                                 value="replace"
                                 checked={onConflict === 'replace'}
@@ -134,13 +136,13 @@ export function DataSection(): React.JSX.Element {
                 </Button>
 
                 {importMutation.isError && (
-                    <p className="text-nb-red font-bold text-sm mt-2">
+                    <p className="text-warn font-medium text-sm mt-2">
                         {getErrorMessage(importMutation.error, 'Import failed. Please try again.')}
                     </p>
                 )}
 
                 {summary && (
-                    <p className="text-nb-green font-bold text-sm mt-2">
+                    <p className="text-accent font-medium text-sm mt-2">
                         Imported {summary.imported.tasks} task{summary.imported.tasks === 1 ? '' : 's'} and{' '}
                         {summary.imported.notifications} notification
                         {summary.imported.notifications === 1 ? '' : 's'}. Skipped {summary.skipped.tasks} task

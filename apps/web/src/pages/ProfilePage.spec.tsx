@@ -3,6 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProfilePage } from './ProfilePage.js';
+import { DensityProvider } from '../theme/DensityContext.js';
+import { ThemeProvider } from '../theme/ThemeContext.js';
 
 // Mock AuthContext
 const mockLogout = vi.fn();
@@ -24,7 +26,14 @@ vi.mock('../auth/AuthContext.js', () => ({
 function wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-    return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+    // The page carries the appearance controls, so it needs the display-preference providers.
+    return (
+        <QueryClientProvider client={qc}>
+            <ThemeProvider>
+                <DensityProvider>{children}</DensityProvider>
+            </ThemeProvider>
+        </QueryClientProvider>
+    );
 }
 
 describe('ProfilePage', () => {

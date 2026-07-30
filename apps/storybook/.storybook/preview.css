@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+@source "../../../packages/ui/src";
+@import '../../../packages/ui/src/styles/tokens.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: ui-sans-serif, -apple-system, 'Segoe UI', sans-serif;
+}

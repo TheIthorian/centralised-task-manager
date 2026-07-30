@@ -1,90 +1,8 @@
 @import 'tailwindcss';
 @source "../../../packages/ui/src";
+@import '../../../packages/ui/src/styles/tokens.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
-
-@theme {
-    --color-nb-yellow: #ffde59;
-    --color-nb-black: #111111;
-    --color-nb-red: #ff3b30;
-    --color-nb-green: #34c759;
-    --color-nb-grey: #888888;
-
-    --shadow-nb: 3px 3px 0px var(--color-nb-black);
-    --shadow-nb-lg: 5px 5px 0px var(--color-nb-black);
-}
-
-@keyframes wobble {
-    0%,
-    100% {
-        transform: rotate(0deg) translateX(0);
-    }
-    15% {
-        transform: rotate(-1.5deg) translateX(-3px);
-    }
-    30% {
-        transform: rotate(1.5deg) translateX(3px);
-    }
-    45% {
-        transform: rotate(-1deg) translateX(-2px);
-    }
-    60% {
-        transform: rotate(1deg) translateX(2px);
-    }
-    75% {
-        transform: rotate(-0.5deg) translateX(-1px);
-    }
-}
-
-@keyframes marching-ants {
-    to {
-        background-position:
-            8px 0,
-            -8px 100%,
-            0 -8px,
-            100% 8px;
-    }
-}
-
-@keyframes dash-march {
-    to {
-        stroke-dashoffset: -16;
-    }
-}
-
-@keyframes pulse-ring {
-    0% {
-        box-shadow:
-            0 0 0 0 rgba(17, 17, 17, 0.9),
-            3px 3px 0 #111;
-    }
-    70% {
-        box-shadow:
-            0 0 0 8px rgba(17, 17, 17, 0),
-            3px 3px 0 #111;
-    }
-    100% {
-        box-shadow:
-            0 0 0 0 rgba(17, 17, 17, 0),
-            3px 3px 0 #111;
-    }
-}
-
-@keyframes neon-pulse {
-    0%,
-    100% {
-        box-shadow:
-            0 0 6px 2px #00ffe7,
-            0 0 20px 4px #00ffe780,
-            3px 3px 0 #111;
-    }
-    50% {
-        box-shadow:
-            0 0 12px 4px #00ffe7,
-            0 0 40px 10px #00ffe780,
-            3px 3px 0 #111;
-    }
-}
 
 * {
     box-sizing: border-box;
@@ -107,41 +25,14 @@ textarea {
     cursor: text;
 }
 
-/* https://coolors.co/ffde59-e34d3d-111111 */
+/*
+ * The list is the interface, so the page ground stays quiet: no canvas colour, no dot
+ * grid, no grain overlay, nothing competing with task state for the contrast budget.
+ */
 body {
-    font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
-    background-color: #ffde59;
-    background-image: radial-gradient(circle, rgba(17, 17, 17, 0.15) 1px, transparent 1px);
-    background-size: 16px 16px;
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
     margin: 0;
-}
-
-.dark body {
-    background-color: #0a0a0a;
-    background-image: radial-gradient(circle, rgba(255, 222, 89, 0.08) 1px, transparent 1px);
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    width: 128vmin;
-    height: 128vmin;
-    pointer-events: none;
-    z-index: -1;
-    background: url('/spiral-light.svg') right bottom / contain no-repeat;
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 200px 200px;
-    opacity: 0.2;
-    mix-blend-mode: multiply;
+    -webkit-font-smoothing: antialiased;
 }

@@ -6,32 +6,36 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
     error?: string;
 };
 
-/** Neobrutalist text input with optional label and error message. */
+/** Text input with an optional label and error message. */
 export function Input({ label, error, className, id, ...props }: InputProps): React.JSX.Element {
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
+    const errorId = error && inputId ? `${inputId}-error` : undefined;
 
     return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
             {label && (
-                <label
-                    htmlFor={inputId}
-                    className="font-black uppercase text-xs tracking-wide text-nb-black dark:text-white"
-                >
+                <label htmlFor={inputId} className="text-[11px] uppercase tracking-[0.12em] text-muted">
                     {label}
                 </label>
             )}
             <input
                 id={inputId}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={errorId}
                 className={clsx(
-                    'w-full border-2 border-nb-black dark:border-white/20 bg-white dark:bg-neutral-800 font-bold p-2 text-nb-black dark:text-white',
-                    'focus:outline-none focus:shadow-[3px_3px_0px_#111] dark:focus:shadow-none',
-                    'placeholder:text-nb-grey placeholder:font-bold',
-                    error && 'border-nb-red',
+                    'min-h-11 w-full rounded-ctm border border-line bg-panel px-3 py-2 text-sm text-fg md:min-h-0',
+                    'placeholder:text-muted',
+                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+                    error && 'border-warn',
                     className,
                 )}
                 {...props}
             />
-            {error && <p className="text-nb-red font-bold text-xs">{error}</p>}
+            {error && (
+                <p id={errorId} className="text-xs text-warn">
+                    {error}
+                </p>
+            )}
         </div>
     );
 }

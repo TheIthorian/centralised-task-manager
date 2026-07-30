@@ -1,35 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import { Banner, Skeleton } from '@ctm/ui';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
-import { TaskFilters } from '../components/tasks/TaskFilters.js';
+import { FilterBar } from '../components/tasks/FilterBar.js';
 import { TaskList } from '../components/tasks/TaskList.js';
 import { GroupedTaskList } from '../components/tasks/GroupedTaskList.js';
 import { AddTaskInline } from '../components/tasks/AddTaskInline.js';
-import { TaskModal } from '../components/tasks/TaskModal.js';
+import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 import { useGroupedTaskQueries } from '../hooks/useGroupedTaskQueries.js';
+import { filterTasks, parseConditions, toggleCondition, writeConditions, type Condition } from '../lib/task-conditions.js';
+import { nextMorning } from '../lib/snooze.js';
+import { useToast } from '../toast/ToastContext.js';
 
 const PAGE_SIZE = 20;
 
 /** Main task management page. Filter is stored in the URL (?filter=today). Opening a specific task is via ?taskId=<id>. */
 export function TasksPage(): React.JSX.Element {
+    const { t, i18n } = useTranslation();
+    const { showToast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
+    const conditions = parseConditions(searchParams);
     const taskIdParam = searchParams.get('taskId');
     const highlightTaskIdParam = searchParams.get('highlightTaskId');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
-    const [doneTasks, setDoneTasks] = useState<TaskDto[]>([]);
+    const [addingTask, setAddingTask] = useState(false);
     const { api } = useAuth();
 
     const qc = useQueryClient();
-
-    // Reset done tasks when filter changes away from 'all'
-    useEffect(() => {
-        if (filter !== 'all') setDoneTasks([]);
-    }, [filter]);
 
     // Highlight task when ?highlightTaskId= is present (e.g. navigated from a notification).
     useEffect(() => {
@@ -108,12 +111,14 @@ export function TasksPage(): React.JSX.Element {
         enabled: filter !== 'all',
     });
 
-    const flatTasks = flatQuery.data?.pages.flat() ?? [];
+    const now = new Date();
+    const loadedFlatTasks = flatQuery.data?.pages.flat() ?? [];
+    const flatTasks = filterTasks({ tasks: loadedFlatTasks, conditions, now });
     const flatIsLoading = flatQuery.isLoading;
     const flatIsError = flatQuery.isError;
 
     // Per-bucket grouped queries (all filter only).
-    const groupedResults = useGroupedTaskQueries({ api, enabled: filter === 'all' });
+    const loadedGroupedResults = useGroupedTaskQueries({ api, enabled: filter === 'all' });
 
     const addMutation = useMutation({
         mutationFn: (dto: CreateTaskDto) => api.createTask({ dto }),
@@ -134,83 +139,12 @@ export function TasksPage(): React.JSX.Element {
     const statusMutation = useMutation({
         mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
             api.setTaskStatus({ id, dto: { status: completed ? 'done' : 'open' } }),
-        onMutate: async ({ id, completed }) => {
-            if (filter === 'all') {
-                // Optimistically move to done section
-                const allBuckets = ['overdue', 'today', 'thisWeek', 'upcoming', 'noDate'] as const;
-
-                const bucketSnapshots: Partial<Record<string, { pages: TaskDto[][] }>> = {};
-                const doneSnapshot = doneTasks;
-
-                for (const bucket of allBuckets) {
-                    const snap = qc.getQueryData<{ pages: TaskDto[][] }>(['tasks', 'grouped', bucket]);
-
-                    if (snap) bucketSnapshots[bucket] = snap;
-                }
-
-                let movedTask: TaskDto | undefined;
-
-                for (const bucket of allBuckets) {
-                    qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', 'grouped', bucket], (prev) => {
-                        if (!prev) return prev;
-
-                        const updated = prev.pages.map((page) => {
-                            const found = page.find((t) => t.id === id);
-
-                            if (found) movedTask = { ...found, completed };
-
-                            return page.filter((t) => t.id !== id);
-                        });
-
-                        return { ...prev, pages: updated };
-                    });
-                }
-
-                if (completed && movedTask) {
-                    setDoneTasks((prev) => [movedTask!, ...prev]);
-                } else if (!completed) {
-                    setDoneTasks((prev) => prev.filter((t) => t.id !== id));
-                    qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
-                }
-
-                return { movedTask, bucketSnapshots, doneSnapshot };
-            }
-
-            await qc.cancelQueries({ queryKey: ['tasks', filter] });
-            const prev = qc.getQueryData<{ pages: TaskDto[][] }>(['tasks', filter]);
-
-            qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', filter], (old) => {
-                if (!old) return old;
-
-                return {
-                    ...old,
-                    pages: old.pages.map((page) =>
-                        page.map((t) => (t.id === id ? { ...t, completed } : t)),
-                    ),
-                };
-            });
-
-            return { prev };
-        },
-        onError: (_err, _vars, ctx) => {
-            if (filter === 'all' && ctx) {
-                const { bucketSnapshots, doneSnapshot } = ctx as {
-                    bucketSnapshots?: Partial<Record<string, { pages: TaskDto[][] }>>;
-                    doneSnapshot?: TaskDto[];
-                };
-
-                if (bucketSnapshots) {
-                    for (const [bucket, snap] of Object.entries(bucketSnapshots)) {
-                        qc.setQueryData(['tasks', 'grouped', bucket], snap);
-                    }
-                }
-
-                if (doneSnapshot !== undefined) {
-                    setDoneTasks(doneSnapshot);
-                }
-            } else if (filter !== 'all' && ctx?.prev) {
-                qc.setQueryData(['tasks', filter], ctx.prev);
-            }
+        // No onMutate. TanStack Query offers optimistic updates and we decline them: the
+        // moment the client patches its own cache it can show a state the backend never
+        // agreed to. Our API answers in one short hop, and the connector push is reported
+        // on the connector row rather than faked in the list.
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['tasks'] });
         },
     });
 
@@ -230,7 +164,6 @@ export function TasksPage(): React.JSX.Element {
         onSuccess: (_data, id) => {
             if (filter === 'all') {
                 qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
-                setDoneTasks((prev) => prev.filter((t) => t.id !== id));
             } else {
                 qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', filter], (prev) => {
                     if (!prev) return prev;
@@ -263,6 +196,13 @@ export function TasksPage(): React.JSX.Element {
         },
     });
 
+    // Only the row being written to dims, so the rest of the list stays usable.
+    const pendingTaskId = firstOf([
+        statusMutation.isPending ? statusMutation.variables?.id : undefined,
+        saveMutation.isPending ? saveMutation.variables?.id : undefined,
+        deleteMutation.isPending ? deleteMutation.variables : undefined,
+    ]);
+
     const handleToggle = useCallback(
         (id: string, completed: boolean) => {
             statusMutation.mutate({ id, completed });
@@ -270,50 +210,107 @@ export function TasksPage(): React.JSX.Element {
         [statusMutation],
     );
 
+    const handleSnooze = useCallback(
+        (task: TaskDto) => {
+            const date = nextMorning();
+
+            saveMutation.mutate(
+                {
+                    id: task.id,
+                    // The recurrence rule is the task's own schedule, not part of the snooze.
+                    dto: { due: { date: date.toISOString(), recurrence: task.due?.recurrence || undefined } },
+                },
+                {
+                    onSuccess: () => {
+                        showToast({
+                            title: t('tasks.snoozed.title'),
+                            description: t('tasks.snoozed.body', {
+                                date: new Intl.DateTimeFormat(i18n.language, {
+                                    weekday: 'long',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                }).format(date),
+                            }),
+                        });
+                    },
+                },
+            );
+        },
+        [saveMutation, showToast, t, i18n.language],
+    );
+
+    const handleSwipeDelete = useCallback(
+        (task: TaskDto) => {
+            deleteMutation.mutate(task.id);
+        },
+        [deleteMutation],
+    );
+
+    // Conditions narrow what has been loaded, not what the server holds, so the count says
+    // "shown" rather than claiming to be a total.
+    const groupedResults = Object.fromEntries(
+        Object.entries(loadedGroupedResults).map(([bucket, result]) => [
+            bucket,
+            { ...result, tasks: filterTasks({ tasks: result.tasks, conditions, now }) },
+        ]),
+    ) as typeof loadedGroupedResults;
+
     const totalLoaded = filter === 'all'
-        ? Object.values(groupedResults).reduce((sum, r) => sum + r.tasks.length, 0) + doneTasks.length
+        ? Object.values(groupedResults).reduce((sum, r) => sum + r.tasks.length, 0)
         : flatTasks.length;
+
+    const loadedTasks =
+        filter === 'all' ? Object.values(loadedGroupedResults).flatMap((r) => r.tasks) : loadedFlatTasks;
+
+    const applyConditions = (next: Condition[]): void =>
+        setSearchParams(writeConditions({ params: searchParams, conditions: next }));
 
     const isLoading = filter === 'all' ? false : flatIsLoading;
     const isError = filter === 'all' ? false : flatIsError;
 
     return (
-        <div className="p-4 md:p-6 max-w-2xl">
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">
-                        My Tasks
-                    </h1>
+        <div className="p-4 md:p-6">
+            <div className="mb-5 flex items-end justify-between gap-4">
+                <div className="flex flex-col gap-0.5">
+                    <h1 className="text-xl font-semibold tracking-tight text-fg">{t('tasks.title')}</h1>
                     {!isLoading && (
-                        <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm">
-                            {totalLoaded} task{totalLoaded !== 1 ? 's' : ''} loaded
+                        <p className="text-xs text-muted" aria-live="polite">
+                            {conditions.length > 0
+                                ? t('tasks.shownCount', { count: totalLoaded })
+                                : t('tasks.openCount', { count: totalLoaded })}
                         </p>
                     )}
                 </div>
             </div>
 
             <div className="flex flex-col gap-4">
-                <TaskFilters active={filter} onChange={(f) => setSearchParams({ filter: f })} />
+                <FilterBar
+                    filter={filter}
+                    onFilterChange={(next) => setSearchParams({ filter: next })}
+                    conditions={conditions}
+                    onToggleCondition={(condition) => applyConditions(toggleCondition({ conditions, condition }))}
+                    onClearConditions={() => applyConditions([])}
+                    sources={[...new Set(loadedTasks.map((task) => task.source))]}
+                    onNewTask={() => setAddingTask(true)}
+                />
 
                 <AddTaskInline
+                    open={addingTask}
+                    onOpenChange={setAddingTask}
                     onAdd={async (dto) => {
                         await addMutation.mutateAsync(dto);
                     }}
                     isPending={addMutation.isPending}
                 />
 
-                {isLoading && (
-                    <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">
-                        Loading…
-                    </p>
-                )}
+                {isLoading && <Skeleton rows={5} />}
 
                 {isError && (
-                    <div className="border-2 border-nb-red bg-nb-red/10 p-3">
-                        <p className="text-nb-red font-bold text-sm">
-                            {getErrorMessage(flatQuery.error, 'Failed to load tasks. Is the API running?')}
-                        </p>
-                    </div>
+                    <Banner
+                        tone="warn"
+                        title={t('tasks.loadFailed.title')}
+                        body={getErrorMessage(flatQuery.error, t('tasks.loadFailed.body'))}
+                    />
                 )}
 
                 {!isLoading &&
@@ -321,10 +318,12 @@ export function TasksPage(): React.JSX.Element {
                     (filter === 'all' ? (
                         <GroupedTaskList
                             groupedResults={groupedResults}
-                            doneTasks={doneTasks}
                             highlightedTaskId={highlightedTaskId}
                             onToggle={handleToggle}
                             onEdit={setEditTask}
+                            onSnooze={handleSnooze}
+                            onDelete={handleSwipeDelete}
+                            pendingTaskId={pendingTaskId}
                         />
                     ) : (
                         <TaskList
@@ -332,6 +331,9 @@ export function TasksPage(): React.JSX.Element {
                             highlightedTaskId={highlightedTaskId}
                             onToggle={handleToggle}
                             onEdit={setEditTask}
+                            onSnooze={handleSnooze}
+                            onDelete={handleSwipeDelete}
+                            pendingTaskId={pendingTaskId}
                             hasNextPage={flatQuery.hasNextPage}
                             isFetchingNextPage={flatQuery.isFetchingNextPage}
                             fetchNextPage={flatQuery.fetchNextPage}
@@ -339,7 +341,7 @@ export function TasksPage(): React.JSX.Element {
                     ))}
             </div>
 
-            <TaskModal
+            <TaskDetailPanel
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}
@@ -359,4 +361,9 @@ export function TasksPage(): React.JSX.Element {
             />
         </div>
     );
+}
+
+/** The one row that dims: whichever write got in first, since only one can be in flight per row. */
+function firstOf(ids: (string | undefined)[]): string | null {
+    return ids.find((id): id is string => Boolean(id)) ?? null;
 }
