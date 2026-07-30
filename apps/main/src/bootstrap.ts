@@ -1,5 +1,4 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import multipart from '@fastify/multipart';
@@ -43,7 +42,6 @@ export async function createApp(): Promise<NestFastifyApplication> {
 
     await app.register(multipart, { limits: { fileSize: 60 * 1024 * 1024 } });
 
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
     app.enableCors(buildCorsOptions(process.env));
     app.useWebSocketAdapter(new IoAdapter(app));
 

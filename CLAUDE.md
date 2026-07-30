@@ -109,6 +109,7 @@ Docusaurus site. **This directory is for compiled/generated user-facing document
 - **Object arguments** — when a function has two or more parameters, use a single object argument instead of positional params.
 - **Docstrings** — add a JSDoc comment to every public method on a class or interface, and every exported module-level function. Keep them concise: only document parameters, return value, or thrown errors when it genuinely adds information beyond the name.
 - **Comments explain why, not how.** The code already says what it does. Comment only what the code cannot: the reason for a non-obvious choice, a constraint from outside the file, a trap someone would otherwise reintroduce. Keep it to a line or two — if a comment needs a paragraph, the reasoning belongs in the spec or the commit message.
+- **Declaration order** — a helper function is declared _after_ its caller, so a file reads top-down from its entry point to its details. Function declarations hoist, so a module-level helper can sit at the bottom of the file even when the code above it calls it. Values that are not hoisted (`const`, `let`, classes) still have to precede their use.
 - **Trailing commas** — always include trailing commas on the last item of multi-line objects, arrays, and parameter lists.
 - **Logging** — always place a blank line before and after a log statement, and a blank line after a closing scope brace (where the formatter allows).
 
@@ -151,14 +152,49 @@ async findOne(...): Promise<TaskDto> { ... }
 
 `@nestjs/swagger/plugin` derives `@ApiProperty` from the class's TS types during OpenAPI generation, so response fields need no decorators — add one only to override (enums, `Record<string, unknown>`). If a handler carries an explicit `@ApiResponse({ status })`, the plugin leaves it alone: pass `type:` yourself.
 
-**Request DTOs** — NestJS DTO classes live in `apps/main/src/**/dto/*.ts` and must `implements` the corresponding api-client type (aliased to avoid name clash):
+**Every handler argument must be validated at runtime, through exactly one mechanism.** A TS type is
+erased at compile time, so `@Body() body: SomeType` validates nothing and the value reaches the
+handler unchecked. Zod is the only validation library: there is no class-validator in `apps/main`.
+
+Read every argument through a `Validated*` decorator from `common/validation/validated.decorators.ts`,
+never through Nest's `@Body`, `@Query`, `@Param` or `@Headers` directly. The schema is named at the
+call site, so validation is visible without knowing anything about the DTO:
+
+```ts
+async create(
+    @Request() req: AuthRequest,
+    @ValidatedBody(CreateTaskDto) dto: CreateTaskDto,
+): Promise<TaskDto> {
+```
+
+- `ValidatedBody(DtoOrSchema)` and `ValidatedQuery(DtoOrSchema)` for whole objects.
+- `ValidatedParam({ name, schema })`, `ValidatedQueryValue({ name, schema })` and `ValidatedHeader({ name, schema })` for single values. Use `objectIdSchema` for Mongo ids: an unchecked id becomes a Mongoose CastError, which surfaces as a 500.
+- **Objects** — define a Zod schema and wrap it with `createZodDto` (`common/zod/create-zod-dto.ts`, a thin adapter over `nestjs-zod`). `nestjs-zod` derives the OpenAPI schema from the Zod schema, so `scripts/generate-openapi.ts` must keep passing the document through `cleanupOpenApiDoc`.
+- **Bound every string.** Give each string a `max`, and each array a `max` length.
+- **`requestObject` for app endpoints, `z.object` for protocol endpoints.** `requestObject` rejects unrecognised keys, which app clients only send by mistake, and reads an explicit `null` as an absent key, since a client round-tripping a response back as a request sends null for fields it did not set. Nested objects need their own `requestObject`. OAuth and MCP clients legitimately send parameters this server does not implement, so `oauth/` and `.well-known` DTOs stay on plain `z.object` and strip instead (RFC 7591 §3.1).
+- **Ajv, not Zod, for schemas that arrive as data** — connector connection details compile JSON Schema at runtime, which Zod cannot do.
+- Never hand a handler argument to a service, a DB query, or an outbound request before it has been through a schema.
+
+This is enforced, not just documented: `HandlerValidationModule` audits every controller's route
+metadata on `onApplicationBootstrap` and refuses to start when an argument carries no validation
+pipe, so the mistake is a failed deploy rather than an open endpoint. A handler that genuinely
+validates its own input by a route the audit cannot see is marked `@UnvalidatedInput(reason)`, and
+the reason is required.
+
+**Request DTOs** live in `apps/main/src/**/dto/*.ts`. Export the schema and the DTO class built from
+it, and pass the api-client type to `createZodDto` so the schema cannot drift from the wire contract:
 
 ```ts
 import type { CreateTaskDto as ICreateTaskDto } from '@ctm/api-client';
-export class CreateTaskDto implements ICreateTaskDto { ... }
+
+export const createTaskSchema = z.strictObject({ ... });
+export class CreateTaskDto extends createZodDto<ICreateTaskDto>({
+    schema: createTaskSchema,
+    name: 'CreateTaskDto',
+}) {}
 ```
 
-- Nested sub-DTOs (`DueDateDto`, `DurationDto`, etc.) implement the api-client type where shapes match exactly; omit `implements` only when optionality semantics differ between wire (nullable) and input (optional).
+- Share nested schemas (`dueDateSchema`, `channelPrefsSchema`) rather than nested DTO classes; `nestjs-zod` inlines them into the OpenAPI document.
 - When adding a new endpoint, define the response type in `api-client` first, then implement in the controller.
 
 ### Client Boundaries

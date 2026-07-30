@@ -1,42 +1,22 @@
-import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import type {
-    UpdateChannelPrefsDto as IUpdateChannelPrefsDto,
-    UpdateNotificationPreferencesDto as IUpdateNotificationPreferencesDto,
-} from '@ctm/api-client';
+import { z } from 'zod';
+import type { UpdateNotificationPreferencesDto as IUpdateNotificationPreferencesDto } from '@ctm/api-client';
+import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { requestObject } from '../../common/zod/param-schemas.js';
 
-export class ChannelPrefsDto implements IUpdateChannelPrefsDto {
-    @IsOptional()
-    @IsBoolean()
-    inApp?: boolean;
+export const channelPrefsSchema = requestObject({
+    inApp: z.boolean().optional(),
+    discord: z.boolean().optional(),
+    email: z.boolean().optional(),
+});
 
-    @IsOptional()
-    @IsBoolean()
-    discord?: boolean;
+export const updatePreferencesSchema = requestObject({
+    connectorReconnect: channelPrefsSchema.optional(),
+    dailySummary: channelPrefsSchema.optional(),
+    reminder: channelPrefsSchema.optional(),
+    upcomingDeadline: channelPrefsSchema.optional(),
+});
 
-    @IsOptional()
-    @IsBoolean()
-    email?: boolean;
-}
-
-export class UpdatePreferencesDto implements IUpdateNotificationPreferencesDto {
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => ChannelPrefsDto)
-    connectorReconnect?: ChannelPrefsDto;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => ChannelPrefsDto)
-    dailySummary?: ChannelPrefsDto;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => ChannelPrefsDto)
-    reminder?: ChannelPrefsDto;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => ChannelPrefsDto)
-    upcomingDeadline?: ChannelPrefsDto;
-}
+export class UpdatePreferencesDto extends createZodDto<IUpdateNotificationPreferencesDto>({
+    schema: updatePreferencesSchema,
+    name: 'UpdatePreferencesDto',
+}) {}

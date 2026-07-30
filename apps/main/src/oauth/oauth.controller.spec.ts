@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
 import { createHash, randomBytes } from 'crypto';
@@ -23,7 +22,6 @@ describe('OAuth endpoints', () => {
     beforeAll(async () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -65,6 +63,35 @@ describe('OAuth endpoints', () => {
         const location = res.headers['location'] as string;
         expect(location).toContain('code=');
         expect(location).toContain('state=xyz');
+    });
+
+    it('POST /oauth/authorize returns the location as JSON when the Accept header asks for it', async () => {
+        const verifier = makeCodeVerifier();
+        const challenge = makeCodeChallenge(verifier);
+        const redirectUri = 'http://localhost:4000/cb';
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            headers: { authorization: `Bearer ${jwt}`, accept: 'application/json' },
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body).location).toContain('code=');
+    });
+
+    it('POST /oauth/authorize redirects when no Accept header is sent', async () => {
+        const verifier = makeCodeVerifier();
+        const challenge = makeCodeChallenge(verifier);
+        const redirectUri = 'http://localhost:4000/cb';
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            headers: { authorization: `Bearer ${jwt}`, accept: '' },
+        });
+
+        expect(res.statusCode).toBe(302);
     });
 
     it('POST /oauth/authorize returns 401 without token', async () => {

@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Types } from 'mongoose';
@@ -64,7 +63,6 @@ describe('TasksModule', () => {
             .compile();
 
         app = moduleRef.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -370,7 +368,6 @@ describe('Tasks — local source: CRUD, auth, validation, filtering', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -932,7 +929,6 @@ describe('Tasks — user isolation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

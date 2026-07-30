@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
 
@@ -12,7 +11,6 @@ describe('GET /users/me + PATCH /users/me', () => {
     beforeAll(async () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -69,7 +67,6 @@ describe('Users — auth guards, validation, persistence', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

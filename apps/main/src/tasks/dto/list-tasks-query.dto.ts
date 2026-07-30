@@ -1,68 +1,29 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsIn, IsBoolean, MaxLength, IsISO8601 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { z } from 'zod';
+import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { isoDateTimeSchema, requestObject, queryBooleanSchema } from '../../common/zod/param-schemas.js';
 
-export class ListTasksQueryDto {
-    /** UI-level preset filter — maps to date/status constraints in the service. */
-    @ApiPropertyOptional({ enum: ['all', 'today', 'upcoming', 'done'] })
-    @IsOptional()
-    @IsIn(['all', 'today', 'upcoming', 'done'])
-    filter?: 'all' | 'today' | 'upcoming' | 'done';
+export const MAX_PAGE_SIZE = 500;
 
-    @ApiPropertyOptional({ enum: ['open', 'done', 'archived'] })
-    @IsOptional()
-    @IsIn(['open', 'done', 'archived'])
-    status?: 'open' | 'done' | 'archived';
+export const listTasksQuerySchema = requestObject({
+    filter: z
+        .enum(['all', 'today', 'upcoming', 'done'])
+        .optional()
+        .describe('UI-level preset filter — maps to date and status constraints in the service.'),
+    status: z.enum(['open', 'done', 'archived']).optional(),
+    source: z.string().min(1).max(50).optional(),
+    fuzzy: z.enum(['this_week', 'this_month', 'someday']).optional(),
+    surfaced: queryBooleanSchema.optional(),
+    lastUpdatedFromDate: isoDateTimeSchema.optional().describe('Only return tasks updated on or after this date.'),
+    dueBefore: isoDateTimeSchema
+        .optional()
+        .describe('Only tasks where due.date < dueBefore. Must not be combined with the `filter` preset.'),
+    dueAfter: isoDateTimeSchema.optional().describe('Only tasks where due.date >= dueAfter.'),
+    noDate: queryBooleanSchema.optional().describe('When true, only return tasks with no due date.'),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(50),
+});
 
-    @ApiPropertyOptional({ example: 'todoist', maxLength: 50 })
-    @IsOptional()
-    @IsString()
-    @MaxLength(50)
-    source?: string;
-
-    @ApiPropertyOptional({ enum: ['this_week', 'this_month', 'someday'] })
-    @IsOptional()
-    @IsIn(['this_week', 'this_month', 'someday'])
-    fuzzy?: 'this_week' | 'this_month' | 'someday';
-
-    @ApiPropertyOptional({ example: false })
-    @IsOptional()
-    @Transform(({ value }: { value: unknown }) => value === 'true')
-    @IsBoolean()
-    surfaced?: boolean;
-
-    /** ISO date string — only return tasks updated on or after this date. */
-    @ApiPropertyOptional({ example: '2026-05-23T00:00:00.000Z' })
-    @IsOptional()
-    @IsString()
-    lastUpdatedFromDate?: string;
-
-    /** ISO date string — only tasks where due.date < dueBefore. Must not be combined with the \`filter\` preset. */
-    @ApiPropertyOptional({ example: '2026-05-30T00:00:00.000Z' })
-    @IsOptional()
-    @IsISO8601()
-    dueBefore?: string;
-
-    /** ISO date string — only tasks where due.date >= dueAfter. */
-    @ApiPropertyOptional({ example: '2026-05-29T00:00:00.000Z' })
-    @IsOptional()
-    @IsISO8601()
-    dueAfter?: string;
-
-    /** When true, only return tasks with no due date. */
-    @ApiPropertyOptional({ example: true })
-    @IsOptional()
-    @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
-    @IsBoolean()
-    noDate?: boolean;
-
-    @ApiPropertyOptional({ default: 1, example: 1 })
-    @IsOptional()
-    @Type(() => Number)
-    page?: number = 1;
-
-    @ApiPropertyOptional({ default: 50, example: 50 })
-    @IsOptional()
-    @Type(() => Number)
-    limit?: number = 50;
-}
+export class ListTasksQueryDto extends createZodDto({
+    schema: listTasksQuerySchema,
+    name: 'ListTasksQueryDto',
+}) {}

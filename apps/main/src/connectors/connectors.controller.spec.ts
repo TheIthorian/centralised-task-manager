@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -18,7 +17,6 @@ describe('ConnectorsModule', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
@@ -159,7 +157,6 @@ describe('Connectors — auth guards and user isolation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

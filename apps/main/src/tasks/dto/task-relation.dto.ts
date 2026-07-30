@@ -1,16 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsMongoId } from 'class-validator';
-import type { TaskRelationDto as ITaskRelationDto, RelationType } from '@ctm/api-client';
+import { z } from 'zod';
+import type { TaskRelationDto as ITaskRelationDto } from '@ctm/api-client';
+import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { objectIdSchema } from '../../common/zod/param-schemas.js';
 
-const RELATION_TYPES: RelationType[] = ['parent', 'child', 'next', 'previous', 'related'];
+export const RELATION_TYPES = ['parent', 'child', 'next', 'previous', 'related'] as const;
 
 /** Request body for adding or removing a relation between two tasks. */
-export class TaskRelationDto implements ITaskRelationDto {
-    @ApiProperty({ enum: RELATION_TYPES, example: 'parent' })
-    @IsIn(RELATION_TYPES)
-    type!: RelationType;
+export const taskRelationSchema = z.strictObject({
+    type: z.enum(RELATION_TYPES),
+    targetTaskId: objectIdSchema.describe('CTM task ObjectId of the related task'),
+});
 
-    @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'CTM task ObjectId of the related task' })
-    @IsMongoId()
-    targetTaskId!: string;
-}
+export class TaskRelationDto extends createZodDto<ITaskRelationDto>({
+    schema: taskRelationSchema,
+    name: 'TaskRelationDto',
+}) {}

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req, Request, Res, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, Post, Req, Request, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
@@ -14,6 +14,8 @@ import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
 import { RefreshRateLimit, StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
+import { ValidatedBody, ValidatedParam } from '../common/validation/validated.decorators.js';
+import { z } from 'zod';
 
 interface AuthRequest {
     user: UserDocument;
@@ -68,7 +70,7 @@ export class AuthController {
     @Post('register')
     @StrictRateLimit()
     async register(
-        @Body() dto: RegisterDto,
+        @ValidatedBody(RegisterDto) dto: RegisterDto,
         @Req() request: FastifyRequest,
         @Res({ passthrough: true }) reply: FastifyReply,
     ): Promise<TokenPairDto> {
@@ -104,7 +106,7 @@ export class AuthController {
     // NAT address out of their sessions.
     @RefreshRateLimit()
     async refresh(
-        @Body() dto: RefreshDto,
+        @ValidatedBody(RefreshDto) dto: RefreshDto,
         @Req() request: FastifyRequest,
         @Res({ passthrough: true }) reply: FastifyReply,
     ): Promise<TokenPairDto> {
@@ -129,7 +131,7 @@ export class AuthController {
     @Post('logout')
     @HttpCode(204)
     async logout(
-        @Body() dto: RefreshDto,
+        @ValidatedBody(RefreshDto) dto: RefreshDto,
         @Req() request: FastifyRequest,
         @Res({ passthrough: true }) reply: FastifyReply,
     ): Promise<void> {
@@ -162,7 +164,10 @@ export class AuthController {
     @Delete('me/authorized-apps/:clientId')
     @HttpCode(204)
     @UseGuards(JwtAuthGuard)
-    async revokeAuthorizedApp(@Request() req: JwtRequest, @Param('clientId') clientId: string): Promise<void> {
+    async revokeAuthorizedApp(
+        @Request() req: JwtRequest,
+        @ValidatedParam({ name: 'clientId', schema: z.string().min(1).max(128) }) clientId: string,
+    ): Promise<void> {
         await this.authorizedApps.revokeAuthorizedApp({ userId: req.user.sub, clientId });
     }
 }

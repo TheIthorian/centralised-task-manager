@@ -1,15 +1,17 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
+import { z } from 'zod';
+import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { requestObject } from '../../common/zod/param-schemas.js';
 
-export class RefreshDto {
-    @ApiPropertyOptional({
-        description:
+// Defaulted so a refresh that relies on the ctm_refresh cookie parses with no body at all.
+export const refreshSchema = requestObject({
+    refreshToken: z
+        .string()
+        .min(1)
+        .max(4096)
+        .optional()
+        .describe(
             'Refresh token issued by POST /auth/login or /auth/register. Omit when the ctm_refresh cookie is present.',
-        maxLength: 4096,
-    })
-    @IsOptional()
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(4096)
-    refreshToken?: string;
-}
+        ),
+}).default({});
+
+export class RefreshDto extends createZodDto({ schema: refreshSchema, name: 'RefreshDto' }) {}

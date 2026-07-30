@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import cookie from '@fastify/cookie';
 import { AppModule } from '../app.module.js';
@@ -20,7 +19,6 @@ describe('login lockout', () => {
 
         app = module.createNestApplication(new FastifyAdapter());
         await app.register(cookie);
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

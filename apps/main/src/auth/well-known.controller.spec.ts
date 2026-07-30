@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
 
@@ -11,7 +10,6 @@ describe('WellKnownController', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
     });
@@ -106,9 +104,18 @@ describe('WellKnownController', () => {
         ['http on a non-loopback host', { client_name: 'x', redirect_uris: ['http://evil.example.com/cb'] }],
         ['a fragment', { client_name: 'x', redirect_uris: ['https://example.com/cb#frag'] }],
         ['a relative uri', { client_name: 'x', redirect_uris: ['/callback'] }],
-        ['too many redirect_uris', { client_name: 'x', redirect_uris: Array.from({ length: 9 }, (_, i) => `https://e.com/${i}`) }],
-        ['an unsupported grant_type', { client_name: 'x', redirect_uris: ['https://e.com/cb'], grant_types: ['client_credentials'] }],
-        ['an unsupported response_type', { client_name: 'x', redirect_uris: ['https://e.com/cb'], response_types: ['token'] }],
+        [
+            'too many redirect_uris',
+            { client_name: 'x', redirect_uris: Array.from({ length: 9 }, (_, i) => `https://e.com/${i}`) },
+        ],
+        [
+            'an unsupported grant_type',
+            { client_name: 'x', redirect_uris: ['https://e.com/cb'], grant_types: ['client_credentials'] },
+        ],
+        [
+            'an unsupported response_type',
+            { client_name: 'x', redirect_uris: ['https://e.com/cb'], response_types: ['token'] },
+        ],
         ['a control character in client_name', { redirect_uris: ['https://e.com/cb'], client_name: 'bad\u0000name' }],
         ['an over-long client_name', { redirect_uris: ['https://e.com/cb'], client_name: 'x'.repeat(101) }],
     ])('POST /.well-known/oauth-client rejects %s', async (_label, payload) => {
@@ -121,7 +128,10 @@ describe('WellKnownController', () => {
         const res = await app.inject({
             method: 'POST',
             url: '/.well-known/oauth-client',
-            payload: { client_name: 'Loopback Client', redirect_uris: ['http://127.0.0.1:8976/callback', 'http://localhost:1234/cb'] },
+            payload: {
+                client_name: 'Loopback Client',
+                redirect_uris: ['http://127.0.0.1:8976/callback', 'http://localhost:1234/cb'],
+            },
         });
 
         expect(res.statusCode).toBe(201);

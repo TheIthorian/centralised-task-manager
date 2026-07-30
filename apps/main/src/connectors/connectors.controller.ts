@@ -1,12 +1,10 @@
 import {
+    Body,
     Controller,
     Get,
     Post,
     Patch,
     Delete,
-    Param,
-    Body,
-    Query,
     Request,
     Res,
     UseGuards,
@@ -32,6 +30,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import { objectIdSchema } from '../common/zod/param-schemas.js';
+import { UnvalidatedInput } from '../common/validation/unvalidated-input.decorator.js';
+import { z } from 'zod';
+import { ValidatedBody, ValidatedQueryValue, ValidatedParam } from '../common/validation/validated.decorators.js';
 
 interface AuthRequest {
     user: JwtPayload;
@@ -135,7 +137,7 @@ export class ConnectorsController {
     @UseGuards(JwtAuthGuard)
     async listNotionDatabases(
         @Request() req: AuthRequest,
-        @Param('connectionId') connectionId: string,
+        @ValidatedParam({ name: 'connectionId', schema: objectIdSchema }) connectionId: string,
     ): Promise<NotionDatabaseDto[]> {
         const source = await this.connectors.getConnectionSource({ userId: req.user.sub, connectionId });
 
@@ -154,9 +156,10 @@ export class ConnectorsController {
     @Post('connections/:connectionId/connection-details')
     @UseGuards(JwtAuthGuard)
     @HttpCode(200)
+    @UnvalidatedInput('the connector supplies its own JSON Schema, compiled by Ajv below')
     async setConnectionDetails(
         @Request() req: AuthRequest,
-        @Param('connectionId') connectionId: string,
+        @ValidatedParam({ name: 'connectionId', schema: objectIdSchema }) connectionId: string,
         @Body() body: Record<string, unknown>,
     ): Promise<OkDto> {
         const source = await this.connectors.getConnectionSource({ userId: req.user.sub, connectionId });
@@ -199,7 +202,7 @@ export class ConnectorsController {
     @UseGuards(JwtAuthGuard)
     async getOAuthUrl(
         @Request() req: AuthRequest,
-        @Param('connectorName') connectorName: ConnectorName,
+        @ValidatedParam({ name: 'connectorName', schema: z.enum(ConnectorName) }) connectorName: ConnectorName,
     ): Promise<ConnectorAuthUrlDto> {
         const url = await this.connectors.getOAuthUrl({ userId: req.user.sub, source: connectorName });
         return { url };
@@ -212,7 +215,10 @@ export class ConnectorsController {
     @Delete('connections/:connectionId')
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
-    async removeConnection(@Request() req: AuthRequest, @Param('connectionId') connectionId: string): Promise<void> {
+    async removeConnection(
+        @Request() req: AuthRequest,
+        @ValidatedParam({ name: 'connectionId', schema: objectIdSchema }) connectionId: string,
+    ): Promise<void> {
         await this.connectors.removeConnection({ userId: req.user.sub, connectionId });
     }
 
@@ -223,9 +229,9 @@ export class ConnectorsController {
     })
     @Get('oauth/callback/:connectorName')
     async oauthCallback(
-        @Param('connectorName') connectorName: ConnectorName,
-        @Query('code') code: string,
-        @Query('state') state: string,
+        @ValidatedParam({ name: 'connectorName', schema: z.enum(ConnectorName) }) connectorName: ConnectorName,
+        @ValidatedQueryValue({ name: 'code', schema: z.string().min(1).max(2048) }) code: string,
+        @ValidatedQueryValue({ name: 'state', schema: z.string().min(1).max(512) }) state: string,
         @Res() res: FastifyReply,
     ): Promise<void> {
         this.logger.log(`oauthCallback connectorName=${connectorName} state=${state} hasCode=${!!code}`);
@@ -265,8 +271,8 @@ export class ConnectorsController {
     @UseGuards(JwtAuthGuard)
     async update(
         @Request() req: AuthRequest,
-        @Param('id') id: string,
-        @Body() dto: UpdateConnectorDto,
+        @ValidatedParam({ name: 'id', schema: objectIdSchema }) id: string,
+        @ValidatedBody(UpdateConnectorDto) dto: UpdateConnectorDto,
     ): Promise<UpdateConnectorResponseDto> {
         const doc = await this.connectors.update({ configId: id, userId: req.user.sub, patch: dto });
         return { id: String(doc._id), enabled: doc.enabled };

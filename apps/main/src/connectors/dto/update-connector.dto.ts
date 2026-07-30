@@ -1,14 +1,15 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsObject, IsOptional } from 'class-validator';
+import { z } from 'zod';
+import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { requestObject } from '../../common/zod/param-schemas.js';
 
-export class UpdateConnectorDto {
-    @ApiPropertyOptional({ example: true })
-    @IsOptional()
-    @IsBoolean()
-    enabled?: boolean;
+export const updateConnectorSchema = requestObject({
+    enabled: z.boolean().optional(),
+    // Connector-specific and opaque here: the connector's own JSON Schema is what constrains the
+    // keys, applied by POST connection-details rather than at this endpoint.
+    settings: z.record(z.string(), z.unknown()).optional(),
+});
 
-    @ApiPropertyOptional({ example: { projectIds: ['abc123'] } })
-    @IsOptional()
-    @IsObject()
-    settings?: Record<string, unknown>;
-}
+export class UpdateConnectorDto extends createZodDto({
+    schema: updateConnectorSchema,
+    name: 'UpdateConnectorDto',
+}) {}

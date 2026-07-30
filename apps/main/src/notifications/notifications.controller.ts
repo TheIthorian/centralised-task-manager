@@ -1,22 +1,12 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Patch,
-    Param,
-    Body,
-    Query,
-    Request,
-    UseGuards,
-    HttpCode,
-    NotFoundException,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Request, UseGuards, HttpCode, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { UsersService } from '../users/users.service.js';
 import { Channel, NotificationsService } from './notifications.service.js';
 import { ListNotificationsQueryDto } from './dto/list-notifications-query.dto.js';
-import type { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
+// Value import, not `import type`: a type-only import is erased, so the pipe would see a bare
+// Object metatype and validate nothing.
+import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import {
     MarkAllReadResultDto,
@@ -25,6 +15,9 @@ import {
     NotificationPreferencesDto,
     TestChannelResultDto,
 } from './dto/notification-response.dto.js';
+import { objectIdSchema } from '../common/zod/param-schemas.js';
+import { z } from 'zod';
+import { ValidatedBody, ValidatedQuery, ValidatedParam } from '../common/validation/validated.decorators.js';
 
 type AuthRequest = { user: JwtPayload };
 
@@ -45,7 +38,7 @@ export class NotificationsController {
     @Post('channels/:channel/test')
     async testNotificationChannel(
         @Request() req: AuthRequest,
-        @Param('channel') channel: Channel,
+        @ValidatedParam({ name: 'channel', schema: z.enum(Channel) }) channel: Channel,
     ): Promise<TestChannelResultDto> {
         return this.notificationsService.testChannel({ userId: req.user.sub, channel });
     }
@@ -56,7 +49,10 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'List in-app notifications' })
     @Get()
-    async list(@Request() req: AuthRequest, @Query() query: ListNotificationsQueryDto): Promise<NotificationDto[]> {
+    async list(
+        @Request() req: AuthRequest,
+        @ValidatedQuery(ListNotificationsQueryDto) query: ListNotificationsQueryDto,
+    ): Promise<NotificationDto[]> {
         return this.notificationsService.list({
             userId: req.user.sub,
             page: query.page,
@@ -69,7 +65,10 @@ export class NotificationsController {
     @ApiBearerAuth('jwt')
     @ApiOperation({ summary: 'Mark a notification as read' })
     @Patch(':id/read')
-    async markRead(@Request() req: AuthRequest, @Param('id') id: string): Promise<MarkReadResultDto> {
+    async markRead(
+        @Request() req: AuthRequest,
+        @ValidatedParam({ name: 'id', schema: objectIdSchema }) id: string,
+    ): Promise<MarkReadResultDto> {
         return this.notificationsService.markRead({ userId: req.user.sub, id });
     }
 
@@ -102,7 +101,7 @@ export class NotificationsController {
     @Patch('preferences')
     async updatePreferences(
         @Request() req: AuthRequest,
-        @Body() dto: UpdatePreferencesDto,
+        @ValidatedBody(UpdatePreferencesDto) dto: UpdatePreferencesDto,
     ): Promise<NotificationPreferencesDto> {
         return this.usersService.updateNotificationPreferences({ userId: req.user.sub, prefs: dto });
     }

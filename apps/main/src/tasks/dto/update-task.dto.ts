@@ -1,108 +1,48 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-    IsString,
-    IsOptional,
-    IsISO8601,
-    IsInt,
-    Min,
-    Max,
-    IsArray,
-    MaxLength,
-    IsUrl,
-    ValidateNested,
-    IsEnum,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import type { LocationDto as ILocationDto, Duration, UpdateTaskDto as IUpdateTaskDto } from '@ctm/api-client';
+import { z } from 'zod';
+import type { LocationDto as ILocationDto, UpdateTaskDto as IUpdateTaskDto } from '@ctm/api-client';
+import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { isoDateTimeSchema, requestObject } from '../../common/zod/param-schemas.js';
 
-export class LocationDto implements ILocationDto {
-    @ApiPropertyOptional({ example: 'Eiffel Tower', maxLength: 200 })
-    @IsString()
-    @MaxLength(200)
-    name!: string;
+export const MAX_TAGS = 50;
+export const MAX_LOCATIONS = 20;
 
-    @ApiPropertyOptional({ example: 'https://maps.google.com/?q=Eiffel+Tower', maxLength: 500 })
-    @IsString()
-    @IsUrl()
-    @MaxLength(500)
-    googleMapsUrl!: string;
-}
+export const locationSchema = requestObject({
+    name: z.string().min(1).max(200),
+    googleMapsUrl: z.string().max(500).url(),
+});
 
-export class DueDateDto {
-    @ApiProperty({ example: '2026-06-01' })
-    @IsISO8601()
-    date!: string;
+export const dueDateSchema = requestObject({
+    date: isoDateTimeSchema,
+    timezone: z.string().max(64).optional(),
+    recurrence: z.string().max(200).optional(),
+});
 
-    @ApiPropertyOptional({ example: 'America/New_York' })
-    @IsOptional()
-    @IsString()
-    timezone?: string;
+export const durationSchema = requestObject({
+    amount: z.number().int().min(1).max(100_000),
+    unit: z.enum(['minute', 'day']),
+});
 
-    @ApiPropertyOptional({ example: 'FREQ=WEEKLY;BYDAY=MO' })
-    @IsOptional()
-    @IsString()
-    recurrence?: string;
-}
+/** Task priority, 1 (highest) to 4 (lowest), matching Todoist's scale. */
+export const prioritySchema = z.literal([1, 2, 3, 4]);
 
-export class DurationDto implements Duration {
-    @ApiProperty({ example: 90 })
-    @IsInt()
-    @Min(1)
-    amount!: number;
+export const tagsSchema = z.array(z.string().min(1).max(50)).max(MAX_TAGS);
 
-    @ApiProperty({ example: 'minute', enum: ['minute', 'day'] })
-    @IsEnum(['minute', 'day'])
-    unit!: 'minute' | 'day';
-}
+export const locationsSchema = z.array(locationSchema).max(MAX_LOCATIONS);
 
-export class UpdateTaskDto implements IUpdateTaskDto {
-    @ApiPropertyOptional({ example: 'Updated title', maxLength: 200 })
-    @IsOptional()
-    @IsString()
-    @MaxLength(200)
-    title?: string;
+export const updateTaskSchema = requestObject({
+    title: z.string().min(1).max(200).optional(),
+    description: z.string().max(2000).optional(),
+    due: dueDateSchema.optional(),
+    deadlineDate: isoDateTimeSchema.optional(),
+    duration: durationSchema.optional(),
+    priority: prioritySchema.optional(),
+    tags: tagsSchema.optional(),
+    locations: locationsSchema.optional().describe('Locations with Google Maps links'),
+});
 
-    @ApiPropertyOptional({ example: 'Updated description', maxLength: 2000 })
-    @IsOptional()
-    @IsString()
-    @MaxLength(2000)
-    description?: string;
+export class LocationDto extends createZodDto<ILocationDto>({ schema: locationSchema, name: 'LocationDto' }) {}
 
-    @ApiPropertyOptional({ type: DueDateDto })
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => DueDateDto)
-    due?: DueDateDto;
-
-    @ApiPropertyOptional({ example: '2026-06-30' })
-    @IsOptional()
-    @IsISO8601()
-    deadlineDate?: string;
-
-    @ApiPropertyOptional({ type: DurationDto })
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => DurationDto)
-    duration?: DurationDto;
-
-    @ApiPropertyOptional({ minimum: 1, maximum: 4, example: 1 })
-    @IsOptional()
-    @IsInt()
-    @Min(1)
-    @Max(4)
-    priority?: 1 | 2 | 3 | 4;
-
-    @ApiPropertyOptional({ type: [String], example: ['work', 'urgent'], maxLength: 50 })
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    @MaxLength(50, { each: true })
-    tags?: string[];
-
-    @ApiPropertyOptional({ type: [LocationDto], description: 'Locations with Google Maps links' })
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => LocationDto)
-    locations?: LocationDto[];
-}
+export class UpdateTaskDto extends createZodDto<IUpdateTaskDto>({
+    schema: updateTaskSchema,
+    name: 'UpdateTaskDto',
+}) {}
