@@ -23,7 +23,7 @@ export function AuthorizedAppsPage(): React.JSX.Element {
     if (isLoading) {
         return (
             <div className="p-4 md:p-6 max-w-2xl">
-                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm">Loading…</p>
+                <p className="text-muted font-bold text-sm">Loading…</p>
             </div>
         );
     }
@@ -31,22 +31,22 @@ export function AuthorizedAppsPage(): React.JSX.Element {
     return (
         <div className="p-4 md:p-6 max-w-2xl">
             <div className="mb-6">
-                <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">
+                <h1 className="text-2xl font-semibold tracking-tight text-fg">
                     Authorized Apps
                 </h1>
-                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
+                <p className="text-muted font-bold text-sm mt-1">
                     Third-party apps you have granted access to your account.
                 </p>
             </div>
 
             {isError && (
-                <p className="text-nb-red font-bold text-sm mb-4">
+                <p className="text-warn font-bold text-sm mb-4">
                     {getErrorMessage(error, 'Failed to load authorized apps.')}
                 </p>
             )}
 
             {apps.length === 0 && !isError && (
-                <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm">No authorized apps.</p>
+                <p className="text-muted font-bold text-sm">No authorized apps.</p>
             )}
 
             <div className="flex flex-col gap-3">
@@ -86,18 +86,18 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
     });
 
     return (
-        <div className="bg-white dark:bg-neutral-900 border-2 border-nb-black dark:border-white/20 shadow-[3px_3px_0px_#111] dark:shadow-none p-4 flex flex-col gap-2">
+        <div className="bg-panel border border-line p-4 flex flex-col gap-2">
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-black uppercase text-sm tracking-wide text-nb-black dark:text-white">
+                        <p className="font-semibold text-sm tracking-wide text-fg">
                             {app.clientName}
                         </p>
-                        <span className="px-1.5 py-0.5 text-[10px] font-black uppercase tracking-widest border border-nb-black/30 dark:border-white/20 text-nb-black/50 dark:text-white/40">
+                        <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]st border border-line/30 text-muted">
                             OAuth
                         </span>
                     </div>
-                    <p className="text-xs text-nb-black/50 dark:text-white/40 font-bold">Authorized {authorizedDate}</p>
+                    <p className="text-xs text-muted font-bold">Authorized {authorizedDate}</p>
                 </div>
 
                 {!confirming && (
@@ -112,7 +112,7 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
                     {app.scopes.map((scope) => (
                         <span
                             key={scope}
-                            className="px-2 py-0.5 text-xs font-bold uppercase border-2 border-nb-black dark:border-white/20 text-nb-black dark:text-white"
+                            className="px-2 py-0.5 text-xs font-bold uppercase border border-line text-fg"
                         >
                             {scope}
                         </span>
@@ -121,13 +121,13 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
             )}
 
             {confirming && (
-                <div className="flex flex-col gap-2 border-t-2 border-nb-black/20 dark:border-white/10 pt-2">
-                    <p className="text-sm font-bold text-nb-black dark:text-white">
+                <div className="flex flex-col gap-2 border-t border-line/20 pt-2">
+                    <p className="text-sm font-bold text-fg">
                         Revoke access for {app.clientName}?
                     </p>
 
                     {revokeMutation.isError && (
-                        <p className="text-nb-red font-bold text-sm">
+                        <p className="text-warn font-bold text-sm">
                             {getErrorMessage(revokeMutation.error, 'Failed to revoke. Please try again.')}
                         </p>
                     )}
@@ -143,7 +143,7 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
                         <button
                             type="button"
                             onClick={() => setConfirming(false)}
-                            className="font-black uppercase text-xs text-nb-black dark:text-white underline"
+                            className="font-semibold text-xs text-fg underline"
                         >
                             Cancel
                         </button>

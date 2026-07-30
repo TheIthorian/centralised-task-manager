@@ -152,19 +152,19 @@ export function OAuthConsentPage(): React.JSX.Element {
 
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-white dark:bg-neutral-900 border-4 border-nb-black dark:border-white/20 shadow-[6px_6px_0px_#111] dark:shadow-none p-8">
-                <p className="text-xs font-black uppercase tracking-widest text-nb-grey mb-1">
+            <div className="w-full max-w-sm bg-panel border border-line shadow-[6px_6px_0px_#111] p-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em]st text-muted mb-1">
                     CTM MCP Server is requesting access
                 </p>
-                <h1 className="text-3xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-1">
+                <h1 className="text-3xl font-semibold tracking-tight text-fg mb-1">
                     Authorise CTM
                 </h1>
-                <p className="text-sm font-bold text-nb-grey mb-5">Signed in as {user.email}</p>
+                <p className="text-sm font-bold text-muted mb-5">Signed in as {user.email}</p>
 
                 {/* Permissions box */}
-                <div className="border-2 border-nb-black mb-5" style={{ background: '#fffbe8' }}>
-                    <div className="px-3 py-2 border-b-2 border-nb-black bg-[#f5f5f5]">
-                        <span className="text-xs font-black uppercase tracking-widest text-nb-grey">
+                <div className="border border-line mb-5" style={{ background: '#fffbe8' }}>
+                    <div className="px-3 py-2 border-b border-line bg-[#f5f5f5]">
+                        <span className="text-xs font-semibold uppercase tracking-[0.12em]st text-muted">
                             Permissions requested
                         </span>
                     </div>
@@ -175,7 +175,7 @@ export function OAuthConsentPage(): React.JSX.Element {
                             <div className="w-2 h-2 bg-[#ccc]" />
                         </div>
                         <div>
-                            <p className="text-xs font-black text-[#aaa]">Verify identity</p>
+                            <p className="text-xs font-semibold text-[#aaa]">Verify identity</p>
                             <p className="text-[10px] font-bold text-[#ccc] uppercase tracking-wide">
                                 openid · Required
                             </p>
@@ -188,7 +188,7 @@ export function OAuthConsentPage(): React.JSX.Element {
                             key={resource}
                             className={idx < arr.length - 1 ? 'px-3 py-2.5 border-b border-[#e8e0b0]' : 'px-3 py-2.5'}
                         >
-                            <p className="text-[10px] font-black uppercase tracking-widest text-nb-black mb-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.12em]st text-fg mb-2">
                                 {RESOURCE_LABELS[resource] ?? resource.charAt(0).toUpperCase() + resource.slice(1)}
                             </p>
                             <div className="flex gap-2 flex-wrap">
@@ -205,13 +205,13 @@ export function OAuthConsentPage(): React.JSX.Element {
                                             className="flex items-center gap-1.5 cursor-pointer"
                                         >
                                             <div
-                                                className={`w-4 h-4 border-2 border-nb-black flex-shrink-0 flex items-center justify-center ${
-                                                    checked ? 'bg-nb-yellow' : 'bg-white'
+                                                className={`w-4 h-4 border border-line flex-shrink-0 flex items-center justify-center ${
+                                                    checked ? 'bg-accent' : 'bg-white'
                                                 }`}
                                             >
-                                                {checked && <div className="w-2 h-2 bg-nb-black" />}
+                                                {checked && <div className="w-2 h-2 bg-fg" />}
                                             </div>
-                                            <span className="text-xs font-bold text-nb-black">{entry.label}</span>
+                                            <span className="text-xs font-bold text-fg">{entry.label}</span>
                                         </button>
                                     );
                                 })}
@@ -221,8 +221,8 @@ export function OAuthConsentPage(): React.JSX.Element {
                 </div>
 
                 {error && (
-                    <div className="border-2 border-nb-red bg-nb-red/10 p-3 mb-4">
-                        <p className="text-nb-red font-bold text-sm">{error}</p>
+                    <div className="border border-warn bg-warn-bg p-3 mb-4">
+                        <p className="text-warn font-bold text-sm">{error}</p>
                     </div>
                 )}
 
@@ -232,7 +232,7 @@ export function OAuthConsentPage(): React.JSX.Element {
                     </Button>
                 </form>
 
-                <p className="mt-4 text-center text-xs font-bold text-nb-grey">
+                <p className="mt-4 text-center text-xs font-bold text-muted">
                     You'll be redirected back to the requesting app after authorising.
                 </p>
             </div>

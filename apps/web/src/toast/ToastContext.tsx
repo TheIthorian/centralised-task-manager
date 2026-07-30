@@ -48,10 +48,10 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
                 {toasts.map((toast) => (
                     <div
                         key={toast.id}
-                        className="border-2 border-nb-black bg-white px-4 py-3 shadow-[4px_4px_0px_#111]"
+                        className="border border-line bg-white px-4 py-3 shadow-[4px_4px_0px_#111]"
                     >
-                        <p className="text-xs font-black uppercase tracking-wide text-nb-black">{toast.title}</p>
-                        <p className="mt-1 text-sm font-bold text-nb-black/80">{toast.description}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-fg">{toast.title}</p>
+                        <p className="mt-1 text-sm font-bold text-fg/80">{toast.description}</p>
                     </div>
                 ))}
             </div>

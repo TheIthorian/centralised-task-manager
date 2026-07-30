@@ -8,10 +8,10 @@ const DAY_WIDTH_PX = 24;
 const LEFT_COL_PX = 180;
 
 const PRIORITY_BAR: Record<number, string> = {
-    1: 'bg-nb-red',
-    2: 'bg-nb-yellow',
-    3: 'bg-nb-black/20',
-    4: 'bg-nb-black/10',
+    1: 'bg-warn',
+    2: 'bg-accent',
+    3: 'bg-fg/20',
+    4: 'bg-fg/10',
 };
 
 function startOfDay(date: Date): Date {
@@ -108,34 +108,34 @@ export function TimelinePage(): React.JSX.Element {
 
     return (
         <div className="p-4 md:p-6 flex flex-col" style={{ height: 'calc(100dvh - 4rem)' }}>
-            <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white mb-4">
+            <h1 className="text-2xl font-semibold tracking-tight text-fg mb-4">
                 Timeline
             </h1>
 
             {isLoading && (
-                <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">
+                <p className="font-bold text-muted uppercase text-sm tracking-wide">
                     Loading…
                 </p>
             )}
 
             {!isLoading && (
-                <div className="flex border-2 border-nb-black dark:border-white/20 overflow-hidden flex-1 min-h-0">
+                <div className="flex border border-line overflow-hidden flex-1 min-h-0">
                     {/* Left column — task titles */}
                     <div
                         style={{ width: LEFT_COL_PX, minWidth: LEFT_COL_PX }}
-                        className="border-r-2 border-nb-black dark:border-white/20 flex flex-col flex-shrink-0 overflow-y-auto"
+                        className="border-r-2 border-line flex flex-col flex-shrink-0 overflow-y-auto"
                     >
-                        <div className="h-8 border-b-2 border-nb-black bg-nb-black flex-shrink-0" />
+                        <div className="h-8 border-b border-line bg-fg flex-shrink-0" />
                         {tasks.map((task) => (
                             <div
                                 key={task.id}
-                                className="h-9 flex-shrink-0 border-b border-nb-black/20 flex items-center px-2 overflow-hidden"
+                                className="h-9 flex-shrink-0 border-b border-line/20 flex items-center px-2 overflow-hidden"
                             >
                                 <span
                                     className={`font-bold text-xs truncate ${
                                         task.completed
-                                            ? 'line-through text-nb-black/40 dark:text-white/30'
-                                            : 'text-nb-black dark:text-white'
+                                            ? 'line-through text-muted'
+                                            : 'text-fg'
                                     }`}
                                 >
                                     {task.title}
@@ -149,13 +149,13 @@ export function TimelinePage(): React.JSX.Element {
                         <div style={{ width: canvasWidth, position: 'relative' }}>
                             {/* Time axis */}
                             <div
-                                className="h-8 border-b-2 border-nb-black relative bg-nb-black flex-shrink-0"
+                                className="h-8 border-b border-line relative bg-fg flex-shrink-0"
                                 style={{ width: canvasWidth }}
                             >
                                 {monthTicks.map((tick) => (
                                     <span
                                         key={`${tick.label}-${tick.leftPx}`}
-                                        className="absolute top-0 h-full flex items-center text-nb-yellow font-black text-xs uppercase pl-1 pointer-events-none"
+                                        className="pointer-events-none absolute top-0 flex h-full items-center pl-1 text-[10px] uppercase tracking-[0.1em] text-accent-fg"
                                         style={{ left: tick.leftPx }}
                                     >
                                         {tick.label}
@@ -163,7 +163,7 @@ export function TimelinePage(): React.JSX.Element {
                                 ))}
                                 {todayOffsetPx >= 0 && todayOffsetPx <= canvasWidth && (
                                     <div
-                                        className="absolute top-0 bottom-0 w-px bg-nb-red"
+                                        className="absolute top-0 bottom-0 w-px bg-warn"
                                         style={{ left: todayOffsetPx }}
                                     />
                                 )}
@@ -181,18 +181,18 @@ export function TimelinePage(): React.JSX.Element {
                                 return (
                                     <div
                                         key={task.id}
-                                        className="h-9 border-b border-nb-black/20 relative"
+                                        className="h-9 border-b border-line/20 relative"
                                         style={{ width: canvasWidth }}
                                     >
                                         {todayOffsetPx >= 0 && todayOffsetPx <= canvasWidth && (
                                             <div
-                                                className="absolute top-0 bottom-0 w-px bg-nb-red/30 pointer-events-none"
+                                                className="absolute top-0 bottom-0 w-px bg-warn/30 pointer-events-none"
                                                 style={{ left: todayOffsetPx }}
                                             />
                                         )}
                                         <button
                                             onClick={() => setEditTask(task)}
-                                            className={`absolute top-1.5 h-6 border-2 border-nb-black cursor-pointer ${barClass} ${
+                                            className={`absolute top-1.5 h-6 border border-line cursor-pointer ${barClass} ${
                                                 task.completed ? 'opacity-40' : ''
                                             } flex items-center px-1 overflow-hidden`}
                                             style={{ left: leftPx, width: Math.max(widthPx, 8) }}
