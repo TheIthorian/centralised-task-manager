@@ -281,7 +281,7 @@ export function TasksPage(): React.JSX.Element {
     const isError = filter === 'all' ? false : flatIsError;
 
     return (
-        <div className="max-w-3xl p-4 md:p-6">
+        <div className="p-4 md:p-6">
             <div className="mb-5 flex items-end justify-between gap-4">
                 <div className="flex flex-col gap-0.5">
                     <h1 className="text-xl font-semibold tracking-tight text-fg">{t('tasks.title')}</h1>
