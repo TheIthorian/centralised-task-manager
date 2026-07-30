@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { InternalError } from '@ctm/errors';
+import { MissingProviderError } from '../lib/errors.js';
 
 export type Density = 'compact' | 'comfortable' | 'spacious';
 
@@ -46,7 +46,7 @@ export function DensityProvider({ children }: { children: React.ReactNode }): Re
 export function useDensity(): DensityContextValue {
     const ctx = useContext(DensityContext);
 
-    if (!ctx) throw new InternalError('useDensity must be used within DensityProvider');
+    if (!ctx) throw new MissingProviderError({ hook: 'useDensity', provider: 'DensityProvider' });
 
     return ctx;
 }
