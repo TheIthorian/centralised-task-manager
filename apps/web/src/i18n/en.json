@@ -5,7 +5,8 @@
         "undo": "Undo",
         "syncNow": "Sync now",
         "reconnect": "Reconnect",
-        "skipToContent": "Skip to content"
+        "skipToContent": "Skip to content",
+        "loading": "Loading…"
     },
     "nav": {
         "label": "Main",
@@ -77,6 +78,24 @@
         "titlePlaceholder": "What needs doing?",
         "notesPlaceholder": "More detail…",
         "priorityLabel": "Priority"
+    },
+    "timeline": {
+        "title": "Timeline"
+    },
+    "calendar": {
+        "title": "Calendar",
+        "today": "Today",
+        "previous": "Previous",
+        "next": "Next",
+        "rangeLabel": "Range",
+        "ranges": {
+            "month": "Month",
+            "week": "Week",
+            "threeDay": "3 days",
+            "day": "Day"
+        },
+        "more": "+{{count}} more",
+        "emptyDay": "Nothing due"
     },
     "palette": {
         "label": "Command palette",
