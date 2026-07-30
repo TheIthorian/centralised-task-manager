@@ -1,4 +1,4 @@
-import type { BrandKey } from './brand-icons.js';
+import type { BrandKey } from '@ctm/ui';
 
 /** Server name written into a client's MCP config when it supports a one-click install. */
 const SERVER_NAME = 'ctm';

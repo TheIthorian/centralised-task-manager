@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Badge, Checkbox } from '@ctm/ui';
 import type { Duration, TaskDto } from '@ctm/api-client';
 import { SourceBadge } from './SourceBadge.js';
+import { useTranslation } from 'react-i18next';
 
 type TaskCardProps = {
     task: TaskDto;
@@ -15,15 +16,10 @@ function formatDuration(d: Duration): string {
     return d.unit === 'minute' ? `${d.amount} min` : `${d.amount}d`;
 }
 
-const priorityVariant = {
-    1: 'p1',
-    2: 'p2',
-    3: 'p3',
-    4: 'p3',
-} as const;
 
 /** A single task row card in neobrutalist style. */
 export function TaskCard({ task, highlighted = false, onToggle, onEdit }: TaskCardProps): React.JSX.Element {
+    const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -108,7 +104,7 @@ export function TaskCard({ task, highlighted = false, onToggle, onEdit }: TaskCa
                 )}
                 <SourceBadge source={task.source} />
                 {task.priority && (
-                    <Badge variant={priorityVariant[task.priority as 1 | 2 | 3 | 4]}>P{task.priority}</Badge>
+                    <Badge variant="priority">{t('tasks.priority', { level: task.priority })}</Badge>
                 )}
             </div>
         </div>

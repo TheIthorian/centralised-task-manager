@@ -79,7 +79,17 @@
             "compact": "Compact",
             "comfortable": "Comfortable",
             "spacious": "Spacious",
-            "previewLabel": "Preview"
+            "previewLabel": "Preview",
+            "light": "Light",
+            "dark": "Dark",
+            "sample": {
+                "first": "Renew home insurance",
+                "firstMeta": "2 days late",
+                "second": "Review sync worker retry logic",
+                "secondMeta": "17:00",
+                "third": "Call the dentist back",
+                "thirdMeta": "18:30"
+            }
         }
     }
 }

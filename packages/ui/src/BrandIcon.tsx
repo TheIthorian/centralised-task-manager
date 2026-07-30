@@ -1,5 +1,5 @@
-import { BRAND_ICONS } from '../lib/brand-icons.js';
-import type { BrandKey } from '../lib/brand-icons.js';
+import { BRAND_ICONS } from './brand-icons.js';
+import type { BrandKey } from './brand-icons.js';
 
 type BrandIconProps = {
     brand: BrandKey;

@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Button } from '@ctm/ui';
+import { BrandIcon, Button } from '@ctm/ui';
 import { MCP_CLIENTS } from '../../lib/mcp-clients.js';
-import { BrandIcon } from '../BrandIcon.js';
 
 type McpConnectorCardProps = {
     mcpUrl: string;
