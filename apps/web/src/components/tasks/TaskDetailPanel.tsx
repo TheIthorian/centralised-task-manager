@@ -8,7 +8,8 @@ import { getErrorMessage } from '../../api/error-message.js';
 import { useToast } from '../../toast/ToastContext.js';
 import { useAuth } from '../../auth/AuthContext.js';
 import { SourceBadge } from './SourceBadge.js';
-import { DATE_FIELD_CLASS, DetailSection, FIELD_CONTROL_CLASS, FIELD_HEIGHT_CLASS, FIELD_LABEL_CLASS } from './detail/DetailSection.js';
+import { DATE_FIELD_CLASS, DetailSection, FIELD_HEIGHT_CLASS, FIELD_LABEL_CLASS } from './detail/DetailSection.js';
+import { AutoGrowTextarea } from './detail/AutoGrowTextarea.js';
 import { DetailSelect } from './detail/DetailSelect.js';
 import { ReminderSection } from './detail/ReminderSection.js';
 import { RelationSection } from './detail/RelationSection.js';
@@ -229,12 +230,11 @@ export function TaskDetailPanel({
                                 <label htmlFor={descriptionId} className={FIELD_LABEL_CLASS}>
                                     {t('taskDetail.fields.description')}
                                 </label>
-                                <textarea
+                                <AutoGrowTextarea
                                     id={descriptionId}
                                     value={description}
                                     disabled={busy}
-                                    onChange={(event) => setDescription(event.target.value)}
-                                    className={`${FIELD_CONTROL_CLASS} h-32 resize-none`}
+                                    onChange={setDescription}
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
