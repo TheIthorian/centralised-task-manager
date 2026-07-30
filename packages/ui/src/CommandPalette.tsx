@@ -165,7 +165,8 @@ export function CommandPalette({
             }}
             onKeyDown={handleKeyDown}
             className={clsx(
-                'fixed inset-0 z-50 grid justify-items-center pt-[12vh]',
+                // items-start, or the grid stretches the dialog to the bottom of the window.
+                'fixed inset-0 z-50 grid items-start justify-items-center pt-[12vh]',
                 // The blur is the point: the dialog floats above the app rather than being
                 // pasted onto it, and the app stays recognisable underneath. It survives
                 // reduced motion, because only the entry movement is motion.
