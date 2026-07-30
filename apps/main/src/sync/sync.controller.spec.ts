@@ -122,6 +122,52 @@ describe('SyncController', () => {
         expect(delRes.statusCode).toBe(204);
     });
 
+    it('GET sync/:jobId 404s under a connection the job does not belong to', async () => {
+        const postRes = await app.inject({
+            method: 'POST',
+            url: `/connectors/connections/${connectionId}/sync`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const { id } = JSON.parse(postRes.body) as { id: string };
+
+        const getRes = await app.inject({
+            method: 'GET',
+            url: `/connectors/connections/${new Types.ObjectId().toString()}/sync/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(getRes.statusCode).toBe(404);
+    });
+
+    it('DELETE sync/:jobId 404s under a connection the job does not belong to', async () => {
+        const postRes = await app.inject({
+            method: 'POST',
+            url: `/connectors/connections/${connectionId}/sync`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const { id } = JSON.parse(postRes.body) as { id: string };
+
+        const delRes = await app.inject({
+            method: 'DELETE',
+            url: `/connectors/connections/${new Types.ObjectId().toString()}/sync/${id}`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(delRes.statusCode).toBe(404);
+    });
+
+    it('GET sync/:jobId 400s on a malformed connection id', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: `/connectors/connections/not-an-id/sync/000000000000000000000000`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
     it('User B cannot access User A sync jobs', async () => {
         const postRes = await app.inject({
             method: 'POST',

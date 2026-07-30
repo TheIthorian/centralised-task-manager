@@ -36,9 +36,10 @@ export class SyncController {
     @Get(':jobId')
     async getJob(
         @Request() req: AuthRequest,
+        @ValidatedParam({ name: 'connectionId', schema: objectIdSchema }) connectionId: string,
         @ValidatedParam({ name: 'jobId', schema: objectIdSchema }) jobId: string,
     ): Promise<TaskSyncJobDto> {
-        const job = await this.sync.getJob({ userId: req.user.sub, jobId });
+        const job = await this.sync.getJob({ userId: req.user.sub, jobId, connectionId });
 
         return toSyncJobDto(job);
     }
@@ -50,8 +51,9 @@ export class SyncController {
     @HttpCode(204)
     async cancelJob(
         @Request() req: AuthRequest,
+        @ValidatedParam({ name: 'connectionId', schema: objectIdSchema }) connectionId: string,
         @ValidatedParam({ name: 'jobId', schema: objectIdSchema }) jobId: string,
     ): Promise<void> {
-        await this.sync.cancelJob({ userId: req.user.sub, jobId });
+        await this.sync.cancelJob({ userId: req.user.sub, jobId, connectionId });
     }
 }

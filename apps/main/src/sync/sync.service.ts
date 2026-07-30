@@ -42,21 +42,40 @@ export class SyncService {
         return job;
     }
 
-    /** Retrieve a job by ID. Throws 404 if not found, 403 if wrong user. */
-    async getJob({ userId, jobId }: { userId: string; jobId: string }): Promise<TaskSyncJobDocument> {
+    /** Retrieve a job by ID within a connection. Throws 404 if not found or on the wrong connection, 403 if wrong user. */
+    async getJob({
+        userId,
+        jobId,
+        connectionId,
+    }: {
+        userId: string;
+        jobId: string;
+        connectionId: string;
+    }): Promise<TaskSyncJobDocument> {
         const job = await this.taskSyncModel.findById(jobId);
 
         if (!job) throw new NotFoundException('Sync job not found');
 
         if (String(job.userId) !== userId) throw new ForbiddenException('Access denied');
 
+        // Ownership is checked first so a mismatched connection cannot reveal that a job id exists on another account.
+        if (job.connectionId !== connectionId) throw new NotFoundException('Sync job not found');
+
         return job;
     }
 
     /** Cancel a queued or running job. No-op if already terminal. */
-    async cancelJob({ userId, jobId }: { userId: string; jobId: string }): Promise<void> {
+    async cancelJob({
+        userId,
+        jobId,
+        connectionId,
+    }: {
+        userId: string;
+        jobId: string;
+        connectionId: string;
+    }): Promise<void> {
         // Verify ownership first
-        await this.getJob({ userId, jobId });
+        await this.getJob({ userId, jobId, connectionId });
 
         // Atomic status-guarded update — prevents TOCTOU race with runSync completing
         const updated = await this.taskSyncModel.findOneAndUpdate(
