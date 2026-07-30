@@ -11,12 +11,19 @@ export type ZodDto<T> = {
 type JsonSchemaProperty = {
     type?: string | string[];
     enum?: unknown[];
-    items?: { type?: string | string[] };
+    items?: { type?: string | string[]; enum?: unknown[] };
     minLength?: number;
     maxLength?: number;
+    minItems?: number;
+    maxItems?: number;
     description?: string;
     format?: string;
 };
+
+/** Converts a snake_case or camelCase property key to PascalCase, for naming enum schemas. */
+function pascalCase(key: string): string {
+    return key.replace(/(^|_)([a-z])/g, (_match, _sep, letter: string) => letter.toUpperCase());
+}
 
 /** Maps a JSON Schema type to the constructor `@nestjs/swagger` expects. */
 function swaggerTypeOf(type: string | string[] | undefined): FunctionConstructor | ObjectConstructor {
@@ -63,11 +70,18 @@ export function createZodDto<T>({ schema, name }: { schema: ZodType<T>; name: st
 
         const decorate = required.has(key) ? ApiProperty : ApiPropertyOptional;
 
+        // An array of enums carries its values on `items`, a scalar enum on the property itself.
+        const enumValues = type === 'array' ? property.items?.enum : property.enum;
+
         const options: ApiPropertyOptions = {
-            ...(property.enum ? { enum: property.enum, enumName: `${name}${key}` } : { type: swaggerTypeOf(type) }),
-            ...(type === 'array' ? { isArray: true, type: swaggerTypeOf(property.items?.type) } : {}),
+            ...(enumValues
+                ? { enum: enumValues, enumName: `${name}${pascalCase(key)}` }
+                : { type: swaggerTypeOf(type === 'array' ? property.items?.type : type) }),
+            ...(type === 'array' ? { isArray: true } : {}),
             ...(property.minLength === undefined ? {} : { minLength: property.minLength }),
             ...(property.maxLength === undefined ? {} : { maxLength: property.maxLength }),
+            ...(property.minItems === undefined ? {} : { minItems: property.minItems }),
+            ...(property.maxItems === undefined ? {} : { maxItems: property.maxItems }),
             ...(property.description === undefined ? {} : { description: property.description }),
         };
 

@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OAuthClientService } from './oauth-client.service.js';
 import { RegisterClientDto } from './dto/register-client.dto.js';
@@ -24,9 +24,6 @@ export class WellKnownController {
     @Post('oauth-client')
     @HttpCode(201)
     @StrictRateLimit()
-    // forbidNonWhitelisted is off here (unlike the global pipe): RFC 7591 §3.1 requires unknown
-    // client metadata to be ignored, and MCP clients routinely send logo_uri, contacts, and friends.
-    @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: false }))
     async registerClient(@Body() dto: RegisterClientDto): Promise<RegisterClientResponseDto> {
         return this.oauthClient.register(dto);
     }
