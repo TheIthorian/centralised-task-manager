@@ -1,49 +1,51 @@
 import type React from 'react';
+import { BrandIcon, type BrandKey } from '@ctm/ui';
 
-interface Integration {
+type Integration = {
+    brand: BrandKey;
     name: string;
-    color: string;
-    initial: string;
-}
+};
 
 const integrations: Integration[] = [
-    { name: 'Todoist', color: '#DB4035', initial: 'T' },
-    { name: 'Google Tasks', color: '#4285F4', initial: 'G' },
+    { brand: 'todoist', name: 'Todoist' },
+    { brand: 'google_tasks', name: 'Google Tasks' },
 ];
 
 /** Cards showing supported task app integrations. */
 export default function Integrations(): React.ReactElement {
     return (
-        <section className="bg-white border-b-4 border-nb-black py-24 px-6">
-            <div className="max-w-6xl mx-auto">
-                <h2 className="font-black text-nb-black uppercase text-4xl md:text-5xl mb-4">WORKS WITH</h2>
-                <p className="font-bold text-nb-black text-lg mb-12">
-                    Connect your existing task apps. More integrations coming soon.
-                </p>
-                <div className="flex flex-wrap gap-6">
+        <section id="works-with" className="border-b border-line px-6 py-24">
+            <div className="mx-auto max-w-6xl">
+                <h2 className="text-3xl font-semibold tracking-tight text-fg md:text-4xl">Works with</h2>
+                <p className="mt-4 text-muted">Connect your existing task apps. More integrations coming soon.</p>
+                <ul className="mt-12 flex flex-wrap gap-3">
                     {integrations.map((integration) => (
-                        <div
-                            key={integration.name}
-                            className="flex items-center gap-4 bg-white border-2 border-nb-black shadow-[4px_4px_0px_#111111] px-6 py-4"
+                        <li
+                            key={integration.brand}
+                            className="flex items-center gap-3 rounded-ctm border border-line bg-panel px-5 py-4"
                         >
-                            <div
-                                className="w-10 h-10 flex items-center justify-center font-black text-white text-lg border-2 border-nb-black shrink-0"
-                                style={{ backgroundColor: integration.color }}
-                            >
-                                {integration.initial}
-                            </div>
-                            <span className="font-black text-nb-black uppercase text-lg">{integration.name}</span>
-                        </div>
+                            <BrandIcon brand={integration.brand} size={24} />
+                            <span className="font-medium text-fg">{integration.name}</span>
+                        </li>
                     ))}
-                    <div className="flex items-center gap-4 border-2 border-dashed border-nb-black px-6 py-4">
-                        <div className="w-10 h-10 flex items-center justify-center font-black text-nb-black text-xl border-2 border-dashed border-nb-black shrink-0">
-                            +
-                        </div>
-                        <span className="font-bold text-nb-black uppercase text-sm tracking-wide">
-                            MORE COMING SOON
-                        </span>
-                    </div>
-                </div>
+                    <li className="flex items-center gap-3 rounded-ctm border border-dashed border-line px-5 py-4">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="24"
+                            height="24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            className="text-muted"
+                            aria-hidden="true"
+                            focusable="false"
+                        >
+                            <path d="M12 6v12M6 12h12" />
+                        </svg>
+                        <span className="text-muted">More coming soon</span>
+                    </li>
+                </ul>
             </div>
         </section>
     );
