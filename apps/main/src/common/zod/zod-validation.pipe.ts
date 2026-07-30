@@ -3,13 +3,6 @@ import { ValidationError } from '@ctm/errors';
 import type { ZodType } from 'zod';
 import { zodSchemaOf } from './create-zod-dto.js';
 
-/** Renders Zod issues as a single line, so the client sees every failure at once. */
-function formatIssues(error: { issues: { path: PropertyKey[]; message: string }[] }): string {
-    return error.issues
-        .map((issue) => (issue.path.length > 0 ? `${issue.path.join('.')}: ${issue.message}` : issue.message))
-        .join('; ');
-}
-
 /**
  * Validates handler arguments whose type was built by `createZodDto`.
  *
@@ -45,4 +38,11 @@ function parseOrThrow<T>({ schema, value }: { schema: ZodType<T>; value: unknown
     if (!result.success) throw new ValidationError(formatIssues(result.error));
 
     return result.data;
+}
+
+/** Renders Zod issues as a single line, so the client sees every failure at once. */
+function formatIssues(error: { issues: { path: PropertyKey[]; message: string }[] }): string {
+    return error.issues
+        .map((issue) => (issue.path.length > 0 ? `${issue.path.join('.')}: ${issue.message}` : issue.message))
+        .join('; ');
 }

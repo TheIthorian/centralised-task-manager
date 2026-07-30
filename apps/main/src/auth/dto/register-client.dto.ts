@@ -13,30 +13,6 @@ const SUPPORTED_GRANT_TYPES = ['authorization_code', 'refresh_token'] as const;
 const SUPPORTED_RESPONSE_TYPES = ['code'] as const;
 
 /**
- * Validates a single registered redirect URI.
- * Plain `http:` is allowed only for loopback hosts, so a dynamically registered client
- * cannot point users at a cleartext third-party host (RFC 8252 §7.3).
- */
-export function isRegisterableRedirectUri(value: string): boolean {
-    let url: URL;
-
-    try {
-        url = new URL(value);
-    } catch {
-        return false;
-    }
-
-    if (!ALLOWED_REDIRECT_SCHEMES.has(url.protocol)) return false;
-
-    // RFC 6749 §3.1.2: the redirection endpoint must not include a fragment.
-    if (url.hash.length > 0) return false;
-
-    if (url.protocol === 'http:' && !LOOPBACK_HOSTS.has(url.hostname)) return false;
-
-    return true;
-}
-
-/**
  * RFC 7591 dynamic client registration request.
  *
  * Unrecognised metadata (`logo_uri`, `contacts`, …) is stripped rather than rejected: RFC 7591
@@ -69,3 +45,27 @@ export class RegisterClientDto extends createZodDto<RegisterClientInput>({
     schema: registerClientSchema,
     name: 'RegisterClientDto',
 }) {}
+
+/**
+ * Validates a single registered redirect URI.
+ * Plain `http:` is allowed only for loopback hosts, so a dynamically registered client
+ * cannot point users at a cleartext third-party host (RFC 8252 §7.3).
+ */
+export function isRegisterableRedirectUri(value: string): boolean {
+    let url: URL;
+
+    try {
+        url = new URL(value);
+    } catch {
+        return false;
+    }
+
+    if (!ALLOWED_REDIRECT_SCHEMES.has(url.protocol)) return false;
+
+    // RFC 6749 §3.1.2: the redirection endpoint must not include a fragment.
+    if (url.hash.length > 0) return false;
+
+    if (url.protocol === 'http:' && !LOOPBACK_HOSTS.has(url.hostname)) return false;
+
+    return true;
+}
