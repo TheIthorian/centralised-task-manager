@@ -25,7 +25,8 @@ export function SegmentedControl<T extends string>({
                 <label
                     key={option.value}
                     className={clsx(
-                        'cursor-pointer border-r border-line px-3 py-1.5 text-[11px] last:border-r-0',
+                        'inline-flex h-11 cursor-pointer items-center border-r border-line px-3 text-[11px] md:h-8',
+                        'last:border-r-0',
                         'transition-colors duration-press',
                         'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-[-2px] has-[:focus-visible]:outline-accent',
                         option.value === value ? 'bg-accent text-accent-fg' : 'bg-panel text-muted hover:text-fg',

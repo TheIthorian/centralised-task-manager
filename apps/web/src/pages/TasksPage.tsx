@@ -26,6 +26,7 @@ export function TasksPage(): React.JSX.Element {
     const highlightTaskIdParam = searchParams.get('highlightTaskId');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
+    const [addingTask, setAddingTask] = useState(false);
     const { api } = useAuth();
 
     const qc = useQueryClient();
@@ -249,9 +250,12 @@ export function TasksPage(): React.JSX.Element {
                     sources={[...new Set(loadedTasks.map((task) => task.source))]}
                     search={searchParams.toString()}
                     onApplySearch={(search) => setSearchParams(new URLSearchParams(search))}
+                    onNewTask={() => setAddingTask(true)}
                 />
 
                 <AddTaskInline
+                    open={addingTask}
+                    onOpenChange={setAddingTask}
                     onAdd={async (dto) => {
                         await addMutation.mutateAsync(dto);
                     }}

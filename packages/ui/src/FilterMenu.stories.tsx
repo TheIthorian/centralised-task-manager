@@ -59,6 +59,8 @@ export const TaskFilters: Story = {
                 clearLabel="Clear filters"
                 onToggle={toggle}
                 onClear={() => setApplied([])}
+                onSaveView={() => setApplied([])}
+                labels={{ saveView: 'Save as view', viewName: 'Name this view', save: 'Save' }}
                 groups={CATALOGUE.map((group) => ({
                     ...group,
                     options: group.options.map((option) => ({

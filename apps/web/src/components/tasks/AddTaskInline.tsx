@@ -6,12 +6,14 @@ import { useTranslation } from 'react-i18next';
 type AddTaskInlineProps = {
     onAdd: (dto: CreateTaskDto) => Promise<void>;
     isPending?: boolean;
+    /** Owned by the page, because the control that opens the form lives in the filter row. */
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
 };
 
-/** Expandable inline form for quickly adding a task. */
-export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps): React.JSX.Element {
+/** Inline form for quickly adding a task. Its trigger sits in the filter row. */
+export function AddTaskInline({ onAdd, isPending = false, open, onOpenChange }: AddTaskInlineProps): React.JSX.Element | null {
     const { t } = useTranslation();
-    const [open, setOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<1 | 2 | 3>(2);
@@ -34,16 +36,10 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
         setDescription('');
         setPriority(2);
         setDueDate('');
-        setOpen(false);
+        onOpenChange(false);
     };
 
-    if (!open) {
-        return (
-            <Button variant="secondary" onClick={() => setOpen(true)} className="self-start">
-                {t('tasks.newTask')}
-            </Button>
-        );
-    }
+    if (!open) return null;
 
     return (
         <form
@@ -51,7 +47,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
             className="flex flex-col gap-3 rounded-ctm border border-line bg-panel p-4"
         >
             <Input
-                label="Task title"
+                label={t('tasks.titleLabel')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t('tasks.titlePlaceholder')}
@@ -59,7 +55,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                 required
             />
             <Input
-                label="Description (optional)"
+                label={t('tasks.descriptionLabel')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t('tasks.notesPlaceholder')}
@@ -83,18 +79,18 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                 ))}
             </div>
             <Input
-                label="Due date (optional)"
+                label={t('tasks.dueDateLabel')}
                 type="datetime-local"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
             />
             <div className="flex gap-2">
                 <Button type="submit" disabled={isPending}>
-                    {isPending ? 'Adding…' : 'Add'}
+                    {isPending ? t('tasks.adding') : t('tasks.add')}
                 </Button>
                 <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={() => onOpenChange(false)}
                     className="cursor-pointer text-xs text-accent underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                     {t('common.cancel')}

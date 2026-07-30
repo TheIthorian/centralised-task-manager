@@ -64,6 +64,7 @@
                 "google": "Google Tasks"
             },
             "menuLabel": "Filter",
+            "sliceLabel": "Which tasks",
             "clear": "Clear filters",
             "groups": {
                 "due": "Due",
@@ -89,6 +90,11 @@
             "title": "Could not load your tasks",
             "body": "The API did not respond. Check that it is running, then try again."
         },
+        "titleLabel": "Task title",
+        "descriptionLabel": "Description (optional)",
+        "dueDateLabel": "Due date (optional)",
+        "add": "Add",
+        "adding": "Adding…",
         "titlePlaceholder": "What needs doing?",
         "notesPlaceholder": "More detail…",
         "priorityLabel": "Priority"

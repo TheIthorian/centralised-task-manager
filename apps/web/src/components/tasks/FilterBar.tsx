@@ -1,13 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Chip, FilterMenu, Input, type FilterGroup } from '@ctm/ui';
+import { Button, Chip, FilterMenu, SegmentedControl, type FilterGroup } from '@ctm/ui';
 import type { TaskFilter } from '@ctm/api-client';
-import {
-    DUE_CONDITIONS,
-    FIELD_CONDITIONS,
-    hasCondition,
-    type Condition,
-} from '../../lib/task-conditions.js';
+import { DUE_CONDITIONS, FIELD_CONDITIONS, hasCondition, type Condition } from '../../lib/task-conditions.js';
 import { addSavedView, readSavedViews, removeSavedView, type SavedView } from '../../lib/saved-views.js';
 
 const BASE_FILTERS: TaskFilter[] = ['all', 'today', 'upcoming', 'done'];
@@ -26,9 +21,10 @@ export type FilterBarProps = {
     /** The query string a saved view would restore. */
     search: string;
     onApplySearch: (search: string) => void;
+    onNewTask: () => void;
 };
 
-/** The row above the list: which slice of the server's tasks, then a menu to narrow it. */
+/** The control row above the list: which slice, how to narrow it, and the way to add one. */
 export function FilterBar({
     filter,
     onFilterChange,
@@ -38,10 +34,10 @@ export function FilterBar({
     sources,
     search,
     onApplySearch,
+    onNewTask,
 }: FilterBarProps): React.JSX.Element {
     const { t } = useTranslation();
     const [views, setViews] = useState<SavedView[]>(readSavedViews);
-    const [newViewName, setNewViewName] = useState<string | null>(null);
 
     // Built alongside the options so a menu selection resolves back to a typed condition
     // without casting the group id.
@@ -57,9 +53,7 @@ export function FilterBar({
         {
             id: 'due',
             label: t('tasks.filters.groups.due'),
-            options: DUE_CONDITIONS.map((value) =>
-                option({ kind: 'due', value }, t(`tasks.filters.due.${value}`)),
-            ),
+            options: DUE_CONDITIONS.map((value) => option({ kind: 'due', value }, t(`tasks.filters.due.${value}`))),
         },
         {
             id: 'field',
@@ -77,83 +71,50 @@ export function FilterBar({
         },
     ].filter((group) => group.options.length > 0);
 
-    const saveView = (): void => {
-        if (!newViewName?.trim()) return;
-
-        setViews(addSavedView({ name: newViewName, search }));
-        setNewViewName(null);
-    };
-
     return (
-        <div className="flex flex-wrap items-center gap-1.5">
-            {BASE_FILTERS.map((value) => (
-                <Chip
-                    key={value}
-                    label={t(`tasks.filters.${value}`)}
-                    selected={filter === value}
-                    onToggle={() => onFilterChange(value)}
-                />
-            ))}
-
-            <span className="mx-1 h-4 w-px bg-line" aria-hidden="true" />
-
-            <FilterMenu
-                label={t('tasks.filters.menuLabel')}
-                clearLabel={t('tasks.filters.clear')}
-                groups={groups}
-                onClear={onClearConditions}
-                onToggle={({ groupId, value }) => {
-                    const condition = byKey.get(`${groupId}:${value}`);
-
-                    if (condition) onToggleCondition(condition);
-                }}
+        <div className="flex flex-wrap items-center gap-2">
+            <SegmentedControl
+                label={t('tasks.filters.sliceLabel')}
+                value={filter}
+                onChange={onFilterChange}
+                options={BASE_FILTERS.map((value) => ({ value, label: t(`tasks.filters.${value}`) }))}
             />
 
-            {views.map((view) => (
-                <span key={view.id} className="inline-flex items-center">
+            <div className="ml-1 flex flex-wrap items-center gap-2">
+                <FilterMenu
+                    label={t('tasks.filters.menuLabel')}
+                    clearLabel={t('tasks.filters.clear')}
+                    groups={groups}
+                    onClear={onClearConditions}
+                    onToggle={({ groupId, value }) => {
+                        const condition = byKey.get(`${groupId}:${value}`);
+
+                        if (condition) onToggleCondition(condition);
+                    }}
+                    onSaveView={(name) => setViews(addSavedView({ name, search }))}
+                    labels={{
+                        saveView: t('tasks.filters.saveAsView'),
+                        viewName: t('tasks.filters.viewName'),
+                        save: t('common.save'),
+                    }}
+                />
+
+                {views.map((view) => (
                     <Chip
+                        key={view.id}
                         label={view.name}
+                        tone="subtle"
                         selected={view.search === search}
                         onToggle={() => onApplySearch(view.search)}
+                        onRemove={() => setViews(removeSavedView(view.id))}
+                        removeLabel={t('tasks.filters.removeView', { name: view.name })}
                     />
-                    <button
-                        type="button"
-                        onClick={() => setViews(removeSavedView(view.id))}
-                        aria-label={t('tasks.filters.removeView', { name: view.name })}
-                        className="cursor-pointer rounded-ctm px-1 text-xs text-muted transition-colors duration-press hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                    >
-                        ×
-                    </button>
-                </span>
-            ))}
+                ))}
+            </div>
 
-            {newViewName === null
-                ? conditions.length > 0 && (
-                      <Button variant="ghost" onClick={() => setNewViewName('')} className="text-xs">
-                          {t('tasks.filters.saveAsView')}
-                      </Button>
-                  )
-                : (
-                      <form
-                          className="flex items-center gap-1.5"
-                          onSubmit={(event) => {
-                              event.preventDefault();
-                              saveView();
-                          }}
-                      >
-                          <Input
-                              aria-label={t('tasks.filters.viewName')}
-                              value={newViewName}
-                              onChange={(event) => setNewViewName(event.target.value)}
-                              placeholder={t('tasks.filters.viewName')}
-                              maxLength={40}
-                              autoFocus
-                          />
-                          <Button type="submit" variant="secondary" className="text-xs">
-                              {t('common.save')}
-                          </Button>
-                      </form>
-                  )}
+            <Button onClick={onNewTask} className="ml-auto h-11 py-0 text-xs md:h-8">
+                {t('tasks.newTask')}
+            </Button>
         </div>
     );
 }
