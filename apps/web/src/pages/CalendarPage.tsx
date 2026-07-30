@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button, SegmentedControl } from '@ctm/ui';
@@ -62,7 +62,30 @@ export function CalendarPage(): React.JSX.Element {
         },
     });
 
-    const step = (direction: 1 | -1): void => setAnchor((current) => shiftAnchor({ anchor: current, range, direction }));
+    const step = useCallback(
+        (direction: 1 | -1): void => setAnchor((current) => shiftAnchor({ anchor: current, range, direction })),
+        [range],
+    );
+
+    useEffect(() => {
+        // A task is open, so the arrows belong to whatever is inside the dialog.
+        if (editTask !== null) return;
+
+        const onKeyDown = (event: KeyboardEvent): void => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+
+            // The same arrows move a caret, and move between the radios of the range
+            // switcher, so the page only claims them when no field has the keyboard.
+            if (isTyping(event.target)) return;
+
+            event.preventDefault();
+            step(event.key === 'ArrowRight' ? 1 : -1);
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [editTask, step]);
 
     return (
         <div className="p-4 md:p-6">
@@ -132,6 +155,13 @@ export function CalendarPage(): React.JSX.Element {
             />
         </div>
     );
+}
+
+/** True when the keyboard belongs to a field rather than the page. */
+function isTyping(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+
+    return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
 }
 
 /** Groups tasks by the calendar day they are due. Tasks with no due date are left out. */

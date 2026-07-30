@@ -5,7 +5,8 @@
         "undo": "Undo",
         "syncNow": "Sync now",
         "reconnect": "Reconnect",
-        "skipToContent": "Skip to content"
+        "skipToContent": "Skip to content",
+        "loading": "Loading…"
     },
     "nav": {
         "label": "Main",
@@ -77,6 +78,9 @@
         "titlePlaceholder": "What needs doing?",
         "notesPlaceholder": "More detail…",
         "priorityLabel": "Priority"
+    },
+    "timeline": {
+        "title": "Timeline"
     },
     "calendar": {
         "title": "Calendar",

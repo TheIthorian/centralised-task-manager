@@ -91,6 +91,22 @@ describe('CalendarPage', () => {
         });
     });
 
+    it('pages with the arrow keys when no field has the keyboard', async () => {
+        renderPage();
+        await screen.findByRole('button', { name: 'Renew home insurance' });
+
+        await userEvent.click(screen.getByRole('radio', { name: 'Day' }));
+        // Clicking a radio leaves it focused, and its own arrow handling comes first.
+        await userEvent.click(document.body);
+        await userEvent.keyboard('{ArrowRight}');
+
+        expect(screen.getByRole('button', { name: 'Call the dentist back' })).toBeInTheDocument();
+
+        await userEvent.keyboard('{ArrowLeft}');
+
+        expect(screen.getByRole('button', { name: 'Renew home insurance' })).toBeInTheDocument();
+    });
+
     it('says so when a day has nothing due', async () => {
         mockApi.listTasks.mockResolvedValue([]);
         renderPage();
