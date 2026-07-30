@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import type { AuthorizedAppDto as IAuthorizedAppDto, TokenPair } from '@ctm/api-client';
 import { UserDto } from '../../users/dto/user.dto.js';
 import type { RegisterClientOutput } from '../oauth-client.service.js';
@@ -34,7 +35,11 @@ export class AuthorizedAppDto implements IAuthorizedAppDto {
 /** Response returned after successful dynamic client registration. */
 export class RegisterClientResponseDto implements RegisterClientOutput {
     client_id!: string;
-    client_secret!: string;
+
+    // A literal type is not something the swagger plugin can widen into an enum on its own.
+    @ApiProperty({ enum: ['none'] })
+    token_endpoint_auth_method!: 'none';
+
     client_name!: string;
     redirect_uris!: string[];
     grant_types!: string[];

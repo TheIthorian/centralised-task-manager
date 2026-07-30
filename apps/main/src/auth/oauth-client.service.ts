@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'crypto';
-import bcrypt from 'bcrypt';
 import type { OAuthClientInfoDto } from '@ctm/api-client';
 import type { OAuthClientDocument } from './schemas/oauth-client.schema.js';
 import { OAuthClient } from './schemas/oauth-client.schema.js';
@@ -25,7 +24,12 @@ export type RegisterClientInput = {
 /** Response returned after successful dynamic client registration. */
 export type RegisterClientOutput = {
     client_id: string;
-    client_secret: string;
+
+    /**
+     * Always `none`: dynamically registered clients are public and authenticate the authorization
+     * code exchange with PKCE, not with a credential (RFC 7591 §3.2.1, RFC 8252 §8.4).
+     */
+    token_endpoint_auth_method: 'none';
     client_name: string;
     redirect_uris: string[];
     grant_types: string[];
@@ -86,13 +90,10 @@ export class OAuthClientService {
     /** Register a new OAuth client per RFC 7591. */
     async register(input: RegisterClientInput): Promise<RegisterClientOutput> {
         const clientId = this.generateClientId();
-        const clientSecret = this.generateClientSecret();
-        const clientSecretHash = await bcrypt.hash(clientSecret, 10);
         const issuedAt = new Date();
 
         const doc = new this.model({
             clientId,
-            clientSecretHash,
             clientName: input.client_name,
             redirectUris: input.redirect_uris,
             grantTypes: input.grant_types ?? ['authorization_code'],
@@ -112,7 +113,7 @@ export class OAuthClientService {
 
         return {
             client_id: clientId,
-            client_secret: clientSecret,
+            token_endpoint_auth_method: 'none',
             client_name: doc.clientName,
             redirect_uris: input.redirect_uris,
             grant_types: doc.grantTypes,
@@ -164,10 +165,6 @@ export class OAuthClientService {
 
     private generateClientId(): string {
         return `client_${randomBytes(16).toString('hex')}`;
-    }
-
-    private generateClientSecret(): string {
-        return randomBytes(32).toString('hex');
     }
 }
 

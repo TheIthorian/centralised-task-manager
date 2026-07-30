@@ -13,13 +13,14 @@ export class WellKnownController {
     /**
      * RFC 7591 dynamic client registration endpoint.
      *
-     * Public and unauthenticated by design, so it carries the strict rate limit: each call
-     * costs a bcrypt hash and an unbounded insert.
+     * Public and unauthenticated by design, so it carries the strict rate limit: each call is an
+     * unbounded insert. Registered clients are public and hold no credential; the authorization
+     * code exchange is protected by PKCE.
      */
     @ApiOperation({ summary: 'Register an OAuth 2.0 client' })
     @ApiResponse({
         status: 201,
-        description: 'Client registered with client_id and client_secret',
+        description: 'Client registered as a public client (token_endpoint_auth_method: none)',
         type: RegisterClientResponseDto,
     })
     @Post('oauth-client')
