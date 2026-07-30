@@ -1,36 +1,27 @@
-import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
+import { Chip } from '@ctm/ui';
 import type { TaskFilter } from '@ctm/api-client';
 
-const filters: { value: TaskFilter; label: string }[] = [
-    { value: 'all', label: 'All' },
-    { value: 'today', label: 'Today' },
-    { value: 'upcoming', label: 'Upcoming' },
-    { value: 'done', label: 'Done' },
-];
+const filters: TaskFilter[] = ['all', 'today', 'upcoming', 'done'];
 
-interface TaskFiltersProps {
+type TaskFiltersProps = {
     active: TaskFilter;
     onChange: (filter: TaskFilter) => void;
-}
+};
 
-/** Pill-button filter row. Active pill has yellow background. */
+/** The filter chip row above the list. */
 export function TaskFilters({ active, onChange }: TaskFiltersProps): React.JSX.Element {
+    const { t } = useTranslation();
+
     return (
-        <div className="flex gap-2 flex-wrap">
-            {filters.map(({ value, label }) => (
-                <button
+        <div className="flex flex-wrap gap-1.5">
+            {filters.map((value) => (
+                <Chip
                     key={value}
-                    onClick={() => onChange(value)}
-                    className={clsx(
-                        'px-3 py-1 border-2 border-nb-black dark:border-white/20 font-black uppercase text-xs tracking-wide',
-                        'transition-colors duration-100 cursor-pointer',
-                        active === value
-                            ? 'bg-nb-yellow text-nb-black'
-                            : 'bg-white dark:bg-neutral-800 text-nb-black dark:text-white hover:bg-nb-yellow/40 dark:hover:bg-nb-yellow/20',
-                    )}
-                >
-                    {label}
-                </button>
+                    label={t(`tasks.filters.${value}`)}
+                    selected={active === value}
+                    onToggle={() => onChange(value)}
+                />
             ))}
         </div>
     );
