@@ -155,7 +155,7 @@ async findOne(...): Promise<TaskDto> { ... }
 compile time, so `@Body() body: SomeType` validates nothing and the value reaches the handler
 unchecked. This applies to `@Body`, `@Query`, `@Param` and `@Headers` alike.
 
-- **Objects** — define a Zod schema and wrap it with `createZodDto` (`common/zod/create-zod-dto.ts`). The global `ZodValidationPipe` parses it, and the helper derives `@ApiProperty` metadata from the schema so the OpenAPI reference stays populated.
+- **Objects** — define a Zod schema and wrap it with `createZodDto` (`common/zod/create-zod-dto.ts`, a thin adapter over `nestjs-zod`). The global `ZodValidationPipe` parses it, and `nestjs-zod` derives the OpenAPI schema from the Zod schema, so `scripts/generate-openapi.ts` must keep passing the document through `cleanupOpenApiDoc`.
 - **Primitives** — a bare `@Param('id') id: string` is unvalidated, because the global pipes skip primitive metatypes. Wrap a schema with `ZodParam`: use `objectIdSchema` for Mongo ids (an unchecked id becomes a Mongoose CastError, which surfaces as a 500), `z.enum` for enums, and `boundedString` for anything else.
 - **Bound every string.** Give each string a `max`, and each array a `max` length.
 - **Unknown keys are stripped, not rejected**, which is the Zod object default. Do not use `.strict()` on a public protocol endpoint: OAuth and MCP clients legitimately send parameters this server does not implement.

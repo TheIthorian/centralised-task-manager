@@ -6,6 +6,7 @@ import { writeFileSync } from 'node:fs';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { AppModule } from '../src/app.module.js';
 
 async function generate(): Promise<void> {
@@ -23,7 +24,8 @@ async function generate(): Promise<void> {
         .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'jwt')
         .build();
 
-    const document = SwaggerModule.createDocument(app, config);
+    // Rewrites only the parts of the document that came from nestjs-zod DTOs.
+    const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
 
     writeFileSync('openapi.json', JSON.stringify(document, null, 2));
     console.info('openapi.json written');

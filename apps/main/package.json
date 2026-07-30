@@ -41,6 +41,7 @@
         "class-validator": "0.15.1",
         "joi": "18.2.3",
         "mongoose": "9.8.0",
+        "nestjs-zod": "5.5.0",
         "passport": "0.7.0",
         "passport-jwt": "4.0.1",
         "passport-local": "1.0.0",
