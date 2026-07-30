@@ -78,6 +78,21 @@
         "notesPlaceholder": "More detail…",
         "priorityLabel": "Priority"
     },
+    "calendar": {
+        "title": "Calendar",
+        "today": "Today",
+        "previous": "Previous",
+        "next": "Next",
+        "rangeLabel": "Range",
+        "ranges": {
+            "month": "Month",
+            "week": "Week",
+            "threeDay": "3 days",
+            "day": "Day"
+        },
+        "more": "+{{count}} more",
+        "emptyDay": "Nothing due"
+    },
     "palette": {
         "label": "Command palette",
         "placeholder": "Jump to a view or run a command",
