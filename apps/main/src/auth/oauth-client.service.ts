@@ -63,6 +63,9 @@ export function isRedirectUriPermitted(registeredUris: string[], requestedUri: s
     });
 }
 
+/** How long an unused dynamically registered client is kept before it is reaped. */
+export const UNUSED_CLIENT_TTL_DAYS = 30;
+
 @Injectable()
 export class OAuthClientService {
     constructor(@InjectModel(OAuthClient.name) private readonly model: Model<OAuthClientDocument>) {}
@@ -72,6 +75,7 @@ export class OAuthClientService {
         const clientId = this.generateClientId();
         const clientSecret = this.generateClientSecret();
         const clientSecretHash = await bcrypt.hash(clientSecret, 10);
+        const issuedAt = new Date();
 
         const doc = new this.model({
             clientId,
@@ -81,7 +85,8 @@ export class OAuthClientService {
             grantTypes: input.grant_types ?? ['authorization_code'],
             responseTypes: input.response_types ?? ['code'],
             scopes: input.scopes ?? ['openid', 'email', 'profile'],
-            issuedAt: new Date(),
+            issuedAt,
+            unusedExpiresAt: new Date(issuedAt.getTime() + UNUSED_CLIENT_TTL_DAYS * 24 * 60 * 60 * 1000),
         });
 
         await doc.save();
@@ -89,7 +94,7 @@ export class OAuthClientService {
         return {
             client_id: clientId,
             client_secret: clientSecret,
-            client_name: input.client_name,
+            client_name: doc.clientName,
             redirect_uris: input.redirect_uris,
             grant_types: doc.grantTypes,
             response_types: doc.responseTypes,
@@ -101,6 +106,14 @@ export class OAuthClientService {
     /** Find a registered client by its client_id. */
     async findByClientId(clientId: string): Promise<OAuthClientDocument | null> {
         return this.model.findOne({ clientId });
+    }
+
+    /**
+     * Record that a client completed an authorization, exempting it from unused-client reaping.
+     * Safe to call repeatedly.
+     */
+    async markUsed({ clientId }: { clientId: string }): Promise<void> {
+        await this.model.updateOne({ clientId }, { $set: { lastUsedAt: new Date() }, $unset: { unusedExpiresAt: '' } });
     }
 
     private generateClientId(): string {
