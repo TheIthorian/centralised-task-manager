@@ -12,3 +12,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Todoist: Story = { args: { brand: 'todoist', label: 'Todoist' } };
 export const GoogleTasks: Story = { args: { brand: 'google_tasks', label: 'Google Tasks' } };
+
+/** Used on a phone row, where the words would take the width the title needs. */
+export const IconOnly: Story = { args: { brand: 'todoist', label: 'Todoist', iconOnly: true } };

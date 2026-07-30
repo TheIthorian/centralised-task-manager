@@ -192,33 +192,49 @@ export function TaskRow({
                 onPointerCancel={handlePointerUp}
                 style={offset ? { transform: `translateX(${offset}px)` } : undefined}
                 className={clsx(
-                    'relative grid touch-pan-y grid-cols-[18px_1fr_auto] items-center gap-3 bg-panel px-3',
+                    // A phone gives the title a line of its own: the metadata would otherwise
+                    // take the width first and truncate the only thing that names the task.
+                    'relative grid touch-pan-y grid-cols-[18px_1fr_auto] items-center gap-x-3 gap-y-1 bg-panel px-3',
+                    'md:gap-y-0',
                     'py-[var(--ctm-row-y)] transition-opacity duration-press',
                     !dragging && 'motion-safe:transition-transform motion-safe:duration-press',
                     pending && 'opacity-55',
                 )}
             >
-                <Checkbox checked={completed} onChange={onToggle} label={title} disabled={pending} />
+                <span className="row-span-2 self-start pt-0.5 md:row-span-1 md:self-center md:pt-0">
+                    <Checkbox checked={completed} onChange={onToggle} label={title} disabled={pending} />
+                </span>
                 <button
                     type="button"
                     onClick={onOpen}
                     disabled={!onOpen}
                     className={clsx(
-                        // The row is 44px on a phone; the label has to fill it rather than
-                        // leaving a 20px strip of text as the only way in.
-                        'min-h-11 self-stretch truncate text-left text-[13.5px] text-fg md:min-h-0',
+                        // The truncation lives on the inner span: overflow hidden on the
+                        // button itself would clip the grown hit area away.
+                        'relative min-w-0 text-left text-[13.5px] text-fg',
+                        // The label grows its hit area rather than its box, which would push
+                        // the metadata line further down the row.
+                        'before:absolute before:-inset-y-3 before:inset-x-0 before:content-[""] md:before:hidden',
                         onOpen && 'cursor-pointer hover:underline',
-                        completed && 'line-through text-muted',
                         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
                     )}
                 >
-                    {title}
+                    <span className={clsx('block truncate', completed && 'text-muted line-through')}>{title}</span>
                 </button>
-                <span className="flex items-center gap-2 whitespace-nowrap text-[11px] tabular-nums">
+                {source && (
+                    <span className="justify-self-end md:hidden">
+                        <SourcePill brand={source.brand} label={source.label} iconOnly />
+                    </span>
+                )}
+                <span className="col-start-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] tabular-nums md:col-start-3 md:row-start-1 md:flex-nowrap md:whitespace-nowrap">
                     {priorityLabel && (
                         <Badge variant={priorityTone === 'warn' ? 'priority' : 'neutral'}>{priorityLabel}</Badge>
                     )}
-                    {source && <SourcePill brand={source.brand} label={source.label} />}
+                    {source && (
+                        <span className="hidden md:inline-flex">
+                            <SourcePill brand={source.brand} label={source.label} />
+                        </span>
+                    )}
                     {due && (
                         <span className={clsx(due.overdue ? 'rounded-[4px] bg-warn-bg px-2 py-0.5 text-warn' : 'text-muted')}>
                             {due.label}
