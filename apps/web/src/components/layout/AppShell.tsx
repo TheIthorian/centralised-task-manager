@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { Sidebar } from './Sidebar.js';
 import { BottomTabs } from './BottomTabs.js';
 import { TopBar } from './TopBar.js';
+import { CommandPaletteHost } from '../../palette/CommandPaletteHost.js';
 
 /**
  * Views whose content is a grid rather than a list. A calendar month and a timeline track
@@ -29,6 +30,7 @@ export function AppShell(): React.JSX.Element {
             </main>
             <TopBar />
             <BottomTabs />
+            <CommandPaletteHost />
         </div>
     );
 }
