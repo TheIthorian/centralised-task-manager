@@ -56,11 +56,11 @@ export function DataSection(): React.JSX.Element {
     });
 
     return (
-        <div className="bg-panel border border-line p-5 mb-8">
+        <div className="bg-panel border border-line p-5 mb-8 rounded-ctm">
             <h2 className="font-semibold text-sm tracking-wide text-fg mb-1">
                 Your Data
             </h2>
-            <p className="text-muted font-bold text-xs mb-4">
+            <p className="text-muted font-medium text-xs mb-4">
                 Export all your tasks, notifications, and profile as JSON, or import them back.
             </p>
 
@@ -71,13 +71,13 @@ export function DataSection(): React.JSX.Element {
                 </Button>
 
                 {exportMutation.isSuccess && (
-                    <p className="text-accent font-bold text-sm mt-2">
+                    <p className="text-accent font-medium text-sm mt-2">
                         Downloaded {exportMutation.data} file{exportMutation.data === 1 ? '' : 's'}.
                     </p>
                 )}
 
                 {exportMutation.isError && (
-                    <p className="text-warn font-bold text-sm mt-2">
+                    <p className="text-warn font-medium text-sm mt-2">
                         {getErrorMessage(exportMutation.error, 'Export failed. Please try again.')}
                     </p>
                 )}
@@ -95,7 +95,7 @@ export function DataSection(): React.JSX.Element {
                     accept="application/json,.json"
                     multiple
                     onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                    className="block w-full text-sm font-bold text-fg mb-3 file:mr-3 file:border-2 file:border-line file:bg-white file:px-3 file:py-1 file:font-semibold file:uppercase file:text-xs dark:file:border-white/20 dark:file:bg-neutral-800 dark:file:text-white"
+                    className="block w-full text-sm font-medium text-fg mb-3 file:mr-3 file:border-2 file:border-line file:bg-white file:px-3 file:py-1 file:font-semibold file:uppercase file:text-xs dark:file:border-white/20 dark:file:bg-neutral-800 dark:file:text-white rounded-ctm"
                 />
 
                 <fieldset className="mb-3">
@@ -103,7 +103,7 @@ export function DataSection(): React.JSX.Element {
                         On Conflict
                     </legend>
                     <div className="flex gap-4">
-                        <label className="flex items-center gap-2 font-bold text-sm text-fg">
+                        <label className="flex items-center gap-2 font-medium text-sm text-fg">
                             <input
                                 type="radio"
                                 name="onConflict"
@@ -113,7 +113,7 @@ export function DataSection(): React.JSX.Element {
                             />
                             Ignore existing
                         </label>
-                        <label className="flex items-center gap-2 font-bold text-sm text-fg">
+                        <label className="flex items-center gap-2 font-medium text-sm text-fg">
                             <input
                                 type="radio"
                                 name="onConflict"
@@ -134,13 +134,13 @@ export function DataSection(): React.JSX.Element {
                 </Button>
 
                 {importMutation.isError && (
-                    <p className="text-warn font-bold text-sm mt-2">
+                    <p className="text-warn font-medium text-sm mt-2">
                         {getErrorMessage(importMutation.error, 'Import failed. Please try again.')}
                     </p>
                 )}
 
                 {summary && (
-                    <p className="text-accent font-bold text-sm mt-2">
+                    <p className="text-accent font-medium text-sm mt-2">
                         Imported {summary.imported.tasks} task{summary.imported.tasks === 1 ? '' : 's'} and{' '}
                         {summary.imported.notifications} notification
                         {summary.imported.notifications === 1 ? '' : 's'}. Skipped {summary.skipped.tasks} task

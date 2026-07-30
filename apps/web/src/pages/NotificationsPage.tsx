@@ -86,7 +86,7 @@ export function NotificationsPage(): React.JSX.Element {
     if (isLoading) {
         return (
             <div className="p-4 md:p-6 max-w-2xl">
-                <p className="font-bold text-sm text-muted">Loading…</p>
+                <p className="font-medium text-sm text-muted">Loading…</p>
             </div>
         );
     }
@@ -94,7 +94,7 @@ export function NotificationsPage(): React.JSX.Element {
     if (isError || !prefs) {
         return (
             <div className="p-4 md:p-6 max-w-2xl">
-                <p className="text-warn font-bold text-sm">Failed to load notification preferences.</p>
+                <p className="text-warn font-medium text-sm">Failed to load notification preferences.</p>
             </div>
         );
     }
@@ -106,12 +106,12 @@ export function NotificationsPage(): React.JSX.Element {
                     Notifications
                 </h1>
 
-                <p className="text-muted font-bold text-sm mt-1">
+                <p className="text-muted font-medium text-sm mt-1">
                     Choose how you receive notifications.
                 </p>
             </div>
 
-            <div className="bg-panel border border-line overflow-x-auto">
+            <div className="bg-panel border border-line overflow-x-auto rounded-ctm">
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="border-b border-line">
@@ -128,7 +128,7 @@ export function NotificationsPage(): React.JSX.Element {
 
                                             <Link
                                                 to="/settings/connectors"
-                                                className="text-muted underline font-bold text-xs normal-case"
+                                                className="text-muted underline font-medium text-xs normal-case"
                                             >
                                                 Connect →
                                             </Link>
@@ -149,7 +149,7 @@ export function NotificationsPage(): React.JSX.Element {
                                     i < ROWS.length - 1 ? 'border-b border-line/10 ' : ''
                                 }
                             >
-                                <td className="px-4 py-3 font-bold text-sm text-fg">{label}</td>
+                                <td className="px-4 py-3 font-medium text-sm text-fg">{label}</td>
 
                                 {CHANNELS.map(({ key: channel }) => {
                                     const isDiscordDisabled = channel === 'discord' && !discordConnected;

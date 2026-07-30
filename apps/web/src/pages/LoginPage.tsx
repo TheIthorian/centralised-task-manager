@@ -32,14 +32,14 @@ export function LoginPage(): React.JSX.Element {
 
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-panel border border-line shadow-[6px_6px_0px_#111] p-8">
+            <div className="w-full max-w-sm bg-panel border border-line shadow-[6px_6px_0px_#111] p-8 rounded-ctm">
                 <h1 className="text-3xl font-semibold tracking-tight text-fg mb-6">
                     CTM Login
                 </h1>
 
                 {error && (
-                    <div className="border border-warn bg-warn-bg p-3 mb-4">
-                        <p className="text-warn font-bold text-sm">{error}</p>
+                    <div className="border border-warn bg-warn-bg p-3 mb-4 rounded-ctm">
+                        <p className="text-warn font-medium text-sm">{error}</p>
                     </div>
                 )}
 
@@ -65,7 +65,7 @@ export function LoginPage(): React.JSX.Element {
                     </Button>
                 </form>
 
-                <p className="mt-4 text-center text-sm font-bold text-fg">
+                <p className="mt-4 text-center text-sm font-medium text-fg">
                     No account?{' '}
                     <Link to="/register" className="underline font-semibold">
                         Register →

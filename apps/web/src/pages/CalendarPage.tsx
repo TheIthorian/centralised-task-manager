@@ -137,7 +137,7 @@ export function CalendarPage(): React.JSX.Element {
     return (
         <div className="p-4 md:p-6">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-4">
+            <div className="mb-4 flex items-center gap-3 pr-12">
                 <h1 className="text-2xl font-semibold tracking-tight text-fg">Calendar</h1>
                 <div className="flex items-center gap-2 ml-auto">
                     <button
@@ -151,7 +151,7 @@ export function CalendarPage(): React.JSX.Element {
                     </button>
                     <button
                         onClick={prevMonth}
-                        className="border border-line px-2 py-0.5 font-semibold text-sm cursor-pointer"
+                        className="border border-line px-2 py-0.5 font-semibold text-sm cursor-pointer rounded-ctm"
                         aria-label="Previous month"
                     >
                         ‹
@@ -161,7 +161,7 @@ export function CalendarPage(): React.JSX.Element {
                     </span>
                     <button
                         onClick={nextMonth}
-                        className="border border-line px-2 py-0.5 font-semibold text-sm cursor-pointer"
+                        className="border border-line px-2 py-0.5 font-semibold text-sm cursor-pointer rounded-ctm"
                         aria-label="Next month"
                     >
                         ›
@@ -170,7 +170,7 @@ export function CalendarPage(): React.JSX.Element {
             </div>
 
             {/* Day name headers */}
-            <div className="grid grid-cols-7 border-2 border-b-0 border-line">
+            <div className="grid grid-cols-7 overflow-hidden rounded-t-ctm border border-b-0 border-line">
                 {DAY_NAMES.map((d) => (
                     <div
                         key={d}
@@ -182,7 +182,7 @@ export function CalendarPage(): React.JSX.Element {
             </div>
 
             {/* Calendar grid */}
-            <div className="grid grid-cols-7 border border-line">
+            <div className="grid grid-cols-7 overflow-hidden rounded-b-ctm border border-line">
                 {cells.map((cell, idx) => {
                     const isToday = cell?.key === todayKey;
                     const cellTasks = cell ? (tasksByDate.get(cell.key) ?? []) : [];
@@ -190,13 +190,13 @@ export function CalendarPage(): React.JSX.Element {
                     return (
                         <div
                             key={idx}
-                            className="border-r-2 border-b-2 last-of-type:border-r-0 border-line min-h-[80px] p-1 flex flex-col"
+                            className="flex min-h-[104px] flex-col gap-1 border-b border-r border-line p-1.5 last-of-type:border-r-0"
                         >
                             {cell !== null && (
                                 <>
                                     <span
-                                        className={`font-semibold text-xs self-start px-1 mb-1 ${
-                                            isToday ? 'bg-accent text-accent-fg' : 'text-fg'
+                                        className={`self-start rounded-full px-1.5 text-xs tabular-nums ${
+                                            isToday ? 'bg-accent font-semibold text-accent-fg' : 'text-muted'
                                         }`}
                                     >
                                         {cell.day}
@@ -206,7 +206,7 @@ export function CalendarPage(): React.JSX.Element {
                                             <button
                                                 key={task.id}
                                                 onClick={() => setEditTask(task)}
-                                                className={`text-left text-xs font-bold px-1 truncate border border-line cursor-pointer ${
+                                                className={`text-left text-xs font-medium px-1 truncate border border-line cursor-pointer ${
                                                     PRIORITY_CHIP_CLASS[task.priority ?? 3]
                                                 } ${task.completed ? 'line-through opacity-50' : ''}`}
                                             >
@@ -214,7 +214,7 @@ export function CalendarPage(): React.JSX.Element {
                                             </button>
                                         ))}
                                         {cellTasks.length > 3 && (
-                                            <span className="text-xs font-bold text-muted">
+                                            <span className="text-xs font-medium text-muted">
                                                 +{cellTasks.length - 3} more
                                             </span>
                                         )}

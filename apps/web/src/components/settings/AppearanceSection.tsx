@@ -22,7 +22,7 @@ export function AppearanceSection(): React.JSX.Element {
         <section className="flex flex-col gap-5">
             <h2 className="text-sm font-semibold text-fg">{t('settings.appearance.title')}</h2>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col items-start gap-2">
                 <SegmentedControl<ThemeValue>
                     label={t('settings.appearance.theme')}
                     value={theme}
@@ -37,7 +37,7 @@ export function AppearanceSection(): React.JSX.Element {
                 />
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col items-start gap-2">
                 <SegmentedControl<Density>
                     label={t('settings.appearance.density')}
                     value={density}

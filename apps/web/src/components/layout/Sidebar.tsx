@@ -25,7 +25,7 @@ export function Sidebar(): React.JSX.Element {
     return (
         <aside className="sticky top-0 hidden h-dvh w-44 shrink-0 flex-col border-r border-line bg-nav-bg md:flex">
             <div className="px-4 py-4">
-                <span className="text-sm font-bold tracking-tight text-fg">CTM</span>
+                <span className="text-sm font-medium tracking-tight text-fg">CTM</span>
             </div>
 
             <nav aria-label={t('nav.label')} className="flex flex-1 flex-col gap-1 px-2">

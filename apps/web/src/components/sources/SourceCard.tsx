@@ -64,9 +64,9 @@ function AccountRow({
         <div className="flex flex-col gap-2 border-t border-line/10 pt-3">
             <div className="flex flex-col items-stretch gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
                 <div className="min-w-0">
-                    <p className="font-bold text-sm text-fg break-words">{accountName}</p>
+                    <p className="font-medium text-sm text-fg break-words">{accountName}</p>
                     {lastSynced && !isSyncing && (
-                        <p className="text-xs font-bold text-muted mt-0.5">
+                        <p className="text-xs font-medium text-muted mt-0.5">
                             Last synced: {new Date(lastSynced).toLocaleDateString()}
                         </p>
                     )}
@@ -114,20 +114,20 @@ function AccountRow({
             </div>
 
             {setupRequired && (
-                <p className="text-xs font-bold text-warn">
+                <p className="text-xs font-medium text-warn">
                     Setup incomplete — click Configure to finish connecting.
                 </p>
             )}
 
             {isUnhealthy && (
-                <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
                     Connection issue — reconnect to restore sync.
                 </p>
             )}
 
             {isSyncing && (
                 <div className="w-full">
-                    <p className="text-xs font-bold text-muted mb-1">
+                    <p className="text-xs font-medium text-muted mb-1">
                         {syncJob?.stage ? (STAGE_LABEL[syncJob.stage] ?? 'Working…') : 'Starting…'}
                     </p>
                     <div className="w-full h-1.5 bg-fg/10 dark:bg-white/10 overflow-hidden">
@@ -137,17 +137,17 @@ function AccountRow({
             )}
 
             {syncFailed && (
-                <p className="text-xs font-bold text-warn">Sync failed: {syncJob?.error ?? 'Unknown error'}</p>
+                <p className="text-xs font-medium text-warn">Sync failed: {syncJob?.error ?? 'Unknown error'}</p>
             )}
 
             {syncJob?.status === 'done' && (
                 <>
-                    <p className="text-xs font-bold text-green-700 dark:text-green-400">
+                    <p className="text-xs font-medium text-green-700 dark:text-green-400">
                         Synced {syncJob.synced} task{syncJob.synced !== 1 ? 's' : ''}
                         {syncJob.skipped > 0 ? `, skipped ${syncJob.skipped} (local changes preserved)` : ''}
                     </p>
                     {syncJob.droppedOverQuota > 0 && (
-                        <p className="text-xs font-bold text-warn">
+                        <p className="text-xs font-medium text-warn">
                             Task limit reached — {syncJob.droppedOverQuota} task
                             {syncJob.droppedOverQuota !== 1 ? 's' : ''} not imported. Delete some tasks, then sync
                             again.
@@ -179,7 +179,7 @@ export function SourceCard({
     const hasAccounts = accounts.length > 0;
 
     return (
-        <div className="bg-panel border border-line p-4 flex flex-col gap-3">
+        <div className="bg-panel border border-line p-4 flex flex-col gap-3 rounded-ctm">
             <div className="flex items-center justify-between gap-4">
                 <div>
                     <p className="font-semibold text-fg text-sm tracking-wide flex items-center gap-2">
@@ -187,7 +187,7 @@ export function SourceCard({
                         {sourceLabel}
                     </p>
                     {!hasAccounts && (
-                        <p className="text-xs font-bold text-muted mt-0.5">Not connected</p>
+                        <p className="text-xs font-medium text-muted mt-0.5">Not connected</p>
                     )}
                 </div>
 

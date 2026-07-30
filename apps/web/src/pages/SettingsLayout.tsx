@@ -29,11 +29,11 @@ export function SettingsLayout(): React.JSX.Element {
                             to={path}
                             aria-current={active ? 'page' : undefined}
                             className={clsx(
-                                'flex items-center gap-2 min-h-11 px-3 font-semibold text-xs border border-line',
+                                'flex items-center gap-2 min-h-11 px-3 font-semibold text-xs border border-line rounded-ctm',
                                 'md:min-h-0 md:px-4 md:py-1.5 md:text-sm',
                                 active
-                                    ? 'border-accent bg-accent text-accent-fg'
-                                    : 'bg-panel text-fg md:shadow-none hover:bg-accent/40 dark:hover:bg-accent/20',
+                                    ? 'border-accent bg-accent text-accent-fg rounded-ctm'
+                                    : 'bg-panel text-fg md:shadow-none hover:bg-accent/40 dark:hover:bg-accent/20 rounded-ctm',
                             )}
                         >
                             <span className="text-base leading-none md:hidden">{icon}</span>
