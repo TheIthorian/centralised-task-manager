@@ -6,6 +6,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
+import { useToast } from '../toast/ToastContext.js';
 import { TaskFilters } from '../components/tasks/TaskFilters.js';
 import { TaskList } from '../components/tasks/TaskList.js';
 import { GroupedTaskList } from '../components/tasks/GroupedTaskList.js';
@@ -18,21 +19,16 @@ const PAGE_SIZE = 20;
 /** Main task management page. Filter is stored in the URL (?filter=today). Opening a specific task is via ?taskId=<id>. */
 export function TasksPage(): React.JSX.Element {
     const { t } = useTranslation();
+    const { showToast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
     const taskIdParam = searchParams.get('taskId');
     const highlightTaskIdParam = searchParams.get('highlightTaskId');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
-    const [doneTasks, setDoneTasks] = useState<TaskDto[]>([]);
     const { api } = useAuth();
 
     const qc = useQueryClient();
-
-    // Reset done tasks when filter changes away from 'all'
-    useEffect(() => {
-        if (filter !== 'all') setDoneTasks([]);
-    }, [filter]);
 
     // Highlight task when ?highlightTaskId= is present (e.g. navigated from a notification).
     useEffect(() => {
@@ -137,83 +133,23 @@ export function TasksPage(): React.JSX.Element {
     const statusMutation = useMutation({
         mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
             api.setTaskStatus({ id, dto: { status: completed ? 'done' : 'open' } }),
-        onMutate: async ({ id, completed }) => {
-            if (filter === 'all') {
-                // Optimistically move to done section
-                const allBuckets = ['overdue', 'today', 'thisWeek', 'upcoming', 'noDate'] as const;
+        // No onMutate. TanStack Query offers optimistic updates and we decline them: the
+        // moment the client patches its own cache it can show a state the backend never
+        // agreed to. Our API answers in one short hop, and the connector push is reported
+        // on the connector row rather than faked in the list.
+        onSuccess: (_result, { id, completed }) => {
+            qc.invalidateQueries({ queryKey: ['tasks'] });
 
-                const bucketSnapshots: Partial<Record<string, { pages: TaskDto[][] }>> = {};
-                const doneSnapshot = doneTasks;
+            if (!completed) return;
 
-                for (const bucket of allBuckets) {
-                    const snap = qc.getQueryData<{ pages: TaskDto[][] }>(['tasks', 'grouped', bucket]);
-
-                    if (snap) bucketSnapshots[bucket] = snap;
-                }
-
-                let movedTask: TaskDto | undefined;
-
-                for (const bucket of allBuckets) {
-                    qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', 'grouped', bucket], (prev) => {
-                        if (!prev) return prev;
-
-                        const updated = prev.pages.map((page) => {
-                            const found = page.find((t) => t.id === id);
-
-                            if (found) movedTask = { ...found, completed };
-
-                            return page.filter((t) => t.id !== id);
-                        });
-
-                        return { ...prev, pages: updated };
-                    });
-                }
-
-                if (completed && movedTask) {
-                    setDoneTasks((prev) => [movedTask!, ...prev]);
-                } else if (!completed) {
-                    setDoneTasks((prev) => prev.filter((t) => t.id !== id));
-                    qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
-                }
-
-                return { movedTask, bucketSnapshots, doneSnapshot };
-            }
-
-            await qc.cancelQueries({ queryKey: ['tasks', filter] });
-            const prev = qc.getQueryData<{ pages: TaskDto[][] }>(['tasks', filter]);
-
-            qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', filter], (old) => {
-                if (!old) return old;
-
-                return {
-                    ...old,
-                    pages: old.pages.map((page) =>
-                        page.map((t) => (t.id === id ? { ...t, completed } : t)),
-                    ),
-                };
+            showToast({
+                title: t('tasks.completedToast'),
+                description: t('tasks.completedToastBody'),
+                action: {
+                    label: t('common.undo'),
+                    onAction: () => statusMutation.mutate({ id, completed: false }),
+                },
             });
-
-            return { prev };
-        },
-        onError: (_err, _vars, ctx) => {
-            if (filter === 'all' && ctx) {
-                const { bucketSnapshots, doneSnapshot } = ctx as {
-                    bucketSnapshots?: Partial<Record<string, { pages: TaskDto[][] }>>;
-                    doneSnapshot?: TaskDto[];
-                };
-
-                if (bucketSnapshots) {
-                    for (const [bucket, snap] of Object.entries(bucketSnapshots)) {
-                        qc.setQueryData(['tasks', 'grouped', bucket], snap);
-                    }
-                }
-
-                if (doneSnapshot !== undefined) {
-                    setDoneTasks(doneSnapshot);
-                }
-            } else if (filter !== 'all' && ctx?.prev) {
-                qc.setQueryData(['tasks', filter], ctx.prev);
-            }
         },
     });
 
@@ -233,7 +169,6 @@ export function TasksPage(): React.JSX.Element {
         onSuccess: (_data, id) => {
             if (filter === 'all') {
                 qc.invalidateQueries({ queryKey: ['tasks', 'grouped'] });
-                setDoneTasks((prev) => prev.filter((t) => t.id !== id));
             } else {
                 qc.setQueryData<{ pages: TaskDto[][] }>(['tasks', filter], (prev) => {
                     if (!prev) return prev;
@@ -266,6 +201,9 @@ export function TasksPage(): React.JSX.Element {
         },
     });
 
+    // Only the row being written to dims, so the rest of the list stays usable.
+    const pendingTaskId = statusMutation.isPending ? (statusMutation.variables?.id ?? null) : null;
+
     const handleToggle = useCallback(
         (id: string, completed: boolean) => {
             statusMutation.mutate({ id, completed });
@@ -274,7 +212,7 @@ export function TasksPage(): React.JSX.Element {
     );
 
     const totalLoaded = filter === 'all'
-        ? Object.values(groupedResults).reduce((sum, r) => sum + r.tasks.length, 0) + doneTasks.length
+        ? Object.values(groupedResults).reduce((sum, r) => sum + r.tasks.length, 0)
         : flatTasks.length;
 
     const isLoading = filter === 'all' ? false : flatIsLoading;
@@ -318,10 +256,10 @@ export function TasksPage(): React.JSX.Element {
                     (filter === 'all' ? (
                         <GroupedTaskList
                             groupedResults={groupedResults}
-                            doneTasks={doneTasks}
                             highlightedTaskId={highlightedTaskId}
                             onToggle={handleToggle}
                             onEdit={setEditTask}
+                            pendingTaskId={pendingTaskId}
                         />
                     ) : (
                         <TaskList
@@ -329,6 +267,7 @@ export function TasksPage(): React.JSX.Element {
                             highlightedTaskId={highlightedTaskId}
                             onToggle={handleToggle}
                             onEdit={setEditTask}
+                            pendingTaskId={pendingTaskId}
                             hasNextPage={flatQuery.hasNextPage}
                             isFetchingNextPage={flatQuery.isFetchingNextPage}
                             fetchNextPage={flatQuery.fetchNextPage}

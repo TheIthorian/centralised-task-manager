@@ -11,6 +11,8 @@ type LegacyProps = {
     groupedResults?: never;
     doneTasks?: never;
     highlightedTaskId?: string | null;
+    /** The task with a write in flight, if any. */
+    pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
 };
@@ -22,6 +24,8 @@ type PaginatedProps = {
     /** Optimistic-only done tasks (from status mutations). No server pagination needed. */
     doneTasks?: TaskDto[];
     highlightedTaskId?: string | null;
+    /** The task with a write in flight, if any. */
+    pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
 };
@@ -41,6 +45,7 @@ function SectionBlock({
     label,
     tasks,
     highlightedTaskId,
+    pendingTaskId,
     onToggle,
     onEdit,
     isLoading,
@@ -51,6 +56,8 @@ function SectionBlock({
     label: string;
     tasks: TaskDto[];
     highlightedTaskId?: string | null;
+    /** The task with a write in flight, if any. */
+    pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
     isLoading?: boolean;
@@ -73,6 +80,7 @@ function SectionBlock({
                         key={task.id}
                         task={task}
                         highlighted={task.id === highlightedTaskId}
+                        pending={task.id === pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
                     />
@@ -96,6 +104,7 @@ export function GroupedTaskList({
     groupedResults,
     doneTasks = [],
     highlightedTaskId,
+    pendingTaskId,
     onToggle,
     onEdit,
 }: GroupedTaskListProps): React.JSX.Element {
@@ -127,6 +136,7 @@ export function GroupedTaskList({
                             label={t(section.labelKey)}
                             tasks={result.tasks}
                             highlightedTaskId={highlightedTaskId}
+                        pendingTaskId={pendingTaskId}
                             onToggle={onToggle}
                             onEdit={onEdit}
                             isLoading={result.isLoading}
@@ -142,6 +152,7 @@ export function GroupedTaskList({
                         label={t('tasks.groups.done')}
                         tasks={doneTasks}
                         highlightedTaskId={highlightedTaskId}
+                        pendingTaskId={pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
                     />
@@ -169,6 +180,7 @@ export function GroupedTaskList({
                         label={t(labelKey)}
                         tasks={sectionTasks}
                         highlightedTaskId={highlightedTaskId}
+                        pendingTaskId={pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
                     />

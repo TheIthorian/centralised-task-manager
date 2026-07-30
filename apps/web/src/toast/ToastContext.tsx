@@ -1,10 +1,19 @@
-import { createContext, useContext, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { Toast } from '@ctm/ui';
+import { MissingProviderError } from '../lib/errors.js';
 
 export type ToastMessage = {
     id: number;
     title: string;
     description: string;
     dedupeKey?: string;
+    action?: ToastAction;
+};
+
+type ToastAction = {
+    label: string;
+    /** Runs, then dismisses the toast. Undo is a real call, never a cache rollback. */
+    onAction: () => void;
 };
 
 type ShowToastParams = {
@@ -12,6 +21,9 @@ type ShowToastParams = {
     description: string;
     /** When set, the toast is dropped if one with the same key is already on screen. */
     dedupeKey?: string;
+    action?: ToastAction;
+    /** Defaults to 4 seconds; undoable toasts get longer so the offer is usable. */
+    durationMs?: number;
 };
 
 type ToastContextValue = {
@@ -20,12 +32,19 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+const DEFAULT_DURATION_MS = 4000;
+const UNDOABLE_DURATION_MS = 8000;
+
 /** Provides global transient toast notifications. */
 export function ToastProvider({ children }: { children: ReactNode }): React.JSX.Element {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     const nextId = useRef(1);
 
-    const showToast = ({ title, description, dedupeKey }: ShowToastParams): void => {
+    const dismiss = useCallback((id: number): void => {
+        setToasts((current) => current.filter((toast) => toast.id !== id));
+    }, []);
+
+    const showToast = ({ title, description, dedupeKey, action, durationMs }: ShowToastParams): void => {
         const id = nextId.current++;
 
         setToasts((current) => {
@@ -33,26 +52,31 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
             // failure buries the app under identical boxes.
             if (dedupeKey !== undefined && current.some((toast) => toast.dedupeKey === dedupeKey)) return current;
 
-            return [...current, { id, title, description, dedupeKey }];
+            return [...current, { id, title, description, dedupeKey, action }];
         });
 
-        window.setTimeout(() => {
-            setToasts((current) => current.filter((toast) => toast.id !== id));
-        }, 4000);
+        window.setTimeout(() => dismiss(id), durationMs ?? (action ? UNDOABLE_DURATION_MS : DEFAULT_DURATION_MS));
     };
 
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <div className="fixed top-4 right-4 z-50 flex w-full max-w-sm flex-col gap-3 px-4">
+            <div className="fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-3 px-4">
                 {toasts.map((toast) => (
-                    <div
+                    <Toast
                         key={toast.id}
-                        className="border border-line bg-white px-4 py-3 shadow-[4px_4px_0px_#111] rounded-ctm"
-                    >
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-fg">{toast.title}</p>
-                        <p className="mt-1 text-sm font-medium text-fg/80">{toast.description}</p>
-                    </div>
+                        title={toast.title}
+                        message={toast.description}
+                        actionLabel={toast.action?.label}
+                        onAction={
+                            toast.action
+                                ? () => {
+                                      toast.action?.onAction();
+                                      dismiss(toast.id);
+                                  }
+                                : undefined
+                        }
+                    />
                 ))}
             </div>
         </ToastContext.Provider>
@@ -63,7 +87,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
 export function useToast(): ToastContextValue {
     const context = useContext(ToastContext);
 
-    if (!context) throw new Error('useToast must be used inside ToastProvider');
+    if (!context) throw new MissingProviderError({ hook: 'useToast', provider: 'ToastProvider' });
 
     return context;
 }

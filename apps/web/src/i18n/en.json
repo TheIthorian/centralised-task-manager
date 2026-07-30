@@ -63,7 +63,7 @@
             "done": "Done"
         },
         "priority": "Priority {{level}}",
-        "completedToast": "Task completed",
+        "completedToast": "Completed",
         "reopenedToast": "Task reopened",
         "localOnly": "In app",
         "daysLate_one": "{{count}} day late",
@@ -78,7 +78,8 @@
         },
         "titlePlaceholder": "What needs doing?",
         "notesPlaceholder": "More detail…",
-        "priorityLabel": "Priority"
+        "priorityLabel": "Priority",
+        "completedToastBody": "Marked as done. Your connector is updated in the background."
     },
     "palette": {
         "label": "Command palette",
@@ -121,6 +122,12 @@
                 "third": "Call the dentist back",
                 "thirdMeta": "18:30"
             }
+        }
+    },
+    "notifications": {
+        "saveFailed": {
+            "title": "Not saved",
+            "body": "Your preferences did not reach the server. Try again."
         }
     }
 }
