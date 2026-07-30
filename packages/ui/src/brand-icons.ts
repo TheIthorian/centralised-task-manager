@@ -1,10 +1,10 @@
-import Claude from '../assets/brands/claude.svg?react';
-import Cursor from '../assets/brands/cursor.svg?react';
-import Discord from '../assets/brands/discord.svg?react';
-import GoogleTasks from '../assets/brands/google-tasks.svg?react';
-import Mcp from '../assets/brands/mcp.svg?react';
-import Notion from '../assets/brands/notion.svg?react';
-import Todoist from '../assets/brands/todoist.svg?react';
+import Claude from './assets/brands/claude.svg?react';
+import Cursor from './assets/brands/cursor.svg?react';
+import Discord from './assets/brands/discord.svg?react';
+import GoogleTasks from './assets/brands/google-tasks.svg?react';
+import Mcp from './assets/brands/mcp.svg?react';
+import Notion from './assets/brands/notion.svg?react';
+import Todoist from './assets/brands/todoist.svg?react';
 
 /**
  * Brand marks live in `src/assets/brands` and are inlined at build time, so they stay

@@ -5,6 +5,7 @@ import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { Button, Input } from '@ctm/ui';
 import { DataSection } from '../components/settings/DataSection.js';
+import { AppearanceSection } from '../components/settings/AppearanceSection.js';
 
 /** Settings sub-page: user profile, password change, and account deletion. */
 export function ProfilePage(): React.JSX.Element {
@@ -66,6 +67,10 @@ export function ProfilePage(): React.JSX.Element {
                 <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm mt-1">
                     Update your account details.
                 </p>
+            </div>
+
+            <div className="mb-8 rounded-ctm border border-line bg-panel p-5">
+                <AppearanceSection />
             </div>
 
             {/* Update form */}

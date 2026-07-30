@@ -1,0 +1,84 @@
+/*
+ * Quiet Slate. Green-biased neutrals so the greys read as chosen rather than inherited,
+ * one pine accent, hairline borders, and no offset shadows. The only shadow in the system
+ * is for overlays, which sit above blurred content and have to detach from it.
+ */
+@theme {
+    --color-bg: #fbfbfa;
+    --color-panel: #ffffff;
+    --color-fg: #1c1f1e;
+    --color-muted: #6b716e;
+    --color-line: #e2e4e1;
+    --color-hair: #eceeeb;
+    --color-accent: #2f5d50;
+    --color-accent-fg: #ffffff;
+    --color-warn: #a2442f;
+    --color-warn-bg: #faeeeb;
+    --color-nav-bg: #f1f2f0;
+    --color-nav-fg: #5c625f;
+    --color-nav-on-bg: #e2e7e4;
+    --color-nav-on-fg: #1c1f1e;
+
+    --radius-ctm: 8px;
+    --radius-overlay: 12px;
+    --shadow-overlay: 0 18px 40px rgb(0 0 0 / 0.22);
+
+    --duration-press: 120ms;
+    --duration-surface: 180ms;
+    --duration-leave: 240ms;
+}
+
+/*
+ * Dark keeps the same hue family; only colour moves. The accent lifts to a paler pine
+ * because the light accent is unreadable on the dark ground.
+ */
+:where(.dark) {
+    --color-bg: #121614;
+    --color-panel: #191e1b;
+    --color-fg: #e4e8e5;
+    --color-muted: #98a09b;
+    --color-line: #262c29;
+    --color-hair: #1f2522;
+    --color-accent: #7fbfa9;
+    --color-accent-fg: #0f1412;
+    --color-warn: #e8917a;
+    --color-warn-bg: #2a1c19;
+    --color-nav-bg: #0d100f;
+    --color-nav-fg: #98a09b;
+    --color-nav-on-bg: #1f2724;
+    --color-nav-on-fg: #e4e8e5;
+}
+
+/* Row density is a user preference. Mobile pins targets to 44px whatever it says. */
+:root {
+    --ctm-row-y: 10px;
+}
+
+:root[data-density='compact'] {
+    --ctm-row-y: 6px;
+}
+
+:root[data-density='spacious'] {
+    --ctm-row-y: 16px;
+}
+
+/* Used by the command palette, and gated behind motion-safe: at the call site. */
+@keyframes ctm-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes ctm-rise {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}

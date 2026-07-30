@@ -1,0 +1,95 @@
+{
+    "common": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "undo": "Undo",
+        "syncNow": "Sync now",
+        "reconnect": "Reconnect",
+        "skipToContent": "Skip to content"
+    },
+    "tasks": {
+        "title": "Tasks",
+        "openCount_one": "{{count}} open",
+        "openCount_other": "{{count}} open",
+        "syncedAgo": "synced {{ago}}",
+        "newTask": "New task",
+        "searchOrRun": "Search or run",
+        "shownCount": "{{count}} shown",
+        "groups": {
+            "overdue": "Overdue",
+            "today": "Today",
+            "thisWeek": "This week",
+            "upcoming": "Upcoming",
+            "noDate": "No date"
+        },
+        "empty": {
+            "overdue": "Nothing overdue. Everything with a due date is still ahead of you.",
+            "today": "Nothing due today.",
+            "thisWeek": "Nothing due this week.",
+            "upcoming": "Nothing scheduled beyond this week.",
+            "noDate": "Every task has a date."
+        },
+        "filters": {
+            "none": "No conditions, showing everything.",
+            "saveAsView": "Save as view",
+            "remove": "Remove {{kind}} {{value}}",
+            "due": {
+                "overdue": "Overdue",
+                "today": "Due today",
+                "week": "This week",
+                "none": "No date"
+            },
+            "field": {
+                "noDate": "No due date",
+                "noDuration": "No duration",
+                "hasReminder": "Has a reminder"
+            }
+        },
+        "priority": "Priority {{level}}",
+        "completedToast": "Task completed",
+        "reopenedToast": "Task reopened"
+    },
+    "palette": {
+        "label": "Command palette",
+        "placeholder": "Search tasks, jump, or run a command",
+        "noMatch": "Nothing matches. Press Enter to hand it to your agent instead.",
+        "groups": {
+            "jump": "Jump to",
+            "views": "Views",
+            "task": "Tasks",
+            "acct": "Accounts",
+            "do": "Actions",
+            "ask": "Ask"
+        },
+        "hints": {
+            "move": "move",
+            "run": "run",
+            "close": "close",
+            "prefixes": "> actions · # views · @ accounts"
+        },
+        "askAgent": "Ask your agent",
+        "handedToAgent": "Handed to your agent"
+    },
+    "settings": {
+        "appearance": {
+            "title": "Appearance",
+            "theme": "Theme",
+            "density": "Density",
+            "densityHelp": "How much breathing room each row gets. Touch targets stay the same size on a phone.",
+            "compact": "Compact",
+            "comfortable": "Comfortable",
+            "spacious": "Spacious",
+            "previewLabel": "Preview",
+            "light": "Light",
+            "dark": "Dark",
+            "sample": {
+                "first": "Renew home insurance",
+                "firstMeta": "2 days late",
+                "second": "Review sync worker retry logic",
+                "secondMeta": "17:00",
+                "third": "Call the dentist back",
+                "thirdMeta": "18:30"
+            }
+        }
+    }
+}

@@ -1,0 +1,4 @@
+{
+    "extends": "@ctm/tsconfig/react.json",
+    "include": [".storybook"]
+}

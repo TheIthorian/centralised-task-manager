@@ -1,4 +1,4 @@
-import type { BrandKey } from './brand-icons.js';
+import type { BrandKey } from '@ctm/ui';
 
 type SourceMeta = {
     label: string;

@@ -36,8 +36,8 @@ the `[vars]` block in `wrangler.toml`.
 
 ### Environment Variables
 
-| Variable     | Description                                                                                                                                                                                                                       |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Variable     | Description                                                                                                                                                                                                                                     |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `API_ORIGIN` | Origin of `apps/main` (no default — required). Locally it comes from `.env` and is read by the Vite dev proxy; in production it comes from `[vars]` in `wrangler.toml` and is read by the Pages Function. Never a build-time/`VITE_*` variable. |
 
 ## Commands
