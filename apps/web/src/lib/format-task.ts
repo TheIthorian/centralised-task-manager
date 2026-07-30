@@ -18,8 +18,13 @@ export function formatDueLabel({
     if (!task.due) return task.deadlineDate ? { label: formatDate({ iso: task.deadlineDate, locale }), overdue: false } : undefined;
 
     const dueAt = new Date(task.due.date);
-    const overdue = !task.completed && dueAt.getTime() < Date.now();
-    const daysLate = Math.floor((Date.now() - dueAt.getTime()) / 86_400_000);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    // Overdue is measured in days, not minutes: a task due at 09:00 today is not late at
+    // 09:01, and colouring it as late would spend the warning colour on nothing.
+    const overdue = !task.completed && dueAt.getTime() < startOfToday.getTime();
+    const daysLate = Math.floor((startOfToday.getTime() - dueAt.getTime()) / 86_400_000) + 1;
 
     if (overdue && daysLate >= 1) return { label: t('tasks.daysLate', { count: daysLate }), overdue: true };
 

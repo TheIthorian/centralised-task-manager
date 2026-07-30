@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Input } from '@ctm/ui';
 import type { CreateTaskDto } from '@ctm/api-client';
+import { useTranslation } from 'react-i18next';
 
 type AddTaskInlineProps = {
     onAdd: (dto: CreateTaskDto) => Promise<void>;
@@ -9,6 +10,7 @@ type AddTaskInlineProps = {
 
 /** Expandable inline form for quickly adding a task. */
 export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps): React.JSX.Element {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -37,8 +39,8 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
 
     if (!open) {
         return (
-            <Button variant="danger" onClick={() => setOpen(true)}>
-                ＋ Add Task
+            <Button variant="secondary" onClick={() => setOpen(true)} className="self-start">
+                {t('tasks.newTask')}
             </Button>
         );
     }
@@ -52,7 +54,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                 label="Task title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="What needs doing?"
+                placeholder={t('tasks.titlePlaceholder')}
                 autoFocus
                 required
             />
@@ -60,11 +62,11 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                 label="Description (optional)"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="More detail…"
+                placeholder={t('tasks.notesPlaceholder')}
             />
             <div className="flex items-center gap-2">
                 <label className="text-[11px] uppercase tracking-[0.12em] text-muted">
-                    Priority:
+                    {t('tasks.priorityLabel')}
                 </label>
                 {([1, 2, 3] as const).map((p) => (
                     <button
@@ -95,7 +97,7 @@ export function AddTaskInline({ onAdd, isPending = false }: AddTaskInlineProps):
                     onClick={() => setOpen(false)}
                     className="cursor-pointer text-xs text-accent underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
-                    Cancel
+                    {t('common.cancel')}
                 </button>
             </div>
         </form>
