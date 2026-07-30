@@ -12,6 +12,10 @@ import { AuthorizeQueryDto } from './dto/authorize-query.dto.js';
 import { ConsentBodyDto, TokenBodyDto } from './dto/token-body.dto.js';
 import { ValidatedBody, ValidatedHeader, ValidatedQuery } from '../common/validation/validated.decorators.js';
 import { acceptHeaderSchema } from '../common/zod/param-schemas.js';
+import type { CodeChallengeMethod } from './pkce.js';
+
+/** Method assumed when the client omits `code_challenge_method`; the server accepts no other. */
+const DEFAULT_CODE_CHALLENGE_METHOD: CodeChallengeMethod = 'S256';
 
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
@@ -37,7 +41,7 @@ export class OAuthController {
             response_type: query.response_type,
             redirect_uri: query.redirect_uri,
             code_challenge: query.code_challenge,
-            code_challenge_method: query.code_challenge_method ?? 'S256',
+            code_challenge_method: query.code_challenge_method ?? DEFAULT_CODE_CHALLENGE_METHOD,
             scope: query.scope ?? 'openid',
             state: query.state ?? '',
             ...(query.client_id ? { client_id: query.client_id } : {}),
@@ -88,6 +92,7 @@ export class OAuthController {
             userId: req.user.sub,
             redirectUri: query.redirect_uri,
             codeChallenge: query.code_challenge,
+            codeChallengeMethod: query.code_challenge_method ?? DEFAULT_CODE_CHALLENGE_METHOD,
             scopes,
             clientId: query.client_id,
         });

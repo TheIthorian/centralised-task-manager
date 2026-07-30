@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { codeChallengeMethodSchema } from '../pkce.js';
 
 /**
  * Query parameters accepted by `/oauth/authorize`.
@@ -19,7 +20,9 @@ export const authorizeQuerySchema = z.object({
     state: z.string().max(512).optional(),
     // RFC 7636 §4.2: base64url of a SHA-256 digest, so always 43 characters.
     code_challenge: z.string().min(43).max(128),
-    code_challenge_method: z.literal('S256').optional().describe('Only S256 is supported.'),
+    // RFC 7636 §4.3 defaults an omitted method to `plain`; this server defaults it to S256
+    // instead, because it never accepts a plain challenge and the parameter is optional.
+    code_challenge_method: codeChallengeMethodSchema.optional().describe('Only S256 is supported.'),
 });
 
 export class AuthorizeQueryDto extends createZodDto({ schema: authorizeQuerySchema, name: 'AuthorizeQueryDto' }) {}

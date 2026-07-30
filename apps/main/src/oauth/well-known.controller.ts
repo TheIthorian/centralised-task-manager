@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { OAuthKeyService } from './oauth-key.service.js';
+import { CODE_CHALLENGE_METHODS } from './pkce.js';
 
 @Controller('.well-known')
 export class WellKnownController {
@@ -38,7 +39,7 @@ export class WellKnownController {
             subject_types_supported: ['public'],
             id_token_signing_alg_values_supported: ['RS256'],
             token_endpoint_auth_methods_supported: ['none'],
-            code_challenge_methods_supported: ['S256'],
+            code_challenge_methods_supported: CODE_CHALLENGE_METHODS,
             claims_supported: ['sub', 'email', 'iss', 'iat', 'exp'],
         };
     }
@@ -58,7 +59,7 @@ export class WellKnownController {
             response_types_supported: ['code'],
             grant_types_supported: ['authorization_code', 'refresh_token'],
             token_endpoint_auth_methods_supported: ['none'],
-            code_challenge_methods_supported: ['S256'],
+            code_challenge_methods_supported: CODE_CHALLENGE_METHODS,
         };
     }
 

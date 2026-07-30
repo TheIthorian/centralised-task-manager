@@ -205,6 +205,41 @@ describe('OAuth endpoints', () => {
         expect(tokenRes.statusCode).toBe(400);
     });
 
+    it('POST /oauth/authorize rejects code_challenge_method=plain', async () => {
+        const verifier = makeCodeVerifier();
+        const challenge = makeCodeChallenge(verifier);
+        const redirectUri = 'http://localhost:4000/cb';
+
+        const res = await app.inject({
+            method: 'POST',
+            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=plain&scope=openid`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        expect(res.statusCode).toBe(400);
+    });
+
+    it('treats an omitted code_challenge_method as S256', async () => {
+        const verifier = makeCodeVerifier();
+        const challenge = makeCodeChallenge(verifier);
+        const redirectUri = 'http://localhost:4000/cb';
+
+        const authorizeRes = await app.inject({
+            method: 'POST',
+            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&scope=openid`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+        const code = new URL(authorizeRes.headers['location'] as string).searchParams.get('code')!;
+
+        const tokenRes = await app.inject({
+            method: 'POST',
+            url: '/oauth/token',
+            payload: { grant_type: 'authorization_code', code, redirect_uri: redirectUri, code_verifier: verifier },
+        });
+
+        expect(tokenRes.statusCode).toBe(200);
+    });
+
     it('GET /oauth/userinfo returns claims for authenticated user', async () => {
         const res = await app.inject({
             method: 'GET',
