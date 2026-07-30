@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Chip, FilterMenu, SegmentedControl, type FilterGroup } from '@ctm/ui';
+import { Button, FilterMenu, SegmentedControl, type FilterGroup } from '@ctm/ui';
 import type { TaskFilter } from '@ctm/api-client';
 import { DUE_CONDITIONS, FIELD_CONDITIONS, hasCondition, type Condition } from '../../lib/task-conditions.js';
-import { addSavedView, readSavedViews, removeSavedView, type SavedView } from '../../lib/saved-views.js';
 
 const BASE_FILTERS: TaskFilter[] = ['all', 'today', 'upcoming', 'done'];
 
@@ -18,9 +16,6 @@ export type FilterBarProps = {
     onClearConditions: () => void;
     /** Sources present in the loaded tasks, so the menu never offers an empty filter. */
     sources: string[];
-    /** The query string a saved view would restore. */
-    search: string;
-    onApplySearch: (search: string) => void;
     onNewTask: () => void;
 };
 
@@ -32,12 +27,9 @@ export function FilterBar({
     onToggleCondition,
     onClearConditions,
     sources,
-    search,
-    onApplySearch,
     onNewTask,
 }: FilterBarProps): React.JSX.Element {
     const { t } = useTranslation();
-    const [views, setViews] = useState<SavedView[]>(readSavedViews);
 
     // Built alongside the options so a menu selection resolves back to a typed condition
     // without casting the group id.
@@ -80,7 +72,7 @@ export function FilterBar({
                 options={BASE_FILTERS.map((value) => ({ value, label: t(`tasks.filters.${value}`) }))}
             />
 
-            <div className="ml-1 flex flex-wrap items-center gap-2">
+            <div className="ml-1">
                 <FilterMenu
                     label={t('tasks.filters.menuLabel')}
                     clearLabel={t('tasks.filters.clear')}
@@ -91,25 +83,7 @@ export function FilterBar({
 
                         if (condition) onToggleCondition(condition);
                     }}
-                    onSaveView={(name) => setViews(addSavedView({ name, search }))}
-                    labels={{
-                        saveView: t('tasks.filters.saveAsView'),
-                        viewName: t('tasks.filters.viewName'),
-                        save: t('common.save'),
-                    }}
                 />
-
-                {views.map((view) => (
-                    <Chip
-                        key={view.id}
-                        label={view.name}
-                        tone="subtle"
-                        selected={view.search === search}
-                        onToggle={() => onApplySearch(view.search)}
-                        onRemove={() => setViews(removeSavedView(view.id))}
-                        removeLabel={t('tasks.filters.removeView', { name: view.name })}
-                    />
-                ))}
             </div>
 
             <Button onClick={onNewTask} className="ml-auto h-11 py-0 text-xs md:h-8">

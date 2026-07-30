@@ -45,7 +45,6 @@
         },
         "filters": {
             "none": "No conditions, showing everything.",
-            "saveAsView": "Save as view",
             "remove": "Remove {{kind}} {{value}}",
             "due": {
                 "overdue": "Overdue",
@@ -71,8 +70,6 @@
                 "field": "Missing",
                 "source": "Source"
             },
-            "removeView": "Remove view {{name}}",
-            "viewName": "Name this view",
             "all": "All",
             "today": "Today",
             "upcoming": "Upcoming",

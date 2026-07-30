@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FilterBar, type FilterBarProps } from './FilterBar.js';
@@ -7,11 +7,9 @@ import type { Condition } from '../../lib/task-conditions.js';
 function renderBar(overrides: Partial<FilterBarProps> = {}): {
     onToggleCondition: (condition: Condition) => void;
     onClearConditions: () => void;
-    onApplySearch: (search: string) => void;
 } {
     const onToggleCondition = vi.fn();
     const onClearConditions = vi.fn();
-    const onApplySearch = vi.fn();
 
     render(
         <FilterBar
@@ -21,14 +19,12 @@ function renderBar(overrides: Partial<FilterBarProps> = {}): {
             onToggleCondition={onToggleCondition}
             onClearConditions={onClearConditions}
             sources={['local', 'todoist']}
-            search="due=overdue"
-            onApplySearch={onApplySearch}
             onNewTask={vi.fn()}
             {...overrides}
         />,
     );
 
-    return { onToggleCondition, onClearConditions, onApplySearch };
+    return { onToggleCondition, onClearConditions };
 }
 
 async function openMenu(): Promise<void> {
@@ -36,10 +32,6 @@ async function openMenu(): Promise<void> {
 }
 
 describe('FilterBar', () => {
-    beforeEach(() => {
-        localStorage.clear();
-    });
-
     it('keeps the server side slices as one control and puts the conditions behind a menu', () => {
         renderBar();
 
@@ -83,29 +75,6 @@ describe('FilterBar', () => {
         expect(onClearConditions).toHaveBeenCalled();
     });
 
-    it('offers to save a view only once something is filtered', async () => {
-        renderBar();
-
-        await openMenu();
-
-        expect(screen.queryByRole('button', { name: 'Save as view' })).not.toBeInTheDocument();
-    });
-
-    it('saves, restores and removes a view', async () => {
-        const { onApplySearch } = renderBar({ conditions: [{ kind: 'due', value: 'overdue' }] });
-
-        await openMenu();
-        await userEvent.click(screen.getByRole('button', { name: 'Save as view' }));
-        await userEvent.type(screen.getByRole('textbox', { name: 'Name this view' }), 'Late');
-        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-        await userEvent.click(screen.getByRole('button', { name: 'Late' }));
-        expect(onApplySearch).toHaveBeenCalledWith('due=overdue');
-
-        await userEvent.click(screen.getByRole('button', { name: 'Remove view Late' }));
-        expect(screen.queryByRole('button', { name: 'Late' })).not.toBeInTheDocument();
-    });
-
     it('opens the add form from the row', async () => {
         const onNewTask = vi.fn();
 
@@ -117,8 +86,6 @@ describe('FilterBar', () => {
                 onToggleCondition={vi.fn()}
                 onClearConditions={vi.fn()}
                 sources={[]}
-                search=""
-                onApplySearch={vi.fn()}
                 onNewTask={onNewTask}
             />,
         );
@@ -128,11 +95,4 @@ describe('FilterBar', () => {
         expect(onNewTask).toHaveBeenCalled();
     });
 
-    it('survives local storage holding something that is not a view', () => {
-        localStorage.setItem('ctm.views', '{"nope":true}');
-
-        renderBar();
-
-        expect(screen.getByRole('button', { name: /Filter/ })).toBeInTheDocument();
-    });
 });

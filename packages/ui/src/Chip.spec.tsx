@@ -33,46 +33,8 @@ describe('Chip', () => {
         expect(screen.getByRole('button', { name: 'Todoist' })).toBeInTheDocument();
     });
 
-    it('removes without also toggling', async () => {
-        const onToggle = vi.fn();
-        const onRemove = vi.fn();
-
-        render(
-            <Chip label="Late" onToggle={onToggle} onRemove={onRemove} removeLabel="Remove view Late" />,
-        );
-
-        await userEvent.click(screen.getByRole('button', { name: 'Remove view Late' }));
-
-        expect(onRemove).toHaveBeenCalledTimes(1);
-        expect(onToggle).not.toHaveBeenCalled();
-    });
-
-    it('keeps both of its controls reachable by keyboard', async () => {
-        render(<Chip label="Late" onToggle={vi.fn()} onRemove={vi.fn()} removeLabel="Remove view Late" />);
-
-        await userEvent.tab();
-        expect(screen.getByRole('button', { name: 'Late' })).toHaveFocus();
-
-        await userEvent.tab();
-        expect(screen.getByRole('button', { name: 'Remove view Late' })).toHaveFocus();
-    });
-
-    it('reports its pressed state in either tone', () => {
-        render(<Chip label="Late" tone="subtle" selected onToggle={vi.fn()} />);
-
-        expect(screen.getByRole('button', { name: 'Late' })).toHaveAttribute('aria-pressed', 'true');
-    });
-
     it('has no axe violations', async () => {
         const { container } = render(<Chip label="Overdue" onToggle={vi.fn()} />);
-
-        expect(await axe(container)).toHaveNoViolations();
-    });
-
-    it('has no axe violations with a remove control', async () => {
-        const { container } = render(
-            <Chip label="Late" onToggle={vi.fn()} onRemove={vi.fn()} removeLabel="Remove view Late" />,
-        );
 
         expect(await axe(container)).toHaveNoViolations();
     });

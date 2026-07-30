@@ -20,9 +20,6 @@ export type FilterMenuProps = {
     onToggle: (selection: { groupId: string; value: string }) => void;
     onClear: () => void;
     clearLabel: string;
-    /** When given, the panel footer can name the current selection and save it. */
-    onSaveView?: (name: string) => void;
-    labels?: { saveView: string; viewName: string; save: string };
 };
 
 /**
@@ -35,11 +32,8 @@ export function FilterMenu({
     onToggle,
     onClear,
     clearLabel,
-    onSaveView,
-    labels,
 }: FilterMenuProps): React.JSX.Element {
     const [open, setOpen] = useState(false);
-    const [viewName, setViewName] = useState<string | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const panelId = useId();
 
@@ -59,7 +53,6 @@ export function FilterMenu({
             if (event.key === 'Escape') setOpen(false);
         };
 
-        setViewName(null);
         document.addEventListener('mousedown', onPointerDown);
         document.addEventListener('keydown', onKeyDown);
 
@@ -133,46 +126,8 @@ export function FilterMenu({
                     </div>
 
                     {applied > 0 && (
-                        <div className="flex flex-col gap-1 border-t border-hair p-1.5">
-                            {viewName === null ? (
-                                <div className="flex items-center justify-between gap-2">
-                                    <FooterAction label={clearLabel} onClick={onClear} />
-                                    {onSaveView && labels && (
-                                        <FooterAction label={labels.saveView} onClick={() => setViewName('')} />
-                                    )}
-                                </div>
-                            ) : (
-                                // The name is asked for inside the panel, so a growing field
-                                // cannot shove the row the trigger sits in.
-                                <form
-                                    className="flex items-center gap-1.5"
-                                    onSubmit={(event) => {
-                                        event.preventDefault();
-
-                                        if (!viewName.trim() || !onSaveView) return;
-
-                                        onSaveView(viewName.trim());
-                                        setViewName(null);
-                                        setOpen(false);
-                                    }}
-                                >
-                                    <input
-                                        aria-label={labels?.viewName}
-                                        placeholder={labels?.viewName}
-                                        value={viewName}
-                                        maxLength={40}
-                                        autoFocus
-                                        onChange={(event) => setViewName(event.target.value)}
-                                        className="min-w-0 flex-1 rounded-ctm border border-line bg-bg px-2 py-1.5 text-[12px] text-fg placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent"
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="cursor-pointer rounded-ctm border border-line px-2.5 py-1.5 text-[12px] text-fg transition-colors duration-press hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                                    >
-                                        {labels?.save}
-                                    </button>
-                                </form>
-                            )}
+                        <div className="border-t border-hair p-1.5">
+                            <FooterAction label={clearLabel} onClick={onClear} />
                         </div>
                     )}
                 </div>

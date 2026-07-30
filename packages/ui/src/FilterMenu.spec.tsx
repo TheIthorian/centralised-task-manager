@@ -104,37 +104,6 @@ describe('FilterMenu', () => {
         expect(screen.queryByRole('checkbox', { name: 'Overdue' })).not.toBeInTheDocument();
     });
 
-    it('names and saves the current selection from the footer', async () => {
-        const onSaveView = vi.fn();
-
-        renderMenu({
-            onSaveView,
-            labels: { saveView: 'Save as view', viewName: 'Name this view', save: 'Save' },
-        });
-
-        await userEvent.click(screen.getByRole('button', { name: /Filter/ }));
-        await userEvent.click(screen.getByRole('button', { name: 'Save as view' }));
-        await userEvent.type(screen.getByRole('textbox', { name: 'Name this view' }), '  Late  ');
-        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-        expect(onSaveView).toHaveBeenCalledWith('Late');
-    });
-
-    it('will not save a view with no name', async () => {
-        const onSaveView = vi.fn();
-
-        renderMenu({
-            onSaveView,
-            labels: { saveView: 'Save as view', viewName: 'Name this view', save: 'Save' },
-        });
-
-        await userEvent.click(screen.getByRole('button', { name: /Filter/ }));
-        await userEvent.click(screen.getByRole('button', { name: 'Save as view' }));
-        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-        expect(onSaveView).not.toHaveBeenCalled();
-    });
-
     it('has no accessibility violations while open', async () => {
         const { container } = renderMenu();
 
