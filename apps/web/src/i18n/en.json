@@ -45,7 +45,6 @@
         },
         "filters": {
             "none": "No conditions, showing everything.",
-            "saveAsView": "Save as view",
             "remove": "Remove {{kind}} {{value}}",
             "due": {
                 "overdue": "Overdue",
@@ -57,6 +56,19 @@
                 "noDate": "No due date",
                 "noDuration": "No duration",
                 "hasReminder": "Has a reminder"
+            },
+            "sources": {
+                "local": "In app",
+                "todoist": "Todoist",
+                "google": "Google Tasks"
+            },
+            "menuLabel": "Filter",
+            "sliceLabel": "Which tasks",
+            "clear": "Clear filters",
+            "groups": {
+                "due": "Due",
+                "field": "Missing",
+                "source": "Source"
             },
             "all": "All",
             "today": "Today",
@@ -75,6 +87,11 @@
             "title": "Could not load your tasks",
             "body": "The API did not respond. Check that it is running, then try again."
         },
+        "titleLabel": "Task title",
+        "descriptionLabel": "Description (optional)",
+        "dueDateLabel": "Due date (optional)",
+        "add": "Add",
+        "adding": "Adding…",
         "titlePlaceholder": "What needs doing?",
         "notesPlaceholder": "More detail…",
         "priorityLabel": "Priority"
