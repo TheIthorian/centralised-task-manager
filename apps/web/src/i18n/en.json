@@ -79,6 +79,109 @@
         "notesPlaceholder": "More detail…",
         "priorityLabel": "Priority"
     },
+    "taskDetail": {
+        "title": "Task detail",
+        "close": "Close",
+        "sections": {
+            "details": "Details",
+            "schedule": "Schedule"
+        },
+        "fields": {
+            "title": "Title",
+            "description": "Description",
+            "priority": "Priority",
+            "priorityOption": "P{{level}}",
+            "dueDate": "Due date",
+            "deadline": "Deadline",
+            "recurrence": "Recurrence",
+            "duration": "Duration",
+            "durationPlaceholder": "Amount",
+            "durationUnit": "Duration unit"
+        },
+        "recurrences": {
+            "none": "None",
+            "daily": "Daily",
+            "weekday": "Every weekday",
+            "weekly": "Weekly",
+            "monthly": "Monthly",
+            "yearly": "Yearly"
+        },
+        "durationUnits": {
+            "minute": "Minutes",
+            "day": "Days"
+        },
+        "reminders": {
+            "title": "Reminders",
+            "empty": "No reminders.",
+            "newLabel": "New reminder",
+            "add": "Add",
+            "remove": "Remove",
+            "removeLabel": "Remove the reminder for {{when}}",
+            "sent": "{{when}} (sent)"
+        },
+        "relations": {
+            "title": "Relations",
+            "empty": "No related tasks.",
+            "typeLabel": "Relation",
+            "searchLabel": "Related task",
+            "searchPlaceholder": "Search a task…",
+            "noMatches": "No matches",
+            "add": "Add",
+            "remove": "Remove",
+            "removeLabel": "Remove the relation to {{title}}",
+            "types": {
+                "parent": "Parent",
+                "child": "Child",
+                "next": "Next",
+                "previous": "Previous",
+                "related": "Related"
+            }
+        },
+        "fuzzy": {
+            "title": "Fuzzy deadline",
+            "typeLabel": "Horizon",
+            "cadenceLabel": "Reminder",
+            "current": "Currently {{horizon}}",
+            "currentWithReminder": "Currently {{horizon}}, reminding {{cadence}}",
+            "types": {
+                "this_week": "This week",
+                "this_month": "This month",
+                "someday": "Someday"
+            },
+            "cadences": {
+                "none": "No reminder",
+                "daily": "Daily",
+                "weekly": "Weekly"
+            }
+        },
+        "locations": {
+            "title": "Locations",
+            "empty": "No locations.",
+            "nameLabel": "Name",
+            "urlLabel": "Google Maps URL",
+            "add": "Add",
+            "remove": "Remove",
+            "removeLabel": "Remove the location {{name}}"
+        },
+        "actions": {
+            "saving": "Saving…",
+            "delete": "Delete",
+            "deleting": "Deleting…",
+            "confirmDelete": "Confirm delete",
+            "confirmHint": "Press delete again to remove this task permanently."
+        },
+        "saved": {
+            "title": "Saved",
+            "body": "Your changes are on the server."
+        },
+        "saveFailed": {
+            "title": "Not saved",
+            "body": "Your changes did not reach the server. Try again."
+        },
+        "deleteFailed": {
+            "body": "The task was not deleted. Try again."
+        }
+    },
     "timeline": {
         "title": "Timeline"
     },

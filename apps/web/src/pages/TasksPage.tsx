@@ -10,7 +10,7 @@ import { TaskFilters } from '../components/tasks/TaskFilters.js';
 import { TaskList } from '../components/tasks/TaskList.js';
 import { GroupedTaskList } from '../components/tasks/GroupedTaskList.js';
 import { AddTaskInline } from '../components/tasks/AddTaskInline.js';
-import { TaskModal } from '../components/tasks/TaskModal.js';
+import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 import { useGroupedTaskQueries } from '../hooks/useGroupedTaskQueries.js';
 
 const PAGE_SIZE = 20;
@@ -262,7 +262,7 @@ export function TasksPage(): React.JSX.Element {
                     ))}
             </div>
 
-            <TaskModal
+            <TaskDetailPanel
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}

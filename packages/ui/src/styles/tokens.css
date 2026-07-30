@@ -72,6 +72,17 @@
     }
 }
 
+@keyframes ctm-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
 @keyframes ctm-rise {
     from {
         opacity: 0;

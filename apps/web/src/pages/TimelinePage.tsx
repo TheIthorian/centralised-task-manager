@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { useAuth } from '../auth/AuthContext.js';
-import { TaskModal } from '../components/tasks/TaskModal.js';
+import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 
 const DAY_WIDTH_PX = 24;
 const LEFT_COL_PX = 180;
@@ -216,7 +216,7 @@ export function TimelinePage(): React.JSX.Element {
                 </div>
             )}
 
-            <TaskModal
+            <TaskDetailPanel
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}

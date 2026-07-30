@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, SegmentedControl } from '@ctm/ui';
 import type { TaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { useAuth } from '../auth/AuthContext.js';
-import { TaskModal } from '../components/tasks/TaskModal.js';
+import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 import { CalendarColumns } from '../components/calendar/CalendarColumns.js';
 import { CalendarMonth } from '../components/calendar/CalendarMonth.js';
 import { buildDays, rangeLabel, shiftAnchor, toDateKey, CALENDAR_RANGES, type CalendarRange } from '../lib/calendar-range.js';
@@ -135,7 +135,7 @@ export function CalendarPage(): React.JSX.Element {
                 />
             )}
 
-            <TaskModal
+            <TaskDetailPanel
                 task={editTask}
                 open={editTask !== null}
                 onClose={() => setEditTask(null)}
