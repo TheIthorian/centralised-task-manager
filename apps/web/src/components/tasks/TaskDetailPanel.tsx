@@ -1,8 +1,7 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
-import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Banner, Button, Input, SegmentedControl } from '@ctm/ui';
+import { Banner, Button, Input, SegmentedControl, Sheet } from '@ctm/ui';
 import type { LocationDto, SetFuzzyDeadlineDto, TaskDto, UpdateTaskDto } from '@ctm/api-client';
 import { getErrorMessage } from '../../api/error-message.js';
 import { useToast } from '../../toast/ToastContext.js';
@@ -105,26 +104,6 @@ export function TaskDetailPanel({
         setErrorMessage('');
     }, [task]);
 
-    useEffect(() => {
-        if (!open) return;
-
-        // Escape has to give the keyboard back to whatever opened the panel, otherwise focus
-        // lands on the body and the next Tab restarts at the top of the page.
-        const opener = document.activeElement;
-
-        const onKeyDown = (event: KeyboardEvent): void => {
-            if (event.key === 'Escape') onClose();
-        };
-
-        document.addEventListener('keydown', onKeyDown);
-
-        return () => {
-            document.removeEventListener('keydown', onKeyDown);
-
-            if (opener instanceof HTMLElement) opener.focus();
-        };
-    }, [open, onClose]);
-
     // Relation targets are picked by title, so the picker needs the whole list rather than
     // the page of tasks the caller happens to be showing.
     const { data: candidates = [] } = useQuery<TaskDto[]>({
@@ -186,20 +165,14 @@ export function TaskDetailPanel({
         }
     };
 
-    return createPortal(
-        <div className="fixed inset-0 z-50 flex justify-end">
-            <div
-                className="absolute inset-0 bg-fg/25 md:bg-fg/10 motion-safe:animate-[ctm-fade_var(--duration-surface)_ease-out]"
-                onClick={onClose}
-                aria-hidden="true"
-            />
-            <div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={headingId}
-                className="relative z-10 flex h-full w-full flex-col bg-panel text-fg md:w-[690px] md:border-l md:border-line md:shadow-overlay motion-safe:animate-[ctm-slide-in_var(--duration-surface)_ease-out]"
-            >
-                <header className="flex items-center gap-3 border-b border-line px-4 py-3 md:px-6">
+    return (
+        <Sheet
+            open={open}
+            onClose={onClose}
+            labelledBy={headingId}
+            dragHandleLabel={t('taskDetail.dragHandle')}
+        >
+            <header className="flex items-center gap-3 border-b border-line px-4 py-3 md:px-6">
                     <h2 id={headingId} className="flex-1 text-base font-semibold tracking-tight text-fg">
                         {t('taskDetail.title')}
                     </h2>
@@ -377,9 +350,7 @@ export function TaskDetailPanel({
                         </p>
                     )}
                 </form>
-            </div>
-        </div>,
-        document.body,
+        </Sheet>
     );
 }
 

@@ -11,6 +11,8 @@ interface TaskListProps {
     pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    onSnooze?: (task: TaskDto) => void;
+    onDelete?: (task: TaskDto) => void;
     hasNextPage?: boolean;
     isFetchingNextPage?: boolean;
     fetchNextPage?: () => void;
@@ -23,6 +25,8 @@ export function TaskList({
     pendingTaskId,
     onToggle,
     onEdit,
+    onSnooze,
+    onDelete,
     hasNextPage = false,
     isFetchingNextPage = false,
     fetchNextPage,
@@ -44,6 +48,8 @@ export function TaskList({
                     highlighted={task.id === highlightedTaskId}
                     onToggle={onToggle}
                     onEdit={onEdit}
+                    onSnooze={onSnooze}
+                    onDelete={onDelete}
                 />
             ))}
 

@@ -54,7 +54,7 @@ export function McpConnectorCard({ mcpUrl }: McpConnectorCardProps): React.JSX.E
                         aria-label="MCP client"
                         value={clientId}
                         onChange={(e) => setClientId(e.target.value)}
-                        className="w-32 border border-line bg-panel text-fg font-medium text-xs uppercase px-2 py-1.5 rounded-ctm"
+                        className="min-h-11 w-32 rounded-ctm border border-line bg-panel px-2 py-1.5 text-xs font-medium uppercase text-fg md:min-h-0"
                     >
                         {MCP_CLIENTS.map(({ id, label }) => (
                             <option key={id} value={id}>

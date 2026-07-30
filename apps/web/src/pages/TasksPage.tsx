@@ -13,12 +13,15 @@ import { AddTaskInline } from '../components/tasks/AddTaskInline.js';
 import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 import { useGroupedTaskQueries } from '../hooks/useGroupedTaskQueries.js';
 import { filterTasks, parseConditions, toggleCondition, writeConditions, type Condition } from '../lib/task-conditions.js';
+import { nextMorning } from '../lib/snooze.js';
+import { useToast } from '../toast/ToastContext.js';
 
 const PAGE_SIZE = 20;
 
 /** Main task management page. Filter is stored in the URL (?filter=today). Opening a specific task is via ?taskId=<id>. */
 export function TasksPage(): React.JSX.Element {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const { showToast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
     const conditions = parseConditions(searchParams);
@@ -194,13 +197,53 @@ export function TasksPage(): React.JSX.Element {
     });
 
     // Only the row being written to dims, so the rest of the list stays usable.
-    const pendingTaskId = statusMutation.isPending ? (statusMutation.variables?.id ?? null) : null;
+    const pendingTaskId = firstOf([
+        statusMutation.isPending ? statusMutation.variables?.id : undefined,
+        saveMutation.isPending ? saveMutation.variables?.id : undefined,
+        deleteMutation.isPending ? deleteMutation.variables : undefined,
+    ]);
 
     const handleToggle = useCallback(
         (id: string, completed: boolean) => {
             statusMutation.mutate({ id, completed });
         },
         [statusMutation],
+    );
+
+    const handleSnooze = useCallback(
+        (task: TaskDto) => {
+            const date = nextMorning();
+
+            saveMutation.mutate(
+                {
+                    id: task.id,
+                    // The recurrence rule is the task's own schedule, not part of the snooze.
+                    dto: { due: { date: date.toISOString(), recurrence: task.due?.recurrence || undefined } },
+                },
+                {
+                    onSuccess: () => {
+                        showToast({
+                            title: t('tasks.snoozed.title'),
+                            description: t('tasks.snoozed.body', {
+                                date: new Intl.DateTimeFormat(i18n.language, {
+                                    weekday: 'long',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                }).format(date),
+                            }),
+                        });
+                    },
+                },
+            );
+        },
+        [saveMutation, showToast, t, i18n.language],
+    );
+
+    const handleSwipeDelete = useCallback(
+        (task: TaskDto) => {
+            deleteMutation.mutate(task.id);
+        },
+        [deleteMutation],
     );
 
     // Conditions narrow what has been loaded, not what the server holds, so the count says
@@ -278,6 +321,8 @@ export function TasksPage(): React.JSX.Element {
                             highlightedTaskId={highlightedTaskId}
                             onToggle={handleToggle}
                             onEdit={setEditTask}
+                            onSnooze={handleSnooze}
+                            onDelete={handleSwipeDelete}
                             pendingTaskId={pendingTaskId}
                         />
                     ) : (
@@ -286,6 +331,8 @@ export function TasksPage(): React.JSX.Element {
                             highlightedTaskId={highlightedTaskId}
                             onToggle={handleToggle}
                             onEdit={setEditTask}
+                            onSnooze={handleSnooze}
+                            onDelete={handleSwipeDelete}
                             pendingTaskId={pendingTaskId}
                             hasNextPage={flatQuery.hasNextPage}
                             isFetchingNextPage={flatQuery.isFetchingNextPage}
@@ -314,4 +361,9 @@ export function TasksPage(): React.JSX.Element {
             />
         </div>
     );
+}
+
+/** The one row that dims: whichever write got in first, since only one can be in flight per row. */
+function firstOf(ids: (string | undefined)[]): string | null {
+    return ids.find((id): id is string => Boolean(id)) ?? null;
 }

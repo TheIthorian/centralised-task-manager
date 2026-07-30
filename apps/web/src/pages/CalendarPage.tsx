@@ -8,6 +8,7 @@ import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 import { CalendarColumns } from '../components/calendar/CalendarColumns.js';
 import { CalendarMonth } from '../components/calendar/CalendarMonth.js';
 import { buildDays, rangeLabel, shiftAnchor, toDateKey, CALENDAR_RANGES, type CalendarRange } from '../lib/calendar-range.js';
+import { useIsPhone } from '../hooks/useIsPhone.js';
 
 /** Calendar over a month, a week, three days or one day. Tasks appear on their due date. */
 export function CalendarPage(): React.JSX.Element {
@@ -16,6 +17,7 @@ export function CalendarPage(): React.JSX.Element {
     const [anchor, setAnchor] = useState(() => new Date());
     const [editTask, setEditTask] = useState<TaskDto | null>(null);
     const { api } = useAuth();
+    const isPhone = useIsPhone();
     const qc = useQueryClient();
 
     const { data: tasks = [] } = useQuery({
@@ -24,7 +26,11 @@ export function CalendarPage(): React.JSX.Element {
     });
 
     const locale = i18n.language;
-    const days = buildDays({ anchor, range });
+    // Seven columns on a 375px screen is 47px per day, which is narrower than the text in
+    // them. The week range falls back to three days rather than growing a sideways scroller:
+    // a horizontal scroll area inside a vertically scrolling page fights the row swipe.
+    const effectiveRange: CalendarRange = isPhone && range === 'week' ? 'threeDay' : range;
+    const days = buildDays({ anchor, range: effectiveRange });
     const tasksByDate = groupByDueDate(tasks);
     const todayKey = toDateKey(new Date());
 
@@ -63,8 +69,8 @@ export function CalendarPage(): React.JSX.Element {
     });
 
     const step = useCallback(
-        (direction: 1 | -1): void => setAnchor((current) => shiftAnchor({ anchor: current, range, direction })),
-        [range],
+        (direction: 1 | -1): void => setAnchor((current) => shiftAnchor({ anchor: current, range: effectiveRange, direction })),
+        [effectiveRange],
     );
 
     useEffect(() => {
@@ -92,7 +98,7 @@ export function CalendarPage(): React.JSX.Element {
             <div className="mb-4 flex flex-wrap items-center gap-3 pr-24">
                 <h1 className="text-2xl font-semibold tracking-tight text-fg">{t('calendar.title')}</h1>
 
-                <div className="ml-auto flex items-center gap-2">
+                <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto md:flex-nowrap">
                     <SegmentedControl
                         label={t('calendar.rangeLabel')}
                         value={range}
@@ -108,8 +114,8 @@ export function CalendarPage(): React.JSX.Element {
                     <Button variant="ghost" onClick={() => step(-1)} aria-label={t('calendar.previous')}>
                         ‹
                     </Button>
-                    <span className="min-w-[150px] text-center text-sm font-semibold tracking-tight">
-                        {rangeLabel({ anchor, range, locale })}
+                    <span className="min-w-[110px] flex-1 text-center text-sm font-semibold tracking-tight md:min-w-[150px] md:flex-none">
+                        {rangeLabel({ anchor, range: effectiveRange, locale })}
                     </span>
                     <Button variant="ghost" onClick={() => step(1)} aria-label={t('calendar.next')}>
                         ›
@@ -117,13 +123,18 @@ export function CalendarPage(): React.JSX.Element {
                 </div>
             </div>
 
-            {range === 'month' ? (
+            {effectiveRange === 'month' ? (
                 <CalendarMonth
                     days={days}
                     tasksByDate={tasksByDate}
                     todayKey={todayKey}
                     locale={locale}
                     onOpenTask={setEditTask}
+                    compact={isPhone}
+                    onSelectDay={(date) => {
+                        setAnchor(date);
+                        setRange('day');
+                    }}
                 />
             ) : (
                 <CalendarColumns

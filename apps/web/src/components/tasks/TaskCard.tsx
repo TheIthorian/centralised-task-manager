@@ -12,6 +12,10 @@ type TaskCardProps = {
     pending?: boolean;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    /** Swipe right. Omitted where a list has no business rescheduling, as on the calendar. */
+    onSnooze?: (task: TaskDto) => void;
+    /** Swipe left, then a deliberate tap on the revealed button. */
+    onDelete?: (task: TaskDto) => void;
 };
 
 /**
@@ -24,6 +28,8 @@ export function TaskCard({
     pending = false,
     onToggle,
     onEdit,
+    onSnooze,
+    onDelete,
 }: TaskCardProps): React.JSX.Element {
     const { t, i18n } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
@@ -59,6 +65,9 @@ export function TaskCard({
                 pending={pending}
                 onToggle={(completed) => onToggle(task.id, completed)}
                 onOpen={() => onEdit(task)}
+                onSnooze={onSnooze && (() => onSnooze(task))}
+                onDelete={onDelete && (() => onDelete(task))}
+                swipeLabels={{ snooze: t('tasks.swipe.snooze'), delete: t('tasks.swipe.delete') }}
             />
         </div>
     );

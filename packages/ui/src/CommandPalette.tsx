@@ -166,7 +166,9 @@ export function CommandPalette({
             onKeyDown={handleKeyDown}
             className={clsx(
                 // items-start, or the grid stretches the dialog to the bottom of the window.
-                'fixed inset-0 z-50 grid items-start justify-items-center pt-[12vh]',
+                // A phone keeps the dialog near the top: 12vh plus a software keyboard puts
+                // the input under the keyboard, and vh does not shrink when it opens.
+                'fixed inset-0 z-50 grid items-start justify-items-center pt-4 md:pt-[12vh]',
                 // The blur is the point: the dialog floats above the app rather than being
                 // pasted onto it, and the app stays recognisable underneath. It survives
                 // reduced motion, because only the entry movement is motion.
@@ -202,7 +204,12 @@ export function CommandPalette({
                         className="min-w-0 flex-1 bg-transparent text-sm text-fg placeholder:text-muted focus:outline-none"
                     />
                 </div>
-                <div id={LIST_ID} role="listbox" aria-label={copy.title} className="max-h-[300px] overflow-y-auto">
+                <div
+                    id={LIST_ID}
+                    role="listbox"
+                    aria-label={copy.title}
+                    className="max-h-[min(300px,45dvh)] overflow-y-auto"
+                >
                     {matches.map((item, index) => {
                         const heading = item.group === lastGroup ? null : copy.groups[item.group];
                         lastGroup = item.group;

@@ -186,7 +186,7 @@ export function TimelinePage(): React.JSX.Element {
                                 return (
                                     <div
                                         key={task.id}
-                                        className="h-9 border-b border-line/20 relative"
+                                        className="relative h-12 border-b border-line/20 md:h-9"
                                     >
                                         {todayVisible && (
                                             <div
@@ -196,7 +196,7 @@ export function TimelinePage(): React.JSX.Element {
                                         )}
                                         <button
                                             onClick={() => setEditTask(task)}
-                                            className={`absolute top-1.5 flex h-6 cursor-pointer items-center overflow-hidden rounded-[4px] border px-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${barClass} ${
+                                            className={`absolute top-0.5 flex h-11 cursor-pointer items-center overflow-hidden rounded-[4px] border px-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:top-1.5 md:h-6 ${barClass} ${
                                                 task.completed ? 'opacity-40' : ''
                                             }`}
                                             style={{

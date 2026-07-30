@@ -13,7 +13,8 @@ export function Button({ variant = 'primary', className, children, ...props }: B
         <button
             className={clsx(
                 'inline-flex items-center justify-center gap-2 rounded-ctm',
-                'border px-3.5 py-1.5 text-sm font-semibold',
+                // 44px on a phone whatever the type scale says, so a thumb has a target.
+                'min-h-11 border px-3.5 py-1.5 text-sm font-semibold md:min-h-0',
                 'cursor-pointer transition-colors duration-press',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
                 'disabled:cursor-not-allowed disabled:opacity-50',

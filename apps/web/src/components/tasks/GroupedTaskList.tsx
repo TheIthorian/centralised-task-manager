@@ -15,6 +15,8 @@ type LegacyProps = {
     pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    onSnooze?: (task: TaskDto) => void;
+    onDelete?: (task: TaskDto) => void;
 };
 
 type PaginatedProps = {
@@ -28,6 +30,8 @@ type PaginatedProps = {
     pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    onSnooze?: (task: TaskDto) => void;
+    onDelete?: (task: TaskDto) => void;
 };
 
 type GroupedTaskListProps = LegacyProps | PaginatedProps;
@@ -48,6 +52,8 @@ function SectionBlock({
     pendingTaskId,
     onToggle,
     onEdit,
+    onSnooze,
+    onDelete,
     isLoading,
     hasNextPage,
     isFetchingNextPage,
@@ -60,6 +66,8 @@ function SectionBlock({
     pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
+    onSnooze?: (task: TaskDto) => void;
+    onDelete?: (task: TaskDto) => void;
     isLoading?: boolean;
     hasNextPage?: boolean;
     isFetchingNextPage?: boolean;
@@ -83,6 +91,8 @@ function SectionBlock({
                         pending={task.id === pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
+                        onSnooze={onSnooze}
+                        onDelete={onDelete}
                     />
                 ))}
 
@@ -107,6 +117,8 @@ export function GroupedTaskList({
     pendingTaskId,
     onToggle,
     onEdit,
+    onSnooze,
+    onDelete,
 }: GroupedTaskListProps): React.JSX.Element {
     const { t } = useTranslation();
 
@@ -139,6 +151,8 @@ export function GroupedTaskList({
                         pendingTaskId={pendingTaskId}
                             onToggle={onToggle}
                             onEdit={onEdit}
+                            onSnooze={onSnooze}
+                            onDelete={onDelete}
                             isLoading={result.isLoading}
                             hasNextPage={result.hasNextPage}
                             isFetchingNextPage={result.isFetchingNextPage}
@@ -155,6 +169,8 @@ export function GroupedTaskList({
                         pendingTaskId={pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
+                        onSnooze={onSnooze}
+                        onDelete={onDelete}
                     />
                 )}
             </div>
@@ -183,6 +199,8 @@ export function GroupedTaskList({
                         pendingTaskId={pendingTaskId}
                         onToggle={onToggle}
                         onEdit={onEdit}
+                        onSnooze={onSnooze}
+                        onDelete={onDelete}
                     />
                 );
             })}

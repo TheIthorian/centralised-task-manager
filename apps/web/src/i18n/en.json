@@ -87,6 +87,14 @@
             "title": "Could not load your tasks",
             "body": "The API did not respond. Check that it is running, then try again."
         },
+        "swipe": {
+            "snooze": "Tomorrow",
+            "delete": "Delete"
+        },
+        "snoozed": {
+            "title": "Snoozed",
+            "body": "Now due {{date}}."
+        },
         "titleLabel": "Task title",
         "descriptionLabel": "Description (optional)",
         "dueDateLabel": "Due date (optional)",
@@ -99,6 +107,7 @@
     "taskDetail": {
         "title": "Task detail",
         "close": "Close",
+        "dragHandle": "Close task detail",
         "sections": {
             "details": "Details",
             "schedule": "Schedule"
@@ -215,6 +224,8 @@
             "day": "Day"
         },
         "more": "+{{count}} more",
+        "dayLabel_one": "{{date}}, {{count}} task",
+        "dayLabel_other": "{{date}}, {{count}} tasks",
         "emptyDay": "Nothing due"
     },
     "palette": {
@@ -276,6 +287,7 @@
         }
     },
     "notifications": {
+        "connect": "Connect →",
         "saveFailed": {
             "title": "Not saved",
             "body": "Your preferences did not reach the server. Try again."
