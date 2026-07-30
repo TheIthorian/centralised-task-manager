@@ -58,6 +58,13 @@
                 "noDuration": "No duration",
                 "hasReminder": "Has a reminder"
             },
+            "sources": {
+                "local": "In app",
+                "todoist": "Todoist",
+                "google": "Google Tasks"
+            },
+            "removeView": "Remove view {{name}}",
+            "viewName": "Name this view",
             "all": "All",
             "today": "Today",
             "upcoming": "Upcoming",

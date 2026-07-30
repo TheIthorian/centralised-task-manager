@@ -6,12 +6,13 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
-import { TaskFilters } from '../components/tasks/TaskFilters.js';
+import { FilterBar } from '../components/tasks/FilterBar.js';
 import { TaskList } from '../components/tasks/TaskList.js';
 import { GroupedTaskList } from '../components/tasks/GroupedTaskList.js';
 import { AddTaskInline } from '../components/tasks/AddTaskInline.js';
 import { TaskModal } from '../components/tasks/TaskModal.js';
 import { useGroupedTaskQueries } from '../hooks/useGroupedTaskQueries.js';
+import { filterTasks, parseConditions, toggleCondition, writeConditions, type Condition } from '../lib/task-conditions.js';
 
 const PAGE_SIZE = 20;
 
@@ -20,6 +21,7 @@ export function TasksPage(): React.JSX.Element {
     const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
+    const conditions = parseConditions(searchParams);
     const taskIdParam = searchParams.get('taskId');
     const highlightTaskIdParam = searchParams.get('highlightTaskId');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
@@ -105,12 +107,14 @@ export function TasksPage(): React.JSX.Element {
         enabled: filter !== 'all',
     });
 
-    const flatTasks = flatQuery.data?.pages.flat() ?? [];
+    const now = new Date();
+    const loadedFlatTasks = flatQuery.data?.pages.flat() ?? [];
+    const flatTasks = filterTasks({ tasks: loadedFlatTasks, conditions, now });
     const flatIsLoading = flatQuery.isLoading;
     const flatIsError = flatQuery.isError;
 
     // Per-bucket grouped queries (all filter only).
-    const groupedResults = useGroupedTaskQueries({ api, enabled: filter === 'all' });
+    const loadedGroupedResults = useGroupedTaskQueries({ api, enabled: filter === 'all' });
 
     const addMutation = useMutation({
         mutationFn: (dto: CreateTaskDto) => api.createTask({ dto }),
@@ -198,9 +202,24 @@ export function TasksPage(): React.JSX.Element {
         [statusMutation],
     );
 
+    // Conditions narrow what has been loaded, not what the server holds, so the count says
+    // "shown" rather than claiming to be a total.
+    const groupedResults = Object.fromEntries(
+        Object.entries(loadedGroupedResults).map(([bucket, result]) => [
+            bucket,
+            { ...result, tasks: filterTasks({ tasks: result.tasks, conditions, now }) },
+        ]),
+    ) as typeof loadedGroupedResults;
+
     const totalLoaded = filter === 'all'
         ? Object.values(groupedResults).reduce((sum, r) => sum + r.tasks.length, 0)
         : flatTasks.length;
+
+    const loadedTasks =
+        filter === 'all' ? Object.values(loadedGroupedResults).flatMap((r) => r.tasks) : loadedFlatTasks;
+
+    const applyConditions = (next: Condition[]): void =>
+        setSearchParams(writeConditions({ params: searchParams, conditions: next }));
 
     const isLoading = filter === 'all' ? false : flatIsLoading;
     const isError = filter === 'all' ? false : flatIsError;
@@ -212,14 +231,24 @@ export function TasksPage(): React.JSX.Element {
                     <h1 className="text-xl font-semibold tracking-tight text-fg">{t('tasks.title')}</h1>
                     {!isLoading && (
                         <p className="text-xs text-muted" aria-live="polite">
-                            {t('tasks.openCount', { count: totalLoaded })}
+                            {conditions.length > 0
+                                ? t('tasks.shownCount', { count: totalLoaded })
+                                : t('tasks.openCount', { count: totalLoaded })}
                         </p>
                     )}
                 </div>
             </div>
 
             <div className="flex flex-col gap-4">
-                <TaskFilters active={filter} onChange={(f) => setSearchParams({ filter: f })} />
+                <FilterBar
+                    filter={filter}
+                    onFilterChange={(next) => setSearchParams({ filter: next })}
+                    conditions={conditions}
+                    onToggleCondition={(condition) => applyConditions(toggleCondition({ conditions, condition }))}
+                    sources={[...new Set(loadedTasks.map((task) => task.source))]}
+                    search={searchParams.toString()}
+                    onApplySearch={(search) => setSearchParams(new URLSearchParams(search))}
+                />
 
                 <AddTaskInline
                     onAdd={async (dto) => {
