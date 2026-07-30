@@ -14,6 +14,13 @@ describe('Toast', () => {
         expect(onAction).toHaveBeenCalledTimes(1);
     });
 
+    it('renders an optional eyebrow above the message', () => {
+        render(<Toast title="Sync" message="Todoist finished syncing" />);
+
+        expect(screen.getByText('Sync')).toBeInTheDocument();
+        expect(screen.getByText('Todoist finished syncing')).toBeInTheDocument();
+    });
+
     it('announces itself politely', () => {
         render(<Toast message="Task completed" />);
 

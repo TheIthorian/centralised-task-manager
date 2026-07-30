@@ -7,6 +7,8 @@ import { EmptyState } from '@ctm/ui';
 interface TaskListProps {
     tasks: TaskDto[];
     highlightedTaskId?: string | null;
+    /** The task with a write in flight, if any. */
+    pendingTaskId?: string | null;
     onToggle: (id: string, completed: boolean) => void;
     onEdit: (task: TaskDto) => void;
     hasNextPage?: boolean;
@@ -18,6 +20,7 @@ interface TaskListProps {
 export function TaskList({
     tasks,
     highlightedTaskId,
+    pendingTaskId,
     onToggle,
     onEdit,
     hasNextPage = false,
@@ -35,6 +38,7 @@ export function TaskList({
         <div className="flex flex-col gap-2">
             {tasks.map((task) => (
                 <TaskCard
+                    pending={task.id === pendingTaskId}
                     key={task.id}
                     task={task}
                     highlighted={task.id === highlightedTaskId}

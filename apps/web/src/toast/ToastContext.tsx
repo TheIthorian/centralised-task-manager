@@ -1,4 +1,6 @@
-import { createContext, useContext, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { Toast } from '@ctm/ui';
+import { MissingProviderError } from '../lib/errors.js';
 
 export type ToastMessage = {
     id: number;
@@ -20,10 +22,16 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+const DURATION_MS = 4000;
+
 /** Provides global transient toast notifications. */
 export function ToastProvider({ children }: { children: ReactNode }): React.JSX.Element {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     const nextId = useRef(1);
+
+    const dismiss = useCallback((id: number): void => {
+        setToasts((current) => current.filter((toast) => toast.id !== id));
+    }, []);
 
     const showToast = ({ title, description, dedupeKey }: ShowToastParams): void => {
         const id = nextId.current++;
@@ -36,23 +44,15 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
             return [...current, { id, title, description, dedupeKey }];
         });
 
-        window.setTimeout(() => {
-            setToasts((current) => current.filter((toast) => toast.id !== id));
-        }, 4000);
+        window.setTimeout(() => dismiss(id), DURATION_MS);
     };
 
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <div className="fixed top-4 right-4 z-50 flex w-full max-w-sm flex-col gap-3 px-4">
+            <div className="fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-3 px-4">
                 {toasts.map((toast) => (
-                    <div
-                        key={toast.id}
-                        className="border border-line bg-white px-4 py-3 shadow-[4px_4px_0px_#111] rounded-ctm"
-                    >
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-fg">{toast.title}</p>
-                        <p className="mt-1 text-sm font-medium text-fg/80">{toast.description}</p>
-                    </div>
+                    <Toast key={toast.id} title={toast.title} message={toast.description} />
                 ))}
             </div>
         </ToastContext.Provider>
@@ -63,7 +63,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
 export function useToast(): ToastContextValue {
     const context = useContext(ToastContext);
 
-    if (!context) throw new Error('useToast must be used inside ToastProvider');
+    if (!context) throw new MissingProviderError({ hook: 'useToast', provider: 'ToastProvider' });
 
     return context;
 }

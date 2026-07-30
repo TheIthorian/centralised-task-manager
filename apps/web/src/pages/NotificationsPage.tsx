@@ -4,6 +4,7 @@ import type { NotificationPreferencesDto, UpdateNotificationPreferencesDto, Chan
 import { useAuth } from '../auth/AuthContext.js';
 import { useToast } from '../toast/ToastContext.js';
 import { Checkbox } from '@ctm/ui';
+import { useTranslation } from 'react-i18next';
 
 type NotificationKey = keyof NotificationPreferencesDto;
 type ChannelKey = keyof ChannelPrefsDto;
@@ -23,6 +24,7 @@ const CHANNELS: { key: ChannelKey; label: string }[] = [
 
 /** Settings sub-page: notification preference grid (per-type × per-channel). */
 export function NotificationsPage(): React.JSX.Element {
+    const { t } = useTranslation();
     const { api } = useAuth();
     const { showToast } = useToast();
     const qc = useQueryClient();
@@ -45,37 +47,14 @@ export function NotificationsPage(): React.JSX.Element {
 
     const mutation = useMutation({
         mutationFn: (dto: UpdateNotificationPreferencesDto) => api.updateNotificationPreferences({ dto }),
-        onMutate: async (dto) => {
-            await qc.cancelQueries({ queryKey: ['notification-preferences'] });
-
-            const previous = qc.getQueryData<NotificationPreferencesDto>(['notification-preferences']);
-
-            qc.setQueryData<NotificationPreferencesDto>(['notification-preferences'], (old) => {
-                if (!old) return old;
-
-                const updated = { ...old };
-
-                for (const [k, v] of Object.entries(dto)) {
-                    updated[k as NotificationKey] = {
-                        ...old[k as NotificationKey],
-                        ...(v ?? {}),
-                    };
-                }
-
-                return updated;
-            });
-
-            return { previous };
-        },
+        // The response is the saved preferences, so the cache takes what the server agreed
+        // to rather than what the click assumed. Controls disable while the write is in
+        // flight, which is honest about the round trip instead of hiding it.
         onSuccess: (serverPrefs) => {
             qc.setQueryData(['notification-preferences'], serverPrefs);
         },
-        onError: (_err, _dto, context) => {
-            if (context?.previous) {
-                qc.setQueryData(['notification-preferences'], context.previous);
-            }
-
-            showToast({ title: 'Error', description: 'Failed to save preferences' });
+        onError: () => {
+            showToast({ title: t('notifications.saveFailed.title'), description: t('notifications.saveFailed.body') });
         },
     });
 
@@ -157,13 +136,15 @@ export function NotificationsPage(): React.JSX.Element {
                                     return (
                                         <td key={channel} className="px-4 py-3 text-center">
                                             <div
-                                                className={`flex justify-center ${isDiscordDisabled ? 'opacity-40' : ''}`}
+                                                className={`flex justify-center ${
+                                                    isDiscordDisabled || mutation.isPending ? 'opacity-40' : ''
+                                                }`}
                                             >
                                                 <Checkbox
                                                     checked={prefs[key][channel]}
                                                     onChange={(v) => handleToggle(key, channel, v)}
                                                     label={`${label} via ${channel}`}
-                                                    disabled={isDiscordDisabled}
+                                                    disabled={isDiscordDisabled || mutation.isPending}
                                                 />
                                             </div>
                                         </td>
