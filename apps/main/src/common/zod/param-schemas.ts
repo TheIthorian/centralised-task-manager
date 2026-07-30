@@ -15,30 +15,25 @@ export const objectIdSchema = z
     });
 
 /**
- * A non-empty string with an upper bound, for `@Param`/`@Query` values that have no DTO.
- * Primitive arguments carry no schema of their own, so an unbounded value would otherwise
- * reach the handler and, for provider callbacks, an outbound HTTP request.
- */
-export function boundedString({ maxLength }: { maxLength: number }): z.ZodString {
-    return z.string().min(1).max(maxLength);
-}
-
-/**
- * Marks a field optional and tolerant of an explicit `null`, normalising it to absent.
+ * A request object: rejects unrecognised keys, and reads an explicit `null` as an absent key.
  *
  * Wire types are nullable where input types are optional, so a client round-tripping a response
- * back as a request sends `null` for fields it did not set. `@IsOptional()` treated null as absent;
- * plain `.optional()` would reject it.
+ * back as a request sends `null` for fields it did not set. `@IsOptional()` accepted that; plain
+ * `.optional()` rejects it. Stripping nulls before the object is parsed keeps the tolerance out of
+ * the field schemas, so the generated OpenAPI document describes the contract rather than the
+ * leniency.
+ *
+ * Nested objects need their own `requestObject`: only the keys of this object are stripped.
  */
-export function optionalOrNull<T extends z.ZodType>(
-    schema: T,
-): z.ZodOptional<z.ZodType<z.output<T> | undefined, z.input<T> | null | undefined>> {
-    // The trailing .optional() is what marks the key optional on the enclosing object: the
-    // transform wraps the schema in a pipe, which loses the marker .nullish() added.
-    return schema
-        .nullish()
-        .transform((value) => value ?? undefined)
-        .optional();
+export function requestObject<T extends z.ZodRawShape>(shape: T): z.ZodType<z.infer<z.ZodObject<T>>> {
+    return z.preprocess(withoutNulls, z.strictObject(shape)) as unknown as z.ZodType<z.infer<z.ZodObject<T>>>;
+}
+
+/** Drops null-valued keys from a plain object, leaving anything else untouched. */
+function withoutNulls(value: unknown): unknown {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) return value;
+
+    return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== null));
 }
 
 /**

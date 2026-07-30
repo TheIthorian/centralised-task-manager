@@ -171,8 +171,7 @@ async create(
 - `ValidatedParam({ name, schema })`, `ValidatedQueryValue({ name, schema })` and `ValidatedHeader({ name, schema })` for single values. Use `objectIdSchema` for Mongo ids: an unchecked id becomes a Mongoose CastError, which surfaces as a 500.
 - **Objects** — define a Zod schema and wrap it with `createZodDto` (`common/zod/create-zod-dto.ts`, a thin adapter over `nestjs-zod`). `nestjs-zod` derives the OpenAPI schema from the Zod schema, so `scripts/generate-openapi.ts` must keep passing the document through `cleanupOpenApiDoc`.
 - **Bound every string.** Give each string a `max`, and each array a `max` length.
-- **`z.strictObject` for app endpoints, `z.object` for protocol endpoints.** App clients sending an unrecognised field have a bug worth reporting. OAuth and MCP clients legitimately send parameters this server does not implement, so `oauth/` and `.well-known` DTOs must stay permissive and strip instead (RFC 7591 §3.1).
-- **`optionalOrNull(schema)`, not `.optional()`**, for a field whose wire type is nullable. A client round-tripping a response back as a request sends explicit `null`; plain `.optional()` rejects it.
+- **`requestObject` for app endpoints, `z.object` for protocol endpoints.** `requestObject` rejects unrecognised keys, which app clients only send by mistake, and reads an explicit `null` as an absent key, since a client round-tripping a response back as a request sends null for fields it did not set. Nested objects need their own `requestObject`. OAuth and MCP clients legitimately send parameters this server does not implement, so `oauth/` and `.well-known` DTOs stay on plain `z.object` and strip instead (RFC 7591 §3.1).
 - **Ajv, not Zod, for schemas that arrive as data** — connector connection details compile JSON Schema at runtime, which Zod cannot do.
 - Never hand a handler argument to a service, a DB query, or an outbound request before it has been through a schema.
 

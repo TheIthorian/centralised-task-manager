@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Types } from 'mongoose';
 import { ValidationError } from '@ctm/errors';
 import { z } from 'zod';
-import { boundedString, objectIdSchema } from './param-schemas.js';
+import { isoDateTimeSchema, objectIdSchema, requestObject, queryBooleanSchema } from './param-schemas.js';
 import { ZodParam } from './zod-param.js';
 import { createZodDto, zodSchemaOf } from './create-zod-dto.js';
 
@@ -25,20 +25,65 @@ describe('objectIdSchema', () => {
     });
 });
 
-describe('boundedString', () => {
-    const schema = boundedString({ maxLength: 8 });
+describe('requestObject', () => {
+    const schema = requestObject({ name: z.string().max(4).optional() });
 
-    it('accepts a value within the bound', () => {
-        expect(schema.parse('abc')).toBe('abc');
+    it.each([
+        ['an explicit null', { name: null }],
+        ['an explicit undefined', { name: undefined }],
+        ['an absent key', {}],
+    ])('reads %s as absent', (_label, value) => {
+        expect(schema.parse(value)).toEqual({ name: undefined });
+    });
+
+    it('still parses a present value', () => {
+        expect(schema.parse({ name: 'abc' })).toEqual({ name: 'abc' });
+    });
+
+    it('still enforces the inner schema', () => {
+        expect(schema.safeParse({ name: 'toolong' }).success).toBe(false);
+    });
+
+    it('rejects an unrecognised key', () => {
+        expect(schema.safeParse({ name: 'ok', role: 'admin' }).success).toBe(false);
+    });
+
+    it('leaves a nested object to its own requestObject', () => {
+        const nested = requestObject({ inner: requestObject({ a: z.string().optional() }).optional() });
+
+        expect(nested.parse({ inner: { a: null } })).toEqual({ inner: {} });
+    });
+});
+
+describe('queryBooleanSchema', () => {
+    it.each([
+        ['the string true', 'true', true],
+        ['the string false', 'false', false],
+        ['a real boolean', true, true],
+    ])('parses %s', (_label, value, expected) => {
+        expect(queryBooleanSchema.parse(value)).toBe(expected);
+    });
+
+    it('rejects any other string', () => {
+        expect(queryBooleanSchema.safeParse('yes').success).toBe(false);
+    });
+});
+
+describe('isoDateTimeSchema', () => {
+    it.each([
+        ['a date', '2026-06-01'],
+        ['a UTC datetime', '2026-06-01T14:00:00.000Z'],
+        ['a local datetime', '2026-06-01T14:00:00'],
+    ])('accepts %s', (_label, value) => {
+        expect(isoDateTimeSchema.safeParse(value).success).toBe(true);
     });
 
     it.each([
-        ['an over-long value', 'x'.repeat(9)],
-        ['an empty string', ''],
-        ['undefined', undefined],
-        ['an array', ['a']],
+        ['a non-date', 'nope'],
+        ['an impossible month', '2026-13-01'],
+        ['an impossible day', '2026-02-30'],
     ])('rejects %s', (_label, value) => {
-        expect(schema.safeParse(value).success).toBe(false);
+        expect(isoDateTimeSchema.safeParse(value).success).toBe(false);
     });
 });
 
@@ -50,7 +95,7 @@ describe('ZodParam', () => {
     });
 
     it('throws a ValidationError carrying the failing path', () => {
-        const pipe = ZodParam(boundedString({ maxLength: 2 }));
+        const pipe = ZodParam(z.string().min(1).max(2));
 
         expect(() => pipe.transform('toolong')).toThrow(ValidationError);
     });

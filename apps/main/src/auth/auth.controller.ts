@@ -9,13 +9,13 @@ import { TokenPairDto, AuthorizedAppDto } from './dto/auth-response.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
-import { boundedString } from '../common/zod/param-schemas.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
 import { RefreshRateLimit, StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 import { ValidatedBody, ValidatedParam } from '../common/validation/validated.decorators.js';
+import { z } from 'zod';
 
 interface AuthRequest {
     user: UserDocument;
@@ -166,7 +166,7 @@ export class AuthController {
     @UseGuards(JwtAuthGuard)
     async revokeAuthorizedApp(
         @Request() req: JwtRequest,
-        @ValidatedParam({ name: 'clientId', schema: boundedString({ maxLength: 128 }) }) clientId: string,
+        @ValidatedParam({ name: 'clientId', schema: z.string().min(1).max(128) }) clientId: string,
     ): Promise<void> {
         await this.authorizedApps.revokeAuthorizedApp({ userId: req.user.sub, clientId });
     }

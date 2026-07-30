@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import type { SetFuzzyDeadlineDto as ISetFuzzyDeadlineDto } from '@ctm/api-client';
 import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { optionalOrNull } from '../../common/zod/param-schemas.js';
+import { requestObject } from '../../common/zod/param-schemas.js';
 
-export const setFuzzyDeadlineSchema = z.strictObject({
+export const setFuzzyDeadlineSchema = requestObject({
     type: z.enum(['this_week', 'this_month', 'someday']),
-    remindEvery: optionalOrNull(z.enum(['daily', 'weekly'])),
+    remindEvery: z.enum(['daily', 'weekly']).optional(),
 });
 
 export class SetFuzzyDeadlineDto extends createZodDto<ISetFuzzyDeadlineDto>({

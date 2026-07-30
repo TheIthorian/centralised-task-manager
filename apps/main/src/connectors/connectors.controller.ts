@@ -30,7 +30,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
-import { objectIdSchema, boundedString } from '../common/zod/param-schemas.js';
+import { objectIdSchema } from '../common/zod/param-schemas.js';
 import { UnvalidatedInput } from '../common/validation/unvalidated-input.decorator.js';
 import { z } from 'zod';
 import { ValidatedBody, ValidatedQueryValue, ValidatedParam } from '../common/validation/validated.decorators.js';
@@ -230,8 +230,8 @@ export class ConnectorsController {
     @Get('oauth/callback/:connectorName')
     async oauthCallback(
         @ValidatedParam({ name: 'connectorName', schema: z.enum(ConnectorName) }) connectorName: ConnectorName,
-        @ValidatedQueryValue({ name: 'code', schema: boundedString({ maxLength: 2048 }) }) code: string,
-        @ValidatedQueryValue({ name: 'state', schema: boundedString({ maxLength: 512 }) }) state: string,
+        @ValidatedQueryValue({ name: 'code', schema: z.string().min(1).max(2048) }) code: string,
+        @ValidatedQueryValue({ name: 'state', schema: z.string().min(1).max(512) }) state: string,
         @Res() res: FastifyReply,
     ): Promise<void> {
         this.logger.log(`oauthCallback connectorName=${connectorName} state=${state} hasCode=${!!code}`);
