@@ -7,13 +7,6 @@ export type ToastMessage = {
     title: string;
     description: string;
     dedupeKey?: string;
-    action?: ToastAction;
-};
-
-type ToastAction = {
-    label: string;
-    /** Runs, then dismisses the toast. Undo is a real call, never a cache rollback. */
-    onAction: () => void;
 };
 
 type ShowToastParams = {
@@ -21,9 +14,6 @@ type ShowToastParams = {
     description: string;
     /** When set, the toast is dropped if one with the same key is already on screen. */
     dedupeKey?: string;
-    action?: ToastAction;
-    /** Defaults to 4 seconds; undoable toasts get longer so the offer is usable. */
-    durationMs?: number;
 };
 
 type ToastContextValue = {
@@ -32,8 +22,7 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const DEFAULT_DURATION_MS = 4000;
-const UNDOABLE_DURATION_MS = 8000;
+const DURATION_MS = 4000;
 
 /** Provides global transient toast notifications. */
 export function ToastProvider({ children }: { children: ReactNode }): React.JSX.Element {
@@ -44,7 +33,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
         setToasts((current) => current.filter((toast) => toast.id !== id));
     }, []);
 
-    const showToast = ({ title, description, dedupeKey, action, durationMs }: ShowToastParams): void => {
+    const showToast = ({ title, description, dedupeKey }: ShowToastParams): void => {
         const id = nextId.current++;
 
         setToasts((current) => {
@@ -52,10 +41,10 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
             // failure buries the app under identical boxes.
             if (dedupeKey !== undefined && current.some((toast) => toast.dedupeKey === dedupeKey)) return current;
 
-            return [...current, { id, title, description, dedupeKey, action }];
+            return [...current, { id, title, description, dedupeKey }];
         });
 
-        window.setTimeout(() => dismiss(id), durationMs ?? (action ? UNDOABLE_DURATION_MS : DEFAULT_DURATION_MS));
+        window.setTimeout(() => dismiss(id), DURATION_MS);
     };
 
     return (
@@ -63,20 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
             {children}
             <div className="fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-3 px-4">
                 {toasts.map((toast) => (
-                    <Toast
-                        key={toast.id}
-                        title={toast.title}
-                        message={toast.description}
-                        actionLabel={toast.action?.label}
-                        onAction={
-                            toast.action
-                                ? () => {
-                                      toast.action?.onAction();
-                                      dismiss(toast.id);
-                                  }
-                                : undefined
-                        }
-                    />
+                    <Toast key={toast.id} title={toast.title} message={toast.description} />
                 ))}
             </div>
         </ToastContext.Provider>

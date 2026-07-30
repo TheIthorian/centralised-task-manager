@@ -6,7 +6,6 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
-import { useToast } from '../toast/ToastContext.js';
 import { TaskFilters } from '../components/tasks/TaskFilters.js';
 import { TaskList } from '../components/tasks/TaskList.js';
 import { GroupedTaskList } from '../components/tasks/GroupedTaskList.js';
@@ -19,7 +18,6 @@ const PAGE_SIZE = 20;
 /** Main task management page. Filter is stored in the URL (?filter=today). Opening a specific task is via ?taskId=<id>. */
 export function TasksPage(): React.JSX.Element {
     const { t } = useTranslation();
-    const { showToast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
     const taskIdParam = searchParams.get('taskId');
@@ -137,19 +135,8 @@ export function TasksPage(): React.JSX.Element {
         // moment the client patches its own cache it can show a state the backend never
         // agreed to. Our API answers in one short hop, and the connector push is reported
         // on the connector row rather than faked in the list.
-        onSuccess: (_result, { id, completed }) => {
+        onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['tasks'] });
-
-            if (!completed) return;
-
-            showToast({
-                title: t('tasks.completedToast'),
-                description: t('tasks.completedToastBody'),
-                action: {
-                    label: t('common.undo'),
-                    onAction: () => statusMutation.mutate({ id, completed: false }),
-                },
-            });
         },
     });
 

@@ -63,8 +63,6 @@
             "done": "Done"
         },
         "priority": "Priority {{level}}",
-        "completedToast": "Completed",
-        "reopenedToast": "Task reopened",
         "localOnly": "In app",
         "daysLate_one": "{{count}} day late",
         "daysLate_other": "{{count}} days late",
@@ -78,8 +76,7 @@
         },
         "titlePlaceholder": "What needs doing?",
         "notesPlaceholder": "More detail…",
-        "priorityLabel": "Priority",
-        "completedToastBody": "Marked as done. Your connector is updated in the background."
+        "priorityLabel": "Priority"
     },
     "palette": {
         "label": "Command palette",
