@@ -115,9 +115,10 @@ describe('OAuthClientService unused-client reaping', () => {
         expect(doc?.lastUsedAt).toBeInstanceOf(Date);
     });
 
-    it('defaults client_name to an empty string when omitted', async () => {
-        const registered = await service.register({ redirect_uris: ['https://example.com/cb'] });
+    it('echoes the registered client_name', async () => {
+        const name = `named-${Date.now()}`;
+        const registered = await service.register({ client_name: name, redirect_uris: ['https://example.com/cb'] });
 
-        expect(registered.client_name).toBe('');
+        expect(registered.client_name).toBe(name);
     });
 });

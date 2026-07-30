@@ -8,14 +8,14 @@ import {
     IsString,
     Matches,
     MaxLength,
+    MinLength,
     Validate,
     ValidatorConstraint,
     type ValidatorConstraintInterface,
 } from 'class-validator';
 import type { RegisterClientInput } from '../oauth-client.service.js';
 
-/** Schemes that must never be accepted as a redirect target. */
-const DENIED_REDIRECT_SCHEMES = new Set(['javascript:', 'data:', 'vbscript:', 'file:', 'blob:', 'about:']);
+const ALLOWED_REDIRECT_SCHEMES = new Set(['http:', 'https:']);
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '[::1]', '::1', 'localhost']);
 
@@ -24,6 +24,19 @@ export const MAX_REDIRECT_URI_LENGTH = 2048;
 
 const SUPPORTED_GRANT_TYPES = ['authorization_code', 'refresh_token'];
 const SUPPORTED_RESPONSE_TYPES = ['code'];
+
+@ValidatorConstraint({ name: 'registerableRedirectUris', async: false })
+export class RegisterableRedirectUrisConstraint implements ValidatorConstraintInterface {
+    /** Returns true when every entry is a redirect URI this server will accept. */
+    validate(value: unknown): boolean {
+        return Array.isArray(value) && value.every(isRegisterableRedirectUri);
+    }
+
+    /** Message shown when validation fails. */
+    defaultMessage(): string {
+        return `each redirect_uris entry must be an http or https URI with no fragment, at most ${MAX_REDIRECT_URI_LENGTH} characters, and must not use http on a non-loopback host`;
+    }
+}
 
 /**
  * Validates a single registered redirect URI.
@@ -41,7 +54,7 @@ export function isRegisterableRedirectUri(value: unknown): boolean {
         return false;
     }
 
-    if (DENIED_REDIRECT_SCHEMES.has(url.protocol)) return false;
+    if (!ALLOWED_REDIRECT_SCHEMES.has(url.protocol)) return false;
 
     // RFC 6749 §3.1.2: the redirection endpoint must not include a fragment.
     if (url.hash.length > 0) return false;
@@ -51,19 +64,6 @@ export function isRegisterableRedirectUri(value: unknown): boolean {
     return true;
 }
 
-@ValidatorConstraint({ name: 'registerableRedirectUris', async: false })
-export class RegisterableRedirectUrisConstraint implements ValidatorConstraintInterface {
-    /** Returns true when every entry is a redirect URI this server will accept. */
-    validate(value: unknown): boolean {
-        return Array.isArray(value) && value.every(isRegisterableRedirectUri);
-    }
-
-    /** Message shown when validation fails. */
-    defaultMessage(): string {
-        return `each redirect_uris entry must be an absolute URI with no fragment, at most ${MAX_REDIRECT_URI_LENGTH} characters, and must not use http on a non-loopback host`;
-    }
-}
-
 /**
  * RFC 7591 dynamic client registration request.
  *
@@ -71,15 +71,15 @@ export class RegisterableRedirectUrisConstraint implements ValidatorConstraintIn
  * §3.1 requires the server to ignore unknown fields, and real MCP clients send plenty of them.
  */
 export class RegisterClientDto implements RegisterClientInput {
-    // Optional per RFC 7591 §2.
-    @ApiPropertyOptional({ maxLength: 100, example: 'My MCP Client' })
-    @IsOptional()
+    // Required, though RFC 7591 §2 marks it optional: it is the only thing identifying the
+    // client on the consent screen, and an unnamed app is one a user cannot make a decision about.
+    @ApiProperty({ minLength: 1, maxLength: 100, example: 'My MCP Client' })
     @IsString()
+    @MinLength(1)
     @MaxLength(100)
-    // Printable characters only. client_name is rendered on the consent screen, so control
-    // characters must not survive into it.
-    @Matches(/^[^\p{C}]*$/u, { message: 'client_name must not contain control characters' })
-    client_name?: string;
+    // Printable characters only, since the value is rendered on the consent screen.
+    @Matches(/^[^\p{C}]+$/u, { message: 'client_name must not contain control characters' })
+    client_name!: string;
 
     @ApiProperty({
         maxItems: MAX_REDIRECT_URIS,
