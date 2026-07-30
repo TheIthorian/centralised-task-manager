@@ -12,6 +12,9 @@ export type CalendarMonthProps = {
     todayKey: string;
     locale: string;
     onOpenTask: (task: TaskDto) => void;
+    /** Phones show dots instead of chips, so the whole cell is the target. */
+    compact?: boolean;
+    onSelectDay?: (date: Date) => void;
 };
 
 /** The month grid: seven columns, a cell per day, capped so no row grows taller than the rest. */
@@ -21,11 +24,14 @@ export function CalendarMonth({
     todayKey,
     locale,
     onOpenTask,
+    compact = false,
+    onSelectDay,
 }: CalendarMonthProps): React.JSX.Element {
     const { t } = useTranslation();
     const first = days[0] as Date;
     const leading = Array.from({ length: first.getDay() }, (_, index) => index);
     const weekdayFormat = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+    const dayFormat = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long' });
 
     // The names come from the first week on screen rather than a constant, so a locale that
     // does not start its week on Sunday only has to change startOfRange.
@@ -51,7 +57,10 @@ export function CalendarMonth({
 
             <div className="grid grid-cols-7 overflow-hidden rounded-b-ctm border border-line">
                 {leading.map((index) => (
-                    <div key={`lead-${index}`} className="min-h-[104px] border-b border-r border-line" />
+                    <div
+                        key={`lead-${index}`}
+                        className="min-h-11 border-b border-r border-line md:min-h-[104px]"
+                    />
                 ))}
 
                 {days.map((date) => {
@@ -59,19 +68,45 @@ export function CalendarMonth({
                     const dayTasks = tasksByDate.get(key) ?? [];
                     const hidden = dayTasks.length - VISIBLE_PER_DAY;
 
+                    const dayNumber = (
+                        <span
+                            className={clsx(
+                                'self-start rounded-full px-1.5 text-xs tabular-nums',
+                                key === todayKey ? 'bg-accent font-semibold text-accent-fg' : 'text-muted',
+                            )}
+                        >
+                            {date.getDate()}
+                        </span>
+                    );
+
+                    if (compact) {
+                        return (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() => onSelectDay?.(date)}
+                                aria-label={t('calendar.dayLabel', {
+                                    date: dayFormat.format(date),
+                                    count: dayTasks.length,
+                                })}
+                                className="flex min-h-11 cursor-pointer flex-col items-center gap-1 border-b border-r border-line py-1.5 last:border-r-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+                            >
+                                {dayNumber}
+                                <span aria-hidden="true" className="flex h-1.5 items-center gap-0.5">
+                                    {dayTasks.slice(0, VISIBLE_PER_DAY).map((task) => (
+                                        <span key={task.id} className="h-1.5 w-1.5 rounded-full bg-accent" />
+                                    ))}
+                                </span>
+                            </button>
+                        );
+                    }
+
                     return (
                         <div
                             key={key}
                             className="flex min-h-[104px] flex-col gap-1 border-b border-r border-line p-1.5 last:border-r-0"
                         >
-                            <span
-                                className={clsx(
-                                    'self-start rounded-full px-1.5 text-xs tabular-nums',
-                                    key === todayKey ? 'bg-accent font-semibold text-accent-fg' : 'text-muted',
-                                )}
-                            >
-                                {date.getDate()}
-                            </span>
+                            {dayNumber}
                             <div className="flex flex-col gap-0.5 overflow-hidden">
                                 {dayTasks.slice(0, VISIBLE_PER_DAY).map((task) => (
                                     <TaskChip key={task.id} task={task} onOpen={onOpenTask} />

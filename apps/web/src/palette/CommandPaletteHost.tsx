@@ -44,7 +44,7 @@ export function CommandPaletteHost(): React.JSX.Element {
                 type="button"
                 onClick={() => setOpen(true)}
                 aria-label={t('palette.open')}
-                className="fixed right-14 top-3 z-30 flex h-9 items-center justify-center rounded-ctm border border-line bg-panel px-2.5 font-mono text-[11px] text-muted transition-colors duration-press hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="fixed right-16 top-3 z-30 flex h-11 items-center justify-center md:right-14 md:h-9 rounded-ctm border border-line bg-panel px-2.5 font-mono text-[11px] text-muted transition-colors duration-press hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
                 <span aria-hidden="true">⌘K</span>
             </button>

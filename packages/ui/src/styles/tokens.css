@@ -75,6 +75,18 @@
     --ctm-row-y: 16px;
 }
 
+/*
+ * A phone gets 44px targets whatever the density preference says: density is a reading
+ * choice on a desktop, and it must not shrink a row below what a thumb can hit.
+ */
+@media (max-width: 767px) {
+    :root,
+    :root[data-density='compact'],
+    :root[data-density='spacious'] {
+        --ctm-row-y: 12px;
+    }
+}
+
 /* Used by the command palette, and gated behind motion-safe: at the call site. */
 @keyframes ctm-fade {
     from {
@@ -103,6 +115,15 @@
     }
     to {
         opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes ctm-slide-up {
+    from {
+        transform: translateY(100%);
+    }
+    to {
         transform: none;
     }
 }

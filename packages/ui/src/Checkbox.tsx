@@ -18,8 +18,11 @@ export function Checkbox({ checked, onChange, label, disabled }: CheckboxProps):
             disabled={disabled}
             onClick={() => onChange(!checked)}
             className={clsx(
-                'flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px]',
+                'relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px]',
                 'cursor-pointer transition-colors duration-press',
+                // The box stays 18px because a 44px square would dominate the row. The hit
+                // area is grown instead, so a thumb has the full target the box does not show.
+                'before:absolute before:-inset-[13px] before:content-[""] md:before:hidden',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
                 checked ? 'border-accent bg-accent' : 'border-muted bg-panel',
                 disabled && 'cursor-not-allowed opacity-50',

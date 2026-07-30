@@ -22,6 +22,16 @@ export const Overdue: Story = { args: { due: { label: '2 days late', overdue: tr
 export const Pending: Story = { args: { pending: true, due: { label: 'Tomorrow' } } };
 export const Completed: Story = { args: { completed: true } };
 
+/** Drag the row sideways: right past a third of its width snoozes, left parks the delete track open. */
+export const Swipeable: Story = {
+    args: {
+        due: { label: 'Tomorrow' },
+        onSnooze: () => {},
+        onDelete: () => {},
+        swipeLabels: { snooze: 'Tomorrow', delete: 'Delete' },
+    },
+};
+
 export const WithPriority: Story = {
     args: {
         priorityLabel: 'Priority 1',

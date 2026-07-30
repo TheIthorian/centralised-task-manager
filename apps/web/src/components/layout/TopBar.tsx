@@ -22,7 +22,7 @@ export function TopBar(): React.JSX.Element {
             <button
                 type="button"
                 onClick={() => setPanelOpen(true)}
-                className="fixed right-4 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-ctm border border-line bg-panel text-muted transition-colors duration-press hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="fixed right-4 top-3 z-30 flex h-11 w-11 items-center justify-center md:h-9 md:w-9 rounded-ctm border border-line bg-panel text-muted transition-colors duration-press hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 aria-label={t('nav.notifications')}
             >
                 <span className="text-xl leading-none">🔔</span>

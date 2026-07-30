@@ -95,7 +95,7 @@ export function DataSection(): React.JSX.Element {
                     accept="application/json,.json"
                     multiple
                     onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                    className="block w-full text-sm font-medium text-fg mb-3 file:mr-3 file:border-2 file:border-line file:bg-white file:px-3 file:py-1 file:font-semibold file:uppercase file:text-xs dark:file:border-white/20 dark:file:bg-neutral-800 dark:file:text-white rounded-ctm"
+                    className="block min-h-11 w-full text-sm font-medium text-fg mb-3 md:min-h-0 file:mr-3 file:border-2 file:border-line file:bg-white file:px-3 file:py-1 file:font-semibold file:uppercase file:text-xs dark:file:border-white/20 dark:file:bg-neutral-800 dark:file:text-white rounded-ctm"
                 />
 
                 <fieldset className="mb-3">
@@ -103,9 +103,10 @@ export function DataSection(): React.JSX.Element {
                         On Conflict
                     </legend>
                     <div className="flex gap-4">
-                        <label className="flex items-center gap-2 font-medium text-sm text-fg">
+                        <label className="flex min-h-11 items-center gap-2 font-medium text-sm text-fg md:min-h-0">
                             <input
                                 type="radio"
+                                className="h-5 w-5 md:h-auto md:w-auto"
                                 name="onConflict"
                                 value="ignore"
                                 checked={onConflict === 'ignore'}
@@ -113,9 +114,10 @@ export function DataSection(): React.JSX.Element {
                             />
                             Ignore existing
                         </label>
-                        <label className="flex items-center gap-2 font-medium text-sm text-fg">
+                        <label className="flex min-h-11 items-center gap-2 font-medium text-sm text-fg md:min-h-0">
                             <input
                                 type="radio"
+                                className="h-5 w-5 md:h-auto md:w-auto"
                                 name="onConflict"
                                 value="replace"
                                 checked={onConflict === 'replace'}

@@ -107,9 +107,9 @@ export function NotificationsPage(): React.JSX.Element {
 
                                             <Link
                                                 to="/settings/connectors"
-                                                className="text-muted underline font-medium text-xs normal-case"
+                                                className="inline-flex min-h-11 items-center text-xs font-medium normal-case text-muted underline md:min-h-0"
                                             >
-                                                Connect →
+                                                {t('notifications.connect')}
                                             </Link>
                                         </span>
                                     ) : (

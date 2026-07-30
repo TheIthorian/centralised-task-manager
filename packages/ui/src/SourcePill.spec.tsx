@@ -10,6 +10,12 @@ describe('SourcePill', () => {
         expect(screen.getByText('Google Tasks')).toBeInTheDocument();
     });
 
+    it('keeps its name when the words are dropped', () => {
+        render(<SourcePill brand="todoist" label="Todoist" iconOnly />);
+
+        expect(screen.getByRole('img', { name: 'Todoist' })).toBeInTheDocument();
+    });
+
     it('has no axe violations', async () => {
         const { container } = render(<SourcePill brand="todoist" label="Todoist" />);
 
