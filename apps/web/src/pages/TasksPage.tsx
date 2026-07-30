@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import { Banner, Skeleton } from '@ctm/ui';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TaskDto, TaskFilter, CreateTaskDto, UpdateTaskDto, SetFuzzyDeadlineDto } from '@ctm/api-client';
 import { getErrorMessage } from '../api/error-message.js';
@@ -15,6 +17,7 @@ const PAGE_SIZE = 20;
 
 /** Main task management page. Filter is stored in the URL (?filter=today). Opening a specific task is via ?taskId=<id>. */
 export function TasksPage(): React.JSX.Element {
+    const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
     const taskIdParam = searchParams.get('taskId');
@@ -278,15 +281,13 @@ export function TasksPage(): React.JSX.Element {
     const isError = filter === 'all' ? false : flatIsError;
 
     return (
-        <div className="p-4 md:p-6 max-w-2xl">
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h1 className="text-2xl font-black uppercase tracking-tight text-nb-black dark:text-white">
-                        My Tasks
-                    </h1>
+        <div className="p-4 md:p-6">
+            <div className="mb-5 flex items-end justify-between gap-4">
+                <div className="flex flex-col gap-0.5">
+                    <h1 className="text-xl font-semibold tracking-tight text-fg">{t('tasks.title')}</h1>
                     {!isLoading && (
-                        <p className="text-nb-black/60 dark:text-white/50 font-bold text-sm">
-                            {totalLoaded} task{totalLoaded !== 1 ? 's' : ''} loaded
+                        <p className="text-xs text-muted" aria-live="polite">
+                            {t('tasks.openCount', { count: totalLoaded })}
                         </p>
                     )}
                 </div>
@@ -302,18 +303,14 @@ export function TasksPage(): React.JSX.Element {
                     isPending={addMutation.isPending}
                 />
 
-                {isLoading && (
-                    <p className="font-bold text-nb-black/60 dark:text-white/50 uppercase text-sm tracking-wide">
-                        Loading…
-                    </p>
-                )}
+                {isLoading && <Skeleton rows={5} />}
 
                 {isError && (
-                    <div className="border-2 border-nb-red bg-nb-red/10 p-3">
-                        <p className="text-nb-red font-bold text-sm">
-                            {getErrorMessage(flatQuery.error, 'Failed to load tasks. Is the API running?')}
-                        </p>
-                    </div>
+                    <Banner
+                        tone="warn"
+                        title={t('tasks.loadFailed.title')}
+                        body={getErrorMessage(flatQuery.error, t('tasks.loadFailed.body'))}
+                    />
                 )}
 
                 {!isLoading &&

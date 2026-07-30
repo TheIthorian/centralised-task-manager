@@ -28,7 +28,7 @@ const TODAY_DATE = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2
 describe('GroupedTaskList', () => {
     it('renders empty state when no tasks', () => {
         render(<GroupedTaskList tasks={[]} onToggle={vi.fn()} onEdit={vi.fn()} />);
-        expect(screen.getByText('No Tasks Here.')).toBeInTheDocument();
+        expect(screen.getByText('No tasks here')).toBeInTheDocument();
     });
 
     it('renders Overdue section for past-due tasks', () => {

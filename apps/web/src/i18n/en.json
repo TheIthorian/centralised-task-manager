@@ -7,6 +7,17 @@
         "reconnect": "Reconnect",
         "skipToContent": "Skip to content"
     },
+    "nav": {
+        "label": "Main",
+        "tasks": "Tasks",
+        "calendar": "Calendar",
+        "timeline": "Timeline",
+        "settings": "Settings",
+        "notifications": "Notifications",
+        "darkMode": "Dark",
+        "lightMode": "Light",
+        "logout": "Logout"
+    },
     "tasks": {
         "title": "Tasks",
         "openCount_one": "{{count}} open",
@@ -20,14 +31,16 @@
             "today": "Today",
             "thisWeek": "This week",
             "upcoming": "Upcoming",
-            "noDate": "No date"
+            "noDate": "No date",
+            "done": "Done"
         },
         "empty": {
             "overdue": "Nothing overdue. Everything with a due date is still ahead of you.",
             "today": "Nothing due today.",
             "thisWeek": "Nothing due this week.",
             "upcoming": "Nothing scheduled beyond this week.",
-            "noDate": "Every task has a date."
+            "noDate": "Every task has a date.",
+            "done": "Nothing completed yet."
         },
         "filters": {
             "none": "No conditions, showing everything.",
@@ -43,11 +56,29 @@
                 "noDate": "No due date",
                 "noDuration": "No duration",
                 "hasReminder": "Has a reminder"
-            }
+            },
+            "all": "All",
+            "today": "Today",
+            "upcoming": "Upcoming",
+            "done": "Done"
         },
         "priority": "Priority {{level}}",
         "completedToast": "Task completed",
-        "reopenedToast": "Task reopened"
+        "reopenedToast": "Task reopened",
+        "localOnly": "In app",
+        "daysLate_one": "{{count}} day late",
+        "daysLate_other": "{{count}} days late",
+        "emptyAll": {
+            "title": "No tasks here",
+            "body": "Add one above, or change the filter."
+        },
+        "loadFailed": {
+            "title": "Could not load your tasks",
+            "body": "The API did not respond. Check that it is running, then try again."
+        },
+        "titlePlaceholder": "What needs doing?",
+        "notesPlaceholder": "More detail…",
+        "priorityLabel": "Priority"
     },
     "palette": {
         "label": "Command palette",

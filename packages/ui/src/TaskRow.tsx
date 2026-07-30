@@ -6,9 +6,11 @@ import type { BrandKey } from './brand-icons.js';
 
 type TaskRowProps = {
     title: string;
-    source: { brand: BrandKey; label: string };
+    source?: { brand?: BrandKey; label: string };
     due?: { label: string; overdue?: boolean };
     priorityLabel?: string;
+    /** Loud only for the top priority; everything else stays neutral. */
+    priorityTone?: 'warn' | 'neutral';
     completed: boolean;
     /** A write is in flight. The row dims and holds still; it never guesses the outcome. */
     pending?: boolean;
@@ -22,6 +24,7 @@ export function TaskRow({
     source,
     due,
     priorityLabel,
+    priorityTone = 'neutral',
     completed,
     pending = false,
     onToggle,
@@ -50,8 +53,10 @@ export function TaskRow({
                 {title}
             </button>
             <span className="flex items-center gap-2 whitespace-nowrap text-[11px] tabular-nums">
-                {priorityLabel && <Badge variant="priority">{priorityLabel}</Badge>}
-                <SourcePill brand={source.brand} label={source.label} />
+                {priorityLabel && (
+                    <Badge variant={priorityTone === 'warn' ? 'priority' : 'neutral'}>{priorityLabel}</Badge>
+                )}
+                {source && <SourcePill brand={source.brand} label={source.label} />}
                 {due && (
                     <span className={clsx(due.overdue ? 'rounded-[4px] bg-warn-bg px-2 py-0.5 text-warn' : 'text-muted')}>
                         {due.label}

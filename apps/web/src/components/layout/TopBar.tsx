@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthContext.js';
 import { NotificationPanel } from '../notifications/NotificationPanel.js';
 
 /** Top bar with bell icon and unread count, shown across all pages. */
 export function TopBar(): React.JSX.Element {
+    const { t } = useTranslation();
     const { api } = useAuth();
     const [panelOpen, setPanelOpen] = useState(false);
 
@@ -20,12 +22,12 @@ export function TopBar(): React.JSX.Element {
             <button
                 type="button"
                 onClick={() => setPanelOpen(true)}
-                className="fixed top-3 right-4 z-30 flex items-center justify-center w-9 h-9 bg-white border-2 border-nb-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-px hover:translate-y-px hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
-                aria-label="Notifications"
+                className="fixed right-4 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-ctm border border-line bg-panel text-muted transition-colors duration-press hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                aria-label={t('nav.notifications')}
             >
                 <span className="text-xl leading-none">🔔</span>
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-nb-yellow text-nb-black text-[9px] font-black min-w-[16px] h-4 flex items-center justify-center px-0.5 leading-none">
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold leading-none text-accent-fg">
                         {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                 )}
