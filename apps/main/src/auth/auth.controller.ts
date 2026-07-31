@@ -1,11 +1,12 @@
 import { Controller, Delete, Get, HttpCode, Post, Req, Request, Res, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { UnauthorizedError, ValidationError } from '@ctm/errors';
 import { AuthService, type TokenPair } from './auth.service.js';
 import { TokenPairDto, AuthorizedAppDto } from './dto/auth-response.dto.js';
+import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
@@ -81,6 +82,9 @@ export class AuthController {
 
     /** Login with email + password. Returns token pair + user. */
     @ApiOperation({ summary: 'Login with email + password' })
+    // The local strategy reads the body itself, so the handler declares no body argument and the
+    // published contract would otherwise show this endpoint taking nothing at all.
+    @ApiBody({ type: LoginDto })
     @ApiResponse({ status: 200, description: 'Token pair + user info', type: TokenPairDto })
     @Post('login')
     @HttpCode(200)

@@ -2,6 +2,9 @@ import type {
     AddReminderDto,
     ConnectorDetailsDto,
     CreateTaskDto,
+    LoginDto,
+    RefreshDto,
+    RegisterDto,
     RelationType,
     SetFuzzyDeadlineDto,
     SetTaskStatusDto,
@@ -19,22 +22,13 @@ export type ApiClientOptions = {
 };
 
 /** Parameters for {@link CtmApiClient.login}. */
-export type LoginParams = {
-    email: string;
-    password: string;
-};
+export type LoginParams = LoginDto;
 
 /** Parameters for {@link CtmApiClient.register}. */
-export type RegisterParams = {
-    name: string;
-    email: string;
-    password: string;
-};
+export type RegisterParams = RegisterDto;
 
 /** Parameters for {@link CtmApiClient.refresh}. Omit to use the token passed to the constructor. */
-export type RefreshParams = {
-    refreshToken?: string;
-};
+export type RefreshParams = RefreshDto;
 
 /** Parameters for {@link CtmApiClient.updateTask}. */
 export type UpdateTaskParams = {

@@ -1,10 +1,10 @@
-import { z } from 'zod';
+import type { LoginDto as ILoginDto } from '@ctm/api-client';
 import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { emailSchema, passwordSchema } from '../../common/zod/param-schemas.js';
+import { emailSchema, passwordSchema, requestObject } from '../../common/zod/param-schemas.js';
 
-export const loginSchema = z.strictObject({
+export const loginSchema = requestObject({
     email: emailSchema,
     password: passwordSchema,
 });
 
-export class LoginDto extends createZodDto({ schema: loginSchema, name: 'LoginDto' }) {}
+export class LoginDto extends createZodDto<ILoginDto>({ schema: loginSchema, name: 'LoginDto' }) {}
