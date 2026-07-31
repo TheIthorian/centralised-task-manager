@@ -153,7 +153,7 @@ All access tokens are RS256, signed with the `RSA_PRIVATE_KEY` keypair (`oauth/o
 
 ### Request / Response Types
 
-All controller request and response types must be defined in `packages/api-client/src/types.ts` and exported from its `index.ts`. Never define inline response shapes in controllers.
+All controller request and response types must be defined in `packages/api-client`, in the module for the domain that owns them (`src/domains/<domain>/<domain>.types.ts`, e.g. `src/domains/tasks/tasks.types.ts`), and exported from the package's `index.ts`. `src/types.ts` and `src/client.types.ts` are re-export barrels: add the type to its domain module and re-export it, never define it in a barrel. Never define inline response shapes in controllers.
 
 **Response types** — controller methods return a DTO **class** that `implements` the api-client type, never the bare type alias. Type aliases are erased at runtime, so `@nestjs/swagger` cannot see them and the API reference renders an empty Responses section:
 
