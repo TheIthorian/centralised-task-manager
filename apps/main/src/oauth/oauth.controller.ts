@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Res, HttpCode, BadRequestException, UseGuards, Request, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Res, HttpCode, BadRequestException, UseGuards, Request } from '@nestjs/common';
+import { createLogger } from '@ctm/logger';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
@@ -31,7 +32,7 @@ const clientIdSchema = z.string().min(1).max(128);
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
 export class OAuthController {
-    private readonly logger = new Logger(OAuthController.name);
+    private readonly logger = createLogger(OAuthController.name);
 
     constructor(
         private readonly oauth: OAuthService,
@@ -76,22 +77,28 @@ export class OAuthController {
         @Res() res: FastifyReply,
         @ValidatedHeader({ name: 'accept', schema: acceptHeaderSchema }) accept: string,
     ): Promise<void> {
-        this.logger.log(
-            `authorizePost client_id=${query.client_id ?? 'none'} redirect_uri=${query.redirect_uri} user=${req.user?.sub ?? 'unauthenticated'}`,
-        );
+        // Routine protocol detail: interesting while debugging a client, noise in an incident.
+        this.logger.debug({ clientId: query.client_id ?? null }, 'Authorization request received');
 
         if (query.client_id) {
             const client = await this.oauthClient.findByClientId(query.client_id);
 
             if (!client) {
-                this.logger.warn(`authorizePost unknown client_id=${query.client_id}`);
+                this.logger.warn({ clientId: query.client_id }, 'Authorization request from unknown client');
+
                 throw new BadRequestException('Unrecognised client');
             }
 
             if (!isRedirectUriPermitted(client.redirectUris, query.redirect_uri)) {
                 this.logger.warn(
-                    `authorizePost redirect_uri not permitted client_id=${query.client_id} redirect_uri=${query.redirect_uri} registered=${client.redirectUris.join(',')}`,
+                    {
+                        clientId: query.client_id,
+                        redirectUri: query.redirect_uri,
+                        registeredRedirectUris: client.redirectUris,
+                    },
+                    'Authorization request with an unregistered redirect_uri',
                 );
+
                 throw new BadRequestException('redirect_uri not permitted for this client');
             }
         }

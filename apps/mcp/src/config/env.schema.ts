@@ -7,4 +7,5 @@ export const envSchema = Joi.object({
     RSA_PUBLIC_KEY: Joi.string().required(),
     PORT: Joi.number().required(),
     NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
+    LOG_LEVEL: Joi.string().valid('trace', 'debug', 'info', 'warn', 'error', 'fatal').required(),
 });

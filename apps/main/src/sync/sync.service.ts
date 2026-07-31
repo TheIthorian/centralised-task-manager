@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { createLogger } from '@ctm/logger';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorName, TaskConnectorName, ExternalTaskSourceRegistry } from '@ctm/connectors';
@@ -10,7 +11,7 @@ import { SyncGateway } from './sync.gateway.js';
 
 @Injectable()
 export class SyncService {
-    private readonly logger = new Logger(SyncService.name);
+    private readonly logger = createLogger(SyncService.name);
 
     constructor(
         // Injected to ensure Mongoose registers the base Job model before the discriminator is used.
@@ -136,7 +137,7 @@ export class SyncService {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
 
-            this.logger.error(`Sync failed jobId=${jobId} connectionId=${connectionId}: ${message}`);
+            this.logger.error({ err, jobId, connectionId, userId }, 'Sync job failed');
 
             const failedJob = await this.taskSyncModel.findByIdAndUpdate(
                 jobId,

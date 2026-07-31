@@ -309,6 +309,9 @@ importers:
       '@ctm/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@ctm/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@ctm/request-logger':
         specifier: workspace:*
         version: link:../../packages/request-logger

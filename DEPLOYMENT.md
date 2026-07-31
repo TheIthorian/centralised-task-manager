@@ -123,6 +123,50 @@ requests, which the Pages Function forwards to `API_ORIGIN`.
 
 ---
 
+## 6. Observability
+
+Both Node services log JSON to stdout. Railway captures stdout per service, so the
+deployment's **Logs** tab is where you read them; there is no log shipping and no log
+file on disk.
+
+### Levels
+
+`LOG_LEVEL` is required on `main` and on `mcp`, and gates everything at or above it.
+
+| Level   | Use                                                                     |
+| ------- | ----------------------------------------------------------------------- |
+| `fatal` | The process cannot continue: `uncaughtException`, `unhandledRejection`. |
+| `error` | A request or job failed and nothing downstream can recover it.          |
+| `warn`  | A request rejected for a reason the caller controls, or a fallback.     |
+| `info`  | One line per completed request, plus lifecycle events. Default in prod. |
+| `debug` | Routine protocol detail: OAuth steps, socket connects.                  |
+| `trace` | Everything. Never in production.                                        |
+
+Raise the verbosity by setting `LOG_LEVEL=debug` on the Railway service and
+redeploying. Put it back to `info` afterwards: `debug` logs every OAuth step of every
+client.
+
+### Following one request
+
+Every response carries an `x-request-id` header, and every log line emitted while
+handling that request carries the same value under `requestId`, plus `userId` once the
+JWT is verified. Search the service's logs for the id to get the whole request in
+order, including the error line from the exception filter.
+
+A caller may supply its own `x-request-id` and it is reused, so a trace can span the
+SPA, `mcp` and `main`. Values longer than 128 characters or carrying anything outside
+`[A-Za-z0-9._:-]` are replaced with a generated UUID.
+
+### What is not logged
+
+`@ctm/logger` redacts authorization and cookie headers, passwords and hashes, every
+token field, and the OAuth `code`, `code_verifier`, `state` and `client_secret`, at the
+top level and two levels down. A new secret-bearing field has to be added to
+`SECRET_KEYS` in `packages/logger/src/redaction.ts`; the list is matched by exact key
+name, not by substring.
+
+---
+
 ## One-off release steps
 
 ### Clear OAuth clients for the `AuthorizedClient` release

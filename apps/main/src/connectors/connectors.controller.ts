@@ -9,13 +9,13 @@ import {
     Res,
     UseGuards,
     HttpCode,
-    Logger,
     BadRequestException,
 } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ConnectorName, TaskConnectorName, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
+import { createLogger } from '@ctm/logger';
 import type { NotionTaskSource } from '@ctm/connectors';
 import {
     ConnectorAuthUrlDto,
@@ -42,7 +42,7 @@ interface AuthRequest {
 @ApiTags('Connectors')
 @Controller('connectors')
 export class ConnectorsController {
-    private readonly logger = new Logger(ConnectorsController.name);
+    private readonly logger = createLogger(ConnectorsController.name);
 
     constructor(
         private readonly connectors: ConnectorsService,
@@ -214,7 +214,8 @@ export class ConnectorsController {
         @ValidatedQueryValue({ name: 'state', schema: z.string().min(1).max(512) }) state: string,
         @Res() res: FastifyReply,
     ): Promise<void> {
-        this.logger.log(`oauthCallback connectorName=${connectorName} state=${state} hasCode=${!!code}`);
+        // The state token is a bearer credential for the callback, so it is never logged.
+        this.logger.debug({ connectorName, hasCode: !!code }, 'Connector OAuth callback received');
 
         const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173');
 
@@ -223,7 +224,7 @@ export class ConnectorsController {
 
             await this.connectors.handleCallback({ source: connectorName, code, userId });
 
-            this.logger.log(`oauthCallback handleCallback done, redirecting to ${webUrl}/settings/connectors`);
+            this.logger.debug({ connectorName }, 'Connector OAuth callback handled');
 
             const connector = this.oAuthConnectorRegistry.get(connectorName);
             const needsSetup = Object.keys(connector.connectionDetailsSchema).length > 0;
@@ -235,7 +236,7 @@ export class ConnectorsController {
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
 
-            this.logger.error(`oauthCallback failed: ${message}`);
+            this.logger.error({ err, connectorName }, 'Connector OAuth callback failed');
 
             await res
                 .status(302)

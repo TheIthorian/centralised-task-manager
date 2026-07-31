@@ -5,11 +5,14 @@ import * as bcrypt from 'bcrypt';
 import { User, type UserDocument, type NotificationPreferences } from './schemas/user.schema.js';
 import { ConnectorConfig, type ConnectorConfigDocument } from '../connectors/schemas/connector-config.schema.js';
 import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
+import { createLogger } from '@ctm/logger';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { UpdatePreferencesDto } from '../notifications/dto/update-preferences.dto.js';
 
 @Injectable()
 export class UsersService {
+    private readonly logger = createLogger(UsersService.name);
+
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
         @InjectModel(ConnectorConfig.name) private readonly connectorConfigModel: Model<ConnectorConfigDocument>,
@@ -31,7 +34,13 @@ export class UsersService {
         try {
             return await this.userModel.create({ email, passwordHash, name });
         } catch (err: unknown) {
-            if (isMongooseDuplicateError(err)) throw new ConflictException('Email already registered');
+            if (isMongooseDuplicateError(err)) {
+                this.logger.debug({ err }, 'Registration rejected: email already in use');
+
+                throw new ConflictException('Email already registered');
+            }
+
+            this.logger.error({ err }, 'Failed to create a user');
 
             throw err;
         }

@@ -1,5 +1,5 @@
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
+import { createLogger } from '@ctm/logger';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
@@ -18,7 +18,7 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     private readonly server!: Server;
 
-    private readonly logger = new Logger(SyncGateway.name);
+    private readonly logger = createLogger(SyncGateway.name);
 
     constructor(private readonly jwt: JwtService) {}
 
@@ -29,23 +29,26 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
             client.handshake.headers['authorization']?.replace('Bearer ', '');
 
         if (!token) {
-            this.logger.warn(`WS connection rejected: no token`);
+            this.logger.warn({ socketId: client.id }, 'Sync socket rejected: no token');
+
             client.disconnect();
+
             return;
         }
 
         try {
             const payload = this.jwt.verify<{ sub: string }>(token);
             void client.join(`user:${payload.sub}`);
-            this.logger.log(`WS connected userId=${payload.sub}`);
-        } catch {
-            this.logger.warn(`WS connection rejected: invalid token`);
+            this.logger.info({ userId: payload.sub, socketId: client.id }, 'Sync socket connected');
+        } catch (err) {
+            this.logger.warn({ err, socketId: client.id }, 'Sync socket rejected: invalid token');
+
             client.disconnect();
         }
     }
 
     handleDisconnect(client: Socket): void {
-        this.logger.log(`WS disconnected clientId=${client.id}`);
+        this.logger.info({ socketId: client.id }, 'Sync socket disconnected');
     }
 
     /** Emit current job state to all sockets belonging to this user. */
