@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { RefreshDto as IRefreshDto } from '@ctm/api-client';
 import { createZodDto } from '../../common/zod/create-zod-dto.js';
 import { requestObject } from '../../common/zod/param-schemas.js';
 
@@ -14,4 +15,4 @@ export const refreshSchema = requestObject({
         ),
 }).default({});
 
-export class RefreshDto extends createZodDto({ schema: refreshSchema, name: 'RefreshDto' }) {}
+export class RefreshDto extends createZodDto<IRefreshDto>({ schema: refreshSchema, name: 'RefreshDto' }) {}

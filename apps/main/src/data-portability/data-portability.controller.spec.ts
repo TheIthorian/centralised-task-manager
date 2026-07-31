@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ExecutionContext } from '@nestjs/common';
+import { ValidationError } from '@ctm/errors';
 import { DataPortabilityController } from './data-portability.controller.js';
 import { ExportService } from './export.service.js';
 import { ImportService } from './import.service.js';
@@ -101,4 +102,58 @@ describe('DataPortabilityController', () => {
         );
         expect(fakeReply.send).toHaveBeenCalledWith(fileBuffer);
     });
+
+    describe('import', () => {
+        it('defaults onConflict to ignore when the field is absent', async () => {
+            await controller.import(importRequest({}) as never);
+
+            expect(mockImportService.import).toHaveBeenCalledWith(expect.objectContaining({ onConflict: 'ignore' }));
+        });
+
+        it('passes a supplied onConflict through', async () => {
+            await controller.import(importRequest({ onConflict: 'replace' }) as never);
+
+            expect(mockImportService.import).toHaveBeenCalledWith(expect.objectContaining({ onConflict: 'replace' }));
+        });
+
+        it('rejects an unrecognised onConflict rather than silently ignoring it', async () => {
+            await expect(controller.import(importRequest({ onConflict: 'overwrite' }) as never)).rejects.toThrow(
+                ValidationError,
+            );
+        });
+
+        it('rejects an unrecognised form field', async () => {
+            await expect(controller.import(importRequest({ dryRun: 'true' }) as never)).rejects.toThrow(
+                ValidationError,
+            );
+        });
+    });
 });
+
+/** Builds a request whose multipart stream carries one valid envelope plus the given form fields. */
+function importRequest(fields: Record<string, string>): { user: { sub: string }; parts: () => AsyncGenerator } {
+    const envelope = {
+        version: '1',
+        exportedAt: new Date().toISOString(),
+        exportId: 'uuid-1',
+        part: 1,
+        totalParts: 1,
+        tasks: [{ source: 'todoist', sourceId: '1' }],
+        notifications: [],
+    };
+
+    return {
+        user: { sub: userId },
+        parts: async function* () {
+            yield {
+                type: 'file',
+                filename: 'part-1.json',
+                toBuffer: async () => Buffer.from(JSON.stringify(envelope)),
+            };
+
+            for (const [fieldname, value] of Object.entries(fields)) {
+                yield { type: 'field', fieldname, value };
+            }
+        },
+    };
+}

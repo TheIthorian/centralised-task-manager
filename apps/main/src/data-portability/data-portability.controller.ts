@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { NotFoundError, ValidationError } from '@ctm/errors';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
@@ -12,7 +12,9 @@ import { ImportService } from './import.service.js';
 import { FilesService } from '../files/files.service.js';
 import type { ExportEnvelopeDto } from '@ctm/api-client';
 import { ExportResponseDto, ImportResponseDto } from './dto/data-portability-response.dto.js';
+import { ImportRequestDto, importRequestSchema } from './dto/import-request.dto.js';
 import { ValidatedParam } from '../common/validation/validated.decorators.js';
+import { parseOrThrow } from '../common/zod/zod-param.js';
 import { z } from 'zod';
 
 type AuthRequest = FastifyRequest & { user: JwtPayload };
@@ -64,10 +66,14 @@ export class DataPortabilityController {
 
     /** Import user data from one or more export part files. Accepts multipart/form-data. */
     @ApiOperation({ summary: 'Import user data' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({ type: ImportRequestDto })
     @Post('import')
+    // The body is a multipart stream this handler drains itself, so there is no argument for
+    // ValidatedBody to sit on: the form fields go through importRequestSchema below instead.
     async import(@Req() req: AuthRequest): Promise<ImportResponseDto> {
         const envelopes: ExportEnvelopeDto[] = [];
-        let onConflict: 'replace' | 'ignore' = 'ignore';
+        const fields: Record<string, unknown> = {};
 
         const parts = req.parts();
 
@@ -86,14 +92,14 @@ export class DataPortabilityController {
                 }
 
                 envelopes.push(envelope);
-            } else if (part.fieldname === 'onConflict') {
-                const value = part.value as string;
-
-                if (value === 'replace' || value === 'ignore') onConflict = value;
+            } else {
+                fields[part.fieldname] = part.value;
             }
         }
 
         if (envelopes.length === 0) throw new ValidationError('At least one export file is required');
+
+        const { onConflict } = parseOrThrow({ schema: importRequestSchema, value: fields });
 
         return this.importService.import({ userId: req.user.sub, envelopes, onConflict });
     }

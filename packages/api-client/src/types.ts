@@ -196,6 +196,25 @@ export type UpdateUserDto = {
     newPassword?: string;
 };
 
+/** Request body for POST /auth/login. */
+export type LoginDto = {
+    email: string;
+    password: string;
+};
+
+/** Request body for POST /auth/register. */
+export type RegisterDto = {
+    name: string;
+    email: string;
+    password: string;
+};
+
+/** Request body for POST /auth/refresh and POST /auth/logout. */
+export type RefreshDto = {
+    /** Omitted by web clients, which carry the refresh token in the ctm_refresh cookie. */
+    refreshToken?: string;
+};
+
 /** Access/refresh token pair returned after login or refresh. */
 export type TokenPair = {
     accessToken: string;
