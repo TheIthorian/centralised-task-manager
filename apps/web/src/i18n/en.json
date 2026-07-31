@@ -292,5 +292,45 @@
             "title": "Not saved",
             "body": "Your preferences did not reach the server. Try again."
         }
+    },
+    "oauth": {
+        "consent": {
+            "requestingAccess": "{{app}} is requesting access",
+            "requestingAccessUnnamed": "An app is requesting access",
+            "title": "Authorise CTM",
+            "signedInAs": "Signed in as {{email}}",
+            "permissions": "Permissions requested",
+            "required": "{{scope}} · Required",
+            "submit": "Authorise →",
+            "submitting": "Authorising…",
+            "redirectNote": "You'll be redirected back to the requesting app after authorising.",
+            "sessionExpired": "Session expired. Please refresh and try again.",
+            "failed": "Something went wrong. Please try again.",
+            "unverified": {
+                "title": "Unverified app",
+                "body": "This app registered itself, so its name is its own claim and nobody has checked it. Only continue if you started this.",
+                "hostsLabel": "It will send you to"
+            },
+            "scopes": {
+                "openid": "Verify identity",
+                "tasks_read": "Read tasks",
+                "tasks_write": "Create & manage tasks",
+                "connectors_read": "Read connectors",
+                "connectors_write": "Manage connectors",
+                "connectors_sync": "Trigger connector sync",
+                "notifications_read": "Read notifications",
+                "notification-config_read": "Read notification prefs",
+                "notification-config_write": "Manage notification prefs",
+                "profile_read": "Read profile",
+                "profile_write": "Update profile"
+            },
+            "resources": {
+                "tasks": "Tasks",
+                "connectors": "Connectors",
+                "notifications": "Notifications",
+                "notification-config": "Notification Config",
+                "profile": "Profile"
+            }
+        }
     }
 }

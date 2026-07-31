@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Res, HttpCode, BadRequestException, UseGuards, Request, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
+import { z } from 'zod';
+import { NotFoundError } from '@ctm/errors';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { OAuthClientService, isRedirectUriPermitted } from '../auth/oauth-client.service.js';
 import { OAuthService } from './oauth.service.js';
@@ -10,8 +12,17 @@ import { filterScopes } from './scopes.js';
 import { StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 import { AuthorizeQueryDto } from './dto/authorize-query.dto.js';
 import { ConsentBodyDto, TokenBodyDto } from './dto/token-body.dto.js';
-import { ValidatedBody, ValidatedHeader, ValidatedQuery } from '../common/validation/validated.decorators.js';
+import { OAuthClientInfoDto } from './dto/client-info-response.dto.js';
+import {
+    ValidatedBody,
+    ValidatedHeader,
+    ValidatedQuery,
+    ValidatedQueryValue,
+} from '../common/validation/validated.decorators.js';
 import { acceptHeaderSchema } from '../common/zod/param-schemas.js';
+
+/** Matches the bound `authorizeQuerySchema` puts on `client_id`. */
+const clientIdSchema = z.string().min(1).max(128);
 
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
@@ -106,6 +117,27 @@ export class OAuthController {
         }
 
         res.redirect(redirectUrl.toString());
+    }
+
+    /**
+     * Public metadata for a registered client, so the consent screen can say who is asking and
+     * where the user is about to be sent.
+     *
+     * Behind the JWT guard: consent only renders for a signed-in user, and leaving this open would
+     * turn client ids into a public existence oracle.
+     */
+    @ApiBearerAuth('jwt')
+    @ApiOperation({ summary: 'Get public metadata for an OAuth client' })
+    @Get('client-info')
+    @UseGuards(JwtAuthGuard)
+    async clientInfo(
+        @ValidatedQueryValue({ name: 'client_id', schema: clientIdSchema }) clientId: string,
+    ): Promise<OAuthClientInfoDto> {
+        const info = await this.oauthClient.getPublicClientInfo({ clientId });
+
+        if (!info) throw new NotFoundError(`OAuth client ${clientId}`);
+
+        return info;
     }
 
     /**

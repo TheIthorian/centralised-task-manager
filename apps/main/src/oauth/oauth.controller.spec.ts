@@ -1,7 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { getModelToken } from '@nestjs/mongoose';
+import type { Model } from 'mongoose';
 import { AppModule } from '../app.module.js';
+import { OAuthClient, type OAuthClientDocument } from '../auth/schemas/oauth-client.schema.js';
 import { createHash, randomBytes } from 'crypto';
 import { SCOPE_REGISTRY, filterScopes, groupScopesByResource } from './scopes.js';
 
@@ -340,6 +343,80 @@ describe('OAuth endpoints', () => {
                 headers: { authorization: `Bearer ${jwt}` },
             });
             expect(authorizeRes.statusCode).toBe(400);
+        });
+    });
+
+    describe('GET /oauth/client-info', () => {
+        async function registerClient(redirectUris: string[]): Promise<string> {
+            const res = await app.inject({
+                method: 'POST',
+                url: '/.well-known/oauth-client',
+                payload: { client_name: 'Google Tasks (Official)', redirect_uris: redirectUris },
+            });
+
+            return (JSON.parse(res.body) as { client_id: string }).client_id;
+        }
+
+        it('reports a dynamically registered client as unverified, with its redirect hosts', async () => {
+            const clientId = await registerClient([
+                'https://impostor.example.com/cb',
+                'https://impostor.example.com/cb2',
+            ]);
+
+            const res = await app.inject({
+                method: 'GET',
+                url: `/oauth/client-info?client_id=${clientId}`,
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+
+            expect(res.statusCode).toBe(200);
+            expect(JSON.parse(res.body)).toEqual({
+                clientId,
+                clientName: 'Google Tasks (Official)',
+                isDynamic: true,
+                redirectHosts: ['impostor.example.com'],
+            });
+        });
+
+        it('reports an operator-configured client as verified', async () => {
+            const clientId = await registerClient(['https://mcp.example.com/cb']);
+            const model = app.get<Model<OAuthClientDocument>>(getModelToken(OAuthClient.name));
+            await model.updateOne({ clientId }, { $set: { isDynamic: false } });
+
+            const res = await app.inject({
+                method: 'GET',
+                url: `/oauth/client-info?client_id=${clientId}`,
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+
+            expect(res.statusCode).toBe(200);
+            expect(JSON.parse(res.body).isDynamic).toBe(false);
+        });
+
+        it('returns 404 for a client_id that was never registered', async () => {
+            const res = await app.inject({
+                method: 'GET',
+                url: '/oauth/client-info?client_id=client_nonexistent',
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+
+            expect(res.statusCode).toBe(404);
+        });
+
+        it('returns 400 when client_id is missing', async () => {
+            const res = await app.inject({
+                method: 'GET',
+                url: '/oauth/client-info',
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('returns 401 without a token', async () => {
+            const res = await app.inject({ method: 'GET', url: '/oauth/client-info?client_id=client_anything' });
+
+            expect(res.statusCode).toBe(401);
         });
     });
 

@@ -1,66 +1,58 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { useSearchParams, Navigate } from 'react-router';
-import { Button } from '@ctm/ui';
+import type { OAuthClientInfoDto } from '@ctm/api-client';
+import { Button, UnverifiedAppNotice } from '@ctm/ui';
 import { useAuth } from '../auth/AuthContext.js';
 import config from '../config.js';
 
 type ScopeEntry = {
     scope: string;
     label: string;
-    required: boolean;
 };
 
-type ScopeGroups = Record<string, ScopeEntry[]>;
-
-const SCOPE_REGISTRY: Record<string, ScopeEntry> = {
-    openid: { scope: 'openid', label: 'Verify identity', required: true },
-    'tasks:read': { scope: 'tasks:read', label: 'Read tasks', required: false },
-    'tasks:write': { scope: 'tasks:write', label: 'Create & manage tasks', required: false },
-    'connectors:read': { scope: 'connectors:read', label: 'Read connectors', required: false },
-    'connectors:write': { scope: 'connectors:write', label: 'Manage connectors', required: false },
-    'connectors:sync': { scope: 'connectors:sync', label: 'Trigger connector sync', required: false },
-    'notifications:read': { scope: 'notifications:read', label: 'Read notifications', required: false },
-    'notification-config:read': {
-        scope: 'notification-config:read',
-        label: 'Read notification prefs',
-        required: false,
-    },
-    'notification-config:write': {
-        scope: 'notification-config:write',
-        label: 'Manage notification prefs',
-        required: false,
-    },
-    'profile:read': { scope: 'profile:read', label: 'Read profile', required: false },
-    'profile:write': { scope: 'profile:write', label: 'Update profile', required: false },
+type ScopeGroup = {
+    resource: string;
+    label: string;
+    entries: ScopeEntry[];
 };
 
-function buildScopeGroups(requestedScopes: string[]): ScopeGroups {
-    const groups: ScopeGroups = {};
+// i18next reads a colon as a namespace separator, so a scope cannot be a key as it stands.
+const SCOPE_LABEL_KEYS = {
+    openid: 'oauth.consent.scopes.openid',
+    'tasks:read': 'oauth.consent.scopes.tasks_read',
+    'tasks:write': 'oauth.consent.scopes.tasks_write',
+    'connectors:read': 'oauth.consent.scopes.connectors_read',
+    'connectors:write': 'oauth.consent.scopes.connectors_write',
+    'connectors:sync': 'oauth.consent.scopes.connectors_sync',
+    'notifications:read': 'oauth.consent.scopes.notifications_read',
+    'notification-config:read': 'oauth.consent.scopes.notification-config_read',
+    'notification-config:write': 'oauth.consent.scopes.notification-config_write',
+    'profile:read': 'oauth.consent.scopes.profile_read',
+    'profile:write': 'oauth.consent.scopes.profile_write',
+} as const;
 
-    for (const scope of requestedScopes) {
-        const colonIdx = scope.indexOf(':');
+const RESOURCE_LABEL_KEYS = {
+    tasks: 'oauth.consent.resources.tasks',
+    connectors: 'oauth.consent.resources.connectors',
+    notifications: 'oauth.consent.resources.notifications',
+    'notification-config': 'oauth.consent.resources.notification-config',
+    profile: 'oauth.consent.resources.profile',
+} as const;
 
-        if (colonIdx === -1) continue;
-
-        const resource = scope.slice(0, colonIdx);
-        const entry = SCOPE_REGISTRY[scope];
-
-        if (!entry) continue;
-
-        if (!groups[resource]) groups[resource] = [];
-        groups[resource].push(entry);
-    }
-
-    return groups;
-}
+type ScopeName = keyof typeof SCOPE_LABEL_KEYS;
+type ResourceName = keyof typeof RESOURCE_LABEL_KEYS;
 
 /** OAuth consent page — shown when a client requests access to CTM. */
 export function OAuthConsentPage(): React.JSX.Element {
+    const { t } = useTranslation();
     const [params] = useSearchParams();
     const { user, isLoading, api } = useAuth();
 
     const rawScope = params.get('scope') ?? 'openid';
-    const requestedScopes = rawScope.split(/\s+/).filter((s) => s in SCOPE_REGISTRY);
+    const clientId = params.get('client_id');
+    const requestedScopes = rawScope.split(/\s+/).filter(isKnownScope);
 
     if (!requestedScopes.includes('openid')) requestedScopes.unshift('openid');
 
@@ -68,15 +60,21 @@ export function OAuthConsentPage(): React.JSX.Element {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const scopeGroups = buildScopeGroups(requestedScopes);
+    // A failed lookup is not evidence that the client is trustworthy, but blocking consent on a
+    // metadata call would break the flow for a network blip, so the screen renders without the
+    // notice rather than retrying or erroring.
+    const { data: clientInfo } = useQuery<OAuthClientInfoDto>({
+        queryKey: ['oauth-client-info', clientId],
+        queryFn: () => api.getOAuthClientInfo({ clientId: clientId ?? '' }),
+        enabled: Boolean(clientId),
+        retry: false,
+    });
 
-    const RESOURCE_LABELS: Record<string, string> = {
-        tasks: 'Tasks',
-        connectors: 'Connectors',
-        notifications: 'Notifications',
-        'notification-config': 'Notification Config',
-        profile: 'Profile',
-    };
+    const scopeGroups = buildScopeGroups({
+        requestedScopes,
+        scopeLabel: (scope) => t(SCOPE_LABEL_KEYS[scope]),
+        resourceLabel: (resource) => t(RESOURCE_LABEL_KEYS[resource]),
+    });
 
     if (isLoading) return <></>;
 
@@ -84,6 +82,8 @@ export function OAuthConsentPage(): React.JSX.Element {
         const returnTo = `/oauth/consent?${params.toString()}`;
         return <Navigate to={`/login?return=${encodeURIComponent(returnTo)}`} replace />;
     }
+
+    const appName = clientInfo?.clientName || clientId;
 
     const toggleScope = (scope: string): void => {
         setSelected((prev) => {
@@ -110,8 +110,8 @@ export function OAuthConsentPage(): React.JSX.Element {
             state: params.get('state') ?? '',
         });
 
-        if (params.get('client_id')) {
-            postParams.set('client_id', params.get('client_id')!);
+        if (clientId) {
+            postParams.set('client_id', clientId);
         }
 
         const selectedWithOpenid = new Set(selected);
@@ -139,12 +139,12 @@ export function OAuthConsentPage(): React.JSX.Element {
 
                 return;
             } else if (res.status === 401) {
-                setError('Session expired. Please refresh and try again.');
+                setError(t('oauth.consent.sessionExpired'));
             } else {
-                setError('Something went wrong. Please try again.');
+                setError(t('oauth.consent.failed'));
             }
         } catch {
-            setError('Something went wrong. Please try again.');
+            setError(t('oauth.consent.failed'));
         } finally {
             setLoading(false);
         }
@@ -154,18 +154,31 @@ export function OAuthConsentPage(): React.JSX.Element {
         <div className="min-h-dvh flex items-center justify-center p-4">
             <div className="w-full max-w-sm bg-panel border border-line shadow-[6px_6px_0px_#111] p-8 rounded-ctm">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em]st text-muted mb-1">
-                    CTM MCP Server is requesting access
+                    {appName
+                        ? t('oauth.consent.requestingAccess', { app: appName })
+                        : t('oauth.consent.requestingAccessUnnamed')}
                 </p>
-                <h1 className="text-3xl font-semibold tracking-tight text-fg mb-1">
-                    Authorise CTM
-                </h1>
-                <p className="text-sm font-medium text-muted mb-5">Signed in as {user.email}</p>
+                <h1 className="text-3xl font-semibold tracking-tight text-fg mb-1">{t('oauth.consent.title')}</h1>
+                <p className="text-sm font-medium text-muted mb-5">
+                    {t('oauth.consent.signedInAs', { email: user.email })}
+                </p>
+
+                {clientInfo?.isDynamic && (
+                    <div className="mb-5">
+                        <UnverifiedAppNotice
+                            title={t('oauth.consent.unverified.title')}
+                            body={t('oauth.consent.unverified.body')}
+                            hostsLabel={t('oauth.consent.unverified.hostsLabel')}
+                            hosts={clientInfo.redirectHosts}
+                        />
+                    </div>
+                )}
 
                 {/* Permissions box */}
                 <div className="border border-line mb-5 rounded-ctm" style={{ background: '#fffbe8' }}>
                     <div className="px-3 py-2 border-b border-line bg-[#f5f5f5]">
                         <span className="text-xs font-semibold uppercase tracking-[0.12em]st text-muted">
-                            Permissions requested
+                            {t('oauth.consent.permissions')}
                         </span>
                     </div>
 
@@ -175,24 +188,24 @@ export function OAuthConsentPage(): React.JSX.Element {
                             <div className="w-2 h-2 bg-[#ccc]" />
                         </div>
                         <div>
-                            <p className="text-xs font-semibold text-[#aaa]">Verify identity</p>
+                            <p className="text-xs font-semibold text-[#aaa]">{t('oauth.consent.scopes.openid')}</p>
                             <p className="text-[10px] font-medium text-[#ccc] uppercase tracking-wide">
-                                openid · Required
+                                {t('oauth.consent.required', { scope: 'openid' })}
                             </p>
                         </div>
                     </div>
 
                     {/* Resource groups */}
-                    {Object.entries(scopeGroups).map(([resource, entries], idx, arr) => (
+                    {scopeGroups.map((group, idx, arr) => (
                         <div
-                            key={resource}
+                            key={group.resource}
                             className={idx < arr.length - 1 ? 'px-3 py-2.5 border-b border-[#e8e0b0]' : 'px-3 py-2.5'}
                         >
                             <p className="text-[10px] font-semibold uppercase tracking-[0.12em]st text-fg mb-2">
-                                {RESOURCE_LABELS[resource] ?? resource.charAt(0).toUpperCase() + resource.slice(1)}
+                                {group.label}
                             </p>
                             <div className="flex gap-2 flex-wrap">
-                                {entries.map((entry) => {
+                                {group.entries.map((entry) => {
                                     const checked = selected.has(entry.scope);
                                     return (
                                         <button
@@ -228,14 +241,54 @@ export function OAuthConsentPage(): React.JSX.Element {
 
                 <form onSubmit={handleSubmit}>
                     <Button type="submit" disabled={loading} className="w-full mt-2">
-                        {loading ? 'Authorising…' : 'Authorise →'}
+                        {loading ? t('oauth.consent.submitting') : t('oauth.consent.submit')}
                     </Button>
                 </form>
 
-                <p className="mt-4 text-center text-xs font-medium text-muted">
-                    You'll be redirected back to the requesting app after authorising.
-                </p>
+                <p className="mt-4 text-center text-xs font-medium text-muted">{t('oauth.consent.redirectNote')}</p>
             </div>
         </div>
     );
+}
+
+/** Groups the requested scopes by the resource they act on. `openid` is rendered separately. */
+function buildScopeGroups({
+    requestedScopes,
+    scopeLabel,
+    resourceLabel,
+}: {
+    requestedScopes: ScopeName[];
+    scopeLabel: (scope: ScopeName) => string;
+    resourceLabel: (resource: ResourceName) => string;
+}): ScopeGroup[] {
+    const groups = new Map<ResourceName, ScopeGroup>();
+
+    for (const scope of requestedScopes) {
+        const resource = resourceOf(scope);
+
+        if (!resource) continue;
+
+        let group = groups.get(resource);
+
+        if (!group) {
+            group = { resource, label: resourceLabel(resource), entries: [] };
+            groups.set(resource, group);
+        }
+
+        group.entries.push({ scope, label: scopeLabel(scope) });
+    }
+
+    return [...groups.values()];
+}
+
+/** The resource a scope acts on, or null for a scope that names no resource (`openid`). */
+function resourceOf(scope: ScopeName): ResourceName | null {
+    const resource = scope.slice(0, scope.indexOf(':'));
+
+    return resource in RESOURCE_LABEL_KEYS ? (resource as ResourceName) : null;
+}
+
+/** Narrows an arbitrary scope string to one this screen knows how to describe. */
+function isKnownScope(scope: string): scope is ScopeName {
+    return scope in SCOPE_LABEL_KEYS;
 }

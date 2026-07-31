@@ -11,6 +11,7 @@ import type {
     MarkReadResultDto,
     NotificationDto,
     NotificationPreferencesDto,
+    OAuthClientInfoDto,
     OkDto,
     ReminderDto,
     TaskDto,
@@ -33,6 +34,7 @@ import type {
     DownloadExportFileParams,
     ImportDataParams,
     GetConnectorAuthUrlParams,
+    GetOAuthClientInfoParams,
     GetSyncJobParams,
     ListNotificationsParams,
     ListTasksParams,
@@ -391,6 +393,15 @@ export class CtmApiClient {
     /** Revoke access for an authorized OAuth app. */
     async revokeAuthorizedApp({ clientId }: RevokeAuthorizedAppParams): Promise<void> {
         await this.request<void>({ method: 'DELETE', path: `/auth/me/authorized-apps/${clientId}` });
+    }
+
+    /** Public metadata for an OAuth client, for a consent screen to describe who is asking. */
+    async getOAuthClientInfo({ clientId }: GetOAuthClientInfoParams): Promise<OAuthClientInfoDto> {
+        return this.request<OAuthClientInfoDto>({
+            method: 'GET',
+            path: '/oauth/client-info',
+            params: { client_id: clientId },
+        });
     }
 
     private filterToParams(filter: TaskFilter): Record<string, string> {

@@ -12,6 +12,7 @@ import {
     type MarkReadResultDto,
     type NotificationDto,
     type NotificationPreferencesDto,
+    type OAuthClientInfoDto,
     type OkDto,
     type UpdateNotificationPreferencesDto,
     type ReminderDto,
@@ -297,6 +298,11 @@ export class WebApiClient {
     /** Revoke access for an authorized OAuth app. */
     async revokeAuthorizedApp({ clientId }: { clientId: string }): Promise<void> {
         await this.execute({ request: () => this.apiClient.revokeAuthorizedApp({ clientId }) });
+    }
+
+    /** Public metadata for an OAuth client, so the consent screen can say who is asking. */
+    async getOAuthClientInfo({ clientId }: { clientId: string }): Promise<OAuthClientInfoDto> {
+        return this.execute({ request: () => this.apiClient.getOAuthClientInfo({ clientId }) });
     }
 
     /**
