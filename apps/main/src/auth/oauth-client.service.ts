@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'crypto';
 import bcrypt from 'bcrypt';
+import type { OAuthClientInfoDto } from '@ctm/api-client';
 import type { OAuthClientDocument } from './schemas/oauth-client.schema.js';
 import { OAuthClient } from './schemas/oauth-client.schema.js';
 
@@ -109,6 +110,26 @@ export class OAuthClientService {
     }
 
     /**
+     * Public metadata for a client, for a consent screen to describe who is asking. Null when the
+     * client_id is not registered.
+     *
+     * Only the host of each redirect URI is exposed: the path and query are noise a user cannot
+     * judge, while the host is the part that answers where the authorization code is being sent.
+     */
+    async getPublicClientInfo({ clientId }: { clientId: string }): Promise<OAuthClientInfoDto | null> {
+        const client = await this.model.findOne({ clientId });
+
+        if (!client) return null;
+
+        return {
+            clientId: client.clientId,
+            clientName: client.clientName,
+            isDynamic: client.isDynamic,
+            redirectHosts: redirectHostsOf(client.redirectUris),
+        };
+    }
+
+    /**
      * Record that a client completed an authorization, exempting it from unused-client reaping.
      * Safe to call repeatedly.
      */
@@ -123,4 +144,17 @@ export class OAuthClientService {
     private generateClientSecret(): string {
         return randomBytes(32).toString('hex');
     }
+}
+
+/** Distinct hosts of the given redirect URIs, in registration order. Unparseable URIs are skipped. */
+function redirectHostsOf(redirectUris: string[]): string[] {
+    const hosts = new Set<string>();
+
+    for (const uri of redirectUris) {
+        if (!URL.canParse(uri)) continue;
+
+        hosts.add(new URL(uri).host);
+    }
+
+    return [...hosts];
 }

@@ -192,6 +192,11 @@ export type RevokeAuthorizedAppParams = {
     clientId: string;
 };
 
+/** Parameters for {@link CtmApiClient.getOAuthClientInfo}. */
+export type GetOAuthClientInfoParams = {
+    clientId: string;
+};
+
 /** Parameters for {@link CtmApiClient.downloadExportFile}. */
 export type DownloadExportFileParams = {
     exportId: string;

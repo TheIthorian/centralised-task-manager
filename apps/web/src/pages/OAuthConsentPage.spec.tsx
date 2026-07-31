@@ -1,29 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router';
+import type { OAuthClientInfoDto } from '@ctm/api-client';
 import { OAuthConsentPage } from './OAuthConsentPage.js';
 
 const mockUser = { id: '1', email: 'user@example.com', name: 'Test User' };
-const mockApi = { getAccessToken: vi.fn(() => 'mock-token') };
+const mockApi = {
+    getAccessToken: vi.fn(() => 'mock-token'),
+    getOAuthClientInfo: vi.fn<() => Promise<OAuthClientInfoDto>>(),
+};
 
 vi.mock('../auth/AuthContext.js', () => ({
     useAuth: vi.fn(() => ({ user: mockUser, isLoading: false, api: mockApi })),
 }));
 
 function renderConsentPage(search: string): ReturnType<typeof render> {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
     return render(
-        <MemoryRouter initialEntries={[`/oauth/consent${search}`]}>
-            <Routes>
-                <Route path="/oauth/consent" element={<OAuthConsentPage />} />
-                <Route path="/login" element={<div>Login page</div>} />
-            </Routes>
-        </MemoryRouter>,
+        <QueryClientProvider client={queryClient}>
+            <MemoryRouter initialEntries={[`/oauth/consent${search}`]}>
+                <Routes>
+                    <Route path="/oauth/consent" element={<OAuthConsentPage />} />
+                    <Route path="/login" element={<div>Login page</div>} />
+                </Routes>
+            </MemoryRouter>
+        </QueryClientProvider>,
     );
 }
 
 describe('OAuthConsentPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks();
+        mockApi.getAccessToken.mockReturnValue('mock-token');
+        mockApi.getOAuthClientInfo.mockReset();
     });
 
     it('renders the requesting access header', () => {
@@ -99,5 +110,70 @@ describe('OAuthConsentPage', () => {
         fireEvent.click(screen.getByRole('button', { name: /authorise/i }));
 
         await waitFor(() => expect(assignSpy).toHaveBeenCalledWith('http://localhost:4000/cb?code=abc123'));
+    });
+
+    describe('client verification', () => {
+        const baseSearch =
+            '?client_id=client_abc&scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code';
+
+        it('warns that a dynamically registered client is unverified', async () => {
+            mockApi.getOAuthClientInfo.mockResolvedValue({
+                clientId: 'client_abc',
+                clientName: 'Google Tasks (Official)',
+                isDynamic: true,
+                redirectHosts: ['tasks-officiaI.example.com'],
+            });
+
+            renderConsentPage(baseSearch);
+
+            expect(await screen.findByText(/unverified app/i)).toBeInTheDocument();
+            expect(screen.getByText('tasks-officiaI.example.com')).toBeInTheDocument();
+        });
+
+        it('names the requesting client from its registered name', async () => {
+            mockApi.getOAuthClientInfo.mockResolvedValue({
+                clientId: 'client_abc',
+                clientName: 'Claude',
+                isDynamic: true,
+                redirectHosts: ['claude.ai'],
+            });
+
+            renderConsentPage(baseSearch);
+
+            expect(await screen.findByText(/claude is requesting access/i)).toBeInTheDocument();
+        });
+
+        it('shows no warning for a client the operator configured', async () => {
+            mockApi.getOAuthClientInfo.mockResolvedValue({
+                clientId: 'client_abc',
+                clientName: 'CTM MCP Server',
+                isDynamic: false,
+                redirectHosts: ['mcp.example.com'],
+            });
+
+            renderConsentPage(baseSearch);
+
+            await screen.findByText(/ctm mcp server is requesting access/i);
+            expect(screen.queryByText(/unverified app/i)).not.toBeInTheDocument();
+        });
+
+        it('stays usable when the client lookup fails', async () => {
+            mockApi.getOAuthClientInfo.mockRejectedValue(new Error('network down'));
+
+            renderConsentPage(baseSearch);
+
+            await waitFor(() => expect(mockApi.getOAuthClientInfo).toHaveBeenCalled());
+            expect(screen.getByRole('button', { name: /authorise/i })).toBeEnabled();
+            expect(screen.queryByText(/unverified app/i)).not.toBeInTheDocument();
+        });
+
+        it('does not look up a client when the request carries no client_id', () => {
+            renderConsentPage(
+                '?scope=tasks:read&redirect_uri=http://localhost:4000/cb&code_challenge=abc&response_type=code',
+            );
+
+            expect(mockApi.getOAuthClientInfo).not.toHaveBeenCalled();
+            expect(screen.getByText(/an app is requesting access/i)).toBeInTheDocument();
+        });
     });
 });

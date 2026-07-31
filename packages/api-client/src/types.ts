@@ -291,6 +291,21 @@ export type AuthorizedAppDto = {
     type: 'oauth';
 };
 
+/**
+ * Public metadata for an OAuth client, shown on the consent screen.
+ *
+ * `clientName` is self-declared by the client and `isDynamic` says whether it registered itself
+ * through the public registration endpoint, so a consumer must treat the name of a dynamic client
+ * as an unverified claim.
+ */
+export type OAuthClientInfoDto = {
+    clientId: string;
+    clientName: string;
+    isDynamic: boolean;
+    /** Distinct hosts of the client's registered redirect URIs, in registration order. */
+    redirectHosts: string[];
+};
+
 /** Metadata for a single file persisted to storage (embedded in ExportResponseDto). */
 export type StoredFileDto = {
     filename: string;
