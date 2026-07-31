@@ -22,9 +22,8 @@ Spec: `.claude/specs/2026-07-30-authorized-client-link-design.md` · Issue #27
    the link's `isDynamic` when the client document is gone; throws `NotFoundError` from
    `@ctm/errors` when neither exists.
 
-7. **Migration** — `apps/main/scripts/backfill-authorized-clients.ts` plus a
-   `backfill-authorized-clients` npm script. Aggregation over `refreshtokens`, bulk upsert,
-   idempotent, `MONGODB_URI` from the environment.
+7. **Deployment** — no migration. Document the drop of `oauthclients` and the client-bound refresh
+   tokens in `DEPLOYMENT.md` as a step run against production before the release.
 
 8. **Tests** — rewrite `authorized-apps.service.spec.ts` against the new collection, add
    `authorized-client.service.spec.ts`. Real MongoDB, unique ids from `Date.now()`, no cleanup.

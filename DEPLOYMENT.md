@@ -123,6 +123,44 @@ requests, which the Pages Function forwards to `API_ORIGIN`.
 
 ---
 
+## One-off release steps
+
+### Clear OAuth clients for the `AuthorizedClient` release
+
+The release that introduces the `authorizedclients` collection does not migrate anything. The
+authorized apps list used to be derived from refresh tokens; it is now read from an explicit grant
+record that no existing row has. Rather than reconstruct that history, drop the OAuth state and let
+users re-authorize from the consent screen.
+
+Run this against production **after** the Railway `main` deploy is live, so nothing re-registers
+between the wipe and the new build going up:
+
+```bash
+mongosh "$MONGODB_URI" --eval '
+  db.oauthclients.deleteMany({});
+  db.authorizedclients.deleteMany({});
+  db.authcodes.deleteMany({});
+  db.refreshtokens.deleteMany({ clientId: { $exists: true, $ne: null } });
+'
+```
+
+What each line does:
+
+- `oauthclients` — every dynamically registered CLI/MCP/third-party client. They re-register on
+  their next connect.
+- `authorizedclients` — the new grant records. Empty on a first deploy; included so the step stays
+  safe to re-run.
+- `authcodes` — authorization codes mid-flight. They live five minutes; a user part-way through a
+  consent flow retries.
+- `refreshtokens` **carrying a `clientId`** — OAuth-issued tokens only. The filter matters: browser
+  session tokens from `POST /auth/login` have no `clientId`, so web users stay signed in.
+
+Users see their connected apps disappear from **Settings → Authorized Apps** and reconnect each one
+(`ctm auth login` for the CLI, re-adding the server for MCP clients). Connector OAuth tokens
+(Todoist, Google) live in `connectorconfigs` and are untouched, so no task data is affected.
+
+---
+
 ## Local MongoDB data
 
 `docker-compose.yml` binds MongoDB's data directory to `./.data/mongodb` (git-ignored)

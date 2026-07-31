@@ -65,15 +65,15 @@ Unchanged in effect, with the link cleaned up alongside the tokens:
 When the `OAuthClient` document is gone but a link survives, the link's `isDynamic` decides. This
 only arises for a TTL-reaped dynamic client, where deleting the leftovers is the right outcome.
 
-## Migration
+## Deployment
 
-`apps/main/scripts/backfill-authorized-clients.ts`, run once before the deploy that ships the read
-change. It aggregates `refreshtokens` grouped by `userId` + `clientId`, taking the newest
-`createdAt` as `authorizedAt` and that document's scopes, and upserts into `authorizedclients`.
-Idempotent: re-running it never creates duplicates and never moves an existing `authorizedAt`.
+No data migration. Existing OAuth clients and their tokens are dropped at deploy time and users
+re-authorize, which costs them a few seconds in the consent screen. Reconstructing grants from
+token history could only ever produce a partial record with the wrong dates on it. The operator
+commands are in `DEPLOYMENT.md`.
 
-Grants whose refresh tokens have all expired are not recoverable and are not backfilled. They were
-already invisible in the old listing.
+Nothing else depends on those collections: account login uses `AuthService`, whose refresh tokens
+carry no `clientId` and are left alone.
 
 ## Out of scope
 

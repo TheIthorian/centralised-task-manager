@@ -9,8 +9,7 @@
         "test": "vitest run",
         "lint": "oxlint .",
         "format": "oxfmt --config ../../.oxfmtrc.json .",
-        "generate-openapi": "tspc -p tsconfig.scripts.json && node dist-scripts/scripts/generate-openapi.js",
-        "backfill-authorized-clients": "tsx scripts/backfill-authorized-clients.ts"
+        "generate-openapi": "tspc -p tsconfig.scripts.json && node dist-scripts/scripts/generate-openapi.js"
     },
     "dependencies": {
         "@ctm/api-client": "workspace:*",
