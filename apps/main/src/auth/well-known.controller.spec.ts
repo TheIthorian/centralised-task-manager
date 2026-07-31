@@ -81,14 +81,44 @@ describe('WellKnownController', () => {
             payload: {
                 client_name: 'Metadata Client',
                 redirect_uris: ['https://example.com/cb'],
-                logo_uri: 'https://example.com/logo.png',
-                contacts: ['ops@example.com'],
                 token_endpoint_auth_method: 'none',
+                software_version: '1.2.3',
+                jwks_uri: 'https://example.com/jwks.json',
             },
         });
 
         expect(res.statusCode).toBe(201);
-        expect(JSON.parse(res.body).client_name).toBe('Metadata Client');
+        const body = JSON.parse(res.body);
+
+        expect(body.client_name).toBe('Metadata Client');
+        expect(body.token_endpoint_auth_method).toBeUndefined();
+    });
+
+    it('POST /.well-known/oauth-client stores and echoes display metadata', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/.well-known/oauth-client',
+            payload: {
+                client_name: 'Display Metadata Client',
+                redirect_uris: ['https://example.com/cb'],
+                logo_uri: 'https://example.com/logo.png',
+                client_uri: 'https://example.com',
+                tos_uri: 'https://example.com/tos',
+                policy_uri: 'https://example.com/privacy',
+                contacts: ['ops@example.com'],
+                software_id: 'example-client',
+            },
+        });
+
+        expect(res.statusCode).toBe(201);
+        const body = JSON.parse(res.body);
+
+        expect(body.logo_uri).toBe('https://example.com/logo.png');
+        expect(body.client_uri).toBe('https://example.com');
+        expect(body.tos_uri).toBe('https://example.com/tos');
+        expect(body.policy_uri).toBe('https://example.com/privacy');
+        expect(body.contacts).toEqual(['ops@example.com']);
+        expect(body.software_id).toBe('example-client');
     });
 
     it.each([
@@ -118,6 +148,36 @@ describe('WellKnownController', () => {
         ],
         ['a control character in client_name', { redirect_uris: ['https://e.com/cb'], client_name: 'bad\u0000name' }],
         ['an over-long client_name', { redirect_uris: ['https://e.com/cb'], client_name: 'x'.repeat(101) }],
+        [
+            'a http logo_uri',
+            { client_name: 'x', redirect_uris: ['https://e.com/cb'], logo_uri: 'http://e.com/logo.png' },
+        ],
+        [
+            'a loopback logo_uri',
+            { client_name: 'x', redirect_uris: ['https://e.com/cb'], logo_uri: 'http://localhost/logo.png' },
+        ],
+        [
+            'a javascript client_uri',
+            { client_name: 'x', redirect_uris: ['https://e.com/cb'], client_uri: 'javascript:alert(1)' },
+        ],
+        ['a relative tos_uri', { client_name: 'x', redirect_uris: ['https://e.com/cb'], tos_uri: '/tos' }],
+        [
+            'a policy_uri with a fragment',
+            { client_name: 'x', redirect_uris: ['https://e.com/cb'], policy_uri: 'https://e.com/p#f' },
+        ],
+        ['a non-email contact', { client_name: 'x', redirect_uris: ['https://e.com/cb'], contacts: ['not-an-email'] }],
+        [
+            'too many contacts',
+            {
+                client_name: 'x',
+                redirect_uris: ['https://e.com/cb'],
+                contacts: Array.from({ length: 6 }, (_, i) => `ops${i}@e.com`),
+            },
+        ],
+        [
+            'a control character in software_id',
+            { client_name: 'x', redirect_uris: ['https://e.com/cb'], software_id: 'bad\u0000id' },
+        ],
     ])('POST /.well-known/oauth-client rejects %s', async (_label, payload) => {
         const res = await app.inject({ method: 'POST', url: '/.well-known/oauth-client', payload });
 

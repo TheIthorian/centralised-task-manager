@@ -30,6 +30,27 @@ export class OAuthClient {
     @Prop({ type: Boolean, default: true })
     isDynamic!: boolean;
 
+    // RFC 7591 §2 display metadata, self-declared by the client and never verified by this server.
+
+    /** Stored but never returned to a browser: see the logo handling in the #28 design spec. */
+    @Prop({ type: String })
+    logoUri?: string;
+
+    @Prop({ type: String })
+    clientUri?: string;
+
+    @Prop({ type: String })
+    tosUri?: string;
+
+    @Prop({ type: String })
+    policyUri?: string;
+
+    @Prop({ type: [String] })
+    contacts?: string[];
+
+    @Prop({ type: String })
+    softwareId?: string;
+
     @Prop({ type: Date, default: () => new Date() })
     issuedAt!: Date;
 

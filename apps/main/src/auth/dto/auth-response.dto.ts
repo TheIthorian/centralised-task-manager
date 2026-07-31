@@ -22,6 +22,13 @@ export class AuthorizedAppDto implements IAuthorizedAppDto {
     scopes!: string[];
     authorizedAt!: string;
     type!: 'oauth';
+
+    /** Unverified RFC 7591 metadata the client declared about itself. `logo_uri` is not exposed. */
+    clientUri?: string;
+    tosUri?: string;
+    policyUri?: string;
+    contacts?: string[];
+    softwareId?: string;
 }
 
 /** Response returned after successful dynamic client registration. */
@@ -34,4 +41,10 @@ export class RegisterClientResponseDto implements RegisterClientOutput {
     response_types!: string[];
     scopes!: string[];
     issued_at!: string;
+    logo_uri?: string;
+    client_uri?: string;
+    tos_uri?: string;
+    policy_uri?: string;
+    contacts?: string[];
+    software_id?: string;
 }

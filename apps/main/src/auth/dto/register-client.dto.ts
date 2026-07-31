@@ -9,14 +9,28 @@ const LOOPBACK_HOSTS = new Set(['127.0.0.1', '[::1]', '::1', 'localhost']);
 export const MAX_REDIRECT_URIS = 8;
 export const MAX_REDIRECT_URI_LENGTH = 2048;
 
+export const MAX_CONTACTS = 5;
+export const MAX_CONTACT_LENGTH = 254;
+
+const DISPLAY_URI_MESSAGE = 'must be an absolute https URI with no fragment';
+
 const SUPPORTED_GRANT_TYPES = ['authorization_code', 'refresh_token'] as const;
 const SUPPORTED_RESPONSE_TYPES = ['code'] as const;
 
 /**
+ * Display metadata a client declares about itself. Unlike `redirect_uris` there is no loopback
+ * exception: these URIs are shown to a user on the Authorized Apps page, where a cleartext or
+ * localhost link is either a downgrade they cannot see or meaningless to them.
+ */
+const displayUriSchema = z.string().min(1).max(MAX_REDIRECT_URI_LENGTH).refine(isDisplayUri, {
+    message: DISPLAY_URI_MESSAGE,
+});
+
+/**
  * RFC 7591 dynamic client registration request.
  *
- * Unrecognised metadata (`logo_uri`, `contacts`, …) is stripped rather than rejected: RFC 7591
- * §3.1 requires the server to ignore unknown fields, and real MCP clients send plenty of them.
+ * Metadata this server has no use for is stripped rather than rejected: RFC 7591 §3.1 requires
+ * the server to ignore unknown fields, and real MCP clients send plenty of them.
  */
 export const registerClientSchema = z.object({
     // Required, though RFC 7591 §2 marks it optional: it is the only thing identifying the
@@ -39,6 +53,18 @@ export const registerClientSchema = z.object({
     grant_types: z.array(z.enum(SUPPORTED_GRANT_TYPES)).max(SUPPORTED_GRANT_TYPES.length).optional(),
     response_types: z.array(z.enum(SUPPORTED_RESPONSE_TYPES)).max(SUPPORTED_RESPONSE_TYPES.length).optional(),
     scopes: z.array(z.string().min(1).max(100)).max(32).optional(),
+    logo_uri: displayUriSchema.optional(),
+    client_uri: displayUriSchema.optional(),
+    tos_uri: displayUriSchema.optional(),
+    policy_uri: displayUriSchema.optional(),
+    contacts: z.array(z.email().max(MAX_CONTACT_LENGTH)).max(MAX_CONTACTS).optional(),
+    software_id: z
+        .string()
+        .min(1)
+        .max(100)
+        // Rendered on the Authorized Apps page, so the same printable-only rule as client_name.
+        .regex(/^[^\p{C}]+$/u, { message: 'software_id must not contain control characters' })
+        .optional(),
 });
 
 export class RegisterClientDto extends createZodDto<RegisterClientInput>({
@@ -66,6 +92,23 @@ export function isRegisterableRedirectUri(value: string): boolean {
     if (url.hash.length > 0) return false;
 
     if (url.protocol === 'http:' && !LOOPBACK_HOSTS.has(url.hostname)) return false;
+
+    return true;
+}
+
+/** Validates a client metadata URI that will be shown to a user (`logo_uri`, `client_uri`, …). */
+export function isDisplayUri(value: string): boolean {
+    let url: URL;
+
+    try {
+        url = new URL(value);
+    } catch {
+        return false;
+    }
+
+    if (url.protocol !== 'https:') return false;
+
+    if (url.hash.length > 0) return false;
 
     return true;
 }

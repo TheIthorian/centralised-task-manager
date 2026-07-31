@@ -301,13 +301,25 @@ export type MarkAllReadResultDto = {
     updated: number;
 };
 
-/** An OAuth client that a user has authorized. No token data included. */
+/**
+ * An OAuth client that a user has authorized. No token data included.
+ *
+ * Every field below `type` is RFC 7591 metadata the client declared about itself at registration
+ * and that this server has not verified. `logo_uri` is deliberately not exposed: it is an
+ * attacker-controlled URL that would otherwise be fetched by the browser of every user viewing
+ * their settings page.
+ */
 export type AuthorizedAppDto = {
     clientId: string;
     clientName: string;
     scopes: string[];
     authorizedAt: string;
     type: 'oauth';
+    clientUri?: string;
+    tosUri?: string;
+    policyUri?: string;
+    contacts?: string[];
+    softwareId?: string;
 };
 
 /**

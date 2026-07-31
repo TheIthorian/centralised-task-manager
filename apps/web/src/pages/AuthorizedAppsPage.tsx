@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthContext.js';
 import { getErrorMessage } from '../api/error-message.js';
@@ -70,12 +71,24 @@ type AppRowProps = {
 };
 
 function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
+    const { t } = useTranslation();
     const [confirming, setConfirming] = useState(false);
 
     const revokeMutation = useMutation({
         mutationFn: () => api.revokeAuthorizedApp({ clientId: app.clientId }),
         onSuccess: () => {
             onRevoked();
+        },
+    });
+
+    const declared = declaredEntries({
+        app,
+        labels: {
+            website: t('authorizedApps.declared.website'),
+            terms: t('authorizedApps.declared.terms'),
+            privacy: t('authorizedApps.declared.privacy'),
+            contact: t('authorizedApps.declared.contact'),
+            softwareId: t('authorizedApps.declared.softwareId'),
         },
     });
 
@@ -120,6 +133,22 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
                 </div>
             )}
 
+            {declared.length > 0 && (
+                <div className="border-t border-line/20 pt-2">
+                    <p className="text-xs text-muted font-medium mb-1">{t('authorizedApps.declared.label')}</p>
+
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
+                        {declared.map((entry) => (
+                            <div key={entry.label} className="contents">
+                                <dt className="text-muted font-medium">{entry.label}</dt>
+                                {/* Plain text, never a link: these values are supplied by the app itself. */}
+                                <dd className="text-fg font-medium break-all">{entry.value}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                </div>
+            )}
+
             {confirming && (
                 <div className="flex flex-col gap-2 border-t border-line/20 pt-2">
                     <p className="text-sm font-medium text-fg">
@@ -152,4 +181,27 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
             )}
         </div>
     );
+}
+
+type DeclaredLabels = {
+    website: string;
+    terms: string;
+    privacy: string;
+    contact: string;
+    softwareId: string;
+};
+
+type DeclaredEntry = { label: string; value: string };
+
+/** Flattens the app's self-declared RFC 7591 metadata into label/value pairs to render as text. */
+function declaredEntries({ app, labels }: { app: AuthorizedAppDto; labels: DeclaredLabels }): DeclaredEntry[] {
+    const entries: DeclaredEntry[] = [];
+
+    if (app.clientUri) entries.push({ label: labels.website, value: app.clientUri });
+    if (app.tosUri) entries.push({ label: labels.terms, value: app.tosUri });
+    if (app.policyUri) entries.push({ label: labels.privacy, value: app.policyUri });
+    if (app.contacts && app.contacts.length > 0) entries.push({ label: labels.contact, value: app.contacts.join(', ') });
+    if (app.softwareId) entries.push({ label: labels.softwareId, value: app.softwareId });
+
+    return entries;
 }

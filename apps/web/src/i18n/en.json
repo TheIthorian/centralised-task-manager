@@ -286,6 +286,16 @@
             }
         }
     },
+    "authorizedApps": {
+        "declared": {
+            "label": "Declared by this app. Not verified.",
+            "website": "Website",
+            "terms": "Terms",
+            "privacy": "Privacy",
+            "contact": "Contact",
+            "softwareId": "Software ID"
+        }
+    },
     "notifications": {
         "connect": "Connect →",
         "saveFailed": {
