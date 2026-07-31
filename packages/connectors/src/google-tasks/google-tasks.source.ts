@@ -111,7 +111,9 @@ export class GoogleTasksTaskSource implements ExternalTaskSource {
             description: task.notes ?? null,
             status: task.status === 'completed' ? 'done' : 'open',
             priority: null,
-            due: task.due ? { date: new Date(task.due), timezone: null, recurrence: null } : null,
+            // Google Tasks only stores a date: the API returns an RFC 3339 timestamp but documents
+            // the time part as always 00:00Z and ignored, so every Google due date is all-day.
+            due: task.due ? { date: new Date(task.due), timezone: null, recurrence: null, allDay: true } : null,
             deadline: null,
             duration: null,
             parentSourceId: null,

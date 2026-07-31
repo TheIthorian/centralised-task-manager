@@ -86,7 +86,14 @@ function taskToDto(t: Task & { _id: Types.ObjectId }): ExportTaskDto {
         status: t.status,
         priority: t.priority ?? null,
         tags: t.tags ?? [],
-        due: t.due ? { date: t.due.date.toISOString(), timezone: t.due.timezone, recurrence: t.due.recurrence } : null,
+        due: t.due
+            ? {
+                  date: t.due.date.toISOString(),
+                  timezone: t.due.timezone,
+                  recurrence: t.due.recurrence,
+                  allDay: t.due.allDay ?? false,
+              }
+            : null,
         deadlineDate: t.deadlineDate ? t.deadlineDate.toISOString() : null,
         duration: t.duration ?? null,
         fuzzyDeadline: t.fuzzyDeadline

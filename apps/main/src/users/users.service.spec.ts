@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
+import { ValidationError } from '@ctm/errors';
 import { UsersService } from './users.service.js';
 import { User, UserSchema } from './schemas/user.schema.js';
 import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
@@ -58,5 +59,32 @@ describe('UsersService — notification preferences', () => {
         await expect(
             service.updateNotificationPreferences({ userId: '000000000000000000000000', prefs: {} }),
         ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('defaults a new user to UTC rather than the server zone', async () => {
+        const user = await service.create({ email: `tz-default-${Date.now()}@test.com`, password: 'pw' });
+
+        expect(user.timezone).toBe('UTC');
+        expect(await service.getTimeZone(String(user._id))).toBe('UTC');
+    });
+
+    it('stores a timezone the caller sends', async () => {
+        const user = await service.create({ email: `tz-set-${Date.now()}@test.com`, password: 'pw' });
+
+        await service.update({ id: String(user._id), dto: { timezone: 'Pacific/Auckland' } });
+
+        expect(await service.getTimeZone(String(user._id))).toBe('Pacific/Auckland');
+    });
+
+    it('refuses a timezone this runtime cannot resolve', async () => {
+        const user = await service.create({ email: `tz-bad-${Date.now()}@test.com`, password: 'pw' });
+
+        await expect(
+            service.update({ id: String(user._id), dto: { timezone: 'Mars/Olympus' } }),
+        ).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it('falls back to UTC for a user that does not exist', async () => {
+        expect(await service.getTimeZone('000000000000000000000000')).toBe('UTC');
     });
 });

@@ -13,6 +13,9 @@ export class TaskDueDateDto implements DueDate {
     date!: string;
     timezone!: string | null;
     recurrence!: string | null;
+
+    /** True when the date names a calendar day with no time, and must be read in UTC. */
+    allDay!: boolean;
 }
 
 /** Time estimate for a task. */

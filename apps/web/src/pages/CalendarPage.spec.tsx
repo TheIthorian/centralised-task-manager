@@ -19,7 +19,7 @@ function makeTask({ id, title, date }: { id: string; title: string; date: string
         title,
         completed: false,
         priority: 2,
-        due: { date, timezone: null, recurrence: null },
+        due: { date, timezone: null, recurrence: null, allDay: true },
         source: 'local',
         sourceId: id,
         externalAccountId: null,

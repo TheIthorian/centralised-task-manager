@@ -2,6 +2,7 @@ import { Injectable, ConflictException, NotFoundException, UnauthorizedException
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { assertTimeZone, UTC } from '@ctm/time';
 import { User, type UserDocument, type NotificationPreferences } from './schemas/user.schema.js';
 import { ConnectorConfig, type ConnectorConfigDocument } from '../connectors/schemas/connector-config.schema.js';
 import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
@@ -56,11 +57,13 @@ export class UsersService {
         return this.userModel.findById(id);
     }
 
-    /** Update email and/or password for a user. Throws NotFoundException if user not found. */
+    /** Update email, timezone and/or password for a user. Throws NotFoundException if user not found. */
     async update({ id, dto }: { id: string; dto: UpdateUserDto }): Promise<UserDocument> {
-        const patch: Partial<{ email: string; passwordHash: string }> = {};
+        const patch: Partial<{ email: string; passwordHash: string; timezone: string }> = {};
 
         if (dto.email) patch.email = dto.email;
+
+        if (dto.timezone) patch.timezone = assertTimeZone(dto.timezone);
 
         if (dto.newPassword) {
             const user = await this.userModel.findById(id).select('passwordHash');
@@ -77,6 +80,13 @@ export class UsersService {
         if (!user) throw new NotFoundException('User not found');
 
         return user;
+    }
+
+    /** The IANA zone whose days this user's date boundaries follow. Falls back to UTC. */
+    async getTimeZone(userId: string): Promise<string> {
+        const user = await this.userModel.findById(userId).select('timezone');
+
+        return user?.timezone ?? UTC;
     }
 
     /** Get the notification preferences for a user. Returns null if user not found. */

@@ -28,7 +28,7 @@ export class UsersController {
 
         if (!user) throw new NotFoundException('User not found');
 
-        return { id: String(user._id), email: user.email };
+        return { id: String(user._id), email: user.email, timezone: user.timezone };
     }
 
     /** Update the current user's email or password. */
@@ -37,7 +37,7 @@ export class UsersController {
     async update(@Request() req: AuthRequest, @ValidatedBody(UpdateUserDto) dto: UpdateUserDto): Promise<UserDto> {
         const user = await this.users.update({ id: req.user.sub, dto });
 
-        return { id: String(user._id), email: user.email };
+        return { id: String(user._id), email: user.email, timezone: user.timezone };
     }
 
     /** Delete the current user's account and all associated data permanently. */

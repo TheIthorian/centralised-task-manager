@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { z } from 'zod';
+import { isValidTimeZone } from '@ctm/time';
 
 /**
  * A well-formed MongoDB ObjectId.
@@ -46,6 +47,17 @@ export const acceptHeaderSchema = z.string().max(256).catch('').default('');
 
 /** An email address, bounded at the longest address SMTP permits. */
 export const emailSchema = z.string().email().max(320);
+
+/**
+ * An IANA time zone identifier.
+ *
+ * Checked against the runtime's own zone database rather than a pattern: a syntactically plausible
+ * id this Node build cannot resolve would throw from `Intl` deep inside a cron, not at the edge.
+ */
+export const timeZoneSchema = z
+    .string()
+    .max(64)
+    .refine(isValidTimeZone, { message: 'must be an IANA time zone identifier' });
 
 /** A user-supplied password. Length only: strength rules belong to the auth service. */
 export const passwordSchema = z.string().min(8).max(255);

@@ -18,6 +18,7 @@
         "@ctm/http-client": "workspace:*",
         "@ctm/logger": "workspace:*",
         "@ctm/request-logger": "workspace:*",
+        "@ctm/time": "workspace:*",
         "@fastify/compress": "9.1.0",
         "@fastify/cookie": "11.0.2",
         "@fastify/cors": "11.3.0",

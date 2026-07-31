@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { UTC } from '@ctm/time';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -55,6 +56,15 @@ export class User {
 
     @Prop({ type: NotificationPreferencesSchema, default: () => ({}) })
     notificationPreferences!: NotificationPreferencesClass;
+
+    /**
+     * IANA zone the server uses for this user's day boundaries.
+     *
+     * `UTC` rather than the server's own zone: a default that follows the host is a default that
+     * changes when the host moves, and every existing row would silently mean something new.
+     */
+    @Prop({ type: String, default: UTC, maxlength: 64 })
+    timezone!: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

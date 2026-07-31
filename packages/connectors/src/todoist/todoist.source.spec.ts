@@ -83,6 +83,50 @@ describe('TodoistTaskSource', () => {
             expect(tasks[0].due?.date).toBeInstanceOf(Date);
         });
 
+        it('reads a date-only due value as all-day and a timestamp as an instant', async () => {
+            mockHttp.get.mockResolvedValue({
+                results: [
+                    {
+                        id: 'all-day',
+                        content: 'Renew passport',
+                        description: '',
+                        checked: false,
+                        priority: 1,
+                        due: { date: '2026-06-01', timezone: null, string: '', lang: 'en', is_recurring: false },
+                        deadline: null,
+                        duration: null,
+                        parent_id: null,
+                        labels: [],
+                    },
+                    {
+                        id: 'timed',
+                        content: 'Standup',
+                        description: '',
+                        checked: false,
+                        priority: 1,
+                        due: {
+                            date: '2026-06-01T09:00:00',
+                            timezone: 'Europe/London',
+                            string: '',
+                            lang: 'en',
+                            is_recurring: false,
+                        },
+                        deadline: null,
+                        duration: null,
+                        parent_id: null,
+                        labels: [],
+                    },
+                ],
+                next_cursor: null,
+            });
+
+            const tasks = await source.fetchTasks(tokens);
+
+            expect(tasks[0].due?.allDay).toBe(true);
+            expect(tasks[0].due?.date.toISOString()).toBe('2026-06-01T00:00:00.000Z');
+            expect(tasks[1].due?.allDay).toBe(false);
+        });
+
         it('maps recurring due dates to RRULE recurrence string', async () => {
             mockHttp.get.mockResolvedValue({
                 results: [

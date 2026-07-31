@@ -5,6 +5,9 @@ import type { CreateTaskDto, ExternalTaskSource, OAuthTokens, RemoteTask, Update
 import type { TodoistTask, TodoistTasksResponse } from './todoist.types.js';
 import { todoistStringToRrule, rruleToTodoistString } from './todoist-recurrence.js';
 
+/** A Todoist due value with no time part, which can only mean a calendar day. */
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 /** Configuration required to instantiate a {@link TodoistTaskSource}. */
 export type TodoistTaskSourceConfig = {
     logger?: Logger;
@@ -109,11 +112,17 @@ export class TodoistTaskSource implements ExternalTaskSource {
     }
 
     private toRemoteTask(task: TodoistTask): RemoteTask {
+        // Todoist signals an all-day date by omitting the time part, and only sends a timezone
+        // for a timed one. Reading `new Date('2026-07-13')` as an instant put the task on the
+        // previous day for anyone west of UTC.
+        const allDay = task.due !== null && DATE_ONLY_PATTERN.test(task.due.date);
+
         const due = task.due
             ? {
                   date: new Date(task.due.date),
                   timezone: task.due.timezone,
                   recurrence: task.due.is_recurring ? todoistStringToRrule(task.due.string, this.config.logger) : null,
+                  allDay,
               }
             : null;
 

@@ -9,7 +9,13 @@ const DAYS_IN_RANGE: Record<Exclude<CalendarRange, 'month'>, number> = {
     day: 1,
 };
 
-/** Local YYYY-MM-DD. Task due dates are compared as calendar days, not instants. */
+/**
+ * YYYY-MM-DD for a grid cell.
+ *
+ * The grid is built from local `Date`s whose only job is to name a day, so their key is read in
+ * the same local clock that produced them. A task's key comes from `dueDateKey`, which reads the
+ * viewer's zone or UTC depending on whether the task has an instant at all.
+ */
 export function toDateKey(date: Date): string {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');

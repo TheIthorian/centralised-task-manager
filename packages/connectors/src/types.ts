@@ -19,11 +19,16 @@ export enum TaskConnectorName {
     Notion = 'notion',
 }
 
-/** A task's due date with optional timezone and recurrence rule (RRULE format). */
+/**
+ * A task's due date with optional timezone and recurrence rule (RRULE format).
+ *
+ * An all-day date has no instant: `date` is the UTC midnight of the calendar day it names.
+ */
 export type DueDate = {
     date: Date;
     timezone: string | null;
     recurrence: string | null;
+    allDay: boolean;
 };
 
 /** A time duration expressed as an amount and unit. */

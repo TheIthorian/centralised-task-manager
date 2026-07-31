@@ -19,7 +19,7 @@ function makeTask(overrides: Partial<TaskDto> = {}): TaskDto {
         description: 'Compare two quotes first',
         completed: false,
         priority: 2,
-        due: { date: '2026-08-01T09:00:00.000Z', timezone: null, recurrence: null },
+        due: { date: '2026-08-01T09:00:00.000Z', timezone: null, recurrence: null, allDay: false },
         deadlineDate: null,
         duration: null,
         fuzzyDeadline: null,

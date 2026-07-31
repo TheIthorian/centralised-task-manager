@@ -48,7 +48,7 @@ export class AuthService {
             accessToken,
             expiresIn: this.config.getOrThrow<number>('JWT_ACCESS_EXPIRES'),
             refreshToken: rawRefresh,
-            user: { id: String(user._id), email: user.email },
+            user: { id: String(user._id), email: user.email, timezone: user.timezone },
         };
     }
 

@@ -13,6 +13,9 @@ import {
 import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import { TasksService } from '../tasks/tasks.service.js';
+import { User, UserSchema } from '../users/schemas/user.schema.js';
+import { UsersService } from '../users/users.service.js';
+import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
 import { SyncGateway } from './sync.gateway.js';
 import { SyncService } from './sync.service.js';
 
@@ -70,11 +73,14 @@ describe('SyncService per connection', () => {
                         discriminators: [{ name: TASK_SYNC_JOB_MODEL, schema: TaskSyncJobSchema }],
                     },
                     { name: Task.name, schema: TaskSchema },
+                    { name: User.name, schema: UserSchema },
+                    { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
                 ]),
             ],
             providers: [
                 SyncService,
                 TasksService,
+                UsersService,
                 { provide: ConnectorsService, useValue: connectorsStub },
                 { provide: ExternalTaskSourceRegistry, useValue: registryStub },
                 { provide: SyncGateway, useValue: { emitProgress: vi.fn() } },

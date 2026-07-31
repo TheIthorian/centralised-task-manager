@@ -6,6 +6,8 @@ import { RemindersService } from './reminders.service.js';
 import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
 import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { User, UserSchema, type UserDocument } from '../users/schemas/user.schema.js';
+import { UsersService } from '../users/users.service.js';
 
 describe('RemindersService', () => {
     let module: TestingModule;
@@ -20,10 +22,12 @@ describe('RemindersService', () => {
                 MongooseModule.forFeature([
                     { name: Task.name, schema: TaskSchema },
                     { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
+                    { name: User.name, schema: UserSchema },
                 ]),
             ],
             providers: [
                 RemindersService,
+                UsersService,
                 { provide: NotificationsService, useValue: { send: vi.fn().mockResolvedValue(undefined) } },
             ],
         }).compile();

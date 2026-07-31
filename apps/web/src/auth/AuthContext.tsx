@@ -3,6 +3,7 @@ import type { UserDto } from '@ctm/api-client';
 import { WebApiClient } from '../api/web-api-client.js';
 import { useToast } from '../toast/ToastContext.js';
 import config from '../config.js';
+import { browserTimeZone } from '../lib/timezone.js';
 
 type AuthContextValue = {
     user: UserDto | null;
@@ -81,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
 
                     if (isMountedRef.current) {
                         setAccessToken(result.accessToken);
-                        setUser(result.user);
+                        setUser(await syncTimeZone({ api, user: result.user }));
                     }
                 } catch {
                     if (isMountedRef.current) {
@@ -105,14 +106,14 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
         const result = await api.login({ email, password });
 
         setAccessToken(result.accessToken);
-        setUser(result.user);
+        setUser(await syncTimeZone({ api, user: result.user }));
     };
 
     const register = async (name: string, email: string, password: string): Promise<void> => {
         const result = await api.register({ name, email, password });
 
         setAccessToken(result.accessToken);
-        setUser(result.user);
+        setUser(await syncTimeZone({ api, user: result.user }));
     };
 
     const logout = async (): Promise<void> => {
@@ -135,6 +136,25 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
             {children}
         </AuthContext.Provider>
     );
+}
+
+/**
+ * Tells the server which zone this reader is in, when it does not already know.
+ *
+ * The server needs it for the work that happens while nobody is looking: reminder crons and the
+ * `today` filter have no browser to ask. A failure here is swallowed on purpose, because a stale
+ * timezone is not worth blocking a sign-in over.
+ */
+async function syncTimeZone({ api, user }: { api: WebApiClient; user: UserDto }): Promise<UserDto> {
+    const timezone = browserTimeZone();
+
+    if (user.timezone === timezone) return user;
+
+    try {
+        return await api.updateMe({ dto: { timezone } });
+    } catch {
+        return user;
+    }
 }
 
 /** Returns auth context. Must be used inside AuthProvider. */

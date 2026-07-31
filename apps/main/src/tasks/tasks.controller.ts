@@ -42,7 +42,12 @@ export class TasksController {
             tags: t.tags,
             locations: t.locations,
             due: t.due
-                ? { date: t.due.date.toISOString(), timezone: t.due.timezone, recurrence: t.due.recurrence }
+                ? {
+                      date: t.due.date.toISOString(),
+                      timezone: t.due.timezone,
+                      recurrence: t.due.recurrence,
+                      allDay: t.due.allDay ?? false,
+                  }
                 : null,
             deadlineDate: t.deadlineDate ? t.deadlineDate.toISOString() : null,
             duration: t.duration ?? null,

@@ -20,6 +20,9 @@ export type NotionTaskSourceConfig = {
 
 export const NOTION_VERSION = '2022-06-28';
 
+/** A Notion date value with no time part, which can only mean a calendar day. */
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 const PRIORITY_MAP: Record<string, number> = {
     high: 3,
     medium: 2,
@@ -287,6 +290,8 @@ export class NotionTaskSource implements ExternalTaskSource {
             date: new Date(dateProp.date.start),
             timezone: dateProp.date.time_zone,
             recurrence: null,
+            // Notion writes a date property with no time part when the user picked a day only.
+            allDay: DATE_ONLY_PATTERN.test(dateProp.date.start),
         };
     }
 
