@@ -594,6 +594,9 @@ importers:
 
   packages/logger:
     dependencies:
+      '@ctm/errors':
+        specifier: workspace:*
+        version: link:../errors
       pino:
         specifier: 10.3.1
         version: 10.3.1

@@ -1,7 +1,15 @@
 import pino from 'pino';
+import { readLoggerConfig, type LoggerConfig } from './config.js';
 import { getRequestContext } from './request-context.js';
 import { REDACT_PATHS, REDACTION_PLACEHOLDER } from './redaction.js';
 
+export {
+    assertSafeInProduction,
+    LOG_LEVELS,
+    readLoggerConfig,
+    type LoggerConfig,
+    type LogLevel,
+} from './config.js';
 export { bindRequestUser, getRequestContext, runWithRequestContext, type RequestContext } from './request-context.js';
 export { installProcessErrorHandlers } from './process-errors.js';
 export { REDACT_PATHS, REDACTION_PLACEHOLDER } from './redaction.js';
@@ -11,13 +19,11 @@ export type Logger = pino.Logger;
 
 /** Creates a named Pino logger for the given context. */
 export function createLogger(context: string): pino.Logger {
-    // pino-pretty is a devDependency, so only an explicit development run may select it: a built
-    // image started under any other NODE_ENV would crash on the missing module.
-    const isDevelopment = process.env['NODE_ENV'] === 'development';
+    const config = readLoggerConfig();
 
     return pino({
-        ...buildLoggerOptions(context),
-        transport: isDevelopment ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
+        ...buildLoggerOptions({ context, config }),
+        transport: config.pretty ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
     });
 }
 
@@ -25,13 +31,11 @@ export function createLogger(context: string): pino.Logger {
  * The redaction, serializer and correlation config shared by every logger in the monorepo,
  * separated from the transport so it can be pointed at a test stream.
  */
-export function buildLoggerOptions(context: string): pino.LoggerOptions {
-    const logLevel = process.env['LOG_LEVEL'] || (process.env['NODE_ENV'] === 'development' ? 'debug' : 'info');
-
+export function buildLoggerOptions({ context, config }: { context: string; config: LoggerConfig }): pino.LoggerOptions {
     return {
         name: context,
-        level: logLevel,
-        redact: { paths: REDACT_PATHS, censor: REDACTION_PLACEHOLDER },
+        level: config.level,
+        ...(config.redact ? { redact: { paths: REDACT_PATHS, censor: REDACTION_PLACEHOLDER } } : {}),
         serializers: {
             err: pino.stdSerializers.err,
             req: serializeRequest,

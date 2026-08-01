@@ -9,7 +9,11 @@ Implements `.claude/specs/production-logging.md`.
   case.
 - `src/redaction.ts` — `REDACT_PATHS`. Spec asserts a secret-bearing payload comes out redacted.
 - `src/process-errors.ts` — `installProcessErrorHandlers({ logger })`, returns an uninstall fn.
-- `src/index.ts` — wire `redact`, `serializers`, `mixin`; pretty transport only in development.
+- `src/config.ts` — `readLoggerConfig` reads and validates `LOG_LEVEL`, `LOG_PRETTY` and
+  `LOG_REDACT`, all required, plus `assertSafeInProduction` for the two combinations production
+  rejects. Spec covers each missing var, a bad level, a non-boolean, and both production guards.
+- `src/index.ts` — wire `redact` (behind `LOG_REDACT`), `serializers`, `mixin`; pretty transport
+  behind `LOG_PRETTY`.
 
 ## 2. `packages/request-logger`
 
@@ -33,7 +37,8 @@ Implements `.claude/specs/production-logging.md`.
 ## 4. `apps/mcp`
 
 - `bootstrap.ts` installs `PinoLoggerService('mcp')` and the process error handlers.
-- `config/env.schema.ts` requires `LOG_LEVEL`; `.env.example` / `.env.test` gain it.
+- `config/env.schema.ts` requires all three logging variables and repeats the production guards;
+  `.env.example` / `.env.test` gain them, and a new `env.schema.spec.ts` covers them.
 - `McpUnauthorizedFilter` logs at `warn`.
 
 ## 5. Docs

@@ -12,6 +12,7 @@
         "dev": "tsc -p tsconfig.build.json --watch"
     },
     "dependencies": {
+        "@ctm/errors": "workspace:*",
         "pino": "10.3.1"
     },
     "devDependencies": {

@@ -76,3 +76,13 @@ export class InternalError extends AppError {
         super(message, 'INTERNAL_ERROR', 500);
     }
 }
+
+/**
+ * Thrown when the environment a process booted with is missing or contradictory. Always fatal at
+ * startup: the status code exists only because every `AppError` carries one.
+ */
+export class ConfigurationError extends AppError {
+    constructor(message: string) {
+        super(message, 'CONFIGURATION_ERROR', 500);
+    }
+}

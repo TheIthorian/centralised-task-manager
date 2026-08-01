@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { Writable } from 'stream';
 import pino from 'pino';
-import { buildLoggerOptions, createLogger, REDACT_PATHS, REDACTION_PLACEHOLDER } from './index.js';
+import { buildLoggerOptions, createLogger, REDACT_PATHS, REDACTION_PLACEHOLDER, type LoggerConfig } from './index.js';
 import { runWithRequestContext } from './request-context.js';
+
+const TEST_CONFIG: LoggerConfig = { level: 'trace', pretty: false, redact: true };
 
 describe('createLogger', () => {
     it('returns a logger with the given context name', () => {
@@ -87,6 +89,14 @@ describe('createLogger', () => {
         expect(lines[0]?.['req']).not.toHaveProperty('body');
     });
 
+    it('leaves secrets intact when redaction is switched off for local debugging', () => {
+        const { logger, lines } = captureLogger({ level: 'trace', pretty: false, redact: false });
+
+        logger.info({ access_token: 'at' }, 'oauth');
+
+        expect(lines[0]).toMatchObject({ access_token: 'at' });
+    });
+
     it('exposes redaction paths for the bare, nested and header positions', () => {
         expect(REDACT_PATHS).toContain('password');
         expect(REDACT_PATHS).toContain('*.password');
@@ -96,7 +106,7 @@ describe('createLogger', () => {
 
 // Exercises the real logger options against an in-memory stream, so the assertions above are
 // about the shipped redaction and serializer config rather than a copy of it.
-function captureLogger(): { logger: pino.Logger; lines: Record<string, unknown>[] } {
+function captureLogger(config: LoggerConfig = TEST_CONFIG): { logger: pino.Logger; lines: Record<string, unknown>[] } {
     const lines: Record<string, unknown>[] = [];
 
     const stream = new Writable({
@@ -106,5 +116,5 @@ function captureLogger(): { logger: pino.Logger; lines: Record<string, unknown>[
         },
     });
 
-    return { logger: pino({ ...buildLoggerOptions('capture'), level: 'trace' }, stream), lines };
+    return { logger: pino(buildLoggerOptions({ context: 'capture', config }), stream), lines };
 }

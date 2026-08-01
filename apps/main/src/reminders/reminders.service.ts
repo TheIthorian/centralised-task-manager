@@ -47,7 +47,7 @@ export class RemindersService {
             })
             .select('userId title reminders');
 
-        this.logger.info({ taskCount: tasks.length }, 'Point-in-time reminder sweep');
+        this.logger.info({ taskCount: tasks.length }, 'Checked tasks for due point-in-time reminders');
 
         for (const task of tasks) {
             for (let i = 0; i < task.reminders.length; i++) {
@@ -81,7 +81,7 @@ export class RemindersService {
             })
             .select('userId title due');
 
-        this.logger.info({ taskCount: tasks.length }, 'Due-date reminder sweep');
+        this.logger.info({ taskCount: tasks.length }, 'Checked tasks for due-date reminders');
 
         for (const task of tasks) {
             await this.notifications.send({
@@ -125,7 +125,7 @@ export class RemindersService {
             .find({ status: 'open', 'fuzzyDeadline.remindEvery': { $in: remindEveryValues } })
             .select('userId title fuzzyDeadline');
 
-        this.logger.info({ taskCount: tasks.length }, 'Fuzzy-deadline reminder sweep');
+        this.logger.info({ taskCount: tasks.length }, 'Checked tasks for fuzzy-deadline reminders');
 
         const byUser = this.groupByUser(tasks);
 
@@ -169,7 +169,7 @@ export class RemindersService {
             .find({ lastError: { $ne: null }, enabled: true })
             .select('userId source');
 
-        this.logger.info({ brokenConnectorCount: broken.length }, 'Connector health sweep');
+        this.logger.info({ brokenConnectorCount: broken.length }, 'Checked connectors for errors');
 
         const byUser = this.groupByUser(broken);
 

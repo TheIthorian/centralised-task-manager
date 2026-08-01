@@ -36,6 +36,19 @@ the error attached and a reason.
 The store lives in `@ctm/logger` rather than `@ctm/request-logger` so the mixin does not create a
 dependency from the logger onto the Nest-aware package.
 
+## Configuration
+
+Three required variables, read by `readLoggerConfig` in `@ctm/logger`: `LOG_LEVEL`,
+`LOG_PRETTY` and `LOG_REDACT`. None has a default and none is inferred from `NODE_ENV`;
+a missing or unparseable value is a `ConfigurationError` at startup rather than a quiet
+fallback. `LOG_PRETTY` replaces the previous behaviour of selecting pino-pretty whenever
+`NODE_ENV` was not production.
+
+`LOG_REDACT=false` exists so keys can be eyeballed locally. Both the logger and each app's
+Joi env schema refuse to boot when `NODE_ENV=production` is combined with `LOG_PRETTY=true`
+(pino-pretty is absent from production images) or `LOG_REDACT=false` (it would write live
+credentials to the log collector).
+
 ## Redaction
 
 `createLogger` sets a pino `redact` list covering authorization and cookie headers, passwords and
@@ -59,8 +72,7 @@ Serializers: pino's `err`, plus `req` / `res` reduced to method, url and status.
 - `PinoLoggerService` moves to `@ctm/request-logger` so `apps/mcp` can install it too.
 - `apps/mcp` validates `LOG_LEVEL` like `apps/main` does.
 - The Nest `Logger` users move to `@ctm/logger` with object-first payloads.
-- `pino-pretty` is only selected when `NODE_ENV === 'development'`, so a built image running under
-  any other `NODE_ENV` emits JSON rather than crashing on a missing devDependency.
+- `pino-pretty` is selected only by `LOG_PRETTY`, never by `NODE_ENV`.
 
 ## Docs
 
