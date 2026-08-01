@@ -10,6 +10,12 @@ import { UsersService } from '../users/users.service.js';
 import { ConfigService } from '@nestjs/config';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
 import { UNREGISTERED_CLIENT } from '../rate-limit/principal-resolver.js';
+import {
+    CODE_CHALLENGE_METHODS,
+    isSupportedCodeChallengeMethod,
+    verifyCodeChallenge,
+    type CodeChallengeMethod,
+} from './pkce.js';
 
 /** Token set returned from the OAuth token endpoint. */
 export interface TokenResponse {
@@ -39,19 +45,30 @@ export class OAuthService {
         userId,
         redirectUri,
         codeChallenge,
+        codeChallengeMethod,
         scopes,
         clientId,
     }: {
         userId: string;
         redirectUri: string;
         codeChallenge: string;
+        codeChallengeMethod: CodeChallengeMethod;
         scopes: string[];
         clientId?: string;
     }): Promise<string> {
         const code = randomBytes(32).toString('hex');
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-        await this.authCodeModel.create({ code, userId, redirectUri, codeChallenge, scopes, expiresAt, clientId });
+        await this.authCodeModel.create({
+            code,
+            userId,
+            redirectUri,
+            codeChallenge,
+            codeChallengeMethod,
+            scopes,
+            expiresAt,
+            clientId,
+        });
 
         return code;
     }
@@ -77,11 +94,21 @@ export class OAuthService {
 
         if (new Date() > authCode.expiresAt) throw new BadRequestException('Authorization code expired');
 
-        // Verify PKCE: SHA-256(code_verifier) base64url == code_challenge
-        const hash = createHash('sha256').update(codeVerifier).digest('base64url');
+        const { codeChallengeMethod } = authCode;
 
-        if (hash !== authCode.codeChallenge)
-            throw new BadRequestException('code_verifier does not match code_challenge');
+        if (!isSupportedCodeChallengeMethod(codeChallengeMethod)) {
+            throw new BadRequestException(
+                `Unsupported code_challenge_method: ${CODE_CHALLENGE_METHODS.join(', ')} only`,
+            );
+        }
+
+        const verified = verifyCodeChallenge({
+            codeVerifier,
+            codeChallenge: authCode.codeChallenge,
+            codeChallengeMethod,
+        });
+
+        if (!verified) throw new BadRequestException('code_verifier does not match code_challenge');
 
         const user = await this.users.findById(authCode.userId);
 
