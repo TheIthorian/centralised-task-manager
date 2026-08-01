@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "@ctm/api-client": "workspace:*",
+        "@ctm/logger": "workspace:*",
         "@ctm/request-logger": "workspace:*",
         "@fastify/cors": "11.3.0",
         "@modelcontextprotocol/sdk": "1.29.0",

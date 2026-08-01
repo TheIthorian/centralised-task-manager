@@ -123,6 +123,73 @@ requests, which the Pages Function forwards to `API_ORIGIN`.
 
 ---
 
+## 6. Observability
+
+Both Node services log JSON to stdout. Railway captures stdout per service, so the
+deployment's **Logs** tab is where you read them; there is no log shipping and no log
+file on disk.
+
+### Required variables
+
+Three variables configure logging. All are **required on both `main` and `mcp`**, with no
+defaults and nothing inferred from `NODE_ENV` — a service whose environment is missing any
+of them refuses to boot. Set all three on both Railway services before deploying.
+
+| Variable     | Values                                        | In production   |
+| ------------ | --------------------------------------------- | --------------- |
+| `LOG_LEVEL`  | `trace` `debug` `info` `warn` `error` `fatal` | usually `info`  |
+| `LOG_PRETTY` | `true` `false`                                | must be `false` |
+| `LOG_REDACT` | `true` `false`                                | must be `true`  |
+
+The last two columns are enforced, not advisory. With `NODE_ENV=production`, the env
+validator rejects `LOG_PRETTY=true` (pino-pretty is a devDependency and is absent from the
+production image, so the first log line would crash the process) and rejects
+`LOG_REDACT=false` (it would write tokens, passwords, cookies and OAuth codes to stdout in
+plain text, where the log collector retains them long after the credential is rotated).
+Neither can be turned on in production by accident.
+
+### Levels
+
+`LOG_LEVEL` gates everything at or above it.
+
+| Level   | Use                                                                     |
+| ------- | ----------------------------------------------------------------------- |
+| `fatal` | The process cannot continue: `uncaughtException`, `unhandledRejection`. |
+| `error` | A request or job failed and nothing downstream can recover it.          |
+| `warn`  | A request rejected for a reason the caller controls, or a fallback.     |
+| `info`  | One line per completed request, plus lifecycle events. Usual in prod.   |
+| `debug` | Routine protocol detail: OAuth steps, socket connects.                  |
+| `trace` | Everything. Never in production.                                        |
+
+Raise the verbosity by setting `LOG_LEVEL=debug` on the Railway service and
+redeploying. Put it back to `info` afterwards: `debug` logs every OAuth step of every
+client.
+
+### Following one request
+
+Every response carries an `x-request-id` header, and every log line emitted while
+handling that request carries the same value under `requestId`, plus `userId` once the
+JWT is verified. Search the service's logs for the id to get the whole request in
+order, including the error line from the exception filter.
+
+A caller may supply its own `x-request-id` and it is reused, so a trace can span the
+SPA, `mcp` and `main`. Values longer than 128 characters or carrying anything outside
+`[A-Za-z0-9._:-]` are replaced with a generated UUID.
+
+### What is not logged
+
+With `LOG_REDACT=true`, `@ctm/logger` redacts authorization and cookie headers, passwords
+and hashes, every token field, and the OAuth `code`, `code_verifier`, `state` and
+`client_secret`, at the top level and two levels down. A new secret-bearing field has to be
+added to `SECRET_KEYS` in `packages/logger/src/redaction.ts`; the list is matched by exact
+key name, not by substring.
+
+Set `LOG_REDACT=false` locally when you need to read one of those values back — say, to
+check which token a connector actually sent. It is a local-only switch: production boots
+are rejected with it off.
+
+---
+
 ## One-off release steps
 
 ### Clear OAuth clients for the `AuthorizedClient` release

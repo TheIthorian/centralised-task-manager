@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { createLogger } from '@ctm/logger';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, type UserDocument } from '../users/schemas/user.schema.js';
@@ -38,7 +39,7 @@ const DEFAULT_PREFS: ChannelPrefs = { [Channel.InApp]: true, [Channel.Discord]: 
 
 @Injectable()
 export class NotificationsService {
-    private readonly logger = new Logger(NotificationsService.name);
+    private readonly logger = createLogger(NotificationsService.name);
 
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
@@ -156,14 +157,17 @@ export class NotificationsService {
                         title: 'Reconnect Discord',
                         body: 'Your Discord connection has expired. Please reconnect.',
                     });
-                } catch {
-                    // ignore
+                } catch (reconnectErr) {
+                    this.logger.error(
+                        { err: reconnectErr, userId: dto.userId, channel },
+                        'Failed to notify the user that Discord needs reconnecting',
+                    );
                 }
 
                 return;
             }
 
-            this.logger.warn(`Channel ${channel} failed: ${err instanceof Error ? err.message : String(err)}`);
+            this.logger.error({ err, userId: dto.userId, channel, type: dto.type }, 'Notification delivery failed');
         }
     }
 }

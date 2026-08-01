@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { createLogger } from '@ctm/logger';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
@@ -10,7 +10,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     @WebSocketServer()
     private readonly server!: Server;
 
-    private readonly logger = new Logger(NotificationsGateway.name);
+    private readonly logger = createLogger(NotificationsGateway.name);
 
     /** userId → set of connected socket IDs (one user may have multiple tabs). */
     private readonly userSockets = new Map<string, Set<string>>();
@@ -37,8 +37,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
             }
 
             this.userSockets.get(userId)!.add(socket.id);
-            this.logger.debug(`Socket connected: userId=${userId} socketId=${socket.id}`);
-        } catch {
+            this.logger.debug({ userId, socketId: socket.id }, 'Notifications socket connected');
+        } catch (err) {
+            this.logger.debug({ err, socketId: socket.id }, 'Notifications socket rejected');
+
             socket.disconnect();
         }
     }
@@ -58,7 +60,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
             }
         }
 
-        this.logger.debug(`Socket disconnected: userId=${userId} socketId=${socket.id}`);
+        this.logger.debug({ userId, socketId: socket.id }, 'Notifications socket disconnected');
     }
 
     /** Emit a notification event to all sockets belonging to the given user. */

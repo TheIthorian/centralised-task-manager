@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { createLogger } from '@ctm/logger';
 import { Cron } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -8,7 +9,7 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 
 @Injectable()
 export class RemindersService {
-    private readonly logger = new Logger(RemindersService.name);
+    private readonly logger = createLogger(RemindersService.name);
 
     constructor(
         @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
@@ -46,7 +47,7 @@ export class RemindersService {
             })
             .select('userId title reminders');
 
-        this.logger.log(`Point-in-time reminders: ${tasks.length} tasks with pending reminders`);
+        this.logger.info({ taskCount: tasks.length }, 'Checked tasks for due point-in-time reminders');
 
         for (const task of tasks) {
             for (let i = 0; i < task.reminders.length; i++) {
@@ -80,7 +81,7 @@ export class RemindersService {
             })
             .select('userId title due');
 
-        this.logger.log(`Due-date reminders: ${tasks.length} tasks due`);
+        this.logger.info({ taskCount: tasks.length }, 'Checked tasks for due-date reminders');
 
         for (const task of tasks) {
             await this.notifications.send({
@@ -124,7 +125,7 @@ export class RemindersService {
             .find({ status: 'open', 'fuzzyDeadline.remindEvery': { $in: remindEveryValues } })
             .select('userId title fuzzyDeadline');
 
-        this.logger.log(`Reminders: ${tasks.length} tasks surfaced`);
+        this.logger.info({ taskCount: tasks.length }, 'Checked tasks for fuzzy-deadline reminders');
 
         const byUser = this.groupByUser(tasks);
 
@@ -168,7 +169,7 @@ export class RemindersService {
             .find({ lastError: { $ne: null }, enabled: true })
             .select('userId source');
 
-        this.logger.log(`ConnectorHealth: ${broken.length} connectors need attention`);
+        this.logger.info({ brokenConnectorCount: broken.length }, 'Checked connectors for errors');
 
         const byUser = this.groupByUser(broken);
 

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ValidationError } from '@ctm/errors';
+import { createLogger } from '@ctm/logger';
 import { User, type UserDocument } from '../users/schemas/user.schema.js';
 import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
 import { Notification, type NotificationDocument } from '../notifications/schemas/notification.schema.js';
@@ -17,6 +18,8 @@ type OnConflict = 'replace' | 'ignore';
 
 @Injectable()
 export class ImportService {
+    private readonly logger = createLogger(ImportService.name);
+
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
         @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
@@ -144,7 +147,13 @@ export class ImportService {
 
             return true;
         } catch (err: unknown) {
-            if (isDuplicateKeyError(err)) return false;
+            if (isDuplicateKeyError(err)) {
+                this.logger.debug({ err }, 'Import skipped a row that already exists');
+
+                return false;
+            }
+
+            this.logger.error({ err }, 'Import failed to write a row');
 
             throw err;
         }

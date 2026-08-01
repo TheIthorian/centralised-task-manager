@@ -318,6 +318,9 @@ importers:
       '@ctm/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@ctm/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@ctm/request-logger':
         specifier: workspace:*
         version: link:../../packages/request-logger
@@ -600,6 +603,9 @@ importers:
 
   packages/logger:
     dependencies:
+      '@ctm/errors':
+        specifier: workspace:*
+        version: link:../errors
       pino:
         specifier: 10.3.1
         version: 10.3.1
