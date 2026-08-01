@@ -1,11 +1,8 @@
 @import 'tailwindcss';
+@source "../../../../packages/ui/src";
+@import '../../../../packages/ui/src/styles/tokens.css';
 
-@theme {
-    --color-nb-yellow: #ffde59;
-    --color-nb-black: #111111;
-    --color-nb-red: #ff3b30;
-    --color-nb-green: #34c759;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 * {
     box-sizing: border-box;
@@ -13,4 +10,22 @@
 
 html {
     scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+body {
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    cursor: pointer;
 }

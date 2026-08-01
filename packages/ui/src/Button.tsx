@@ -1,31 +1,21 @@
 import { type ButtonHTMLAttributes } from 'react';
-import clsx from 'clsx';
-
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+import { buttonClassName, type ButtonSize, type ButtonVariant } from './button-styles.js';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: ButtonVariant;
+    size?: ButtonSize;
 };
 
 /** Quiet Slate button: one accent, a hairline border, and no offset shadow. */
-export function Button({ variant = 'primary', className, children, ...props }: ButtonProps): React.JSX.Element {
+export function Button({
+    variant = 'primary',
+    size = 'md',
+    className,
+    children,
+    ...props
+}: ButtonProps): React.JSX.Element {
     return (
-        <button
-            className={clsx(
-                'inline-flex items-center justify-center gap-2 rounded-ctm',
-                // 44px on a phone whatever the type scale says, so a thumb has a target.
-                'min-h-11 border px-3.5 py-1.5 text-sm font-semibold md:min-h-0',
-                'cursor-pointer transition-colors duration-press',
-                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-                'disabled:cursor-not-allowed disabled:opacity-50',
-                variant === 'primary' && 'border-transparent bg-accent text-accent-fg hover:opacity-90',
-                variant === 'secondary' && 'border-line bg-panel text-fg hover:bg-nav-on-bg',
-                variant === 'ghost' && 'border-transparent bg-transparent text-muted hover:text-fg',
-                variant === 'danger' && 'border-transparent bg-warn text-accent-fg hover:opacity-90',
-                className,
-            )}
-            {...props}
-        >
+        <button className={buttonClassName({ variant, size, className })} {...props}>
             {children}
         </button>
     );

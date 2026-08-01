@@ -1,10 +1,10 @@
 import type React from 'react';
 
-interface Step {
+type Step = {
     number: string;
     title: string;
     description: string;
-}
+};
 
 const steps: Step[] = [
     {
@@ -27,22 +27,26 @@ const steps: Step[] = [
 /** Numbered step-by-step breakdown of how CTM works. */
 export default function HowItWorks(): React.ReactElement {
     return (
-        <section className="bg-nb-yellow border-b-4 border-nb-black py-24 px-6">
-            <div className="max-w-4xl mx-auto">
-                <h2 className="font-black text-nb-black uppercase text-4xl md:text-5xl mb-12">HOW IT WORKS</h2>
-                <div className="flex flex-col gap-6">
+        <section id="how-it-works" className="border-b border-line bg-panel px-6 py-24">
+            <div className="mx-auto max-w-4xl">
+                <h2 className="text-3xl font-semibold tracking-tight text-fg md:text-4xl">How it works</h2>
+                <ol className="mt-12 flex flex-col gap-8">
                     {steps.map((step) => (
-                        <div key={step.number} className="flex gap-6 items-start">
-                            <div className="min-w-16 h-16 bg-nb-black text-nb-yellow font-black text-xl flex items-center justify-center border-2 border-nb-black shrink-0">
+                        <li key={step.number} className="flex items-start gap-5">
+                            {/* Decorative: the list already conveys order, and a numeral read aloud twice is noise. */}
+                            <span
+                                className="flex size-11 shrink-0 items-center justify-center rounded-ctm bg-nav-on-bg text-sm font-semibold text-accent"
+                                aria-hidden="true"
+                            >
                                 {step.number}
+                            </span>
+                            <div>
+                                <h3 className="text-lg font-semibold text-fg">{step.title}</h3>
+                                <p className="mt-1 leading-relaxed text-muted">{step.description}</p>
                             </div>
-                            <div className="pt-2">
-                                <h3 className="font-black text-nb-black uppercase text-xl mb-1">{step.title}</h3>
-                                <p className="font-bold text-nb-black leading-relaxed">{step.description}</p>
-                            </div>
-                        </div>
+                        </li>
                     ))}
-                </div>
+                </ol>
             </div>
         </section>
     );
