@@ -1,4 +1,4 @@
-import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants.js';
+import { PATH_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants.js';
 import { UNVALIDATED_INPUT } from './unvalidated-input.decorator.js';
 
 /** A controller class, as stored on the Nest instance wrapper. */
@@ -27,6 +27,11 @@ const REPLACEMENTS = new Map([
     [6, 'ValidatedHeader'],
 ]);
 
+const PARAM_SOURCE = 5;
+
+/** Matches one `:name` token in a route path, ignoring any `?` or `(regex)` suffix. */
+const PATH_PARAM_PATTERN = /:([A-Za-z0-9_]+)/g;
+
 /**
  * Finds handler arguments that reach a handler without runtime validation.
  *
@@ -35,6 +40,11 @@ const REPLACEMENTS = new Map([
  * a TS type is erased at compile time, so a DTO annotation proves nothing at runtime, and the
  * `import type` that erases the class is invisible in review.
  *
+ * A path parameter the handler never declares is invisible to that check, so the route path is
+ * audited too: the parameter still reaches the application through route matching, it is part of
+ * the resource identity, and nothing validates it. It also leaves the operation missing a parameter
+ * its path template declares, which is an invalid OpenAPI document.
+ *
  * @returns One human-readable finding per unvalidated argument; empty when everything is covered.
  */
 export function auditHandlerInputs({ controllers }: { controllers: ControllerClass[] }): string[] {
@@ -42,16 +52,22 @@ export function auditHandlerInputs({ controllers }: { controllers: ControllerCla
 
     for (const controller of controllers) {
         for (const methodName of handlerNames(controller)) {
-            const routeArgs = Reflect.getMetadata(ROUTE_ARGS_METADATA, controller, methodName) as RouteArgs | undefined;
-
-            if (!routeArgs) continue;
-
             if (Reflect.getMetadata(UNVALIDATED_INPUT, controller.prototype[methodName]) !== undefined) continue;
+
+            const routeArgs =
+                (Reflect.getMetadata(ROUTE_ARGS_METADATA, controller, methodName) as RouteArgs | undefined) ?? {};
 
             for (const [key, entry] of Object.entries(routeArgs)) {
                 const problem = describeProblem({ key, entry });
 
                 if (problem) findings.push(`${controller.name}.${methodName}: ${problem}`);
+            }
+
+            for (const name of undeclaredPathParams({ controller, methodName, routeArgs })) {
+                findings.push(
+                    `${controller.name}.${methodName}: route declares ':${name}' but the handler never reads it, ` +
+                        `use ValidatedParam({ name: '${name}', schema })`,
+                );
             }
         }
     }
@@ -59,9 +75,62 @@ export function auditHandlerInputs({ controllers }: { controllers: ControllerCla
     return findings;
 }
 
-/** Returns the handler method names declared on a controller. */
+/**
+ * Returns the method names declared on a controller.
+ *
+ * Accessors are skipped: reading one off the prototype runs the getter against an undefined `this`.
+ */
 function handlerNames(controller: ControllerClass): string[] {
-    return Object.getOwnPropertyNames(controller.prototype).filter((name) => name !== 'constructor');
+    const descriptors = Object.getOwnPropertyDescriptors(controller.prototype);
+
+    return Object.entries(descriptors)
+        .filter(([name, descriptor]) => name !== 'constructor' && typeof descriptor.value === 'function')
+        .map(([name]) => name);
+}
+
+/** Returns the path parameters a handler's route declares but its signature never reads. */
+function undeclaredPathParams({
+    controller,
+    methodName,
+    routeArgs,
+}: {
+    controller: ControllerClass;
+    methodName: string;
+    routeArgs: RouteArgs;
+}): string[] {
+    const paramEntries = Object.entries(routeArgs).filter(([key]) => Number(key.split(':')[0]) === PARAM_SOURCE);
+
+    // A bare `@Param()` hands the handler the whole params object, so every parameter is read.
+    if (paramEntries.some(([, entry]) => entry.data === undefined)) return [];
+
+    const declared = new Set(paramEntries.map(([, entry]) => String(entry.data)));
+
+    return pathParamNames({ controller, methodName }).filter((name) => !declared.has(name));
+}
+
+/** Extracts the `:param` names from a handler's full route path, controller prefix included. */
+function pathParamNames({ controller, methodName }: { controller: ControllerClass; methodName: string }): string[] {
+    const handler = controller.prototype[methodName] as object;
+    const methodPath = Reflect.getMetadata(PATH_METADATA, handler) as string | string[] | undefined;
+
+    if (methodPath === undefined) return [];
+
+    const controllerPath = Reflect.getMetadata(PATH_METADATA, controller) as string | string[] | undefined;
+    const segments = [...toPaths(controllerPath), ...toPaths(methodPath)];
+    const names = new Set<string>();
+
+    for (const segment of segments) {
+        for (const match of segment.matchAll(PATH_PARAM_PATTERN)) names.add(match[1]!);
+    }
+
+    return [...names];
+}
+
+/** Normalises Nest's `string | string[]` path metadata to an array. */
+function toPaths(path: string | string[] | undefined): string[] {
+    if (path === undefined) return [];
+
+    return Array.isArray(path) ? path : [path];
 }
 
 /** Describes why one route argument is unvalidated, or undefined when it is covered. */

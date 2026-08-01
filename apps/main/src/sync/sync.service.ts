@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorName, TaskConnectorName, ExternalTaskSourceRegistry } from '@ctm/connectors';
@@ -42,21 +42,38 @@ export class SyncService {
         return job;
     }
 
-    /** Retrieve a job by ID. Throws 404 if not found, 403 if wrong user. */
-    async getJob({ userId, jobId }: { userId: string; jobId: string }): Promise<TaskSyncJobDocument> {
+    /** Retrieve a job by ID within a connection. Throws 404 when it does not exist, belongs to another user, or sits on another connection. */
+    async getJob({
+        userId,
+        jobId,
+        connectionId,
+    }: {
+        userId: string;
+        jobId: string;
+        connectionId: string;
+    }): Promise<TaskSyncJobDocument> {
         const job = await this.taskSyncModel.findById(jobId);
 
-        if (!job) throw new NotFoundException('Sync job not found');
-
-        if (String(job.userId) !== userId) throw new ForbiddenException('Access denied');
+        // One 404 for every miss: a distinct status for "owned by someone else" would confirm the job id exists.
+        if (!job || String(job.userId) !== userId || job.connectionId !== connectionId) {
+            throw new NotFoundException('Sync job not found');
+        }
 
         return job;
     }
 
     /** Cancel a queued or running job. No-op if already terminal. */
-    async cancelJob({ userId, jobId }: { userId: string; jobId: string }): Promise<void> {
+    async cancelJob({
+        userId,
+        jobId,
+        connectionId,
+    }: {
+        userId: string;
+        jobId: string;
+        connectionId: string;
+    }): Promise<void> {
         // Verify ownership first
-        await this.getJob({ userId, jobId });
+        await this.getJob({ userId, jobId, connectionId });
 
         // Atomic status-guarded update — prevents TOCTOU race with runSync completing
         const updated = await this.taskSyncModel.findOneAndUpdate(

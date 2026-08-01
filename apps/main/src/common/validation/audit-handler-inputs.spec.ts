@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createZodDto } from '../zod/create-zod-dto.js';
 import { objectIdSchema } from '../zod/param-schemas.js';
+import { ZodParam } from '../zod/zod-param.js';
 import { auditHandlerInputs, type ControllerClass } from './audit-handler-inputs.js';
 import { UnvalidatedInput } from './unvalidated-input.decorator.js';
 import {
@@ -114,6 +115,90 @@ describe('auditHandlerInputs', () => {
         }
 
         expect(audit(Exempt)).toEqual([]);
+    });
+
+    it('flags a controller-level path parameter the handler never reads', () => {
+        @Controller('things/:thingId')
+        class Bad {
+            @Get(':id')
+            findOne(@ValidatedParam({ name: 'id', schema: objectIdSchema }) _id: string): void {}
+        }
+
+        expect(audit(Bad)).toEqual([
+            "Bad.findOne: route declares ':thingId' but the handler never reads it, use ValidatedParam({ name: 'thingId', schema })",
+        ]);
+    });
+
+    it('flags a method-level path parameter the handler never reads', () => {
+        @Controller('things')
+        class Bad {
+            @Get(':id/parts/:partId')
+            findOne(@ValidatedParam({ name: 'id', schema: objectIdSchema }) _id: string): void {}
+        }
+
+        expect(audit(Bad)).toEqual([
+            "Bad.findOne: route declares ':partId' but the handler never reads it, use ValidatedParam({ name: 'partId', schema })",
+        ]);
+    });
+
+    it('flags a path parameter when the handler declares no arguments at all', () => {
+        @Controller('things/:thingId')
+        class Bad {
+            @Get()
+            list(): void {}
+        }
+
+        expect(audit(Bad)[0]).toContain("route declares ':thingId'");
+    });
+
+    it('accepts a handler that reads every path parameter', () => {
+        @Controller('things/:thingId')
+        class Ok {
+            @Get(':id')
+            findOne(
+                @ValidatedParam({ name: 'thingId', schema: objectIdSchema }) _thingId: string,
+                @ValidatedParam({ name: 'id', schema: objectIdSchema }) _id: string,
+            ): void {}
+        }
+
+        expect(audit(Ok)).toEqual([]);
+    });
+
+    it('treats a validated bare @Param() as reading every path parameter', () => {
+        const paramsSchema = z.object({ thingId: objectIdSchema, id: objectIdSchema });
+
+        @Controller('things/:thingId')
+        class Ok {
+            @Get(':id')
+            findOne(@Param(ZodParam(paramsSchema)) _params: z.infer<typeof paramsSchema>): void {}
+        }
+
+        expect(audit(Ok)).toEqual([]);
+    });
+
+    it('skips path parameters on a handler marked UnvalidatedInput', () => {
+        @Controller('things/:thingId')
+        class Exempt {
+            @Get()
+            @UnvalidatedInput('validated against a schema compiled at request time')
+            list(): void {}
+        }
+
+        expect(audit(Exempt)).toEqual([]);
+    });
+
+    it('ignores a non-route method on a parameterised controller', () => {
+        @Controller('things/:thingId')
+        class Ok {
+            @Get()
+            list(@ValidatedParam({ name: 'thingId', schema: objectIdSchema }) _thingId: string): void {}
+
+            helper(): string {
+                return 'not a route';
+            }
+        }
+
+        expect(audit(Ok)).toEqual([]);
     });
 
     it('reports every finding across controllers', () => {
