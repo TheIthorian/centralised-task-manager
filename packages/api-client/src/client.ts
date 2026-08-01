@@ -1,538 +1,328 @@
-import axios, { AxiosError, type AxiosInstance } from 'axios';
+import { AppConfigClient } from './domains/app-config/app-config.client.js';
+import type { AppConfigDto } from './domains/app-config/app-config.types.js';
+import { AuthClient } from './domains/auth/auth.client.js';
 import type {
-    AppConfigDto,
     AuthorizedAppDto,
+    GetOAuthClientInfoParams,
+    LoginParams,
+    OAuthClientInfoDto,
+    RefreshParams,
+    RegisterParams,
+    RevokeAuthorizedAppParams,
+    TokenPair,
+} from './domains/auth/auth.types.js';
+import { ConnectorsClient } from './domains/connectors/connectors.client.js';
+import type {
     ConnectorHealthDto,
     ConnectorStatusDto,
+    DisconnectConnectorParams,
     DiscordStatusDto,
+    GetConnectorAuthUrlParams,
+    ListNotionDatabasesParams,
+    SetConnectionDetailsParams,
+} from './domains/connectors/connectors.types.js';
+import { DataPortabilityClient } from './domains/data-portability/data-portability.client.js';
+import type {
+    DownloadExportFileParams,
     ExportResponseDto,
+    ImportDataParams,
     ImportResponseDto,
+} from './domains/data-portability/data-portability.types.js';
+import { NotificationsClient } from './domains/notifications/notifications.client.js';
+import type {
+    ListNotificationsParams,
     MarkAllReadResultDto,
+    MarkNotificationReadParams,
     MarkReadResultDto,
     NotificationDto,
     NotificationPreferencesDto,
-    OAuthClientInfoDto,
-    OkDto,
-    ReminderDto,
-    TaskDto,
-    TaskFilter,
-    TaskSyncJobDto,
     TestChannelResultDto,
-    TokenPair,
-    UserDto,
-} from './types.js';
+    TestNotificationChannelParams,
+    UpdateNotificationPreferencesParams,
+} from './domains/notifications/notifications.types.js';
+import type { OkDto } from './domains/shared.types.js';
+import { SyncClient } from './domains/sync/sync.client.js';
 import type {
-    AddRelationParams,
-    AddReminderParams,
-    GetTaskParams,
-    ApiClientErrorOptions,
-    ApiClientOptions,
     CancelSyncJobParams,
+    GetSyncJobParams,
+    SyncConnectorParams,
+    TaskSyncJobDto,
+} from './domains/sync/sync.types.js';
+import { TasksClient } from './domains/tasks/tasks.client.js';
+import type {
+    AddReminderParams,
+    AddRelationParams,
     CreateTaskParams,
     DeleteTaskParams,
-    DisconnectConnectorParams,
-    DownloadExportFileParams,
-    ImportDataParams,
-    GetConnectorAuthUrlParams,
-    GetOAuthClientInfoParams,
-    GetSyncJobParams,
-    ListNotificationsParams,
+    GetTaskParams,
     ListTasksParams,
-    LoginParams,
-    MarkNotificationReadParams,
-    RefreshParams,
-    RegisterParams,
+    ReminderDto,
     RemoveFuzzyDeadlineParams,
     RemoveRelationParams,
     RemoveReminderParams,
-    RevokeAuthorizedAppParams,
-    SetConnectionDetailsParams,
     SetFuzzyDeadlineParams,
     SetTaskStatusParams,
-    SyncConnectorParams,
-    UpdateMeParams,
-    UpdateNotificationPreferencesParams,
+    TaskDto,
     UpdateTaskParams,
-    ListNotionDatabasesParams,
-} from './client.types.js';
+} from './domains/tasks/tasks.types.js';
+import { UsersClient } from './domains/users/users.client.js';
+import type { UpdateMeParams, UserDto } from './domains/users/users.types.js';
+import { ApiHttpClient } from './http/api-http-client.js';
+import type { ApiClientOptions } from './http/http.types.js';
 
-const RATE_LIMITED_STATUS = 429;
+export { ApiClientError } from './http/api-client.error.js';
 
-/** Structured HTTP error returned by the REST wrapper. */
-export class ApiClientError extends Error {
-    readonly statusCode: number;
-    readonly method: string;
-    readonly path: string;
-    readonly responseBody?: unknown;
-    /** Seconds to wait before retrying, from the `Retry-After` header of a 429. */
-    readonly retryAfterSeconds?: number;
-
-    constructor({ message, statusCode, method, path, responseBody, retryAfterSeconds }: ApiClientErrorOptions) {
-        super(message);
-        this.name = 'ApiClientError';
-        this.statusCode = statusCode;
-        this.method = method;
-        this.path = path;
-        this.responseBody = responseBody;
-        this.retryAfterSeconds = retryAfterSeconds;
-    }
-
-    /** Whether the request was rejected by a rate limit rather than failing outright. */
-    get isRateLimited(): boolean {
-        return this.statusCode === RATE_LIMITED_STATUS;
-    }
-}
-
-/** Pure typed REST client for the CTM API. */
+/**
+ * Pure typed REST client for the CTM API.
+ *
+ * A flat facade over the per-domain clients in `./domains`, so callers keep a single
+ * entry point while each domain stays independently readable.
+ */
 export class CtmApiClient {
-    private readonly client: AxiosInstance;
-    private readonly refreshToken: string | null;
+    private readonly auth: AuthClient;
+    private readonly tasks: TasksClient;
+    private readonly connectors: ConnectorsClient;
+    private readonly sync: SyncClient;
+    private readonly users: UsersClient;
+    private readonly dataPortability: DataPortabilityClient;
+    private readonly notifications: NotificationsClient;
+    private readonly appConfig: AppConfigClient;
 
     constructor({ baseUrl, accessToken, refreshToken }: ApiClientOptions) {
-        this.client = axios.create({
-            baseURL: baseUrl,
-            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        });
-        this.refreshToken = refreshToken ?? null;
+        const http = new ApiHttpClient({ baseUrl, accessToken });
+
+        this.auth = new AuthClient({ http, refreshToken: refreshToken ?? null });
+        this.tasks = new TasksClient({ http });
+        this.connectors = new ConnectorsClient({ http });
+        this.sync = new SyncClient({ http });
+        this.users = new UsersClient({ http });
+        this.dataPortability = new DataPortabilityClient({ http });
+        this.notifications = new NotificationsClient({ http });
+        this.appConfig = new AppConfigClient({ http });
     }
 
     /** Login with email and password. */
-    async login({ email, password }: LoginParams): Promise<TokenPair> {
-        return this.request<TokenPair>({ method: 'POST', path: '/auth/login', body: { email, password } });
+    async login(params: LoginParams): Promise<TokenPair> {
+        return this.auth.login(params);
     }
 
     /** Register a new account. */
-    async register({ name, email, password }: RegisterParams): Promise<TokenPair> {
-        return this.request<TokenPair>({ method: 'POST', path: '/auth/register', body: { name, email, password } });
+    async register(params: RegisterParams): Promise<TokenPair> {
+        return this.auth.register(params);
     }
 
     /**
      * Exchange a refresh token for a new token pair. Web clients omit the token
      * and rely on the HttpOnly cookie.
      */
-    async refresh({ refreshToken }: RefreshParams = {}): Promise<TokenPair> {
-        const token = refreshToken ?? this.refreshToken;
-
-        return this.request<TokenPair>({
-            method: 'POST',
-            path: '/auth/refresh',
-            body: token ? { refreshToken: token } : {},
-        });
+    async refresh(params: RefreshParams = {}): Promise<TokenPair> {
+        return this.auth.refresh(params);
     }
 
     /** Revoke the current refresh token. */
-    async logout({ refreshToken }: RefreshParams = {}): Promise<void> {
-        const token = refreshToken ?? this.refreshToken;
-
-        await this.request<void>({
-            method: 'POST',
-            path: '/auth/logout',
-            body: token ? { refreshToken: token } : {},
-        });
-    }
-
-    /** List tasks, optionally filtered by UI filter and/or update date. */
-    async listTasks({
-        filter,
-        lastUpdatedFromDate,
-        page,
-        limit,
-        status,
-        dueBefore,
-        dueAfter,
-        noDate,
-    }: ListTasksParams = {}): Promise<TaskDto[]> {
-        const params: Record<string, string> = filter ? this.filterToParams(filter) : {};
-
-        if (status) params['status'] = status;
-
-        if (lastUpdatedFromDate) params['lastUpdatedFromDate'] = lastUpdatedFromDate;
-
-        if (page !== undefined) params['page'] = String(page);
-
-        if (limit !== undefined) params['limit'] = String(limit);
-
-        if (dueBefore) params['dueBefore'] = dueBefore;
-
-        if (dueAfter) params['dueAfter'] = dueAfter;
-
-        if (noDate !== undefined) params['noDate'] = String(noDate);
-
-        return this.request<TaskDto[]>({
-            method: 'GET',
-            path: '/tasks',
-            params,
-        });
-    }
-
-    /** Get a single task by ID. */
-    async getTask({ id }: GetTaskParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'GET', path: `/tasks/${id}` });
-    }
-
-    /** Create a new task. */
-    async createTask({ dto }: CreateTaskParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'POST', path: '/tasks', body: dto });
-    }
-
-    /** Update an existing task. */
-    async updateTask({ id, dto }: UpdateTaskParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'PATCH', path: `/tasks/${id}`, body: dto });
-    }
-
-    /** Delete a task permanently. */
-    async deleteTask({ id }: DeleteTaskParams): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: `/tasks/${id}` });
-    }
-
-    /** Set task status to 'open' or 'done'. */
-    async setTaskStatus({ id, dto }: SetTaskStatusParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'PUT', path: `/tasks/${id}/status`, body: dto });
-    }
-
-    /** Set the fuzzy deadline for an existing task. */
-    async setFuzzyDeadline({ id, dto }: SetFuzzyDeadlineParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'PATCH', path: `/tasks/${id}/fuzzy-deadline`, body: dto });
-    }
-
-    /** Remove the fuzzy deadline from a task. */
-    async removeFuzzyDeadline({ id }: RemoveFuzzyDeadlineParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/fuzzy-deadline` });
-    }
-
-    /** Add a reminder datetime to a task. */
-    async addReminder({ id, dto }: AddReminderParams): Promise<ReminderDto> {
-        return this.request<ReminderDto>({ method: 'POST', path: `/tasks/${id}/reminders`, body: dto });
-    }
-
-    /** Remove a reminder from a task by its index in the reminders array. */
-    async removeReminder({ id, index }: RemoveReminderParams): Promise<OkDto> {
-        return this.request<OkDto>({ method: 'DELETE', path: `/tasks/${id}/reminders/${index}` });
-    }
-
-    /** Fetch public client configuration, such as the advertised MCP server URL. */
-    async getAppConfig(): Promise<AppConfigDto> {
-        return this.request<AppConfigDto>({ method: 'GET', path: '/config' });
-    }
-
-    /** List all connector statuses for the current user. */
-    async listConnectors(): Promise<ConnectorStatusDto[]> {
-        return this.request<ConnectorStatusDto[]>({ method: 'GET', path: '/connectors' });
-    }
-
-    /** Health-check all connected task-sync connectors for the current user. */
-    async getConnectorHealth(): Promise<ConnectorHealthDto[]> {
-        return this.request<ConnectorHealthDto[]>({ method: 'GET', path: '/connectors/health' });
-    }
-
-    /** Get the OAuth authorisation URL for a connector source. */
-    async getConnectorAuthUrl({ source }: GetConnectorAuthUrlParams): Promise<string> {
-        const response = await this.request<{ url: string }>({ method: 'GET', path: `/connectors/${source}/auth` });
-
-        return response.url;
-    }
-
-    /** Disconnect a single connection by id. */
-    async disconnectConnector({ connectionId }: DisconnectConnectorParams): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: `/connectors/connections/${connectionId}` });
-    }
-
-    /** Start a pull-sync job for a connection. */
-    async syncConnector({ connectionId }: SyncConnectorParams): Promise<TaskSyncJobDto> {
-        return this.request<TaskSyncJobDto>({ method: 'POST', path: `/connectors/connections/${connectionId}/sync` });
-    }
-
-    /** Get the status of a sync job. */
-    async getSyncJob({ connectionId, jobId }: GetSyncJobParams): Promise<TaskSyncJobDto> {
-        return this.request<TaskSyncJobDto>({
-            method: 'GET',
-            path: `/connectors/connections/${connectionId}/sync/${jobId}`,
-        });
-    }
-
-    /** Cancel a sync job. */
-    async cancelSyncJob({ connectionId, jobId }: CancelSyncJobParams): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: `/connectors/connections/${connectionId}/sync/${jobId}` });
-    }
-
-    /** Save connection details for a connection (e.g. Notion database ID). */
-    async setConnectionDetails({ connectionId, details }: SetConnectionDetailsParams): Promise<void> {
-        await this.request<void>({
-            method: 'POST',
-            path: `/connectors/connections/${connectionId}/connection-details`,
-            body: details,
-        });
-    }
-
-    /** List Notion databases accessible via a connection's Notion integration. */
-    async listNotionDatabases({ connectionId }: ListNotionDatabasesParams): Promise<{ id: string; name: string }[]> {
-        return this.request<{ id: string; name: string }[]>({
-            method: 'GET',
-            path: `/connectors/connections/${connectionId}/notion/databases`,
-        });
-    }
-
-    /** Get the current user's profile. */
-    async getMe(): Promise<UserDto> {
-        return this.request<UserDto>({ method: 'GET', path: '/users/me' });
-    }
-
-    /** Update the current user's profile. */
-    async updateMe({ dto }: UpdateMeParams): Promise<UserDto> {
-        return this.request<UserDto>({ method: 'PATCH', path: '/users/me', body: dto });
-    }
-
-    /** Permanently delete the current user's account. */
-    async deleteMe(): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: '/users/me' });
-    }
-
-    /** Generate a full data export. Returns metadata for the created files. */
-    async exportData(): Promise<ExportResponseDto> {
-        return this.request<ExportResponseDto>({ method: 'POST', path: '/users/me/export' });
-    }
-
-    /** Download a single export file as a Blob. */
-    async downloadExportFile({ exportId, filename }: DownloadExportFileParams): Promise<Blob> {
-        return this.request<Blob>({
-            method: 'GET',
-            path: `/users/me/exports/${exportId}/${filename}`,
-            responseType: 'blob',
-        });
-    }
-
-    /** Import user data from one or more export files. */
-    async importData({ files, onConflict }: ImportDataParams): Promise<ImportResponseDto> {
-        const form = new FormData();
-
-        for (const file of files) {
-            form.append('files', file);
-        }
-
-        form.append('onConflict', onConflict);
-
-        return this.request<ImportResponseDto>({ method: 'POST', path: '/users/me/import', body: form });
-    }
-
-    /** List in-app notifications for the current user. */
-    async listNotifications({ page = 1, limit = 20, unreadOnly = false }: ListNotificationsParams = {}): Promise<
-        NotificationDto[]
-    > {
-        return this.request<NotificationDto[]>({
-            method: 'GET',
-            path: '/notifications',
-            params: { page: String(page), limit: String(limit), unreadOnly: String(unreadOnly) },
-        });
-    }
-
-    /** Mark a single notification as read. */
-    async markNotificationRead({ id }: MarkNotificationReadParams): Promise<MarkReadResultDto> {
-        return this.request<MarkReadResultDto>({ method: 'PATCH', path: `/notifications/${id}/read` });
-    }
-
-    /** Mark all notifications as read. */
-    async markAllNotificationsRead(): Promise<MarkAllReadResultDto> {
-        return this.request<MarkAllReadResultDto>({ method: 'PATCH', path: '/notifications/read-all' });
-    }
-
-    /** Get notification preferences for the current user. */
-    async getNotificationPreferences(): Promise<NotificationPreferencesDto> {
-        return this.request<NotificationPreferencesDto>({ method: 'GET', path: '/notifications/preferences' });
-    }
-
-    /** Update notification preferences (partial). */
-    async updateNotificationPreferences({
-        dto,
-    }: UpdateNotificationPreferencesParams): Promise<NotificationPreferencesDto> {
-        return this.request<NotificationPreferencesDto>({
-            method: 'PATCH',
-            path: '/notifications/preferences',
-            body: dto,
-        });
-    }
-
-    /** Get the Discord OAuth URL for connecting. */
-    async getDiscordConnectUrl(): Promise<string> {
-        const response = await this.request<{ url: string }>({
-            method: 'GET',
-            path: '/connectors/discord/connect-url',
-        });
-        return response.url;
-    }
-
-    /** Get Discord connection status. */
-    async getDiscordStatus(): Promise<DiscordStatusDto> {
-        return this.request<DiscordStatusDto>({ method: 'GET', path: '/connectors/discord/status' });
-    }
-
-    /** Disconnect Discord. */
-    async disconnectDiscord(): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: '/connectors/discord' });
-    }
-
-    /** Send a test notification via a channel (e.g. 'discord'). */
-    async testNotificationChannel({ channel }: { channel: string }): Promise<TestChannelResultDto> {
-        return this.request<TestChannelResultDto>({ method: 'POST', path: `/notifications/channels/${channel}/test` });
-    }
-
-    /** Add a typed relation between two tasks. */
-    async addRelation({ id, dto }: AddRelationParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'POST', path: `/tasks/${id}/relations`, body: dto });
-    }
-
-    /** Remove a typed relation between two tasks. */
-    async removeRelation({ id, dto }: RemoveRelationParams): Promise<TaskDto> {
-        return this.request<TaskDto>({ method: 'DELETE', path: `/tasks/${id}/relations`, body: dto });
+    async logout(params: RefreshParams = {}): Promise<void> {
+        await this.auth.logout(params);
     }
 
     /** List OAuth apps the current user has authorized. */
     async getAuthorizedApps(): Promise<AuthorizedAppDto[]> {
-        return this.request<AuthorizedAppDto[]>({ method: 'GET', path: '/auth/me/authorized-apps' });
+        return this.auth.getAuthorizedApps();
     }
 
     /** Revoke access for an authorized OAuth app. */
-    async revokeAuthorizedApp({ clientId }: RevokeAuthorizedAppParams): Promise<void> {
-        await this.request<void>({ method: 'DELETE', path: `/auth/me/authorized-apps/${clientId}` });
+    async revokeAuthorizedApp(params: RevokeAuthorizedAppParams): Promise<void> {
+        await this.auth.revokeAuthorizedApp(params);
     }
 
     /** Public metadata for an OAuth client, for a consent screen to describe who is asking. */
-    async getOAuthClientInfo({ clientId }: GetOAuthClientInfoParams): Promise<OAuthClientInfoDto> {
-        return this.request<OAuthClientInfoDto>({
-            method: 'GET',
-            path: '/oauth/client-info',
-            params: { client_id: clientId },
-        });
+    async getOAuthClientInfo(params: GetOAuthClientInfoParams): Promise<OAuthClientInfoDto> {
+        return this.auth.getOAuthClientInfo(params);
     }
 
-    private filterToParams(filter: TaskFilter): Record<string, string> {
-        switch (filter) {
-            case 'done':
-                return { status: 'done' };
-            case 'today':
-                return { filter: 'today' };
-            case 'upcoming':
-                return { filter: 'upcoming' };
-            case 'all':
-            default:
-                return { filter: 'all' };
-        }
+    /** List tasks, optionally filtered by UI filter and/or update date. */
+    async listTasks(params: ListTasksParams = {}): Promise<TaskDto[]> {
+        return this.tasks.listTasks(params);
     }
 
-    private async request<T>({
-        method,
-        path,
-        body,
-        params,
-        responseType,
-    }: {
-        method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-        path: string;
-        body?: unknown;
-        params?: Record<string, string>;
-        responseType?: 'blob';
-    }): Promise<T> {
-        try {
-            const response = await this.client.request<T>({
-                method,
-                url: path,
-                data: body,
-                params,
-                ...(responseType !== undefined ? { responseType } : {}),
-            });
-
-            return response.data;
-        } catch (error) {
-            throw this.toApiClientError({ error, method, path });
-        }
+    /** Get a single task by ID. */
+    async getTask(params: GetTaskParams): Promise<TaskDto> {
+        return this.tasks.getTask(params);
     }
 
-    private toApiClientError({
-        error,
-        method,
-        path,
-    }: {
-        error: unknown;
-        method: string;
-        path: string;
-    }): ApiClientError {
-        if (axios.isAxiosError(error)) {
-            const statusCode = error.response?.status ?? 0;
-            const retryAfterSeconds = this.extractRetryAfterSeconds(error);
-
-            return new ApiClientError({
-                message:
-                    statusCode === RATE_LIMITED_STATUS
-                        ? this.rateLimitMessage({ error, retryAfterSeconds })
-                        : this.extractMessage(error),
-                statusCode,
-                method,
-                path,
-                responseBody: error.response?.data,
-                ...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {}),
-            });
-        }
-
-        if (error instanceof Error) {
-            return new ApiClientError({
-                message: error.message,
-                statusCode: 0,
-                method,
-                path,
-            });
-        }
-
-        return new ApiClientError({
-            message: 'Unknown API client error',
-            statusCode: 0,
-            method,
-            path,
-            responseBody: error,
-        });
+    /** Create a new task. */
+    async createTask(params: CreateTaskParams): Promise<TaskDto> {
+        return this.tasks.createTask(params);
     }
 
-    private extractRetryAfterSeconds(error: AxiosError): number | undefined {
-        const header = error.response?.headers?.['retry-after'];
-        const seconds = Number(header);
-
-        return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : undefined;
+    /** Update an existing task. */
+    async updateTask(params: UpdateTaskParams): Promise<TaskDto> {
+        return this.tasks.updateTask(params);
     }
 
-    /** Rate-limit responses are actionable, so say how long to wait rather than just "429". */
-    private rateLimitMessage({
-        error,
-        retryAfterSeconds,
-    }: {
-        error: AxiosError;
-        retryAfterSeconds: number | undefined;
-    }): string {
-        const wait = retryAfterSeconds === undefined ? '' : ` Retry in ${retryAfterSeconds}s.`;
-
-        return `${this.extractMessage(error)}${wait}`;
+    /** Delete a task permanently. */
+    async deleteTask(params: DeleteTaskParams): Promise<void> {
+        await this.tasks.deleteTask(params);
     }
 
-    private extractMessage(error: AxiosError): string {
-        const responseBody = error.response?.data;
+    /** Set task status to 'open' or 'done'. */
+    async setTaskStatus(params: SetTaskStatusParams): Promise<TaskDto> {
+        return this.tasks.setTaskStatus(params);
+    }
 
-        if (typeof responseBody === 'string' && responseBody.length > 0) {
-            return responseBody;
-        }
+    /** Set the fuzzy deadline for an existing task. */
+    async setFuzzyDeadline(params: SetFuzzyDeadlineParams): Promise<TaskDto> {
+        return this.tasks.setFuzzyDeadline(params);
+    }
 
-        if (responseBody !== null && typeof responseBody === 'object' && 'message' in responseBody) {
-            const { message } = responseBody;
+    /** Remove the fuzzy deadline from a task. */
+    async removeFuzzyDeadline(params: RemoveFuzzyDeadlineParams): Promise<TaskDto> {
+        return this.tasks.removeFuzzyDeadline(params);
+    }
 
-            if (typeof message === 'string' && message.length > 0) {
-                return message;
-            }
+    /** Add a reminder datetime to a task. */
+    async addReminder(params: AddReminderParams): Promise<ReminderDto> {
+        return this.tasks.addReminder(params);
+    }
 
-            if (Array.isArray(message)) {
-                const parts = message.filter((part): part is string => typeof part === 'string' && part.length > 0);
+    /** Remove a reminder from a task by its index in the reminders array. */
+    async removeReminder(params: RemoveReminderParams): Promise<OkDto> {
+        return this.tasks.removeReminder(params);
+    }
 
-                if (parts.length > 0) {
-                    return parts.join(', ');
-                }
-            }
-        }
+    /** Add a typed relation between two tasks. */
+    async addRelation(params: AddRelationParams): Promise<TaskDto> {
+        return this.tasks.addRelation(params);
+    }
 
-        return error.message;
+    /** Remove a typed relation between two tasks. */
+    async removeRelation(params: RemoveRelationParams): Promise<TaskDto> {
+        return this.tasks.removeRelation(params);
+    }
+
+    /** List all connector statuses for the current user. */
+    async listConnectors(): Promise<ConnectorStatusDto[]> {
+        return this.connectors.listConnectors();
+    }
+
+    /** Health-check all connected task-sync connectors for the current user. */
+    async getConnectorHealth(): Promise<ConnectorHealthDto[]> {
+        return this.connectors.getConnectorHealth();
+    }
+
+    /** Get the OAuth authorisation URL for a connector source. */
+    async getConnectorAuthUrl(params: GetConnectorAuthUrlParams): Promise<string> {
+        return this.connectors.getConnectorAuthUrl(params);
+    }
+
+    /** Disconnect a single connection by id. */
+    async disconnectConnector(params: DisconnectConnectorParams): Promise<void> {
+        await this.connectors.disconnectConnector(params);
+    }
+
+    /** Save connection details for a connection (e.g. Notion database ID). */
+    async setConnectionDetails(params: SetConnectionDetailsParams): Promise<void> {
+        await this.connectors.setConnectionDetails(params);
+    }
+
+    /** List Notion databases accessible via a connection's Notion integration. */
+    async listNotionDatabases(params: ListNotionDatabasesParams): Promise<{ id: string; name: string }[]> {
+        return this.connectors.listNotionDatabases(params);
+    }
+
+    /** Get the Discord OAuth URL for connecting. */
+    async getDiscordConnectUrl(): Promise<string> {
+        return this.connectors.getDiscordConnectUrl();
+    }
+
+    /** Get Discord connection status. */
+    async getDiscordStatus(): Promise<DiscordStatusDto> {
+        return this.connectors.getDiscordStatus();
+    }
+
+    /** Disconnect Discord. */
+    async disconnectDiscord(): Promise<void> {
+        await this.connectors.disconnectDiscord();
+    }
+
+    /** Start a pull-sync job for a connection. */
+    async syncConnector(params: SyncConnectorParams): Promise<TaskSyncJobDto> {
+        return this.sync.syncConnector(params);
+    }
+
+    /** Get the status of a sync job. */
+    async getSyncJob(params: GetSyncJobParams): Promise<TaskSyncJobDto> {
+        return this.sync.getSyncJob(params);
+    }
+
+    /** Cancel a sync job. */
+    async cancelSyncJob(params: CancelSyncJobParams): Promise<void> {
+        await this.sync.cancelSyncJob(params);
+    }
+
+    /** Get the current user's profile. */
+    async getMe(): Promise<UserDto> {
+        return this.users.getMe();
+    }
+
+    /** Update the current user's profile. */
+    async updateMe(params: UpdateMeParams): Promise<UserDto> {
+        return this.users.updateMe(params);
+    }
+
+    /** Permanently delete the current user's account. */
+    async deleteMe(): Promise<void> {
+        await this.users.deleteMe();
+    }
+
+    /** Generate a full data export. Returns metadata for the created files. */
+    async exportData(): Promise<ExportResponseDto> {
+        return this.dataPortability.exportData();
+    }
+
+    /** Download a single export file as a Blob. */
+    async downloadExportFile(params: DownloadExportFileParams): Promise<Blob> {
+        return this.dataPortability.downloadExportFile(params);
+    }
+
+    /** Import user data from one or more export files. */
+    async importData(params: ImportDataParams): Promise<ImportResponseDto> {
+        return this.dataPortability.importData(params);
+    }
+
+    /** List in-app notifications for the current user. */
+    async listNotifications(params: ListNotificationsParams = {}): Promise<NotificationDto[]> {
+        return this.notifications.listNotifications(params);
+    }
+
+    /** Mark a single notification as read. */
+    async markNotificationRead(params: MarkNotificationReadParams): Promise<MarkReadResultDto> {
+        return this.notifications.markNotificationRead(params);
+    }
+
+    /** Mark all notifications as read. */
+    async markAllNotificationsRead(): Promise<MarkAllReadResultDto> {
+        return this.notifications.markAllNotificationsRead();
+    }
+
+    /** Get notification preferences for the current user. */
+    async getNotificationPreferences(): Promise<NotificationPreferencesDto> {
+        return this.notifications.getNotificationPreferences();
+    }
+
+    /** Update notification preferences (partial). */
+    async updateNotificationPreferences(
+        params: UpdateNotificationPreferencesParams,
+    ): Promise<NotificationPreferencesDto> {
+        return this.notifications.updateNotificationPreferences(params);
+    }
+
+    /** Send a test notification via a channel (e.g. 'discord'). */
+    async testNotificationChannel(params: TestNotificationChannelParams): Promise<TestChannelResultDto> {
+        return this.notifications.testNotificationChannel(params);
+    }
+
+    /** Fetch public client configuration, such as the advertised MCP server URL. */
+    async getAppConfig(): Promise<AppConfigDto> {
+        return this.appConfig.getAppConfig();
     }
 }
