@@ -119,16 +119,18 @@ describe('SyncService per connection', () => {
         ).rejects.toMatchObject({ status: 404 });
     });
 
-    it('getJob 403s for another user before the connection is considered', async () => {
+    it('getJob 404s for another user, matching the not-found status exactly', async () => {
         const jobId = await seedJob();
 
         await expect(
-            service.getJob({
-                userId: new Types.ObjectId().toString(),
-                jobId,
-                connectionId: new Types.ObjectId().toString(),
-            }),
-        ).rejects.toMatchObject({ status: 403 });
+            service.getJob({ userId: new Types.ObjectId().toString(), jobId, connectionId }),
+        ).rejects.toMatchObject({ status: 404 });
+    });
+
+    it('getJob 404s for an unknown job', async () => {
+        await expect(
+            service.getJob({ userId, jobId: new Types.ObjectId().toString(), connectionId }),
+        ).rejects.toMatchObject({ status: 404 });
     });
 
     it('getJob returns the job under its own connection', async () => {

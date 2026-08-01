@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorName, TaskConnectorName, ExternalTaskSourceRegistry } from '@ctm/connectors';
@@ -42,7 +42,7 @@ export class SyncService {
         return job;
     }
 
-    /** Retrieve a job by ID within a connection. Throws 404 if not found or on the wrong connection, 403 if wrong user. */
+    /** Retrieve a job by ID within a connection. Throws 404 when it does not exist, belongs to another user, or sits on another connection. */
     async getJob({
         userId,
         jobId,
@@ -54,12 +54,10 @@ export class SyncService {
     }): Promise<TaskSyncJobDocument> {
         const job = await this.taskSyncModel.findById(jobId);
 
-        if (!job) throw new NotFoundException('Sync job not found');
-
-        if (String(job.userId) !== userId) throw new ForbiddenException('Access denied');
-
-        // Ownership is checked first so a mismatched connection cannot reveal that a job id exists on another account.
-        if (job.connectionId !== connectionId) throw new NotFoundException('Sync job not found');
+        // One 404 for every miss: a distinct status for "owned by someone else" would confirm the job id exists.
+        if (!job || String(job.userId) !== userId || job.connectionId !== connectionId) {
+            throw new NotFoundException('Sync job not found');
+        }
 
         return job;
     }

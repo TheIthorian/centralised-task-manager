@@ -8,8 +8,9 @@ Branch: `fix/sync-connection-id-param`
 
 `apps/main/src/sync/sync.service.ts`
 
-- `getJob({ userId, jobId, connectionId })`: after the existing 404 and 403 checks, throw
-  `NotFoundException('Sync job not found')` when `job.connectionId !== connectionId`.
+- `getJob({ userId, jobId, connectionId })`: throw `NotFoundException('Sync job not found')` when
+  the job is missing, owned by another user, or carries a different `connectionId`. The existing
+  `ForbiddenException` goes, and its import with it.
 - `cancelJob({ userId, jobId, connectionId })`: forward `connectionId` to the `getJob` ownership
   check. The atomic `findOneAndUpdate` still keys on `_id` alone, since `getJob` has already proved
   the pair matches.
@@ -43,7 +44,8 @@ Branch: `fix/sync-connection-id-param`
   with no decorated arguments at all on a parameterised route is flagged; `@UnvalidatedInput`
   handler is skipped.
 - `apps/main/src/sync/sync.controller.spec.ts`: a job created under connection A returns 404 on
-  `GET`/`DELETE` under a different connection id, and still 200/204 under its own.
+  `GET`/`DELETE` under a different connection id, and still 200/204 under its own. Another user's
+  `GET` returns 404 with a body identical to the unknown-job 404, and their `DELETE` returns 404.
 - `apps/main/src/sync/sync.service.spec.ts`: update the existing `getJob` call to pass
   `connectionId`.
 

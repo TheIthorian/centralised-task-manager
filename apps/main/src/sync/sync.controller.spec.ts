@@ -168,7 +168,7 @@ describe('SyncController', () => {
         expect(res.statusCode).toBe(400);
     });
 
-    it('User B cannot access User A sync jobs', async () => {
+    it('User B gets the same 404 as an unknown job for User A sync jobs', async () => {
         const postRes = await app.inject({
             method: 'POST',
             url: `/connectors/connections/${connectionId}/sync`,
@@ -191,6 +191,39 @@ describe('SyncController', () => {
             headers: { authorization: `Bearer ${jwtB}` },
         });
 
-        expect(getRes.statusCode).toBe(403);
+        const unknownRes = await app.inject({
+            method: 'GET',
+            url: `/connectors/connections/${connectionId}/sync/000000000000000000000000`,
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
+
+        expect(getRes.statusCode).toBe(404);
+        expect(getRes.body).toBe(unknownRes.body);
+    });
+
+    it('DELETE on another user sync job returns 404', async () => {
+        const postRes = await app.inject({
+            method: 'POST',
+            url: `/connectors/connections/${connectionId}/sync`,
+            headers: { authorization: `Bearer ${jwt}` },
+        });
+
+        const { id } = JSON.parse(postRes.body) as { id: string };
+
+        const emailB = `syncB+${Date.now()}@example.com`;
+        const regB = await app.inject({
+            method: 'POST',
+            url: '/auth/register',
+            payload: { name: 'Sync User B', email: emailB, password: 'password123' },
+        });
+        const jwtB = JSON.parse(regB.body).accessToken as string;
+
+        const delRes = await app.inject({
+            method: 'DELETE',
+            url: `/connectors/connections/${connectionId}/sync/${id}`,
+            headers: { authorization: `Bearer ${jwtB}` },
+        });
+
+        expect(delRes.statusCode).toBe(404);
     });
 });

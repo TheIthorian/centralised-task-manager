@@ -14,7 +14,7 @@ never read `connectionId`, so:
   declares `{connectionId}` and neither operation declares a parameter for it.
 
 This is not an authorization hole: `SyncService.getJob` compares `job.userId` with the caller, so
-another user's job still 403s.
+another user's job is still refused.
 
 The startup audit in `HandlerValidationModule` cannot see the mistake. It walks the arguments a
 handler declares, so a path parameter the handler never declares is invisible to it.
@@ -24,14 +24,12 @@ handler declares, so a path parameter the handler never declares is invisible to
 ### Scope the lookup
 
 `SyncService.getJob` takes `connectionId` alongside `userId` and `jobId`. The job is fetched by id,
-then checked in this order:
+and a 404 with one message covers all three misses: no such job, a job owned by another user, and a
+job that sits on another connection.
 
-1. Not found: 404.
-2. `job.userId` does not match the caller: 403.
-3. `job.connectionId` does not match the path: 404.
-
-Ownership is checked before the connection, so a probe cannot use the connection mismatch to learn
-that a job id exists on another account.
+A single status is the point. A 403 on someone else's job confirms that the id exists, which is a
+job count and a job id an unrelated account can enumerate. The caller is authenticated either way,
+so nothing legitimate can tell the three cases apart, and the response body is byte-identical.
 
 `cancelJob` takes the same argument and delegates its check to `getJob`, as it already does.
 
