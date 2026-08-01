@@ -22,7 +22,8 @@ export const envSchema = Joi.object({
         .valid(...LOG_LEVELS)
         .required(),
     LOG_PRETTY: Joi.boolean()
-        .required()
+        .optional()
+        .default(false)
         .when('NODE_ENV', {
             is: 'production',
             // oxlint-disable-next-line unicorn/no-thenable -- Joi's conditional key, not a promise.
@@ -32,7 +33,8 @@ export const envSchema = Joi.object({
             }),
         }),
     LOG_REDACT: Joi.boolean()
-        .required()
+        .optional()
+        .default(true)
         .when('NODE_ENV', {
             is: 'production',
             // oxlint-disable-next-line unicorn/no-thenable -- Joi's conditional key, not a promise.
