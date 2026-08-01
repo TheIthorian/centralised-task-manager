@@ -6,6 +6,8 @@ import { randomBytes, createHash } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { AuthCode, type AuthCodeDocument } from './schemas/auth-code.schema.js';
 import { RefreshToken, type RefreshTokenDocument } from '../auth/schemas/refresh-token.schema.js';
+import { AuthorizedClientService } from '../auth/authorized-client.service.js';
+import { OAuthClientService } from '../auth/oauth-client.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ConfigService } from '@nestjs/config';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
@@ -35,6 +37,8 @@ export class OAuthService {
         private readonly users: UsersService,
         private readonly jwt: JwtService,
         private readonly config: ConfigService,
+        private readonly authorizedClients: AuthorizedClientService,
+        private readonly oauthClients: OAuthClientService,
     ) {}
 
     /**
@@ -160,6 +164,8 @@ export class OAuthService {
 
         await this.refreshTokenModel.create({ tokenHash, userId, expiresAt, scopes, clientId });
 
+        if (clientId) await this.recordGrant({ userId, clientId, scopes });
+
         return {
             access_token: accessToken,
             id_token: idToken,
@@ -168,6 +174,29 @@ export class OAuthService {
             scope: scopes.join(' '),
             refresh_token: rawRefresh,
         };
+    }
+
+    /**
+     * Record the user's grant alongside the refresh token, so the authorized apps list is read
+     * from an explicit link rather than inferred from credentials that expire.
+     */
+    private async recordGrant({
+        userId,
+        clientId,
+        scopes,
+    }: {
+        userId: string;
+        clientId: string;
+        scopes: string[];
+    }): Promise<void> {
+        const client = await this.oauthClients.findByClientId(clientId);
+
+        await this.authorizedClients.recordAuthorization({
+            userId,
+            clientId,
+            scopes,
+            isDynamic: client?.isDynamic ?? true,
+        });
     }
 
     /** Exchange a refresh token for a new token set (rotates the refresh token). */

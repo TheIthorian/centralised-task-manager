@@ -1,48 +1,45 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { NotFoundError } from '@ctm/errors';
 import type { AuthorizedAppDto } from '@ctm/api-client';
 import { RefreshToken, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
 import { OAuthClient, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
+import { AuthorizedClient, type AuthorizedClientDocument } from './schemas/authorized-client.schema.js';
 
 @Injectable()
 export class AuthorizedAppsService {
     constructor(
         @InjectModel(RefreshToken.name) private readonly refreshTokenModel: Model<RefreshTokenDocument>,
         @InjectModel(OAuthClient.name) private readonly oauthClientModel: Model<OAuthClientDocument>,
+        @InjectModel(AuthorizedClient.name)
+        private readonly authorizedClientModel: Model<AuthorizedClientDocument>,
     ) {}
 
     /** List OAuth clients the given user has authorized. */
     async getAuthorizedApps(userId: string): Promise<AuthorizedAppDto[]> {
-        const tokens = await this.refreshTokenModel.find({
-            userId,
-            clientId: { $exists: true, $ne: null },
+        const authorizations = await this.authorizedClientModel.find({ userId }).sort({ authorizedAt: -1 });
+
+        if (authorizations.length === 0) return [];
+
+        const clients = await this.oauthClientModel.find({
+            clientId: { $in: authorizations.map((authorization) => authorization.clientId) },
         });
 
-        const latestByClient = new Map<string, RefreshTokenDocument>();
-
-        for (const token of tokens) {
-            if (!token.clientId) continue;
-
-            const existing = latestByClient.get(token.clientId);
-
-            if (!existing || token.createdAt > existing.createdAt) {
-                latestByClient.set(token.clientId, token);
-            }
-        }
-
+        const clientsById = new Map(clients.map((client) => [client.clientId, client]));
         const results: AuthorizedAppDto[] = [];
 
-        for (const [clientId, token] of latestByClient) {
-            const client = await this.oauthClientModel.findOne({ clientId });
+        for (const authorization of authorizations) {
+            const client = clientsById.get(authorization.clientId);
 
+            // A grant whose client has been deleted or TTL-reaped is not something the user can act on.
             if (!client) continue;
 
             results.push({
-                clientId,
+                clientId: authorization.clientId,
                 clientName: client.clientName,
-                scopes: token.scopes,
-                authorizedAt: token.createdAt.toISOString(),
+                scopes: authorization.scopes,
+                authorizedAt: authorization.authorizedAt.toISOString(),
                 type: 'oauth',
                 clientUri: client.clientUri,
                 tosUri: client.tosUri,
@@ -57,23 +54,28 @@ export class AuthorizedAppsService {
 
     /**
      * Revoke a user's access to an OAuth client.
-     * OAuth dynamic clients: deletes the OAuthClient + all its refresh tokens.
-     * OAuth static clients: deletes only this user's refresh tokens for that client.
+     * Dynamic clients: deletes the OAuthClient + every grant and refresh token it holds.
+     * Static clients: deletes only this user's grant and refresh tokens for that client.
      */
     async revokeAuthorizedApp({ userId, clientId }: { userId: string; clientId: string }): Promise<void> {
         const oauthClient = await this.oauthClientModel.findOne({ clientId });
+        const authorization = await this.authorizedClientModel.findOne({ userId, clientId });
 
-        if (oauthClient) {
-            if (oauthClient.isDynamic) {
-                await this.oauthClientModel.deleteOne({ clientId });
-                await this.refreshTokenModel.deleteMany({ clientId });
-            } else {
-                await this.refreshTokenModel.deleteMany({ userId, clientId });
-            }
+        if (!oauthClient && !authorization) throw new NotFoundError(`Authorized app ${clientId}`);
+
+        // The client document is the source of truth while it exists. A dynamic client can be
+        // TTL-reaped out from under a grant, and then the grant's own snapshot decides.
+        const isDynamic = oauthClient ? oauthClient.isDynamic : (authorization?.isDynamic ?? true);
+
+        if (isDynamic) {
+            await this.oauthClientModel.deleteOne({ clientId });
+            await this.authorizedClientModel.deleteMany({ clientId });
+            await this.refreshTokenModel.deleteMany({ clientId });
 
             return;
         }
 
-        throw new NotFoundException(`Authorized app ${clientId} not found`);
+        await this.authorizedClientModel.deleteOne({ userId, clientId });
+        await this.refreshTokenModel.deleteMany({ userId, clientId });
     }
 }

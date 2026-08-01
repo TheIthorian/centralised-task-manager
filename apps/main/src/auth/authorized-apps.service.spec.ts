@@ -2,15 +2,22 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { MongooseModule } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { NotFoundError } from '@ctm/errors';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
-import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema.js';
-import { OAuthClient, OAuthClientSchema } from './schemas/oauth-client.schema.js';
+import { RefreshToken, RefreshTokenSchema, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
+import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
+import {
+    AuthorizedClient,
+    AuthorizedClientSchema,
+    type AuthorizedClientDocument,
+} from './schemas/authorized-client.schema.js';
 
 describe('AuthorizedAppsService', () => {
     let module: TestingModule;
     let service: AuthorizedAppsService;
-    let refreshTokenModel: Model<typeof RefreshToken>;
-    let oauthClientModel: Model<typeof OAuthClient>;
+    let refreshTokenModel: Model<RefreshTokenDocument>;
+    let oauthClientModel: Model<OAuthClientDocument>;
+    let authorizedClientModel: Model<AuthorizedClientDocument>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -19,6 +26,7 @@ describe('AuthorizedAppsService', () => {
                 MongooseModule.forFeature([
                     { name: RefreshToken.name, schema: RefreshTokenSchema },
                     { name: OAuthClient.name, schema: OAuthClientSchema },
+                    { name: AuthorizedClient.name, schema: AuthorizedClientSchema },
                 ]),
             ],
             providers: [AuthorizedAppsService],
@@ -27,13 +35,14 @@ describe('AuthorizedAppsService', () => {
         service = module.get(AuthorizedAppsService);
         refreshTokenModel = module.get(`${RefreshToken.name}Model`);
         oauthClientModel = module.get(`${OAuthClient.name}Model`);
+        authorizedClientModel = module.get(`${AuthorizedClient.name}Model`);
     });
 
     afterAll(async () => {
         await module.close();
     });
 
-    it('getAuthorizedApps returns OAuth apps for user with active tokens', async () => {
+    it('getAuthorizedApps returns the apps a user has granted', async () => {
         const userId = new Types.ObjectId().toHexString();
         const clientId = `client_${Date.now()}`;
 
@@ -45,23 +54,22 @@ describe('AuthorizedAppsService', () => {
             isDynamic: true,
         });
 
-        await refreshTokenModel.create({
-            tokenHash: `hash_${Date.now()}`,
+        await authorizedClientModel.create({
             userId,
             clientId,
             scopes: ['openid', 'tasks:read'],
-            expiresAt: new Date(Date.now() + 86400_000),
+            isDynamic: true,
+            authorizedAt: new Date(),
         });
 
         const result = await service.getAuthorizedApps(userId);
-        const oauthResult = result.filter((a) => a.type === 'oauth');
 
-        expect(oauthResult).toHaveLength(1);
-        expect(oauthResult[0]!.clientId).toBe(clientId);
-        expect(oauthResult[0]!.clientName).toBe('Test App');
-        expect(oauthResult[0]!.scopes).toEqual(['openid', 'tasks:read']);
-        expect(oauthResult[0]!.authorizedAt).toBeDefined();
-        expect(oauthResult[0]!.type).toBe('oauth');
+        expect(result).toHaveLength(1);
+        expect(result[0]!.clientId).toBe(clientId);
+        expect(result[0]!.clientName).toBe('Test App');
+        expect(result[0]!.scopes).toEqual(['openid', 'tasks:read']);
+        expect(result[0]!.authorizedAt).toBeDefined();
+        expect(result[0]!.type).toBe('oauth');
     });
 
     it('getAuthorizedApps returns declared client metadata but never the logo', async () => {
@@ -82,12 +90,12 @@ describe('AuthorizedAppsService', () => {
             softwareId: 'example-client',
         });
 
-        await refreshTokenModel.create({
-            tokenHash: `hash_meta_${Date.now()}`,
+        await authorizedClientModel.create({
             userId,
             clientId,
             scopes: ['openid'],
-            expiresAt: new Date(Date.now() + 86400_000),
+            isDynamic: true,
+            authorizedAt: new Date(),
         });
 
         const [app] = await service.getAuthorizedApps(userId);
@@ -100,7 +108,7 @@ describe('AuthorizedAppsService', () => {
         expect(JSON.stringify(app)).not.toContain('logo.png');
     });
 
-    it('getAuthorizedApps ignores OAuth tokens with no clientId', async () => {
+    it('getAuthorizedApps ignores refresh tokens with no clientId', async () => {
         const userId = new Types.ObjectId().toHexString();
 
         await refreshTokenModel.create({
@@ -112,10 +120,10 @@ describe('AuthorizedAppsService', () => {
 
         const result = await service.getAuthorizedApps(userId);
 
-        expect(result.filter((a) => a.type === 'oauth')).toHaveLength(0);
+        expect(result).toHaveLength(0);
     });
 
-    it('getAuthorizedApps deduplicates multiple tokens for same client', async () => {
+    it('getAuthorizedApps returns one entry per client however many tokens exist', async () => {
         const userId = new Types.ObjectId().toHexString();
         const clientId = `client_dedup_${Date.now()}`;
 
@@ -127,28 +135,77 @@ describe('AuthorizedAppsService', () => {
             isDynamic: true,
         });
 
-        await refreshTokenModel.create({
-            tokenHash: `hash_a_${Date.now()}`,
+        await authorizedClientModel.create({
             userId,
             clientId,
             scopes: ['openid'],
-            expiresAt: new Date(Date.now() + 86400_000),
+            isDynamic: true,
+            authorizedAt: new Date(),
         });
 
-        await refreshTokenModel.create({
-            tokenHash: `hash_b_${Date.now() + 1}`,
+        for (const suffix of ['a', 'b']) {
+            await refreshTokenModel.create({
+                tokenHash: `hash_${suffix}_${Date.now()}`,
+                userId,
+                clientId,
+                scopes: ['openid'],
+                expiresAt: new Date(Date.now() + 86400_000),
+            });
+        }
+
+        const result = await service.getAuthorizedApps(userId);
+
+        expect(result.filter((app) => app.clientId === clientId)).toHaveLength(1);
+    });
+
+    it('getAuthorizedApps lists a grant that has no refresh token left', async () => {
+        const userId = new Types.ObjectId().toHexString();
+        const clientId = `client_notoken_${Date.now()}`;
+
+        await oauthClientModel.create({
+            clientId,
+            clientSecretHash: 'hash',
+            clientName: 'Token-less App',
+            redirectUris: ['http://localhost'],
+            isDynamic: true,
+        });
+
+        await authorizedClientModel.create({
             userId,
             clientId,
             scopes: ['openid'],
-            expiresAt: new Date(Date.now() + 86400_000),
+            isDynamic: true,
+            authorizedAt: new Date(),
         });
 
         const result = await service.getAuthorizedApps(userId);
 
-        expect(result.filter((a) => a.clientId === clientId)).toHaveLength(1);
+        expect(result.map((app) => app.clientId)).toEqual([clientId]);
     });
 
-    it('revokeAuthorizedApp dynamic: deletes client and all refresh tokens', async () => {
+    it('getAuthorizedApps skips grants whose client no longer exists', async () => {
+        const userId = new Types.ObjectId().toHexString();
+
+        await authorizedClientModel.create({
+            userId,
+            clientId: `client_reaped_${Date.now()}`,
+            scopes: ['openid'],
+            isDynamic: true,
+            authorizedAt: new Date(),
+        });
+
+        const result = await service.getAuthorizedApps(userId);
+
+        expect(result).toHaveLength(0);
+    });
+
+    it('getAuthorizedApps returns nothing for a user with no grants', async () => {
+        const result = await service.getAuthorizedApps(new Types.ObjectId().toHexString());
+
+        expect(result).toHaveLength(0);
+    });
+
+    it('revokeAuthorizedApp dynamic: deletes client, all grants and all refresh tokens', async () => {
         const userId1 = new Types.ObjectId().toHexString();
         const userId2 = new Types.ObjectId().toHexString();
         const clientId = `client_dyn_${Date.now()}`;
@@ -161,32 +218,32 @@ describe('AuthorizedAppsService', () => {
             isDynamic: true,
         });
 
-        await refreshTokenModel.create({
-            tokenHash: `hash_u1_${Date.now()}`,
-            userId: userId1,
-            clientId,
-            scopes: ['openid'],
-            expiresAt: new Date(Date.now() + 86400_000),
-        });
+        for (const userId of [userId1, userId2]) {
+            await authorizedClientModel.create({
+                userId,
+                clientId,
+                scopes: ['openid'],
+                isDynamic: true,
+                authorizedAt: new Date(),
+            });
 
-        await refreshTokenModel.create({
-            tokenHash: `hash_u2_${Date.now()}`,
-            userId: userId2,
-            clientId,
-            scopes: ['openid'],
-            expiresAt: new Date(Date.now() + 86400_000),
-        });
+            await refreshTokenModel.create({
+                tokenHash: `hash_${userId}_${Date.now()}`,
+                userId,
+                clientId,
+                scopes: ['openid'],
+                expiresAt: new Date(Date.now() + 86400_000),
+            });
+        }
 
         await service.revokeAuthorizedApp({ userId: userId1, clientId });
 
-        const clientAfter = await oauthClientModel.findOne({ clientId });
-        const tokensAfter = await refreshTokenModel.find({ clientId });
-
-        expect(clientAfter).toBeNull();
-        expect(tokensAfter).toHaveLength(0);
+        expect(await oauthClientModel.findOne({ clientId })).toBeNull();
+        expect(await authorizedClientModel.find({ clientId })).toHaveLength(0);
+        expect(await refreshTokenModel.find({ clientId })).toHaveLength(0);
     });
 
-    it('revokeAuthorizedApp static: deletes only the requesting user token', async () => {
+    it('revokeAuthorizedApp static: deletes only the requesting user grant and tokens', async () => {
         const userId1 = new Types.ObjectId().toHexString();
         const userId2 = new Types.ObjectId().toHexString();
         const clientId = `client_static_${Date.now()}`;
@@ -199,36 +256,53 @@ describe('AuthorizedAppsService', () => {
             isDynamic: false,
         });
 
-        await refreshTokenModel.create({
-            tokenHash: `hash_s1_${Date.now()}`,
-            userId: userId1,
-            clientId,
-            scopes: ['openid'],
-            expiresAt: new Date(Date.now() + 86400_000),
-        });
+        for (const userId of [userId1, userId2]) {
+            await authorizedClientModel.create({
+                userId,
+                clientId,
+                scopes: ['openid'],
+                isDynamic: false,
+                authorizedAt: new Date(),
+            });
 
-        await refreshTokenModel.create({
-            tokenHash: `hash_s2_${Date.now()}`,
-            userId: userId2,
-            clientId,
-            scopes: ['openid'],
-            expiresAt: new Date(Date.now() + 86400_000),
-        });
+            await refreshTokenModel.create({
+                tokenHash: `hash_s_${userId}_${Date.now()}`,
+                userId,
+                clientId,
+                scopes: ['openid'],
+                expiresAt: new Date(Date.now() + 86400_000),
+            });
+        }
 
         await service.revokeAuthorizedApp({ userId: userId1, clientId });
 
-        const clientAfter = await oauthClientModel.findOne({ clientId });
-        const user1Tokens = await refreshTokenModel.find({ userId: userId1, clientId });
-        const user2Tokens = await refreshTokenModel.find({ userId: userId2, clientId });
-
-        expect(clientAfter).not.toBeNull();
-        expect(user1Tokens).toHaveLength(0);
-        expect(user2Tokens).toHaveLength(1);
+        expect(await oauthClientModel.findOne({ clientId })).not.toBeNull();
+        expect(await authorizedClientModel.find({ userId: userId1, clientId })).toHaveLength(0);
+        expect(await refreshTokenModel.find({ userId: userId1, clientId })).toHaveLength(0);
+        expect(await authorizedClientModel.find({ userId: userId2, clientId })).toHaveLength(1);
+        expect(await refreshTokenModel.find({ userId: userId2, clientId })).toHaveLength(1);
     });
 
-    it('revokeAuthorizedApp throws NotFoundException for unknown client', async () => {
+    it('revokeAuthorizedApp falls back to the grant when the client was reaped', async () => {
+        const userId = new Types.ObjectId().toHexString();
+        const clientId = `client_orphan_${Date.now()}`;
+
+        await authorizedClientModel.create({
+            userId,
+            clientId,
+            scopes: ['openid'],
+            isDynamic: true,
+            authorizedAt: new Date(),
+        });
+
+        await service.revokeAuthorizedApp({ userId, clientId });
+
+        expect(await authorizedClientModel.find({ userId, clientId })).toHaveLength(0);
+    });
+
+    it('revokeAuthorizedApp throws NotFoundError for unknown client', async () => {
         await expect(service.revokeAuthorizedApp({ userId: 'uid', clientId: 'client_nonexistent' })).rejects.toThrow(
-            'Authorized app client_nonexistent not found',
+            NotFoundError,
         );
     });
 });
