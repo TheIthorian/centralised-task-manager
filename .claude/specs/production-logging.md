@@ -38,23 +38,24 @@ dependency from the logger onto the Nest-aware package.
 
 ## Configuration
 
-Three variables, read by `readLoggerConfig` in `@ctm/logger`: `LOG_LEVEL`, `LOG_PRETTY` and
-`LOG_REDACT`. Nothing is inferred from `NODE_ENV`; `LOG_PRETTY` replaces the previous
-behaviour of selecting pino-pretty whenever `NODE_ENV` was not production.
+`@ctm/logger` and `@ctm/request-logger` never read `process.env`. `createLogger` takes
+`{ context, config }` and `PinoLoggerService` takes `{ name, config }`; the packages own the
+`LoggerConfig` shape and the `LOG_LEVELS` set, nothing else.
 
-`LOG_LEVEL` is required. The two switches default to `LOGGER_CONFIG_DEFAULTS`
-(`pretty: false`, `redact: true`), the safe end of each. A value that is present but
-unparseable is a `ConfigurationError` rather than a silent fall back to the default.
+Each app owns its environment. `loadEnv` in `apps/<app>/src/config/load-env.ts` validates
+`process.env` against that app's Joi schema exactly once, memoises the coerced result, and hands
+the same object to both `ConfigModule` (via `load`, with `ignoreEnvVars`) and the logger (via
+`toLoggerConfig`). Bootstrap calls it before `NestFactory.create`, so validation happens once, up
+front, rather than once per subsystem that happens to read a variable.
 
-`readLoggerConfig` runs before Nest validates anything, since bootstrap builds a logger
-first, so it and the apps' Joi schemas have to agree exactly. A rule stricter in the logger
-kills the process before the schema is consulted, making the schema's version unreachable;
-the defaults are therefore imported from `@ctm/logger` rather than restated in Joi.
+`LOG_LEVEL` is required. `LOG_PRETTY` and `LOG_REDACT` default to `false` and `true` in the Joi
+schema, which is the only place defaults are defined. `toLoggerConfig` deliberately adds none: it
+throws if handed anything that has not been through the schema, so an uncoerced `process.env`
+cannot masquerade as config.
 
-`LOG_REDACT=false` exists so keys can be eyeballed locally. Both the logger and each app's
-Joi env schema refuse to boot when `NODE_ENV=production` is combined with `LOG_PRETTY=true`
-(pino-pretty is absent from production images) or `LOG_REDACT=false` (it would write live
-credentials to the log collector).
+`LOG_REDACT=false` exists so keys can be eyeballed locally. Each app's schema refuses to boot when
+`NODE_ENV=production` is combined with `LOG_PRETTY=true` (pino-pretty is absent from production
+images) or `LOG_REDACT=false` (it would write live credentials to the log collector).
 
 ## Redaction
 
@@ -80,6 +81,7 @@ Serializers: pino's `err`, plus `req` / `res` reduced to method, url and status.
 - `apps/mcp` validates `LOG_LEVEL` like `apps/main` does.
 - The Nest `Logger` users move to `@ctm/logger` with object-first payloads.
 - `pino-pretty` is selected only by `LOG_PRETTY`, never by `NODE_ENV`.
+- The packages take config as an argument; the apps read and validate the environment.
 
 ## Docs
 

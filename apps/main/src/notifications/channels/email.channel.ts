@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../../logging/app-logger.js';
 import type { SendNotificationDto } from '../dto/send-notification.dto.js';
 
 @Injectable()
 export class EmailChannel {
-    private readonly logger = createLogger(EmailChannel.name);
+    private readonly logger = appLogger(EmailChannel.name);
 
     /** Mock email channel — logs only. Replace with real transport in production. */
     async send({ userId, type }: SendNotificationDto): Promise<void> {

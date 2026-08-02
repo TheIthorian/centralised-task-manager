@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { Cron } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -9,7 +9,7 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 
 @Injectable()
 export class RemindersService {
-    private readonly logger = createLogger(RemindersService.name);
+    private readonly logger = appLogger(RemindersService.name);
 
     constructor(
         @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,

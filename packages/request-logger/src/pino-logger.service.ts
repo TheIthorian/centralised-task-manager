@@ -1,5 +1,5 @@
 import type { LoggerService } from '@nestjs/common';
-import { createLogger, type Logger } from '@ctm/logger';
+import { createLogger, type Logger, type LoggerConfig } from '@ctm/logger';
 
 /**
  * Adapts the shared Pino logger to Nest's LoggerService so framework logs
@@ -9,8 +9,8 @@ import { createLogger, type Logger } from '@ctm/logger';
 export class PinoLoggerService implements LoggerService {
     private readonly logger: Logger;
 
-    constructor(name = 'main') {
-        this.logger = createLogger(name);
+    constructor({ name, config }: { name: string; config: LoggerConfig }) {
+        this.logger = createLogger({ context: name, config });
     }
 
     /** Log at info level. */

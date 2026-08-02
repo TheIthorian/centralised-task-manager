@@ -4,9 +4,11 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import multipart from '@fastify/multipart';
 import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
-import { createLogger, installProcessErrorHandlers } from '@ctm/logger';
+import { installProcessErrorHandlers } from '@ctm/logger';
 import { PinoLoggerService } from '@ctm/request-logger';
 import { AppModule } from './app.module.js';
+import { loadEnv, toLoggerConfig } from './config/load-env.js';
+import { rootLogger } from './logging/app-logger.js';
 
 interface CorsOptions {
     origin: true | string[];
@@ -27,12 +29,16 @@ export function buildCorsOptions(env: NodeJS.ProcessEnv): CorsOptions {
 
 /** Create and configure the Nest Fastify application. */
 export async function createApp(): Promise<NestFastifyApplication> {
-    installProcessErrorHandlers({ logger: createLogger('main') });
+    // Validate before anything else: a bad environment should be one clear error, not a stack
+    // trace from whichever subsystem happened to read it first. AppModule reuses this result.
+    const env = loadEnv();
+
+    installProcessErrorHandlers({ logger: rootLogger() });
 
     // trustProxy: the service always runs behind a proxy in production, so without it every
     // request reports the proxy's address and IP-keyed rate limits bucket all clients together.
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ trustProxy: true }), {
-        logger: new PinoLoggerService(),
+        logger: new PinoLoggerService({ name: 'main', config: toLoggerConfig(env) }),
     });
 
     await app.register(compress, {

@@ -8,14 +8,26 @@ const TEST_CONFIG: LoggerConfig = { level: 'trace', pretty: false, redact: true 
 
 describe('createLogger', () => {
     it('returns a logger with the given context name', () => {
-        const logger = createLogger('test-context');
+        const logger = createLogger({ context: 'test-context', config: TEST_CONFIG });
+
         expect(logger.bindings()).toMatchObject({ name: 'test-context' });
     });
 
     it('returns a child logger when child() is called', () => {
-        const logger = createLogger('parent');
+        const logger = createLogger({ context: 'parent', config: TEST_CONFIG });
         const child = logger.child({ requestId: 'abc' });
+
         expect(child.bindings()).toMatchObject({ name: 'parent', requestId: 'abc' });
+    });
+
+    it('takes its level from the config it was handed, not the environment', () => {
+        process.env['LOG_LEVEL'] = 'trace';
+
+        const logger = createLogger({ context: 'explicit', config: { ...TEST_CONFIG, level: 'warn' } });
+
+        expect(logger.level).toBe('warn');
+
+        delete process.env['LOG_LEVEL'];
     });
 
     it('adds the request context to every line logged inside a request', () => {

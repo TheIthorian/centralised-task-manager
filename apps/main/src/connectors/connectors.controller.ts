@@ -15,7 +15,7 @@ import type { FastifyReply } from 'fastify';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ConnectorName, TaskConnectorName, OAuthConnectorRegistry, ExternalTaskSourceRegistry } from '@ctm/connectors';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import type { NotionTaskSource } from '@ctm/connectors';
 import {
     ConnectorAuthUrlDto,
@@ -42,7 +42,7 @@ interface AuthRequest {
 @ApiTags('Connectors')
 @Controller('connectors')
 export class ConnectorsController {
-    private readonly logger = createLogger(ConnectorsController.name);
+    private readonly logger = appLogger(ConnectorsController.name);
 
     constructor(
         private readonly connectors: ConnectorsService,

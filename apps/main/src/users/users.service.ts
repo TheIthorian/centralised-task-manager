@@ -5,13 +5,13 @@ import * as bcrypt from 'bcrypt';
 import { User, type UserDocument, type NotificationPreferences } from './schemas/user.schema.js';
 import { ConnectorConfig, type ConnectorConfigDocument } from '../connectors/schemas/connector-config.schema.js';
 import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { UpdatePreferencesDto } from '../notifications/dto/update-preferences.dto.js';
 
 @Injectable()
 export class UsersService {
-    private readonly logger = createLogger(UsersService.name);
+    private readonly logger = appLogger(UsersService.name);
 
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,

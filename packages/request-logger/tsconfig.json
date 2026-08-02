@@ -1,5 +1,5 @@
 {
-    "extends": "@ctm/tsconfig/base.json",
+    "extends": "@ctm/tsconfig/nestjs.json",
     "compilerOptions": {
         "outDir": "dist",
         "rootDir": "src"

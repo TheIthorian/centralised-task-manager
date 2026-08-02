@@ -1,4 +1,4 @@
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
@@ -10,7 +10,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     @WebSocketServer()
     private readonly server!: Server;
 
-    private readonly logger = createLogger(NotificationsGateway.name);
+    private readonly logger = appLogger(NotificationsGateway.name);
 
     /** userId → set of connected socket IDs (one user may have multiple tabs). */
     private readonly userSockets = new Map<string, Set<string>>();
