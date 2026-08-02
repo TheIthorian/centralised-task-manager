@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { QuotaExceededError } from '@ctm/errors';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -10,6 +9,7 @@ import type { UpdateTaskDto } from './dto/update-task.dto.js';
 import type { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
 import type { SetTaskStatusDto } from './dto/set-task-status.dto.js';
 import type { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
+import { MAX_TASKS_PER_USER } from '../config/limits.js';
 
 /** Source name reserved for tasks stored only in CTM (no external connector). */
 const LOCAL_SOURCE = 'local';
@@ -23,17 +23,13 @@ export type UpsertFromRemoteResult = {
 
 @Injectable()
 export class TasksService {
-    constructor(
-        @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
-        private readonly config: ConfigService,
-    ) {}
+    constructor(@InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>) {}
 
     /** How many more tasks this user may store before hitting the per-account cap. */
     private async remainingTaskCapacity(userId: string): Promise<number> {
-        const max = this.config.getOrThrow<number>('MAX_TASKS_PER_USER');
         const count = await this.taskModel.countDocuments({ userId: new Types.ObjectId(userId) });
 
-        return Math.max(0, max - count);
+        return Math.max(0, MAX_TASKS_PER_USER - count);
     }
 
     /** List tasks for a user with optional filters. */
@@ -195,9 +191,9 @@ export class TasksService {
      *  When source is 'local', skip the connector and store the task directly in CTM. */
     async create({ userId, dto }: { userId: string; dto: CreateTaskDto }): Promise<TaskDocument> {
         if ((await this.remainingTaskCapacity(userId)) === 0) {
-            const max = this.config.getOrThrow<number>('MAX_TASKS_PER_USER');
-
-            throw new QuotaExceededError(`Task limit of ${max} reached. Delete some tasks before creating more.`);
+            throw new QuotaExceededError(
+                `Task limit of ${MAX_TASKS_PER_USER} reached. Delete some tasks before creating more.`,
+            );
         }
 
         const { due, deadlineDate } = this.parseDueFields(dto);

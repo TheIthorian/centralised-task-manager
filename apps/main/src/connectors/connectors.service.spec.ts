@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
 import { QuotaExceededError } from '@ctm/errors';
+import { MAX_CONNECTIONS_PER_CONNECTOR } from '../config/limits.js';
 import { Test } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
@@ -42,15 +43,8 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
     };
     const mockRegistry = { get: vi.fn().mockReturnValue(mockConnector) };
     const mockJwt = { sign: vi.fn(), verify: vi.fn() };
-    const mockConfig = { getOrThrow: vi.fn(() => 5) };
 
-    const service = new ConnectorsService(
-        mockModel as any,
-        mockRegistry as any,
-        mockEncryption as any,
-        mockJwt as any,
-        mockConfig as any,
-    );
+    const service = new ConnectorsService(mockModel as any, mockRegistry as any, mockEncryption as any, mockJwt as any);
 
     return { service, mockModel, mockConnector, mockEncryption };
 }
@@ -170,7 +164,7 @@ describe('ConnectorsService connections (real DB)', () => {
     it('caps the number of accounts per connector but still allows re-auth', async () => {
         const userId = new Types.ObjectId().toString();
         const source = ConnectorName.GoogleTasks;
-        const max = Number(process.env['MAX_CONNECTIONS_PER_CONNECTOR']);
+        const max = MAX_CONNECTIONS_PER_CONNECTOR;
         const stamp = Date.now();
 
         for (let i = 0; i < max; i++) {

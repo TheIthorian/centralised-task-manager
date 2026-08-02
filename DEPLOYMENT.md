@@ -59,8 +59,9 @@ separate worker service (`apps/sync` is an unimplemented stub).
   deployments must set both variables on Railway BEFORE merging/deploying this
   change, not after.
 - The rate-limit variables (`RATE_LIMIT_*`, `LOGIN_MAX_FAILED_ATTEMPTS`,
-  `LOGIN_LOCKOUT_MINUTES`, `MAX_CONNECTIONS_PER_CONNECTOR`, `MAX_TASKS_PER_USER`)
-  default in `env.schema.ts`; set them on Railway only to override.
+  `LOGIN_LOCKOUT_MINUTES`) default in `env.schema.ts`; set them on Railway only to
+  override. The per-account caps are constants in `apps/main/src/config/limits.ts`
+  and are changed by editing the code, not the environment.
 - Rate-limit counters are held **in process**. Keep `main` on a single replica, or the
   effective limit multiplies by the replica count.
 - `REDIRECT_BASE_URL` is `https://ctm-web.pages.dev/api` — the `/api` suffix is

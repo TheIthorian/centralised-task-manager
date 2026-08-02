@@ -1,14 +1,18 @@
-import { ConfigService } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import { Model, Types } from 'mongoose';
 import { QuotaExceededError } from '@ctm/errors';
 import { TaskConnectorName } from '@ctm/connectors';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { TasksService } from './tasks.service.js';
 import { Task, TaskSchema, type TaskDocument } from './schemas/task.schema.js';
+import { MAX_TASKS_PER_USER } from '../config/limits.js';
 
-const MAX_TASKS = 3;
+// The real cap is far too large to fill from a test, so the constant module is stubbed.
+// vi.mock is hoisted above every const, so the value is inlined rather than referenced.
+vi.mock('../config/limits.js', () => ({ MAX_TASKS_PER_USER: 3, MAX_CONNECTIONS_PER_CONNECTOR: 5 }));
+
+const MAX_TASKS = MAX_TASKS_PER_USER;
 
 describe('TasksService task cap', () => {
     let service: TasksService;
@@ -33,7 +37,7 @@ describe('TasksService task cap', () => {
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
                 MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
             ],
-            providers: [TasksService, { provide: ConfigService, useValue: { getOrThrow: (): number => MAX_TASKS } }],
+            providers: [TasksService],
         }).compile();
 
         service = moduleRef.get(TasksService);
