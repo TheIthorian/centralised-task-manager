@@ -2,6 +2,7 @@ import type { Command } from 'commander';
 import { input, password } from '@inquirer/prompts';
 import { CtmApiClient } from '@ctm/api-client';
 import { writeConfig } from '../auth.js';
+import { bakedBaseUrl } from '../baked-config.js';
 import { print } from '../output.js';
 import { registerClient, performOAuthLogin } from '../oauth.js';
 
@@ -10,7 +11,7 @@ export function registerLoginCommand(program: Command): void {
     program
         .command('login')
         .description('Log in and store credentials')
-        .option('--base-url <url>', 'API base URL', process.env['CTM_BASE_URL'])
+        .option('--base-url <url>', 'API base URL', process.env['CTM_BASE_URL'] ?? bakedBaseUrl() ?? undefined)
         .option('--password', 'Use password login instead of browser OAuth')
         .action(async (opts: { baseUrl?: string; password?: boolean }) => {
             if (!opts.baseUrl) {

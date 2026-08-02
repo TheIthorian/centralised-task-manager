@@ -10,6 +10,11 @@
             "dependsOn": ["^build"],
             "outputs": ["dist/**", "build/**", ".docusaurus/**"]
         },
+        "bundle": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist/**"],
+            "env": ["CTM_DEFAULT_BASE_URL"]
+        },
         "@ctm/docs#build": {
             "dependsOn": ["^build", "@ctm/main#generate-openapi"],
             "outputs": ["build/**", ".docusaurus/**"],
