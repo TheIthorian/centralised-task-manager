@@ -48,7 +48,6 @@ describe('AuthorizedAppsService', () => {
 
         await oauthClientModel.create({
             clientId,
-            clientSecretHash: 'hash',
             clientName: 'Test App',
             redirectUris: ['http://localhost'],
             isDynamic: true,
@@ -78,7 +77,6 @@ describe('AuthorizedAppsService', () => {
 
         await oauthClientModel.create({
             clientId,
-            clientSecretHash: 'hash',
             clientName: 'Metadata App',
             redirectUris: ['https://example.com/cb'],
             isDynamic: true,
@@ -129,7 +127,6 @@ describe('AuthorizedAppsService', () => {
 
         await oauthClientModel.create({
             clientId,
-            clientSecretHash: 'hash',
             clientName: 'Dedup App',
             redirectUris: ['http://localhost'],
             isDynamic: true,
@@ -212,7 +209,6 @@ describe('AuthorizedAppsService', () => {
 
         await oauthClientModel.create({
             clientId,
-            clientSecretHash: 'hash',
             clientName: 'Dynamic App',
             redirectUris: ['http://localhost'],
             isDynamic: true,
@@ -250,7 +246,6 @@ describe('AuthorizedAppsService', () => {
 
         await oauthClientModel.create({
             clientId,
-            clientSecretHash: 'hash',
             clientName: 'Static App',
             redirectUris: ['http://localhost'],
             isDynamic: false,

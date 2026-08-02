@@ -9,9 +9,6 @@ export class OAuthClient {
     @Prop({ type: String, required: true, unique: true })
     clientId!: string;
 
-    @Prop({ type: String, required: true })
-    clientSecretHash!: string;
-
     @Prop({ type: String, default: '' })
     clientName!: string;
 

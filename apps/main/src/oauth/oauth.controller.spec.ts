@@ -335,6 +335,10 @@ describe('OAuth endpoints', () => {
             const client = JSON.parse(regRes.body) as { client_id: string };
             expect(client.client_id).toBeTruthy();
 
+            // The exchange below carries no client credential, only PKCE: the whole point of a
+            // public client. Registration must therefore not have issued one.
+            expect(client).not.toHaveProperty('client_secret');
+
             const verifier = makeCodeVerifier();
             const challenge = makeCodeChallenge(verifier);
             const redirectUri = 'http://127.0.0.1:54321/callback';

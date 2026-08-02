@@ -52,8 +52,28 @@ describe('Well-known endpoints', () => {
         expect(res.statusCode).toBe(201);
         const body = JSON.parse(res.body);
         expect(body.client_id).toMatch(/^client_/);
-        expect(body.client_secret).toBeTruthy();
         expect(body.grant_types).toContain('authorization_code');
+    });
+
+    it('a registered client authenticates the way discovery advertises', async () => {
+        const registerRes = await app.inject({
+            method: 'POST',
+            url: '/.well-known/oauth-client',
+            payload: { client_name: 'Public Client', redirect_uris: ['http://127.0.0.1:6274/oauth/callback'] },
+        });
+
+        const client = JSON.parse(registerRes.body);
+
+        expect(client.token_endpoint_auth_method).toBe('none');
+        expect(client).not.toHaveProperty('client_secret');
+
+        for (const url of ['/.well-known/openid-configuration', '/.well-known/oauth-authorization-server']) {
+            const res = await app.inject({ method: 'GET', url });
+
+            expect(JSON.parse(res.body).token_endpoint_auth_methods_supported).toContain(
+                client.token_endpoint_auth_method,
+            );
+        }
     });
 
     it('GET /.well-known/jwks.json returns a key set with RS256 key', async () => {

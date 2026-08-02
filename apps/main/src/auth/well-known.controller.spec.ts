@@ -18,7 +18,7 @@ describe('WellKnownController', () => {
         await app.close();
     });
 
-    it('POST /.well-known/oauth-client registers a client and returns credentials', async () => {
+    it('POST /.well-known/oauth-client registers a public client', async () => {
         const res = await app.inject({
             method: 'POST',
             url: '/.well-known/oauth-client',
@@ -32,7 +32,8 @@ describe('WellKnownController', () => {
         const body = JSON.parse(res.body);
 
         expect(body.client_id).toMatch(/^client_[0-9a-f]{32}$/);
-        expect(body.client_secret).toMatch(/^[0-9a-f]{64}$/);
+        expect(body.token_endpoint_auth_method).toBe('none');
+        expect(body).not.toHaveProperty('client_secret');
         expect(body.redirect_uris).toEqual(['https://example.com/callback']);
         expect(body.grant_types).toContain('authorization_code');
         expect(body.response_types).toContain('code');
@@ -91,7 +92,11 @@ describe('WellKnownController', () => {
         const body = JSON.parse(res.body);
 
         expect(body.client_name).toBe('Metadata Client');
-        expect(body.token_endpoint_auth_method).toBeUndefined();
+        expect(body.software_version).toBeUndefined();
+        expect(body.jwks_uri).toBeUndefined();
+        // Unlike the two above, this one is a registered property of the client, so the server
+        // answers with the value it assigned rather than dropping the field.
+        expect(body.token_endpoint_auth_method).toBe('none');
     });
 
     it('POST /.well-known/oauth-client stores and echoes display metadata', async () => {
@@ -197,8 +202,8 @@ describe('WellKnownController', () => {
         expect(res.statusCode).toBe(201);
     });
 
-    it('each registration produces a unique client_id and client_secret', async () => {
-        const makeClient = (): Promise<{ client_id: string; client_secret: string }> =>
+    it('each registration produces a unique client_id', async () => {
+        const makeClient = (): Promise<{ client_id: string }> =>
             app
                 .inject({
                     method: 'POST',
@@ -210,6 +215,23 @@ describe('WellKnownController', () => {
         const [a, b] = await Promise.all([makeClient(), makeClient()]);
 
         expect(a.client_id).not.toBe(b.client_id);
-        expect(a.client_secret).not.toBe(b.client_secret);
+    });
+
+    it('POST /.well-known/oauth-client ignores a requested confidential auth method', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/.well-known/oauth-client',
+            payload: {
+                client_name: 'Confidential Hopeful',
+                redirect_uris: ['https://example.com/cb'],
+                token_endpoint_auth_method: 'client_secret_basic',
+            },
+        });
+
+        expect(res.statusCode).toBe(201);
+        const body = JSON.parse(res.body);
+
+        expect(body.token_endpoint_auth_method).toBe('none');
+        expect(body).not.toHaveProperty('client_secret');
     });
 });
