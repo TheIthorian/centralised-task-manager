@@ -16,8 +16,8 @@ There are two windows, and both must have budget left for a request to be served
 
 | Window    | Setting                         | Default |
 | --------- | ------------------------------- | ------- |
-| Burst     | `RATE_LIMIT_BURST_PER_MINUTE`   | 60      |
-| Sustained | `RATE_LIMIT_SUSTAINED_PER_HOUR` | 1000    |
+| Burst     | `RATE_LIMIT_BURST_PER_MINUTE`   | 100     |
+| Sustained | `RATE_LIMIT_SUSTAINED_PER_HOUR` | 2000    |
 
 One budget covers your whole account: the web app, the CLI, MCP and direct API calls all
 draw on it, and extra API tokens do not buy more.
@@ -25,8 +25,8 @@ draw on it, and extra API tokens do not buy more.
 ## Per-client fence
 
 Under the account ceiling, each app you have authorised gets its own smaller allowance
-(`RATE_LIMIT_CLIENT_BURST_PER_MINUTE`, default 40, and `RATE_LIMIT_CLIENT_SUSTAINED_PER_HOUR`,
-default 700). This is not extra quota — the account limits still apply on top. It exists so
+(`RATE_LIMIT_CLIENT_BURST_PER_MINUTE`, default 60, and `RATE_LIMIT_CLIENT_SUSTAINED_PER_HOUR`,
+default 1000). This is not extra quota — the account limits still apply on top. It exists so
 a busy script cannot spend your whole budget and lock your browser session out; the noisy
 client gets the `429` and everything else keeps working.
 
@@ -58,13 +58,13 @@ Every response carries the state of the burst window, and the sustained window i
 alongside it with a `-sustained` suffix:
 
 ```http
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 58
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 98
 X-RateLimit-Reset: 41
-X-RateLimit-Limit-sustained: 1000
-X-RateLimit-Remaining-sustained: 934
-X-RateLimit-Limit-client: 40
-X-RateLimit-Remaining-client: 38
+X-RateLimit-Limit-sustained: 2000
+X-RateLimit-Remaining-sustained: 1934
+X-RateLimit-Limit-client: 60
+X-RateLimit-Remaining-client: 58
 ```
 
 The `-client` pair reports the calling app's own allowance.
@@ -98,10 +98,10 @@ try {
 
 ## Account caps
 
-| Cap                         | Setting                         | Default |
-| --------------------------- | ------------------------------- | ------- |
-| Accounts per connector type | `MAX_CONNECTIONS_PER_CONNECTOR` | 5       |
-| Tasks stored                | `MAX_TASKS_PER_USER`            | 10000   |
+| Cap                         | Limit |
+| --------------------------- | ----- |
+| Accounts per connector type | 5     |
+| Tasks stored                | 10000 |
 
 Connecting an additional account beyond the connector cap returns `403` with code
 `QUOTA_EXCEEDED`; re-authorising an account you have already connected is always allowed.

@@ -158,8 +158,8 @@ describe('envSchema', () => {
         const { error, value } = envSchema.validate(withoutLimits);
 
         expect(error).toBeUndefined();
-        expect(value.RATE_LIMIT_BURST_PER_MINUTE).toBe(60);
-        expect(value.RATE_LIMIT_SUSTAINED_PER_HOUR).toBe(1000);
+        expect(value.RATE_LIMIT_BURST_PER_MINUTE).toBe(100);
+        expect(value.RATE_LIMIT_SUSTAINED_PER_HOUR).toBe(2000);
         expect(value.LOGIN_MAX_FAILED_ATTEMPTS).toBe(5);
     });
 
