@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InternalError, QuotaExceededError } from '@ctm/errors';
-import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model, Types } from 'mongoose';
@@ -8,6 +7,7 @@ import { ConnectorName, OAuthConnectorRegistry } from '@ctm/connectors';
 import type { OAuthTokens } from '@ctm/connectors';
 import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
 import { EncryptionService } from './encryption.service.js';
+import { MAX_CONNECTIONS_PER_CONNECTOR } from '../config/limits.js';
 
 type OAuthStatePayload = { sub: string };
 
@@ -18,7 +18,6 @@ export class ConnectorsService {
         private readonly registry: OAuthConnectorRegistry,
         private readonly encryption: EncryptionService,
         private readonly jwt: JwtService,
-        private readonly config: ConfigService,
     ) {}
 
     /** List all available connector source names. */
@@ -108,11 +107,12 @@ export class ConnectorsService {
 
         if (existing) return;
 
-        const max = this.config.getOrThrow<number>('MAX_CONNECTIONS_PER_CONNECTOR');
         const count = await this.configModel.countDocuments({ userId: new Types.ObjectId(userId), source });
 
-        if (count >= max) {
-            throw new QuotaExceededError(`You can connect at most ${max} ${source} accounts. Remove one first.`);
+        if (count >= MAX_CONNECTIONS_PER_CONNECTOR) {
+            throw new QuotaExceededError(
+                `You can connect at most ${MAX_CONNECTIONS_PER_CONNECTOR} ${source} accounts. Remove one first.`,
+            );
         }
     }
 

@@ -31,8 +31,6 @@ describe('envSchema', () => {
         RATE_LIMIT_CLIENT_SUSTAINED_PER_HOUR: 700,
         LOGIN_MAX_FAILED_ATTEMPTS: 5,
         LOGIN_LOCKOUT_MINUTES: 15,
-        MAX_CONNECTIONS_PER_CONNECTOR: 5,
-        MAX_TASKS_PER_USER: 10000,
     };
 
     it('accepts valid env', () => {
@@ -155,7 +153,6 @@ describe('envSchema', () => {
             RATE_LIMIT_BURST_PER_MINUTE,
             RATE_LIMIT_SUSTAINED_PER_HOUR,
             LOGIN_MAX_FAILED_ATTEMPTS,
-            MAX_TASKS_PER_USER,
             ...withoutLimits
         } = validEnv;
         const { error, value } = envSchema.validate(withoutLimits);
@@ -164,13 +161,6 @@ describe('envSchema', () => {
         expect(value.RATE_LIMIT_BURST_PER_MINUTE).toBe(60);
         expect(value.RATE_LIMIT_SUSTAINED_PER_HOUR).toBe(1000);
         expect(value.LOGIN_MAX_FAILED_ATTEMPTS).toBe(5);
-        expect(value.MAX_TASKS_PER_USER).toBe(10000);
-    });
-
-    it('rejects a zero MAX_TASKS_PER_USER', () => {
-        const { error } = envSchema.validate({ ...validEnv, MAX_TASKS_PER_USER: 0 });
-
-        expect(error?.message).toContain('MAX_TASKS_PER_USER');
     });
 
     it('coerces COOKIE_SECURE to a boolean', () => {
