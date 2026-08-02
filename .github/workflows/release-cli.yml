@@ -1,0 +1,71 @@
+name: release-cli
+
+on:
+    push:
+        branches: [main]
+        tags: ['v*']
+    pull_request:
+        paths:
+            - 'apps/cli/**'
+            - 'packages/api-client/**'
+            - '.github/workflows/release-cli.yml'
+    workflow_dispatch:
+
+concurrency:
+    group: release-cli-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+jobs:
+    bundle:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile --prefer-offline
+
+            - name: Bundle CLI
+              env:
+                  # Baked in as the last-resort API base URL. Unset produces a bundle that still
+                  # requires --base-url or CTM_BASE_URL, so a missing variable is not silent.
+                  CTM_DEFAULT_BASE_URL: ${{ vars.CTM_DEFAULT_BASE_URL }}
+              run: pnpm exec turbo run bundle --filter=@ctm/cli
+
+            - name: Package
+              run: |
+                  mkdir -p release
+                  cp apps/cli/dist/ctm.cjs release/ctm
+                  chmod +x release/ctm
+                  tar -czf ctm-cli.tar.gz -C release ctm
+                  sha256sum ctm-cli.tar.gz > ctm-cli.tar.gz.sha256
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: ctm-cli
+                  path: |
+                      ctm-cli.tar.gz
+                      ctm-cli.tar.gz.sha256
+                  if-no-files-found: error
+
+    release:
+        needs: bundle
+        if: startsWith(github.ref, 'refs/tags/v')
+        runs-on: ubuntu-latest
+        # Only this job writes; everything else keeps the read-only default token.
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  name: ctm-cli
+            - uses: softprops/action-gh-release@v2
+              with:
+                  files: |
+                      ctm-cli.tar.gz
+                      ctm-cli.tar.gz.sha256

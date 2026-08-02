@@ -1,6 +1,7 @@
 import { CtmApiClient } from '@ctm/api-client';
+import { ConfigurationError } from '@ctm/errors';
 import { readConfig } from './auth.js';
-import { assert } from 'node:console';
+import { bakedBaseUrl } from './baked-config.js';
 
 /** Options accepted by {@link buildClient}. */
 export type ClientOptions = {
@@ -9,10 +10,12 @@ export type ClientOptions = {
 };
 
 /**
- * Build a CtmApiClient from:
- * 1. --token flag / CTM_TOKEN env var
- * 2. Stored config (~/.config/ctm/config.json)
- * Falls back to unauthenticated client if no token found.
+ * Build a CtmApiClient. Tokens resolve from the --token flag, the CTM_TOKEN env var, then the
+ * stored config (~/.config/ctm/config.json); an unauthenticated client is returned if none is
+ * found. Base URL resolves from --base-url, CTM_BASE_URL, the stored config, then the URL baked
+ * in at bundle time.
+ *
+ * @throws ConfigurationError when no base URL can be resolved.
  */
 export function buildClient({ token, baseUrl }: ClientOptions): CtmApiClient {
     const envToken = process.env['CTM_TOKEN'];
@@ -20,16 +23,20 @@ export function buildClient({ token, baseUrl }: ClientOptions): CtmApiClient {
     const config = readConfig();
 
     const resolvedToken = token ?? envToken ?? config?.accessToken ?? null;
-    const resolvedBaseUrl = baseUrl ?? envBaseUrl ?? config?.baseUrl;
+    const resolvedBaseUrl = baseUrl ?? envBaseUrl ?? config?.baseUrl ?? bakedBaseUrl();
 
-    assert(resolvedBaseUrl, 'Base URL must be provided via --base-url flag, CTM_BASE_URL env var, or config file');
+    if (!resolvedBaseUrl) {
+        throw new ConfigurationError(
+            'Base URL must be provided via --base-url flag, CTM_BASE_URL env var, or config file',
+        );
+    }
 
     // Only use the stored refresh token when we're actually using the stored access token
     const usingStoredToken = token == null && envToken == null && config?.accessToken != null;
     const refreshToken = usingStoredToken ? (config?.refreshToken ?? null) : null;
 
     return new CtmApiClient({
-        baseUrl: resolvedBaseUrl!,
+        baseUrl: resolvedBaseUrl,
         accessToken: resolvedToken,
         refreshToken,
     });

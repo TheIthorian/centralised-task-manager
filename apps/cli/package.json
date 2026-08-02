@@ -8,6 +8,7 @@
     "type": "module",
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
+        "bundle": "node scripts/bundle.mjs",
         "test": "vitest run",
         "lint": "oxlint .",
         "format": "oxfmt --no-error-on-unmatched-pattern --config ../../.oxfmtrc.json src '**/*.md'"
@@ -24,6 +25,7 @@
         "@ctm/tsconfig": "workspace:*",
         "@swc/core": "1.15.46",
         "@types/node": "26.1.1",
+        "esbuild": "0.28.1",
         "ts-node": "10.9.2",
         "typescript": "6.0.3",
         "unplugin-swc": "1.5.9",
