@@ -38,11 +38,18 @@ dependency from the logger onto the Nest-aware package.
 
 ## Configuration
 
-Three required variables, read by `readLoggerConfig` in `@ctm/logger`: `LOG_LEVEL`,
-`LOG_PRETTY` and `LOG_REDACT`. None has a default and none is inferred from `NODE_ENV`;
-a missing or unparseable value is a `ConfigurationError` at startup rather than a quiet
-fallback. `LOG_PRETTY` replaces the previous behaviour of selecting pino-pretty whenever
-`NODE_ENV` was not production.
+Three variables, read by `readLoggerConfig` in `@ctm/logger`: `LOG_LEVEL`, `LOG_PRETTY` and
+`LOG_REDACT`. Nothing is inferred from `NODE_ENV`; `LOG_PRETTY` replaces the previous
+behaviour of selecting pino-pretty whenever `NODE_ENV` was not production.
+
+`LOG_LEVEL` is required. The two switches default to `LOGGER_CONFIG_DEFAULTS`
+(`pretty: false`, `redact: true`), the safe end of each. A value that is present but
+unparseable is a `ConfigurationError` rather than a silent fall back to the default.
+
+`readLoggerConfig` runs before Nest validates anything, since bootstrap builds a logger
+first, so it and the apps' Joi schemas have to agree exactly. A rule stricter in the logger
+kills the process before the schema is consulted, making the schema's version unreachable;
+the defaults are therefore imported from `@ctm/logger` rather than restated in Joi.
 
 `LOG_REDACT=false` exists so keys can be eyeballed locally. Both the logger and each app's
 Joi env schema refuse to boot when `NODE_ENV=production` is combined with `LOG_PRETTY=true`
