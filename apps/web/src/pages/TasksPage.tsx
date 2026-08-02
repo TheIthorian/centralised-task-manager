@@ -14,6 +14,7 @@ import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 import { useGroupedTaskQueries } from '../hooks/useGroupedTaskQueries.js';
 import { filterTasks, parseConditions, toggleCondition, writeConditions, type Condition } from '../lib/task-conditions.js';
 import { nextMorning } from '../lib/snooze.js';
+import { useTimeZone } from '../hooks/useTimeZone.js';
 import { useToast } from '../toast/ToastContext.js';
 
 const PAGE_SIZE = 20;
@@ -22,6 +23,7 @@ const PAGE_SIZE = 20;
 export function TasksPage(): React.JSX.Element {
     const { t, i18n } = useTranslation();
     const { showToast } = useToast();
+    const timeZone = useTimeZone();
     const [searchParams, setSearchParams] = useSearchParams();
     const filter = (searchParams.get('filter') ?? 'all') as TaskFilter;
     const conditions = parseConditions(searchParams);
@@ -212,7 +214,7 @@ export function TasksPage(): React.JSX.Element {
 
     const handleSnooze = useCallback(
         (task: TaskDto) => {
-            const date = nextMorning();
+            const date = nextMorning({ timeZone });
 
             saveMutation.mutate(
                 {
@@ -236,7 +238,7 @@ export function TasksPage(): React.JSX.Element {
                 },
             );
         },
-        [saveMutation, showToast, t, i18n.language],
+        [saveMutation, showToast, t, i18n.language, timeZone],
     );
 
     const handleSwipeDelete = useCallback(

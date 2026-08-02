@@ -32,14 +32,14 @@ describe('GroupedTaskList', () => {
     });
 
     it('renders Overdue section for past-due tasks', () => {
-        const task = makeTask({ id: '1', due: { date: OVERDUE_DATE, timezone: null, recurrence: null } });
+        const task = makeTask({ id: '1', due: { date: OVERDUE_DATE, timezone: null, recurrence: null, allDay: false } });
         render(<GroupedTaskList tasks={[task]} onToggle={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText(/overdue/i)).toBeInTheDocument();
         expect(screen.getByText('Task 1')).toBeInTheDocument();
     });
 
     it('renders Today section for tasks due today', () => {
-        const task = makeTask({ id: '2', due: { date: TODAY_DATE, timezone: null, recurrence: null } });
+        const task = makeTask({ id: '2', due: { date: TODAY_DATE, timezone: null, recurrence: null, allDay: false } });
         render(<GroupedTaskList tasks={[task]} onToggle={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText(/today/i)).toBeInTheDocument();
         expect(screen.getByText('Task 2')).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('GroupedTaskList', () => {
     });
 
     it('hides empty sections', () => {
-        const task = makeTask({ id: '4', due: { date: TODAY_DATE, timezone: null, recurrence: null } });
+        const task = makeTask({ id: '4', due: { date: TODAY_DATE, timezone: null, recurrence: null, allDay: false } });
         render(<GroupedTaskList tasks={[task]} onToggle={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.queryByText(/overdue/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/no date/i)).not.toBeInTheDocument();
@@ -61,8 +61,8 @@ describe('GroupedTaskList', () => {
 
     it('shows task count in section chip', () => {
         const tasks = [
-            makeTask({ id: '5', due: { date: TODAY_DATE, timezone: null, recurrence: null } }),
-            makeTask({ id: '6', due: { date: TODAY_DATE, timezone: null, recurrence: null } }),
+            makeTask({ id: '5', due: { date: TODAY_DATE, timezone: null, recurrence: null, allDay: false } }),
+            makeTask({ id: '6', due: { date: TODAY_DATE, timezone: null, recurrence: null, allDay: false } }),
         ];
         render(<GroupedTaskList tasks={tasks} onToggle={vi.fn()} onEdit={vi.fn()} />);
         // The count "2" appears inside the Today chip
@@ -73,7 +73,7 @@ describe('GroupedTaskList', () => {
         const task = makeTask({
             id: '7',
             completed: true,
-            due: { date: TODAY_DATE, timezone: null, recurrence: null },
+            due: { date: TODAY_DATE, timezone: null, recurrence: null, allDay: false },
         });
         render(<GroupedTaskList tasks={[task]} onToggle={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText(/done/i)).toBeInTheDocument();

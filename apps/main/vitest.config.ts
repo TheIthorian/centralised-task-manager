@@ -9,5 +9,8 @@ export default defineConfig({
         include: ['src/**/*.spec.ts'],
         setupFiles: ['./vitest.setup.ts'],
         envFile: '.env.test',
+        // A non-UTC, non-whole-hour zone, so anything that still reads the server's clock for a
+        // day boundary fails here rather than passing by luck on a UTC runner.
+        env: { TZ: 'Pacific/Chatham' },
     },
 });

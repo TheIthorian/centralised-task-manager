@@ -4,6 +4,8 @@ import { QuotaExceededError } from '@ctm/errors';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
+import { addDays, dayOfWeek, startOfDay, toDateKey, UTC } from '@ctm/time';
+import { UsersService } from '../users/users.service.js';
 import { Task, RELATION_INVERSE, type RelationType, type TaskDocument } from './schemas/task.schema.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
 import type { UpdateTaskDto } from './dto/update-task.dto.js';
@@ -13,6 +15,9 @@ import type { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 
 /** Source name reserved for tasks stored only in CTM (no external connector). */
 const LOCAL_SOURCE = 'local';
+
+/** An ISO value with no time part, which can only mean a calendar day. */
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Outcome of a pull-sync. `droppedOverQuota` counts remote tasks left unimported at the cap. */
 export type UpsertFromRemoteResult = {
@@ -26,6 +31,7 @@ export class TasksService {
     constructor(
         @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
         private readonly config: ConfigService,
+        private readonly users: UsersService,
     ) {}
 
     /** How many more tasks this user may store before hitting the per-account cap. */
@@ -40,14 +46,14 @@ export class TasksService {
     async list(userId: string, query: ListTasksQueryDto): Promise<TaskDocument[]> {
         const filter: Record<string, unknown> = { userId: new Types.ObjectId(userId) };
 
+        // "Today" is the caller's today, not the server's. Reading the zone once keeps a single
+        // round trip out of the filters that do not need it.
+        const timeZone = query.filter || query.surfaced ? await this.users.getTimeZone(userId) : UTC;
+
         if (query.filter) {
-            const todayStart = new Date();
-
-            todayStart.setHours(0, 0, 0, 0);
-
-            const tomorrowStart = new Date(todayStart);
-
-            tomorrowStart.setDate(todayStart.getDate() + 1);
+            const now = new Date();
+            const todayStart = startOfDay({ instant: now, timeZone });
+            const tomorrowStart = startOfDay({ instant: addDays({ instant: now, days: 1, timeZone }), timeZone });
 
             switch (query.filter) {
                 case 'today':
@@ -74,8 +80,8 @@ export class TasksService {
         if (query.fuzzy) filter['fuzzyDeadline.type'] = query.fuzzy;
 
         if (query.surfaced) {
-            const today = new Date();
-            const isMonday = today.getDay() === 1;
+            const isMonday = dayOfWeek(toDateKey({ instant: new Date(), timeZone })) === 1;
+
             filter['fuzzyDeadline.remindEvery'] = { $in: isMonday ? ['daily', 'weekly'] : ['daily'] };
         }
 
@@ -507,21 +513,40 @@ export class TasksService {
     }
 
     private parseDueFields(dto: {
-        due?: { date: string; timezone?: string; recurrence?: string };
+        due?: { date: string; timezone?: string; recurrence?: string; allDay?: boolean };
         deadlineDate?: string;
     }): {
-        due: { date: Date; timezone: string | null; recurrence: string | null } | undefined;
+        due: { date: Date; timezone: string | null; recurrence: string | null; allDay: boolean } | undefined;
         deadlineDate: Date | undefined;
     } {
         return {
-            due: dto.due
-                ? {
-                      date: new Date(dto.due.date),
-                      timezone: dto.due.timezone ?? null,
-                      recurrence: dto.due.recurrence ?? null,
-                  }
-                : undefined,
+            due: dto.due ? toStoredDueDate(dto.due) : undefined,
             deadlineDate: dto.deadlineDate ? new Date(dto.deadlineDate) : undefined,
         };
     }
+}
+
+/**
+ * Normalises a due date for storage.
+ *
+ * A date-only string is an all-day date whether or not the caller said so, and is pinned to UTC
+ * midnight: `new Date('2026-07-13')` already parses as UTC midnight, but a caller that sent
+ * `2026-07-13T00:00:00+13:00` meant the same calendar day and must not land on the 12th.
+ */
+function toStoredDueDate(due: { date: string; timezone?: string; recurrence?: string; allDay?: boolean }): {
+    date: Date;
+    timezone: string | null;
+    recurrence: string | null;
+    allDay: boolean;
+} {
+    const allDay = due.allDay ?? DATE_ONLY_PATTERN.test(due.date);
+    const instant = new Date(due.date);
+    const date = allDay ? new Date(`${toDateKey({ instant, timeZone: due.timezone ?? UTC })}T00:00:00.000Z`) : instant;
+
+    return {
+        date,
+        timezone: due.timezone ?? null,
+        recurrence: due.recurrence ?? null,
+        allDay,
+    };
 }

@@ -5,6 +5,7 @@ import { TaskRow } from '@ctm/ui';
 import type { TaskDto } from '@ctm/api-client';
 import { getSourceBrand, getSourceLabel } from '../../lib/source-labels.js';
 import { formatDueLabel } from '../../lib/format-task.js';
+import { useTimeZone } from '../../hooks/useTimeZone.js';
 
 type TaskCardProps = {
     task: TaskDto;
@@ -32,6 +33,7 @@ export function TaskCard({
     onDelete,
 }: TaskCardProps): React.JSX.Element {
     const { t, i18n } = useTranslation();
+    const timeZone = useTimeZone();
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -41,7 +43,7 @@ export function TaskCard({
     }, [highlighted]);
 
     const external = Boolean(task.source) && task.source !== 'local';
-    const due = formatDueLabel({ task, locale: i18n.language, t });
+    const due = formatDueLabel({ task, locale: i18n.language, timeZone, t });
 
     return (
         <div ref={ref} className={clsx(highlighted && 'bg-accent/8')}>

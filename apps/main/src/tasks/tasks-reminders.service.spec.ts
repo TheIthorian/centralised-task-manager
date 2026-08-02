@@ -5,6 +5,10 @@ import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { TasksService } from './tasks.service.js';
+import { User, UserSchema } from '../users/schemas/user.schema.js';
+import { UsersService } from '../users/users.service.js';
+import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
+
 import { Task, TaskSchema, type TaskDocument } from './schemas/task.schema.js';
 
 describe('TasksService – reminders', () => {
@@ -18,9 +22,13 @@ describe('TasksService – reminders', () => {
             imports: [
                 ConfigModule.forRoot({ isGlobal: true }),
                 MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
-                MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
+                MongooseModule.forFeature([
+                    { name: Task.name, schema: TaskSchema },
+                    { name: User.name, schema: UserSchema },
+                    { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
+                ]),
             ],
-            providers: [TasksService],
+            providers: [TasksService, UsersService],
         }).compile();
 
         service = module.get(TasksService);

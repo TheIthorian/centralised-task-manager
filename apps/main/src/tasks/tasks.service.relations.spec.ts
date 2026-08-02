@@ -3,6 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TasksService } from './tasks.service.js';
+import { User, UserSchema } from '../users/schemas/user.schema.js';
+import { UsersService } from '../users/users.service.js';
+import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
+
 import { Task, TaskSchema, type TaskDocument } from './schemas/task.schema.js';
 
 describe('TasksService relations', () => {
@@ -25,9 +29,13 @@ describe('TasksService relations', () => {
             imports: [
                 ConfigModule.forRoot({ isGlobal: true }),
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
-                MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
+                MongooseModule.forFeature([
+                    { name: Task.name, schema: TaskSchema },
+                    { name: User.name, schema: UserSchema },
+                    { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
+                ]),
             ],
-            providers: [TasksService],
+            providers: [TasksService, UsersService],
         }).compile();
 
         service = moduleRef.get(TasksService);

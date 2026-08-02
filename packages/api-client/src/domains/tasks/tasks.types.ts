@@ -1,8 +1,16 @@
-/** ISO date string with optional timezone and recurrence rule. */
+/**
+ * When a task is due.
+ *
+ * A timed due date is an instant: `date` is the UTC instant and `timezone` names the IANA zone
+ * whose wall clock it was written in. An all-day due date has no instant at all: it is stored as
+ * the UTC midnight of its calendar date and must be read back in UTC, so it names the same day for
+ * every reader.
+ */
 export type DueDate = {
     date: string;
     timezone: string | null;
     recurrence: string | null;
+    allDay: boolean;
 };
 
 /** Time estimate for a task. */
@@ -66,7 +74,7 @@ export type CreateTaskDto = {
     title: string;
     description?: string;
     priority?: 1 | 2 | 3 | 4;
-    due?: { date: string; timezone?: string; recurrence?: string };
+    due?: { date: string; timezone?: string; recurrence?: string; allDay?: boolean };
     deadlineDate?: string;
     duration?: Duration;
     source: string;
@@ -78,7 +86,7 @@ export type UpdateTaskDto = {
     title?: string;
     description?: string;
     priority?: 1 | 2 | 3 | 4;
-    due?: { date: string; timezone?: string; recurrence?: string };
+    due?: { date: string; timezone?: string; recurrence?: string; allDay?: boolean };
     deadlineDate?: string;
     duration?: Duration;
     tags?: string[];

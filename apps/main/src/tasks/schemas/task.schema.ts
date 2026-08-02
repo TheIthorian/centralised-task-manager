@@ -53,6 +53,10 @@ class DueDate {
 
     @Prop({ type: String, default: null })
     recurrence!: string | null;
+
+    /** An all-day date has no instant: `date` is the UTC midnight of the calendar day it names. */
+    @Prop({ type: Boolean, default: false })
+    allDay!: boolean;
 }
 
 const DueDateSchema = SchemaFactory.createForClass(DueDate);
@@ -127,7 +131,7 @@ export class Task {
     tags!: string[];
 
     @Prop({ type: DueDateSchema, default: null })
-    due!: { date: Date; timezone: string | null; recurrence: string | null } | null;
+    due!: { date: Date; timezone: string | null; recurrence: string | null; allDay: boolean } | null;
 
     @Prop({ type: Date, default: null })
     deadlineDate!: Date | null;

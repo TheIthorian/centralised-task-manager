@@ -5,4 +5,7 @@ export class UserDto implements IUserDto {
     id!: string;
     email!: string;
     name?: string;
+
+    /** IANA identifier the server uses for this user's day boundaries. */
+    timezone!: string;
 }

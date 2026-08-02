@@ -175,7 +175,12 @@ function taskDtoToFields(t: ExportTaskDto, userId: string): Record<string, unkno
         priority: t.priority ?? null,
         tags: t.tags,
         due: t.due
-            ? { date: new Date(t.due.date), timezone: t.due.timezone ?? null, recurrence: t.due.recurrence ?? null }
+            ? {
+                  date: new Date(t.due.date),
+                  timezone: t.due.timezone ?? null,
+                  recurrence: t.due.recurrence ?? null,
+                  allDay: t.due.allDay ?? false,
+              }
             : null,
         deadlineDate: t.deadlineDate ? new Date(t.deadlineDate) : null,
         duration: t.duration ?? null,

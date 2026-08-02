@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { LocationDto as ILocationDto, UpdateTaskDto as IUpdateTaskDto } from '@ctm/api-client';
 import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { isoDateTimeSchema, requestObject } from '../../common/zod/param-schemas.js';
+import { isoDateTimeSchema, requestObject, timeZoneSchema } from '../../common/zod/param-schemas.js';
 
 export const MAX_TAGS = 50;
 export const MAX_LOCATIONS = 20;
@@ -13,8 +13,9 @@ export const locationSchema = requestObject({
 
 export const dueDateSchema = requestObject({
     date: isoDateTimeSchema,
-    timezone: z.string().max(64).optional(),
+    timezone: timeZoneSchema.optional(),
     recurrence: z.string().max(200).optional(),
+    allDay: z.boolean().optional().describe('True when the date names a calendar day with no time'),
 });
 
 export const durationSchema = requestObject({

@@ -6,6 +6,10 @@ import { QuotaExceededError } from '@ctm/errors';
 import { TaskConnectorName } from '@ctm/connectors';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { TasksService } from './tasks.service.js';
+import { User, UserSchema } from '../users/schemas/user.schema.js';
+import { UsersService } from '../users/users.service.js';
+import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
+
 import { Task, TaskSchema, type TaskDocument } from './schemas/task.schema.js';
 
 const MAX_TASKS = 3;
@@ -31,9 +35,17 @@ describe('TasksService task cap', () => {
         const moduleRef = await Test.createTestingModule({
             imports: [
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
-                MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
+                MongooseModule.forFeature([
+                    { name: Task.name, schema: TaskSchema },
+                    { name: User.name, schema: UserSchema },
+                    { name: ConnectorConfig.name, schema: ConnectorConfigSchema },
+                ]),
             ],
-            providers: [TasksService, { provide: ConfigService, useValue: { getOrThrow: (): number => MAX_TASKS } }],
+            providers: [
+                TasksService,
+                UsersService,
+                { provide: ConfigService, useValue: { getOrThrow: (): number => MAX_TASKS } },
+            ],
         }).compile();
 
         service = moduleRef.get(TasksService);

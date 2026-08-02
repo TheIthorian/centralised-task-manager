@@ -8,6 +8,8 @@ import { TaskDetailPanel } from '../components/tasks/TaskDetailPanel.js';
 import { CalendarColumns } from '../components/calendar/CalendarColumns.js';
 import { CalendarMonth } from '../components/calendar/CalendarMonth.js';
 import { buildDays, rangeLabel, shiftAnchor, toDateKey, CALENDAR_RANGES, type CalendarRange } from '../lib/calendar-range.js';
+import { dueDateKey } from '../lib/timezone.js';
+import { useTimeZone } from '../hooks/useTimeZone.js';
 import { useIsPhone } from '../hooks/useIsPhone.js';
 
 /** Calendar over a month, a week, three days or one day. Tasks appear on their due date. */
@@ -26,12 +28,13 @@ export function CalendarPage(): React.JSX.Element {
     });
 
     const locale = i18n.language;
+    const timeZone = useTimeZone();
     // Seven columns on a 375px screen is 47px per day, which is narrower than the text in
     // them. The week range falls back to three days rather than growing a sideways scroller:
     // a horizontal scroll area inside a vertically scrolling page fights the row swipe.
     const effectiveRange: CalendarRange = isPhone && range === 'week' ? 'threeDay' : range;
     const days = buildDays({ anchor, range: effectiveRange });
-    const tasksByDate = groupByDueDate(tasks);
+    const tasksByDate = groupByDueDate({ tasks, timeZone });
     const todayKey = toDateKey(new Date());
 
     const saveMutation = useMutation({
@@ -176,13 +179,13 @@ function isTyping(target: EventTarget | null): boolean {
 }
 
 /** Groups tasks by the calendar day they are due. Tasks with no due date are left out. */
-function groupByDueDate(tasks: TaskDto[]): Map<string, TaskDto[]> {
+function groupByDueDate({ tasks, timeZone }: { tasks: TaskDto[]; timeZone: string }): Map<string, TaskDto[]> {
     const map = new Map<string, TaskDto[]>();
 
     for (const task of tasks) {
-        if (!task.due?.date) continue;
+        const key = dueDateKey({ task, timeZone });
 
-        const key = task.due.date.slice(0, 10);
+        if (!key) continue;
 
         map.set(key, [...(map.get(key) ?? []), task]);
     }

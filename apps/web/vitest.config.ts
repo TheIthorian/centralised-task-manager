@@ -9,5 +9,8 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['./src/test-setup.ts'],
+        // A non-UTC, non-whole-hour zone, so a date assertion that quietly relies on the machine
+        // clock fails here rather than passing by luck on a UTC CI runner.
+        env: { TZ: 'Pacific/Chatham' },
     },
 });

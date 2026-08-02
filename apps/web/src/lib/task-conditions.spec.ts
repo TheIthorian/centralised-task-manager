@@ -33,7 +33,7 @@ function makeTask(overrides: Partial<TaskDto> & { id: string }): TaskDto {
 }
 
 function due(date: string): Pick<TaskDto, 'due'> {
-    return { due: { date, timezone: null, recurrence: null } };
+    return { due: { date, timezone: null, recurrence: null, allDay: false } };
 }
 
 const overdue = makeTask({ id: 'overdue', ...due('2026-07-28') });

@@ -1,4 +1,6 @@
 import type { TaskDto } from '@ctm/api-client';
+import { startOfLastDayOfWeek, toDateKey } from '@ctm/time';
+import { dueDateKey } from './timezone.js';
 
 export type TaskBuckets = {
     overdue: TaskDto[];
@@ -9,36 +11,23 @@ export type TaskBuckets = {
     done: TaskDto[];
 };
 
-/** Parse an ISO date string (YYYY-MM-DD or full ISO-8601) to a local-timezone Date at midnight. */
-function parseDateOnly(iso: string): Date {
-    const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
-
-    return new Date(year, (month as number) - 1, day as number);
-}
-
-/** Monday of the week containing `d` (local time). */
-function startOfWeek(d: Date): Date {
-    const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon … 6=Sat
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + daysToMonday);
-
-    return monday;
-}
-
-/** Sunday (end of week) of the week containing `d` (local time). */
-function endOfWeek(d: Date): Date {
-    const monday = startOfWeek(d);
-
-    return new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
-}
-
 /**
  * Partition tasks into due-date buckets ordered by urgency.
- * Pass `now` explicitly in tests to avoid time-dependent failures.
+ *
+ * Buckets are decided by comparing date keys rather than instants, so the boundaries are the
+ * reader's own midnights. Pass `now` explicitly in tests to avoid time-dependent failures.
  */
-export function bucketTasks(tasks: TaskDto[], now: Date = new Date()): TaskBuckets {
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekEnd = endOfWeek(todayStart);
+export function bucketTasks({
+    tasks,
+    timeZone,
+    now = new Date(),
+}: {
+    tasks: TaskDto[];
+    timeZone: string;
+    now?: Date;
+}): TaskBuckets {
+    const todayKey = toDateKey({ instant: now, timeZone });
+    const weekEndKey = toDateKey({ instant: startOfLastDayOfWeek({ instant: now, timeZone }), timeZone });
 
     const overdue: TaskDto[] = [];
     const today: TaskDto[] = [];
@@ -53,18 +42,18 @@ export function bucketTasks(tasks: TaskDto[], now: Date = new Date()): TaskBucke
             continue;
         }
 
-        if (!task.due) {
+        const dueKey = dueDateKey({ task, timeZone });
+
+        if (!dueKey) {
             noDate.push(task);
             continue;
         }
 
-        const due = parseDateOnly(task.due.date);
-
-        if (due < todayStart) {
+        if (dueKey < todayKey) {
             overdue.push(task);
-        } else if (due.getTime() === todayStart.getTime()) {
+        } else if (dueKey === todayKey) {
             today.push(task);
-        } else if (due <= weekEnd) {
+        } else if (dueKey <= weekEndKey) {
             thisWeek.push(task);
         } else {
             upcoming.push(task);

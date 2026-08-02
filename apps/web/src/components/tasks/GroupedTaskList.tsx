@@ -4,6 +4,7 @@ import type { TaskDto } from '@ctm/api-client';
 import { TaskCard } from './TaskCard.js';
 import { ScrollSentinel } from './ScrollSentinel.js';
 import { bucketTasks, type TaskBuckets } from '../../lib/bucket-tasks.js';
+import { useTimeZone } from '../../hooks/useTimeZone.js';
 import type { GroupedQueryResults } from '../../hooks/useGroupedTaskQueries.js';
 
 type LegacyProps = {
@@ -121,6 +122,7 @@ export function GroupedTaskList({
     onDelete,
 }: GroupedTaskListProps): React.JSX.Element {
     const { t } = useTranslation();
+    const timeZone = useTimeZone();
 
     // Paginated mode: groupedResults provided
     if (groupedResults) {
@@ -178,7 +180,7 @@ export function GroupedTaskList({
     }
 
     // Legacy mode: flat tasks array, client-side bucketing
-    const buckets = bucketTasks(tasks ?? []);
+    const buckets = bucketTasks({ tasks: tasks ?? [], timeZone });
     const isEmpty = Object.values(buckets).every((arr) => arr.length === 0);
 
     if (isEmpty) return <EmptyState title={t('tasks.emptyAll.title')} body={t('tasks.emptyAll.body')} />;
