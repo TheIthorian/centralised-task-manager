@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { LOG_LEVELS, LOGGER_CONFIG_DEFAULTS } from '@ctm/logger';
+import { LOG_LEVELS } from '@ctm/logger';
 
 export const envSchema = Joi.object({
     CTM_API_BASE_URL: Joi.string().uri().required(),
@@ -8,18 +8,14 @@ export const envSchema = Joi.object({
     RSA_PUBLIC_KEY: Joi.string().required(),
     PORT: Joi.number().required(),
     NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
-    // readLoggerConfig in @ctm/logger enforces the same rules and runs first, because bootstrap
-    // builds a logger before Nest validates anything. The two must agree: a rule that is stricter
-    // here than there is unreachable, and one that is stricter there than here kills the process
-    // before this schema is ever consulted. The defaults are imported rather than repeated for
-    // exactly that reason. These rules are restated here so a bad value is reported alongside
-    // every other variable rather than as a lone stack trace.
+    // This app owns its logging configuration end to end: @ctm/logger is handed the result and
+    // never reads the environment itself, so these are the only defaults and the only guards.
     LOG_LEVEL: Joi.string()
         .valid(...LOG_LEVELS)
         .required(),
     LOG_PRETTY: Joi.boolean()
         .optional()
-        .default(LOGGER_CONFIG_DEFAULTS.pretty)
+        .default(false)
         .when('NODE_ENV', {
             is: 'production',
             // oxlint-disable-next-line unicorn/no-thenable -- Joi's conditional key, not a promise.
@@ -30,7 +26,7 @@ export const envSchema = Joi.object({
         }),
     LOG_REDACT: Joi.boolean()
         .optional()
-        .default(LOGGER_CONFIG_DEFAULTS.redact)
+        .default(true)
         .when('NODE_ENV', {
             is: 'production',
             // oxlint-disable-next-line unicorn/no-thenable -- Joi's conditional key, not a promise.

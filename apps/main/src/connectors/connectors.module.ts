@@ -12,7 +12,7 @@ import {
     NotionTaskSource,
     DiscordOAuthConnector,
 } from '@ctm/connectors';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { ConnectorConfig, ConnectorConfigSchema } from './schemas/connector-config.schema.js';
 import { ConnectorsService } from './connectors.service.js';
 import { ConnectorsController } from './connectors.controller.js';
@@ -37,7 +37,7 @@ import { UsersModule } from '../users/users.module.js';
             inject: [ConfigService],
             useFactory: (config: ConfigService): OAuthConnectorRegistry => {
                 const registry = new OAuthConnectorRegistry();
-                const logger = createLogger('connectors');
+                const logger = appLogger('connectors');
 
                 registry.register(
                     new TodoistOAuthConnector({
@@ -83,7 +83,7 @@ import { UsersModule } from '../users/users.module.js';
             provide: ExternalTaskSourceRegistry,
             useFactory: (): ExternalTaskSourceRegistry => {
                 const registry = new ExternalTaskSourceRegistry();
-                const logger = createLogger('connectors');
+                const logger = appLogger('connectors');
 
                 registry.register(new TodoistTaskSource({ logger }));
                 registry.register(new GoogleTasksTaskSource({ logger }));

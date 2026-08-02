@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorName, TaskConnectorName, ExternalTaskSourceRegistry } from '@ctm/connectors';
@@ -11,7 +11,7 @@ import { SyncGateway } from './sync.gateway.js';
 
 @Injectable()
 export class SyncService {
-    private readonly logger = createLogger(SyncService.name);
+    private readonly logger = appLogger(SyncService.name);
 
     constructor(
         // Injected to ensure Mongoose registers the base Job model before the discriminator is used.

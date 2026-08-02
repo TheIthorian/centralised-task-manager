@@ -1,9 +1,11 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { createLogger, installProcessErrorHandlers } from '@ctm/logger';
+import { installProcessErrorHandlers } from '@ctm/logger';
 import { PinoLoggerService } from '@ctm/request-logger';
 import { AppModule } from './app.module.js';
+import { loadEnv, toLoggerConfig } from './config/load-env.js';
+import { rootLogger } from './logging/app-logger.js';
 
 /** CORS for browser MCP clients (e.g. MCP Inspector). Allows any origin. */
 export const mcpCorsOptions = {
@@ -29,10 +31,14 @@ export const mcpCorsOptions = {
 };
 
 export async function createApp(): Promise<NestFastifyApplication> {
-    installProcessErrorHandlers({ logger: createLogger('mcp') });
+    // Validate before anything else: a bad environment should be one clear error, not a stack
+    // trace from whichever subsystem happened to read it first. AppModule reuses this result.
+    const env = loadEnv();
+
+    installProcessErrorHandlers({ logger: rootLogger() });
 
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
-        logger: new PinoLoggerService('mcp'),
+        logger: new PinoLoggerService({ name: 'mcp', config: toLoggerConfig(env) }),
     });
 
     app.enableCors(mcpCorsOptions);

@@ -1,12 +1,12 @@
 import { Catch, ExceptionFilter, ArgumentsHost, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { OAuthResourceService } from '../oauth/oauth-resource.service.js';
 
 /** Adds RFC 9728 `WWW-Authenticate` on 401 so MCP clients discover the CTM authorization server. */
 @Catch(UnauthorizedException)
 export class McpUnauthorizedFilter implements ExceptionFilter {
-    private readonly logger = createLogger('mcp-unauthorized');
+    private readonly logger = appLogger('mcp-unauthorized');
 
     constructor(private readonly oauthResource: OAuthResourceService) {}
 

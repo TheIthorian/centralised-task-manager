@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, type UserDocument } from '../users/schemas/user.schema.js';
@@ -39,7 +39,7 @@ const DEFAULT_PREFS: ChannelPrefs = { [Channel.InApp]: true, [Channel.Discord]: 
 
 @Injectable()
 export class NotificationsService {
-    private readonly logger = createLogger(NotificationsService.name);
+    private readonly logger = appLogger(NotificationsService.name);
 
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,

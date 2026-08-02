@@ -1,6 +1,6 @@
 import { ArgumentsHost, Catch, type ExceptionFilter } from '@nestjs/common';
 import { AppError, RateLimitError } from '@ctm/errors';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../../logging/app-logger.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 /**
@@ -9,7 +9,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
  */
 @Catch(AppError)
 export class AppErrorFilter implements ExceptionFilter {
-    private readonly logger = createLogger('app-error');
+    private readonly logger = appLogger('app-error');
 
     /** Log the failure, then send the error's own status code, message and machine-readable code. */
     catch(error: AppError, host: ArgumentsHost): void {

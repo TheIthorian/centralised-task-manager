@@ -1,6 +1,8 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
+import type { Logger } from '@ctm/logger';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { createRequestLogger, runRequestWithLogging } from './logging.js';
+import { runRequestWithLogging } from './logging.js';
+import { APP_LOGGER } from './logger.token.js';
 
 /**
  * Nest + Fastify middleware that opens the correlation context for the request, then logs method,
@@ -9,7 +11,11 @@ import { createRequestLogger, runRequestWithLogging } from './logging.js';
  */
 @Injectable()
 export class RequestLoggingMiddleware implements NestMiddleware {
-    private readonly logger = createRequestLogger('http');
+    private readonly logger: Logger;
+
+    constructor(@Inject(APP_LOGGER) logger: Logger) {
+        this.logger = logger.child({ name: 'http' });
+    }
 
     /** Bind a request id, attach finish/error listeners, then delegate to the next handler. */
     use(req: IncomingMessage, res: ServerResponse, next: () => void): void {

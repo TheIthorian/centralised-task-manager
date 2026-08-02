@@ -1,11 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import {
-    createLogger,
-    getRequestContext,
-    runWithRequestContext,
-    type Logger,
-    type RequestContext,
-} from '@ctm/logger';
+import { getRequestContext, runWithRequestContext, type Logger, type RequestContext } from '@ctm/logger';
 import { REQUEST_ID_HEADER, resolveRequestId } from './request-id.js';
 
 export type { Logger };
@@ -19,11 +13,6 @@ export type RequestLog = {
     requestId?: string;
     userId?: string;
 };
-
-/** Creates a named logger for HTTP request logging. */
-export function createRequestLogger(name: string): Logger {
-    return createLogger(name);
-}
 
 /** Builds structured fields for a completed request. */
 export function buildRequestLog({

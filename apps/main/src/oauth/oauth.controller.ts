@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Res, HttpCode, BadRequestException, UseGuards, Request } from '@nestjs/common';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
@@ -32,7 +32,7 @@ const clientIdSchema = z.string().min(1).max(128);
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
 export class OAuthController {
-    private readonly logger = createLogger(OAuthController.name);
+    private readonly logger = appLogger(OAuthController.name);
 
     constructor(
         private readonly oauth: OAuthService,

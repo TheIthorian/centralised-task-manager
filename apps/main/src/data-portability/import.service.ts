@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ValidationError } from '@ctm/errors';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { User, type UserDocument } from '../users/schemas/user.schema.js';
 import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
 import { Notification, type NotificationDocument } from '../notifications/schemas/notification.schema.js';
@@ -18,7 +18,7 @@ type OnConflict = 'replace' | 'ignore';
 
 @Injectable()
 export class ImportService {
-    private readonly logger = createLogger(ImportService.name);
+    private readonly logger = appLogger(ImportService.name);
 
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,

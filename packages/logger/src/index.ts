@@ -1,16 +1,9 @@
 import pino from 'pino';
-import { readLoggerConfig, type LoggerConfig } from './config.js';
+import type { LoggerConfig } from './config.js';
 import { getRequestContext } from './request-context.js';
 import { REDACT_PATHS, REDACTION_PLACEHOLDER } from './redaction.js';
 
-export {
-    assertSafeInProduction,
-    LOG_LEVELS,
-    LOGGER_CONFIG_DEFAULTS,
-    readLoggerConfig,
-    type LoggerConfig,
-    type LogLevel,
-} from './config.js';
+export { LOG_LEVELS, type LoggerConfig, type LogLevel } from './config.js';
 export { bindRequestUser, getRequestContext, runWithRequestContext, type RequestContext } from './request-context.js';
 export { installProcessErrorHandlers } from './process-errors.js';
 export { REDACT_PATHS, REDACTION_PLACEHOLDER } from './redaction.js';
@@ -18,10 +11,8 @@ export { REDACT_PATHS, REDACTION_PLACEHOLDER } from './redaction.js';
 /** Re-exported Pino logger type used across the monorepo. */
 export type Logger = pino.Logger;
 
-/** Creates a named Pino logger for the given context. */
-export function createLogger(context: string): pino.Logger {
-    const config = readLoggerConfig();
-
+/** Creates a named Pino logger from config the caller has already validated. */
+export function createLogger({ context, config }: { context: string; config: LoggerConfig }): pino.Logger {
     return pino({
         ...buildLoggerOptions({ context, config }),
         transport: config.pretty ? { target: 'pino-pretty', options: { colorize: true } } : undefined,

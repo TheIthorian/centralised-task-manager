@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Logger } from '@ctm/logger';
+import type { Logger, LoggerConfig } from '@ctm/logger';
 import { PinoLoggerService } from './pino-logger.service.js';
 
 describe('PinoLoggerService', () => {
@@ -67,7 +67,8 @@ function serviceWithFakeLogger(): { service: PinoLoggerService; calls: Calls } {
             calls[level].push(payload);
         };
 
-    const service = new PinoLoggerService();
+    const config: LoggerConfig = { level: 'trace', pretty: false, redact: true };
+    const service = new PinoLoggerService({ name: 'test', config });
 
     // The service builds its logger in the constructor, so the fake is swapped in afterwards;
     // what is under test is the argument mapping, not pino itself.

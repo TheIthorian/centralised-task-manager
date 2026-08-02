@@ -1,5 +1,5 @@
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
-import { createLogger } from '@ctm/logger';
+import { appLogger } from '../logging/app-logger.js';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
@@ -18,7 +18,7 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     private readonly server!: Server;
 
-    private readonly logger = createLogger(SyncGateway.name);
+    private readonly logger = appLogger(SyncGateway.name);
 
     constructor(private readonly jwt: JwtService) {}
 
