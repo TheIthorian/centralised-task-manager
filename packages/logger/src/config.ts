@@ -5,7 +5,7 @@ export const LOG_LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'] a
 
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
-/** Logging settings, all read from the environment and none of them defaulted. */
+/** Logging settings read from the environment. */
 export type LoggerConfig = {
     level: LogLevel;
     pretty: boolean;
@@ -13,16 +13,37 @@ export type LoggerConfig = {
 };
 
 /**
- * Reads and validates the three logging variables. Every one is required: a log level that
- * silently falls back hides lines nobody asked to lose, and a redaction flag that defaults to on
- * is a flag nobody notices is off.
+ * Defaults for the two switches, matching the Joi schemas in `apps/main` and `apps/mcp`. Both are
+ * the safe end of their switch: plain JSON that any collector can parse, and redaction left on.
+ */
+export const LOGGER_CONFIG_DEFAULTS = { pretty: false, redact: true } as const;
+
+/**
+ * Reads and validates the logging variables.
  *
- * @throws ConfigurationError when a variable is absent, unparseable, or contradicts NODE_ENV.
+ * `LOG_LEVEL` is required: a level that silently falls back drops lines nobody chose to lose.
+ * `LOG_PRETTY` and `LOG_REDACT` fall back to {@link LOGGER_CONFIG_DEFAULTS} when absent, but a
+ * value that is present and unparseable is still rejected rather than treated as absent.
+ *
+ * These defaults have to match the apps' Joi schemas. This runs first — bootstrap builds a logger
+ * before Nest validates anything — so if it were stricter than Joi, the Joi default could never be
+ * reached and the app would die before the schema was consulted.
+ *
+ * @throws ConfigurationError when a variable is unparseable, when LOG_LEVEL is absent, or when the
+ * result contradicts NODE_ENV.
  */
 export function readLoggerConfig(env: NodeJS.ProcessEnv = process.env): LoggerConfig {
     const level = readLevel(env['LOG_LEVEL']);
-    const pretty = readBoolean({ name: 'LOG_PRETTY', value: env['LOG_PRETTY'] });
-    const redact = readBoolean({ name: 'LOG_REDACT', value: env['LOG_REDACT'] });
+    const pretty = readBoolean({
+        name: 'LOG_PRETTY',
+        value: env['LOG_PRETTY'],
+        fallback: LOGGER_CONFIG_DEFAULTS.pretty,
+    });
+    const redact = readBoolean({
+        name: 'LOG_REDACT',
+        value: env['LOG_REDACT'],
+        fallback: LOGGER_CONFIG_DEFAULTS.redact,
+    });
 
     assertSafeInProduction({ nodeEnv: env['NODE_ENV'], pretty, redact });
 
@@ -78,12 +99,20 @@ function isLogLevel(value: string): value is LogLevel {
     return (LOG_LEVELS as readonly string[]).includes(value);
 }
 
-// Only the two literals are accepted. '1', 'yes' and 'TRUE' each look deliberate enough to be
-// mistaken for working, and a redaction flag read as false by accident is a silent leak.
-function readBoolean({ name, value }: { name: string; value: string | undefined }): boolean {
-    if (value === undefined || value === '') {
-        throw new ConfigurationError(`${name} is required. Set it to 'true' or 'false'.`);
-    }
+// An absent switch takes its default, but a present one is read strictly: '1', 'yes' and 'TRUE'
+// each look deliberate enough to be mistaken for working, and a redaction flag silently read as
+// false is a leak. An empty string counts as absent, since that is what an unset Railway variable
+// and a bare `LOG_PRETTY=` line in a .env file both produce.
+function readBoolean({
+    name,
+    value,
+    fallback,
+}: {
+    name: string;
+    value: string | undefined;
+    fallback: boolean;
+}): boolean {
+    if (value === undefined || value === '') return fallback;
 
     if (value !== 'true' && value !== 'false') {
         throw new ConfigurationError(`${name} must be 'true' or 'false'. Received '${value}'.`);

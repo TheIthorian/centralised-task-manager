@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { LOG_LEVELS } from '@ctm/logger';
+import { LOG_LEVELS, LOGGER_CONFIG_DEFAULTS } from '@ctm/logger';
 
 export const envSchema = Joi.object({
     CTM_API_BASE_URL: Joi.string().uri().required(),
@@ -8,16 +8,18 @@ export const envSchema = Joi.object({
     RSA_PUBLIC_KEY: Joi.string().required(),
     PORT: Joi.number().required(),
     NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
-    // The single source of truth for these rules is readLoggerConfig in @ctm/logger, which runs
-    // first (bootstrap builds a logger before Nest boots) and is stricter about booleans. They are
-    // repeated here so a bad combination is also reported by the env validator, alongside every
-    // other variable, rather than as a lone stack trace.
+    // readLoggerConfig in @ctm/logger enforces the same rules and runs first, because bootstrap
+    // builds a logger before Nest validates anything. The two must agree: a rule that is stricter
+    // here than there is unreachable, and one that is stricter there than here kills the process
+    // before this schema is ever consulted. The defaults are imported rather than repeated for
+    // exactly that reason. These rules are restated here so a bad value is reported alongside
+    // every other variable rather than as a lone stack trace.
     LOG_LEVEL: Joi.string()
         .valid(...LOG_LEVELS)
         .required(),
     LOG_PRETTY: Joi.boolean()
         .optional()
-        .default(false)
+        .default(LOGGER_CONFIG_DEFAULTS.pretty)
         .when('NODE_ENV', {
             is: 'production',
             // oxlint-disable-next-line unicorn/no-thenable -- Joi's conditional key, not a promise.
@@ -28,7 +30,7 @@ export const envSchema = Joi.object({
         }),
     LOG_REDACT: Joi.boolean()
         .optional()
-        .default(true)
+        .default(LOGGER_CONFIG_DEFAULTS.redact)
         .when('NODE_ENV', {
             is: 'production',
             // oxlint-disable-next-line unicorn/no-thenable -- Joi's conditional key, not a promise.

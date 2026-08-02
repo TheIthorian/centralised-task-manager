@@ -129,19 +129,23 @@ Both Node services log JSON to stdout. Railway captures stdout per service, so t
 deployment's **Logs** tab is where you read them; there is no log shipping and no log
 file on disk.
 
-### Required variables
+### Variables
 
-Three variables configure logging. All are **required on both `main` and `mcp`**, with no
-defaults and nothing inferred from `NODE_ENV` — a service whose environment is missing any
-of them refuses to boot. Set all three on both Railway services before deploying.
+Three variables configure logging, on both `main` and `mcp`. Nothing is inferred from
+`NODE_ENV`.
 
-| Variable     | Values                                        | In production   |
-| ------------ | --------------------------------------------- | --------------- |
-| `LOG_LEVEL`  | `trace` `debug` `info` `warn` `error` `fatal` | usually `info`  |
-| `LOG_PRETTY` | `true` `false`                                | must be `false` |
-| `LOG_REDACT` | `true` `false`                                | must be `true`  |
+| Variable     | Values                                        | Absent          | In production   |
+| ------------ | --------------------------------------------- | --------------- | --------------- |
+| `LOG_LEVEL`  | `trace` `debug` `info` `warn` `error` `fatal` | refuses to boot | usually `info`  |
+| `LOG_PRETTY` | `true` `false`                                | `false`         | must be `false` |
+| `LOG_REDACT` | `true` `false`                                | `true`          | must be `true`  |
 
-The last two columns are enforced, not advisory. With `NODE_ENV=production`, the env
+`LOG_LEVEL` has no default: a service that cannot say how much it logs should not start.
+The two switches default to the safe end, so a deployment that sets neither gets plain JSON
+with redaction on. Set explicitly is still better than relying on the default. A value that
+is present but unparseable (`LOG_REDACT=flase`) is rejected rather than treated as absent.
+
+The production column is enforced, not advisory. With `NODE_ENV=production`, the env
 validator rejects `LOG_PRETTY=true` (pino-pretty is a devDependency and is absent from the
 production image, so the first log line would crash the process) and rejects
 `LOG_REDACT=false` (it would write tokens, passwords, cookies and OAuth codes to stdout in

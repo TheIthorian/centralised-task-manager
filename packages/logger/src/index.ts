@@ -6,6 +6,7 @@ import { REDACT_PATHS, REDACTION_PLACEHOLDER } from './redaction.js';
 export {
     assertSafeInProduction,
     LOG_LEVELS,
+    LOGGER_CONFIG_DEFAULTS,
     readLoggerConfig,
     type LoggerConfig,
     type LogLevel,
