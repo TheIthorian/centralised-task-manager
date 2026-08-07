@@ -101,4 +101,39 @@ describe('ApiHttpClient', () => {
         expect(apiError.retryAfterSeconds).toBeUndefined();
         expect(apiError.message).toBe('Too many requests');
     });
+
+    // Node dials IPv6 and IPv4 in parallel (`autoSelectFamily`, on by default since Node 20). When
+    // every address is refused it throws an AggregateError whose own message is empty.
+    it('describes a transport failure whose axios error carries no message', async () => {
+        const http = new ApiHttpClient({ baseUrl: 'http://localhost:59999' });
+
+        const aggregate = new AggregateError(
+            [new Error('connect ECONNREFUSED ::1:59999'), new Error('connect ECONNREFUSED 127.0.0.1:59999')],
+            '',
+        );
+
+        mockedAxios.isAxiosError.mockReturnValue(true);
+        mockInstance.request.mockRejectedValueOnce(Object.assign(aggregate, { isAxiosError: true, code: 'ECONNREFUSED' }));
+
+        const apiError = (await http
+            .request({ method: 'GET', path: '/tasks' })
+            .catch((caught: unknown) => caught)) as ApiClientError;
+
+        expect(apiError.statusCode).toBe(0);
+        expect(apiError.message).toContain('ECONNREFUSED');
+        expect(apiError.message).toContain('GET http://localhost:59999/tasks');
+    });
+
+    it('falls back to the error code alone when nothing else describes the failure', async () => {
+        const http = new ApiHttpClient({ baseUrl: 'http://localhost:59999' });
+
+        mockedAxios.isAxiosError.mockReturnValue(true);
+        mockInstance.request.mockRejectedValueOnce({ isAxiosError: true, message: '', code: 'ETIMEDOUT' });
+
+        const apiError = (await http
+            .request({ method: 'GET', path: '/tasks' })
+            .catch((caught: unknown) => caught)) as ApiClientError;
+
+        expect(apiError.message).toBe('ETIMEDOUT: GET http://localhost:59999/tasks failed');
+    });
 });

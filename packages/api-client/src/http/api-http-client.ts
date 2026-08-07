@@ -5,8 +5,10 @@ import type { ApiClientOptions, RequestOptions } from './http.types.js';
 /** Request plumbing shared by every domain client: one axios instance and one error shape. */
 export class ApiHttpClient {
     private readonly client: AxiosInstance;
+    private readonly baseUrl: string;
 
     constructor({ baseUrl, accessToken }: ApiClientOptions) {
+        this.baseUrl = baseUrl;
         this.client = axios.create({
             baseURL: baseUrl,
             headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
@@ -26,12 +28,24 @@ export class ApiHttpClient {
 
             return response.data;
         } catch (error) {
-            throw toApiClientError({ error, method, path });
+            throw toApiClientError({ error, method, path, baseUrl: this.baseUrl });
         }
     }
 }
 
-function toApiClientError({ error, method, path }: { error: unknown; method: string; path: string }): ApiClientError {
+function toApiClientError({
+    error,
+    method,
+    path,
+    baseUrl,
+}: {
+    error: unknown;
+    method: string;
+    path: string;
+    baseUrl: string;
+}): ApiClientError {
+    const target = `${method} ${baseUrl}${path}`;
+
     if (axios.isAxiosError(error)) {
         const statusCode = error.response?.status ?? 0;
         const retryAfterSeconds = extractRetryAfterSeconds(error);
@@ -39,8 +53,8 @@ function toApiClientError({ error, method, path }: { error: unknown; method: str
         return new ApiClientError({
             message:
                 statusCode === RATE_LIMITED_STATUS
-                    ? rateLimitMessage({ error, retryAfterSeconds })
-                    : extractMessage(error),
+                    ? rateLimitMessage({ error, retryAfterSeconds, target })
+                    : extractMessage({ error, target }),
             statusCode,
             method,
             path,
@@ -51,7 +65,7 @@ function toApiClientError({ error, method, path }: { error: unknown; method: str
 
     if (error instanceof Error) {
         return new ApiClientError({
-            message: error.message,
+            message: error.message.length > 0 ? error.message : `${error.name}: ${target} failed`,
             statusCode: 0,
             method,
             path,
@@ -78,16 +92,18 @@ function extractRetryAfterSeconds(error: AxiosError): number | undefined {
 function rateLimitMessage({
     error,
     retryAfterSeconds,
+    target,
 }: {
     error: AxiosError;
     retryAfterSeconds: number | undefined;
+    target: string;
 }): string {
     const wait = retryAfterSeconds === undefined ? '' : ` Retry in ${retryAfterSeconds}s.`;
 
-    return `${extractMessage(error)}${wait}`;
+    return `${extractMessage({ error, target })}${wait}`;
 }
 
-function extractMessage(error: AxiosError): string {
+function extractMessage({ error, target }: { error: AxiosError; target: string }): string {
     const responseBody = error.response?.data;
 
     if (typeof responseBody === 'string' && responseBody.length > 0) {
@@ -110,5 +126,27 @@ function extractMessage(error: AxiosError): string {
         }
     }
 
-    return error.message;
+    if (error.message.length > 0) {
+        return error.message;
+    }
+
+    return describeTransportFailure({ error, target });
+}
+
+/**
+ * A request that never reached the server has no response body, and Node dials IPv6 and IPv4 in
+ * parallel, so a refused connection arrives as an `AggregateError` with an empty message and one
+ * inner error per address. The failure has to be rebuilt from the error code and those inners.
+ */
+function describeTransportFailure({ error, target }: { error: AxiosError; target: string }): string {
+    const causes =
+        error instanceof AggregateError
+            ? error.errors
+                  .filter((cause: unknown): cause is Error => cause instanceof Error && cause.message.length > 0)
+                  .map((cause) => cause.message)
+            : [];
+
+    const detail = causes.length > 0 ? `: ${causes.join(', ')}` : '';
+
+    return `${error.code ?? 'Request failed'}: ${target} failed${detail}`;
 }
