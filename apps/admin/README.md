@@ -51,6 +51,22 @@ That is fine at this size; if it stops being fine, cache here rather than in the
 Reads are not written to the audit log. The log records what an operator changed, and a dashboard
 that logs every page view buries the entries that matter.
 
+## OAuth clients
+
+`GET /oauth-clients` lists registered clients, filterable by `search` or `isDynamic`. `POST`,
+`PATCH /:clientId` and `DELETE /:clientId` create, configure and revoke them, so a client can be set
+up from the UI instead of through RFC 7591 dynamic registration.
+`GET /oauth-clients/available-scopes` returns the scope registry for the editor.
+
+**Clients seeded from code are read-only here.** `isDynamic: false` is set only by
+`FirstPartyClientsService` in `apps/main`, which re-applies its definition on every boot. A write
+from the admin API would be reverted by the next deploy, and the client would be broken until then,
+so the write is refused with a 409 rather than silently undone later. They are still listed, since
+the operator needs to see that `ctm-cli` exists and when it was last used.
+
+Scopes are validated against `SCOPE_REGISTRY` in `@ctm/db`, so a client cannot be granted a scope
+the authorization server does not implement.
+
 ## Audit log
 
 Every operator action is recorded, append-only, in the `auditlogs` collection. There is no update

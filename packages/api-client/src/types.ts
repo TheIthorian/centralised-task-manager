@@ -7,6 +7,12 @@ export { ConnectorType } from './domains/connectors/connectors.types.js';
 
 export type {
     AdminIdentityDto,
+    AdminOAuthClientDto,
+    AdminOAuthClientPageDto,
+    AvailableScopeDto,
+    CreateOAuthClientDto,
+    ListOAuthClientsQueryDto,
+    UpdateOAuthClientDto,
     AuditLogEntryDto,
     AuditLogPageDto,
     ConnectorMetricsDto,
