@@ -42,9 +42,8 @@ metatypes regardless.
 status and by source, connectors with a separate count of those whose last sync recorded an error,
 and sync health derived from job status over the trailing 24 hours.
 
-`GET /metrics/growth?days=30` returns new users and tasks per calendar day (UTC), oldest first. Days
-with no activity are present with zeroes rather than omitted — a chart that closes the gap implies
-activity that did not happen.
+Totals only, deliberately: time series belong in a product analytics tool rather than in aggregations
+this app maintains.
 
 Nothing is cached. `generatedAt` is request time, and the aggregations scan the window each call.
 That is fine at this size; if it stops being fine, cache here rather than in the SPA.
