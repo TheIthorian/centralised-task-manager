@@ -8,6 +8,7 @@ import { rootLogger } from './logging/app-logger.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { AuditModule } from './audit/audit.module.js';
+import { MetricsModule } from './metrics/metrics.module.js';
 import { AdminGuard } from './auth/admin.guard.js';
 
 @Module({
@@ -20,6 +21,7 @@ import { AdminGuard } from './auth/admin.guard.js';
         DatabaseModule,
         AuthModule,
         AuditModule,
+        MetricsModule,
         // Last, so it audits every controller the modules above registered.
         HandlerValidationModule,
     ],

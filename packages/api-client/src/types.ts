@@ -9,7 +9,16 @@ export type {
     AdminIdentityDto,
     AuditLogEntryDto,
     AuditLogPageDto,
+    ConnectorMetricsDto,
+    GrowthMetricsDto,
+    GrowthMetricsQueryDto,
+    GrowthPointDto,
     ListAuditLogQueryDto,
+    MetricBucketDto,
+    SiteMetricsDto,
+    SyncMetricsDto,
+    TaskMetricsDto,
+    UserMetricsDto,
 } from './domains/admin/admin.types.js';
 export type { AppConfigDto, HealthDto } from './domains/app-config/app-config.types.js';
 export type {
