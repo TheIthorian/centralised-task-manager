@@ -150,3 +150,27 @@ export type AvailableScopeDto = {
     label: string;
     required: boolean;
 };
+
+/**
+ * Options for constructing a {@link CtmAdminClient}. There is no token: Cloudflare Access
+ * authenticates the operator in front of the origin.
+ */
+export type AdminApiClientOptions = {
+    baseUrl: string;
+};
+
+/** Parameters for {@link AdminClient.getOAuthClient} and {@link AdminClient.revokeOAuthClient}. */
+export type GetAdminOAuthClientParams = {
+    clientId: string;
+};
+
+/** Parameters for {@link AdminClient.createOAuthClient}. */
+export type CreateAdminOAuthClientParams = {
+    dto: CreateOAuthClientDto;
+};
+
+/** Parameters for {@link AdminClient.updateOAuthClient}. */
+export type UpdateAdminOAuthClientParams = {
+    clientId: string;
+    dto: UpdateOAuthClientDto;
+};
