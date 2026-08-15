@@ -5,8 +5,7 @@ import type { JwtPayload } from '../tokens/token-claims.js';
 import { TaskSyncJobDto } from './dto/task-sync-job.dto.js';
 import { SyncService } from './sync.service.js';
 import { toSyncJobDto } from './sync-job.dto.js';
-import { objectIdSchema } from '../common/zod/param-schemas.js';
-import { ValidatedParam } from '../common/validation/validated.decorators.js';
+import { objectIdSchema, ValidatedParam } from '@ctm/nest-common';
 
 type AuthRequest = {
     user: JwtPayload;

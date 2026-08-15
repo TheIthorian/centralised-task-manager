@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { CreateTaskDto as ICreateTaskDto } from '@ctm/api-client';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { isoDateTimeSchema, requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, isoDateTimeSchema, requestObject } from '@ctm/nest-common';
 import { dueDateSchema, durationSchema, locationsSchema, prioritySchema } from './update-task.dto.js';
 
 export const createTaskSchema = requestObject({

@@ -17,8 +17,7 @@ import { SyncModule } from './sync/sync.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { DataPortabilityModule } from './data-portability/data-portability.module.js';
 import { RateLimitModule } from './rate-limit/rate-limit.module.js';
-import { AppErrorFilter } from './common/filters/app-error.filter.js';
-import { HandlerValidationModule } from './common/validation/handler-validation.module.js';
+import { AppErrorFilter, HandlerValidationModule } from '@ctm/nest-common';
 
 @Module({
     imports: [

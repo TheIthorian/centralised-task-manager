@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { UpdateNotificationPreferencesDto as IUpdateNotificationPreferencesDto } from '@ctm/api-client';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, requestObject } from '@ctm/nest-common';
 
 export const channelPrefsSchema = requestObject({
     inApp: z.boolean().optional(),

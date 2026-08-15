@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { createZodDto } from '@ctm/nest-common';
 import { codeChallengeMethodSchema } from '../pkce.js';
 
 /**

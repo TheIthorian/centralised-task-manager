@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** An operator surface (`apps/admin`) with admin roles, reversible account deletion, site metrics, and OAuth client management, backed by an audit log.
+**Goal:** An operator surface (`apps/admin`) with reversible account deletion, site metrics, and OAuth client management, backed by an audit log.
 
-**Architecture:** Mongoose schemas move out of `apps/main/src/**/schemas` into a new `packages/db` so a second backend can own its own connection to the same MongoDB. `apps/admin` is a NestJS backend serving a React SPA on its own origin, issuing its own admin-only tokens that `apps/main` does not accept.
+**Architecture:** Mongoose schemas move out of `apps/main/src/**/schemas` into a new `packages/db`, and the shared Nest request-validation helpers into `packages/nest-common`, so a second backend can own its own connection to the same MongoDB. `apps/admin` is a NestJS backend serving a React SPA on its own origin, behind a single operator credential that `apps/main` knows nothing about.
 
 **Tech Stack:** NestJS (Fastify), Mongoose, Zod + `nestjs-zod`, Vite + React, Tailwind v4, `@ctm/ui`, vitest.
 
@@ -37,10 +37,11 @@ waits on a merge.
 
 ```
 main
-└── refactor/auth-oauth-boundary   PR #86 (not ours)
+└── refactor/auth-oauth-boundary    PR #86 (not ours)
     └── feat/db-package             Phase 1
-        └── feat/admin-roles-audit  Phase 2
-            └── ...                 Phases 3-6
+        └── feat/nest-common        Phase 1b
+            └── feat/admin-backend  Phase 2
+                └── ...             Phases 3-6
 ```
 
 Phase 1 is based on `refactor/auth-oauth-boundary` rather than `main` because that PR moves
@@ -70,20 +71,28 @@ same files Phase 1 relocates into `packages/db`. Rebase the stack if #86 is forc
 | `src/audit.ts`                                         | `AuditAction` enum                   |
 | `src/index.ts`                                         | barrel                               |
 
+### New package: `packages/nest-common`
+
+The `Validated*` decorators, `createZodDto`, the shared param schemas, `HandlerValidationModule`
+and `AppErrorFilter`, extracted from `apps/main/src/common` so both Nest apps validate handler
+input the same way rather than drifting apart in two copies. `AppErrorFilter` takes its logger
+through `APP_LOGGER` instead of importing one, since the root logger is built from the environment
+of whichever app installs it.
+
 ### New app: `apps/admin`
 
 Every admin endpoint lives here, not in `apps/main`. Backend `src/` mirrors `apps/main`
 conventions; frontend `web/` mirrors `apps/web`.
 
-| File                                    | Responsibility                                       |
-| --------------------------------------- | ---------------------------------------------------- |
-| `src/auth/admin-jwt.strategy.ts`        | verifies `aud: ctm-admin` against the admin keypair  |
-| `src/auth/admin.guard.ts`               | rejects a user whose `role` is not `UserRole.Admin`  |
-| `src/users/admin-users.controller.ts`   | list / grant / revoke / soft-delete / restore        |
+| File                                      | Responsibility                                     |
+| ----------------------------------------- | -------------------------------------------------- |
+| `src/auth/admin-auth.service.ts`          | checks the credential, mints the session           |
+| `src/auth/admin.guard.ts`                 | rejects any request without a valid session cookie |
+| `src/users/admin-users.controller.ts`     | list / soft-delete / restore                       |
 | `src/metrics/admin-metrics.controller.ts` | aggregate site data                                |
 | `src/clients/admin-clients.controller.ts` | OAuth client CRUD                                  |
-| `src/audit/audit.controller.ts`         | audit log read                                       |
-| `src/audit/audit.service.ts`            | append-only writer                                   |
+| `src/audit/audit.controller.ts`           | audit log read                                     |
+| `src/audit/audit.service.ts`              | append-only writer                                 |
 
 ### `apps/main` additions
 
@@ -118,6 +127,11 @@ Move the 13 Mongoose schemas, add the barrel, rewrite the 59 import sites in `ap
 old `schemas/` directories. `config/env.schema.ts` is a Zod env schema, not Mongoose, and stays in
 `apps/main`. No behaviour change: `pnpm test` green before and after at 17 tasks / 522 `@ctm/main`
 tests.
+
+### Phase 1b — `packages/nest-common` extraction
+
+Move the request-validation helpers and the error filter out of `apps/main/src/common`. No
+behaviour change beyond the filter's logger arriving by injection.
 
 ### Phase 2 — `apps/admin` backend, audit log
 

@@ -1,20 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import type { ZodType } from 'zod';
-import { loginSchema } from '../../auth/dto/login.dto.js';
-import { registerSchema } from '../../auth/dto/register.dto.js';
-import { refreshSchema } from '../../auth/dto/refresh.dto.js';
-import { updateUserSchema } from '../../users/dto/update-user.dto.js';
-import { createTaskSchema } from '../../tasks/dto/create-task.dto.js';
-import { updateTaskSchema } from '../../tasks/dto/update-task.dto.js';
-import { listTasksQuerySchema } from '../../tasks/dto/list-tasks-query.dto.js';
-import { addReminderSchema } from '../../tasks/dto/add-reminder.dto.js';
-import { setFuzzyDeadlineSchema } from '../../tasks/dto/set-fuzzy-deadline.dto.js';
-import { setTaskStatusSchema } from '../../tasks/dto/set-task-status.dto.js';
-import { taskRelationSchema } from '../../tasks/dto/task-relation.dto.js';
-import { listNotificationsQuerySchema } from '../../notifications/dto/list-notifications-query.dto.js';
-import { updatePreferencesSchema } from '../../notifications/dto/update-preferences.dto.js';
-import { updateConnectorSchema } from '../../connectors/dto/update-connector.dto.js';
-import { importRequestSchema } from '../../data-portability/dto/import-request.dto.js';
+import { loginSchema } from '../auth/dto/login.dto.js';
+import { registerSchema } from '../auth/dto/register.dto.js';
+import { refreshSchema } from '../auth/dto/refresh.dto.js';
+import { updateUserSchema } from '../users/dto/update-user.dto.js';
+import { createTaskSchema } from '../tasks/dto/create-task.dto.js';
+import { updateTaskSchema } from '../tasks/dto/update-task.dto.js';
+import { listTasksQuerySchema } from '../tasks/dto/list-tasks-query.dto.js';
+import { addReminderSchema } from '../tasks/dto/add-reminder.dto.js';
+import { setFuzzyDeadlineSchema } from '../tasks/dto/set-fuzzy-deadline.dto.js';
+import { setTaskStatusSchema } from '../tasks/dto/set-task-status.dto.js';
+import { taskRelationSchema } from '../tasks/dto/task-relation.dto.js';
+import { listNotificationsQuerySchema } from '../notifications/dto/list-notifications-query.dto.js';
+import { updatePreferencesSchema } from '../notifications/dto/update-preferences.dto.js';
+import { updateConnectorSchema } from '../connectors/dto/update-connector.dto.js';
+import { importRequestSchema } from '../data-portability/dto/import-request.dto.js';
 
 /**
  * Every request schema an app client posts to. Each carries the smallest body that should parse,

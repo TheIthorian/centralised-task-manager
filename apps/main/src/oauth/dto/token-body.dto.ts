@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { createZodDto } from '@ctm/nest-common';
 
 /** Body accepted by `POST /oauth/token`. Field requirements per grant are enforced in the handler. */
 export const tokenBodySchema = z.object({

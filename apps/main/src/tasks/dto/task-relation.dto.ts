@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { TaskRelationDto as ITaskRelationDto } from '@ctm/api-client';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { objectIdSchema, requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, objectIdSchema, requestObject } from '@ctm/nest-common';
 
 export const RELATION_TYPES = ['parent', 'child', 'next', 'previous', 'related'] as const;
 

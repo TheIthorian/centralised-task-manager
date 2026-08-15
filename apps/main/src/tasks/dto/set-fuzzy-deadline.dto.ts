@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { SetFuzzyDeadlineDto as ISetFuzzyDeadlineDto } from '@ctm/api-client';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, requestObject } from '@ctm/nest-common';
 
 export const setFuzzyDeadlineSchema = requestObject({
     type: z.enum(['this_week', 'this_month', 'someday']),

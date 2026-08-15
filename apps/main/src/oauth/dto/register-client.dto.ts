@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
+import { createZodDto } from '@ctm/nest-common';
 import type { RegisterClientInput } from '../oauth-client.service.js';
 
 const ALLOWED_REDIRECT_SCHEMES = new Set(['http:', 'https:']);

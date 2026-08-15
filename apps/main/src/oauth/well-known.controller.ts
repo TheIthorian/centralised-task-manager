@@ -11,7 +11,7 @@ import {
     RegisterClientResponseDto,
 } from './dto/well-known-response.dto.js';
 import { StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
-import { ValidatedBody } from '../common/validation/validated.decorators.js';
+import { ValidatedBody } from '@ctm/nest-common';
 import { CODE_CHALLENGE_METHODS } from './pkce.js';
 
 const SCOPES_SUPPORTED = ['openid', 'email', 'profile'];

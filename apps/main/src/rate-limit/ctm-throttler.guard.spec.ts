@@ -5,7 +5,9 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { Test } from '@nestjs/testing';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { AppErrorFilter } from '../common/filters/app-error.filter.js';
+import { AppErrorFilter } from '@ctm/nest-common';
+import { APP_LOGGER } from '@ctm/request-logger';
+import { rootLogger } from '../logging/app-logger.js';
 import { CtmThrottlerGuard } from './ctm-throttler.guard.js';
 import { PrincipalResolver } from './principal-resolver.js';
 import { resolveRateLimitProfile } from './resolve-rate-limit-profile.js';
@@ -124,6 +126,7 @@ describe('CtmThrottlerGuard', () => {
             providers: [
                 { provide: APP_GUARD, useClass: CtmThrottlerGuard },
                 { provide: APP_FILTER, useClass: AppErrorFilter },
+                { provide: APP_LOGGER, useFactory: rootLogger },
             ],
         }).compile();
 

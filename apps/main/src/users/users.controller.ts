@@ -6,7 +6,7 @@ import { UsersService } from './users.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { JwtPayload } from '../tokens/token-claims.js';
 import { UserDto } from './dto/user.dto.js';
-import { ValidatedBody } from '../common/validation/validated.decorators.js';
+import { ValidatedBody } from '@ctm/nest-common';
 
 interface AuthRequest {
     user: JwtPayload;

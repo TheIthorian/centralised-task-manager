@@ -30,10 +30,8 @@ import { ConnectorsService } from './connectors.service.js';
 import { ConnectionDetailsValidator } from './connection-details-validator.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
 import type { JwtPayload } from '../tokens/token-claims.js';
-import { objectIdSchema } from '../common/zod/param-schemas.js';
-import { UnvalidatedInput } from '../common/validation/unvalidated-input.decorator.js';
+import { objectIdSchema, UnvalidatedInput, ValidatedBody, ValidatedParam, ValidatedQueryValue } from '@ctm/nest-common';
 import { z } from 'zod';
-import { ValidatedBody, ValidatedQueryValue, ValidatedParam } from '../common/validation/validated.decorators.js';
 
 interface AuthRequest {
     user: JwtPayload;

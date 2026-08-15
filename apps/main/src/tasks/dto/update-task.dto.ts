@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { LocationDto as ILocationDto, UpdateTaskDto as IUpdateTaskDto } from '@ctm/api-client';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { isoDateTimeSchema, requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, isoDateTimeSchema, requestObject } from '@ctm/nest-common';
 
 export const MAX_TAGS = 50;
 export const MAX_LOCATIONS = 20;
