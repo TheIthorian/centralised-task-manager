@@ -13,8 +13,7 @@ import { FilesService } from '../files/files.service.js';
 import type { ExportEnvelopeDto } from '@ctm/api-client';
 import { ExportResponseDto, ImportResponseDto } from './dto/data-portability-response.dto.js';
 import { ImportRequestDto, importRequestSchema } from './dto/import-request.dto.js';
-import { ValidatedParam } from '../common/validation/validated.decorators.js';
-import { parseOrThrow } from '../common/zod/zod-param.js';
+import { parseOrThrow, ValidatedParam } from '@ctm/nest-common';
 import { z } from 'zod';
 
 type AuthRequest = FastifyRequest & { user: JwtPayload };

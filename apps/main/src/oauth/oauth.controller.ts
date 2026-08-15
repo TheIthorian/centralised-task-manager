@@ -15,12 +15,12 @@ import { AuthorizeQueryDto } from './dto/authorize-query.dto.js';
 import { ConsentBodyDto, TokenBodyDto } from './dto/token-body.dto.js';
 import { OAuthClientInfoDto } from './dto/client-info-response.dto.js';
 import {
+    acceptHeaderSchema,
     ValidatedBody,
     ValidatedHeader,
     ValidatedQuery,
     ValidatedQueryValue,
-} from '../common/validation/validated.decorators.js';
-import { acceptHeaderSchema } from '../common/zod/param-schemas.js';
+} from '@ctm/nest-common';
 import type { CodeChallengeMethod } from './pkce.js';
 
 /** Method assumed when the client omits `code_challenge_method`; the server accepts no other. */

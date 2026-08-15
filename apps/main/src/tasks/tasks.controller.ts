@@ -13,9 +13,8 @@ import type { JwtPayload } from '../tokens/token-claims.js';
 import { AddReminderDto } from './dto/add-reminder.dto.js';
 import { TaskDto, ReminderDto } from './dto/task-response.dto.js';
 import { OkDto } from '../common/dto/ok.dto.js';
-import { objectIdSchema } from '../common/zod/param-schemas.js';
+import { objectIdSchema, ValidatedBody, ValidatedParam, ValidatedQuery } from '@ctm/nest-common';
 import { z } from 'zod';
-import { ValidatedBody, ValidatedQuery, ValidatedParam } from '../common/validation/validated.decorators.js';
 
 type AuthRequest = {
     user: JwtPayload;

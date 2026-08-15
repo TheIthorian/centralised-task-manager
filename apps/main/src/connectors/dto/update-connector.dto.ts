@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, requestObject } from '@ctm/nest-common';
 
 export const updateConnectorSchema = requestObject({
     enabled: z.boolean().optional(),

@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { queryBooleanSchema, requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, queryBooleanSchema, requestObject } from '@ctm/nest-common';
 
 /** Validated query parameters for listing in-app notifications. */
 export const listNotificationsQuerySchema = requestObject({

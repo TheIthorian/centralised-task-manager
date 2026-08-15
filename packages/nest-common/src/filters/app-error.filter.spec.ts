@@ -47,14 +47,14 @@ function makeFilter(): {
     reply: { header: ReturnType<typeof vi.fn>; send: ReturnType<typeof vi.fn> };
 } {
     const calls: Calls = { error: [], warn: [] };
-    const filter = new AppErrorFilter();
 
     const fakeLogger = {
         error: vi.fn((...args: unknown[]) => calls.error.push(args)),
         warn: vi.fn((...args: unknown[]) => calls.warn.push(args)),
+        child: (): unknown => fakeLogger,
     } as unknown as Logger;
 
-    Object.defineProperty(filter, 'logger', { value: fakeLogger });
+    const filter = new AppErrorFilter(fakeLogger);
 
     const send = vi.fn();
     const reply = { header: vi.fn(), status: vi.fn(() => ({ send })), send };

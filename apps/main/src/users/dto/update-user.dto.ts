@@ -1,6 +1,5 @@
 import type { UpdateUserDto as IUpdateUserDto } from '@ctm/api-client';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { emailSchema, requestObject, passwordSchema } from '../../common/zod/param-schemas.js';
+import { createZodDto, emailSchema, passwordSchema, requestObject } from '@ctm/nest-common';
 
 export const updateUserSchema = requestObject({
     email: emailSchema.optional(),

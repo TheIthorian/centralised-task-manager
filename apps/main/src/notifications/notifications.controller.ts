@@ -15,9 +15,8 @@ import {
     NotificationPreferencesDto,
     TestChannelResultDto,
 } from './dto/notification-response.dto.js';
-import { objectIdSchema } from '../common/zod/param-schemas.js';
+import { objectIdSchema, ValidatedBody, ValidatedParam, ValidatedQuery } from '@ctm/nest-common';
 import { z } from 'zod';
-import { ValidatedBody, ValidatedQuery, ValidatedParam } from '../common/validation/validated.decorators.js';
 
 type AuthRequest = { user: JwtPayload };
 

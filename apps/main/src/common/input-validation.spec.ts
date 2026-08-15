@@ -3,7 +3,8 @@ import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fa
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createHash, randomBytes } from 'crypto';
 import { AppModule } from '../app.module.js';
-import { AppErrorFilter } from './filters/app-error.filter.js';
+import { AppErrorFilter } from '@ctm/nest-common';
+import { rootLogger } from '../logging/app-logger.js';
 
 /**
  * Malformed path, query and body input must produce a 4xx, never a 500. A CastError escaping
@@ -19,7 +20,7 @@ describe('handler input validation', () => {
         const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
 
         app = module.createNestApplication(new FastifyAdapter());
-        app.useGlobalFilters(new AppErrorFilter());
+        app.useGlobalFilters(new AppErrorFilter(rootLogger()));
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 

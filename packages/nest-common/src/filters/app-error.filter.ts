@@ -1,6 +1,7 @@
-import { ArgumentsHost, Catch, type ExceptionFilter } from '@nestjs/common';
+import { ArgumentsHost, Catch, Inject, type ExceptionFilter } from '@nestjs/common';
 import { AppError, RateLimitError } from '@ctm/errors';
-import { appLogger } from '../../logging/app-logger.js';
+import { APP_LOGGER } from '@ctm/request-logger';
+import type { Logger } from '@ctm/logger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 /**
@@ -9,7 +10,13 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
  */
 @Catch(AppError)
 export class AppErrorFilter implements ExceptionFilter {
-    private readonly logger = appLogger('app-error');
+    private readonly logger: Logger;
+
+    // The root logger is built from the environment of whichever app installs this filter, so it
+    // arrives through the container rather than being imported from one of them.
+    constructor(@Inject(APP_LOGGER) logger: Logger) {
+        this.logger = logger.child({ name: 'app-error' });
+    }
 
     /** Log the failure, then send the error's own status code, message and machine-readable code. */
     catch(error: AppError, host: ArgumentsHost): void {

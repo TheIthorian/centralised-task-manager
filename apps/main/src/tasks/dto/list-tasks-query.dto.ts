@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { isoDateTimeSchema, requestObject, queryBooleanSchema } from '../../common/zod/param-schemas.js';
+import { createZodDto, isoDateTimeSchema, queryBooleanSchema, requestObject } from '@ctm/nest-common';
 
 export const MAX_PAGE_SIZE = 500;
 

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { RefreshDto as IRefreshDto } from '@ctm/api-client';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, requestObject } from '@ctm/nest-common';
 
 // Defaulted so a refresh that relies on the ctm_refresh cookie parses with no body at all.
 export const refreshSchema = requestObject({

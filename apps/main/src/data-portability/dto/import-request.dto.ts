@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { ImportRequestDto as IImportRequestDto } from '@ctm/api-client';
-import { createZodDto } from '../../common/zod/create-zod-dto.js';
-import { requestObject } from '../../common/zod/param-schemas.js';
+import { createZodDto, requestObject } from '@ctm/nest-common';
 
 // Defaulted so an upload that sends only files still parses; the safe choice is to keep
 // whatever the account already has.
