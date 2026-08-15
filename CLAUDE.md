@@ -12,6 +12,8 @@ Turborepo monorepo managed with **pnpm workspaces**.
 apps/
   main/             # NestJS REST API + auth server (primary backend)
   web/              # Vite + React SPA (served by apps/main in production)
+  admin/            # NestJS operator API — metrics, OAuth clients, audit log (Cloudflare Access)
+  admin-web/        # Vite + React SPA — the operator console for apps/admin
   cli/              # Node.js CLI (`ctm`) — task and connector management
   docs/             # Docusaurus site — compiled user-facing docs + OpenAPI reference
                     # (do NOT store internal markdown here)
@@ -98,6 +100,13 @@ NestJS background worker. No HTTP server. Polls connected sources every 15 minut
 Vite + React SPA. No SSR. Deployed to Cloudflare Pages (see `DEPLOYMENT.md`).
 
 **Stack:** Vite · React · React Router · Tailwind CSS v4 · TypeScript (strict, `moduleResolution: bundler`)
+
+### apps/admin and apps/admin-web
+
+The operator surface: a NestJS API and the SPA that drives it. Cloudflare Access authenticates the
+operator, so neither app stores a credential or has a login route, and the SPA reaches the API
+through a same-origin Pages Function rather than calling it directly. `apps/admin` publishes no
+OpenAPI document. See each app's README before changing either.
 
 ### packages/ui
 

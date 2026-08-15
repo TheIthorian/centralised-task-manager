@@ -1,0 +1,164 @@
+{
+    "app": {
+        "name": "CTM Operations",
+        "skipToContent": "Skip to content"
+    },
+    "nav": {
+        "label": "Sections",
+        "dashboard": "Deployment",
+        "clients": "OAuth clients",
+        "audit": "Audit log",
+        "darkMode": "Dark mode",
+        "lightMode": "Light mode",
+        "signedInAs": "Signed in as {{email}}",
+        "identityUnknown": "Identity unavailable",
+        "signOut": "Sign out"
+    },
+    "common": {
+        "loading": "Loading",
+        "retry": "Retry",
+        "cancel": "Cancel",
+        "close": "Close",
+        "save": "Save",
+        "never": "Never",
+        "none": "None",
+        "loadMore": "Load more",
+        "showingOf": "Showing {{shown}} of {{total}}",
+        "unknownError": "Something went wrong. Try again.",
+        "loadFailed": "Could not load this view"
+    },
+    "dashboard": {
+        "title": "Deployment",
+        "subtitle": "Counts across every account, computed when this page loaded.",
+        "generatedAt": "Figures as at {{time}}",
+        "refresh": "Refresh",
+        "loadFailed": "The metrics endpoint did not respond.",
+        "users": {
+            "title": "Accounts",
+            "total": "Registered",
+            "createdLast7Days": "New in 7 days",
+            "createdLast30Days": "New in 30 days"
+        },
+        "tasks": {
+            "title": "Tasks",
+            "total": "Total",
+            "byStatus": "By status",
+            "bySource": "By source"
+        },
+        "connectors": {
+            "title": "Connectors",
+            "total": "Connections",
+            "enabled": "Enabled",
+            "failing": "Failing",
+            "failingHint": "Connections whose last sync attempt recorded an error.",
+            "bySource": "By source"
+        },
+        "sync": {
+            "title": "Sync",
+            "lastSucceededAt": "Last success",
+            "succeededLast24Hours": "Succeeded in 24h",
+            "failedLast24Hours": "Failed in 24h",
+            "inFlight": "In flight",
+            "inFlightHint": "Queued or running. A number that only grows means the worker is stuck.",
+            "stalled": "No sync job has completed in the last 24 hours."
+        },
+        "emptyBreakdown": {
+            "title": "Nothing recorded yet",
+            "body": "This breakdown fills in once the first record exists."
+        }
+    },
+    "clients": {
+        "title": "OAuth clients",
+        "subtitle": "Applications that may ask a user to authorise them.",
+        "search": "Search",
+        "searchPlaceholder": "Name or client id",
+        "filterLabel": "Ownership",
+        "filter": {
+            "all": "All",
+            "dynamic": "Registered",
+            "seeded": "Seeded"
+        },
+        "register": "Register client",
+        "count": "{{count}} client",
+        "count_other": "{{count}} clients",
+        "loadFailed": "The client list did not load.",
+        "column": {
+            "name": "Name",
+            "clientId": "Client id",
+            "scopes": "Scopes",
+            "issuedAt": "Registered",
+            "lastUsedAt": "Last used",
+            "actions": "Actions"
+        },
+        "seededBadge": "Seeded from code",
+        "seededHint": "Defined in the deployment and re-applied on every boot, so it cannot be changed here.",
+        "dynamicBadge": "Registered",
+        "edit": "Edit",
+        "editLabel": "Edit {{name}}",
+        "revoke": "Revoke",
+        "revokeLabel": "Revoke {{name}}",
+        "empty": {
+            "title": "No clients match",
+            "body": "Clear the search, or register the first client."
+        },
+        "form": {
+            "createTitle": "Register client",
+            "editTitle": "Edit client",
+            "clientName": "Name",
+            "redirectUris": "Redirect URIs",
+            "redirectUrisHint": "One per line. The authorization server will only redirect to these.",
+            "scopes": "Scopes",
+            "clientUri": "Homepage",
+            "contacts": "Contacts",
+            "contactsHint": "One email per line.",
+            "submitCreate": "Register",
+            "submitEdit": "Save changes",
+            "nameRequired": "Give the client a name.",
+            "redirectUriRequired": "Add at least one redirect URI.",
+            "redirectUriInvalid": "{{uri}} is not a valid URL.",
+            "scopeRequired": "Select at least one scope.",
+            "saveFailed": "The client was not saved."
+        },
+        "revokeDialog": {
+            "title": "Revoke client",
+            "body": "{{name}} will no longer be able to complete an authorization. Anyone using it is signed out at their next token refresh.",
+            "confirm": "Revoke",
+            "failed": "The client was not revoked."
+        },
+        "toast": {
+            "created": "{{name}} registered",
+            "updated": "{{name}} saved",
+            "revoked": "{{name}} revoked"
+        }
+    },
+    "audit": {
+        "title": "Audit log",
+        "subtitle": "Every operator action, append-only. Reads are not recorded.",
+        "filterAction": "Action",
+        "filterActionPlaceholder": "e.g. oauth_client.updated",
+        "filterTarget": "Target id",
+        "filterTargetPlaceholder": "Client id or account id",
+        "clearFilters": "Clear filters",
+        "loadFailed": "The audit log did not load.",
+        "count": "{{count}} entry",
+        "count_other": "{{count}} entries",
+        "actor": "by {{actor}}",
+        "target": "on {{label}}",
+        "fromIp": "from {{ip}}",
+        "metadata": "Details",
+        "empty": {
+            "title": "No entries",
+            "body": "Nothing matches these filters yet."
+        }
+    },
+    "notFound": {
+        "title": "No such page",
+        "body": "That address is not part of the operator console.",
+        "action": "Go to the deployment overview"
+    },
+    "error": {
+        "title": "This page could not be rendered",
+        "body": "The console hit an unexpected error. Reloading usually clears it.",
+        "reload": "Reload"
+    }
+}
