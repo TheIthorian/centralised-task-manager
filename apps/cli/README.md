@@ -21,13 +21,20 @@ No build step. Node strips the types and a resolve hook points the compiled-outp
 specifiers back at their `.ts` files:
 
 ```bash
-pnpm --filter @ctm/cli ctm tasks list
-pnpm --filter @ctm/cli ctm login --base-url http://localhost:3000
+pnpm -s ctm tasks list
+pnpm -s ctm login --base-url http://localhost:3000
 ```
 
-From `apps/cli`, `pnpm ctm <args>` is the same thing. The flags behind it (`dev-loader.mjs`,
-`--experimental-transform-types`) are in the `ctm` script; `--experimental-transform-types` is
-needed because `enum` is not erasable syntax.
+Keep the `-s`. Without it pnpm echoes the command it runs and appends its own
+`ELIFECYCLE`/`ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL` after any non-zero exit, which buries the CLI's
+own output. The released binary has neither. For a bare `ctm` that behaves like the real thing:
+
+```bash
+alias ctm="node --experimental-transform-types --disable-warning=ExperimentalWarning \
+  --import $PWD/apps/cli/dev-loader.mjs $PWD/apps/cli/src/main.ts"
+```
+
+`--experimental-transform-types` is needed because `enum` is not erasable syntax.
 
 Point it at a local API with `--base-url http://localhost:3000` or `CTM_BASE_URL`, and keep
 development credentials separate from your real ones by logging in against that URL: tokens are
