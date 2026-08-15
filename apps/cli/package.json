@@ -23,7 +23,7 @@
     },
     "devDependencies": {
         "@ctm/tsconfig": "workspace:*",
-        "@swc/core": "1.15.46",
+        "@swc/core": "1.15.47",
         "@types/node": "26.1.1",
         "esbuild": "0.28.1",
         "ts-node": "10.9.2",
