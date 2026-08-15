@@ -15,6 +15,7 @@
         "@ctm/api-client": "workspace:*",
         "@ctm/connectors": "workspace:*",
         "@ctm/db": "workspace:*",
+        "@ctm/env": "workspace:*",
         "@ctm/errors": "workspace:*",
         "@ctm/http-client": "workspace:*",
         "@ctm/logger": "workspace:*",

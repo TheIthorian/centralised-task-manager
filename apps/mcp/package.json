@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "@ctm/api-client": "workspace:*",
+        "@ctm/env": "workspace:*",
         "@ctm/errors": "workspace:*",
         "@ctm/logger": "workspace:*",
         "@ctm/request-logger": "workspace:*",

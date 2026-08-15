@@ -1,0 +1,28 @@
+{
+    "name": "@ctm/env",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json . '**/*.md'",
+        "dev": "tsc -p tsconfig.build.json --watch"
+    },
+    "dependencies": {
+        "@ctm/errors": "workspace:*",
+        "@ctm/logger": "workspace:*"
+    },
+    "peerDependencies": {
+        "joi": "18.2.3"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "@types/node": "26.1.1",
+        "joi": "18.2.3",
+        "typescript": "6.0.3",
+        "vitest": "4.1.10"
+    }
+}
