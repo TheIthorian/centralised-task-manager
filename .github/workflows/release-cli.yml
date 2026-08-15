@@ -1,14 +1,14 @@
 name: release-cli
 
+# Automatic triggers are off while the org's Actions storage quota is exhausted.
+# Restore the push block below once there is headroom.
 on:
-    push:
-        branches: [main]
-        tags: ['v*']
-    pull_request:
-        paths:
-            - 'apps/cli/**'
-            - 'packages/api-client/**'
-            - '.github/workflows/release-cli.yml'
+    # push:
+    #     branches: [main]
+    #     paths:
+    #         - 'apps/cli/**'
+    #         - 'packages/api-client/**'
+    #         - '.github/workflows/release-cli.yml'
     workflow_dispatch:
 
 concurrency:
@@ -52,6 +52,7 @@ jobs:
                       ctm-cli.tar.gz
                       ctm-cli.tar.gz.sha256
                   if-no-files-found: error
+                  retention-days: 7
 
     release:
         needs: bundle
