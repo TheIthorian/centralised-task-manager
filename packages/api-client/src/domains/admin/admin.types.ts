@@ -80,20 +80,3 @@ export type SiteMetricsDto = {
     generatedAt: string;
 };
 
-/** One day's worth of new records. */
-export type GrowthPointDto = {
-    /** Calendar day in `YYYY-MM-DD`, in UTC. */
-    date: string;
-    users: number;
-    tasks: number;
-};
-
-/** New users and tasks per day over the requested window. */
-export type GrowthMetricsDto = {
-    points: GrowthPointDto[];
-};
-
-/** Query for {@link AdminClient.getGrowthMetrics}. */
-export type GrowthMetricsQueryDto = {
-    days?: number;
-};
