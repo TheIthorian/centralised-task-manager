@@ -298,6 +298,14 @@
     },
     "notifications": {
         "connect": "Connect →",
+        "panel": {
+            "title": "Notifications",
+            "unreadCount_one": "{{count}} unread",
+            "unreadCount_other": "{{count}} unread",
+            "markAllRead": "Mark all read",
+            "close": "Close notifications",
+            "empty": "No notifications"
+        },
         "saveFailed": {
             "title": "Not saved",
             "body": "Your preferences did not reach the server. Try again."

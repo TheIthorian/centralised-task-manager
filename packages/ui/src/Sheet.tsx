@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
+import { usePresence } from './usePresence.js';
 
 export type SheetProps = {
     open: boolean;
@@ -16,6 +17,9 @@ export type SheetProps = {
 
 /** Past this many pixels of downward drag, releasing dismisses instead of springing back. */
 const DISMISS_THRESHOLD_PX = 96;
+
+/** Kept in step with `--duration-leave`, which drives the exit keyframes below. */
+const EXIT_MS = 240;
 
 const FOCUSABLE =
     'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -36,6 +40,7 @@ export function Sheet({
     const dialogRef = useRef<HTMLDivElement>(null);
     const dragStartRef = useRef<number | null>(null);
     const [dragOffset, setDragOffset] = useState(0);
+    const { mounted, leaving } = usePresence({ open, exitDurationMs: EXIT_MS });
 
     useEffect(() => {
         if (!open) return;
@@ -65,10 +70,12 @@ export function Sheet({
     }, [open, onClose]);
 
     useEffect(() => {
-        if (!open) setDragOffset(0);
+        // Reset on the way in, not on the way out: zeroing the offset as the sheet closes
+        // springs it back up before the exit animation can carry it down.
+        if (open) setDragOffset(0);
     }, [open]);
 
-    if (!open) return null;
+    if (!mounted) return null;
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
         if (event.key !== 'Tab') return;
@@ -110,9 +117,20 @@ export function Sheet({
     const dragging = dragStartRef.current !== null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-end justify-end md:items-stretch">
+        <div
+            className={clsx(
+                'fixed inset-0 z-50 flex items-end justify-end md:items-stretch',
+                // A sheet on its way out must not swallow the click that reopens it.
+                leaving && 'pointer-events-none',
+            )}
+        >
             <div
-                className="absolute inset-0 bg-fg/25 md:bg-fg/10 motion-safe:animate-[ctm-fade_var(--duration-surface)_ease-out]"
+                className={clsx(
+                    'absolute inset-0 bg-fg/25 md:bg-fg/10',
+                    leaving
+                        ? 'motion-safe:animate-[ctm-fade-out_var(--duration-leave)_var(--ease-exit)_forwards]'
+                        : 'motion-safe:animate-[ctm-fade_var(--duration-surface)_var(--ease-surface)]',
+                )}
                 onClick={onClose}
                 aria-hidden="true"
             />
@@ -129,7 +147,15 @@ export function Sheet({
                     'md:max-h-none md:h-full md:rounded-none md:border-l md:border-line md:shadow-overlay',
                     desktopWidthClassName,
                     !dragging && 'motion-safe:transition-transform motion-safe:duration-surface',
-                    'motion-safe:animate-[ctm-slide-up_var(--duration-surface)_ease-out] md:motion-safe:animate-[ctm-slide-in_var(--duration-surface)_ease-out]',
+                    leaving
+                        ? [
+                              'motion-safe:animate-[ctm-slide-down_var(--duration-leave)_var(--ease-exit)_forwards]',
+                              'md:motion-safe:animate-[ctm-slide-out_var(--duration-leave)_var(--ease-exit)_forwards]',
+                          ]
+                        : [
+                              'motion-safe:animate-[ctm-slide-up_var(--duration-surface)_var(--ease-surface)]',
+                              'md:motion-safe:animate-[ctm-slide-in_var(--duration-surface)_var(--ease-surface)]',
+                          ],
                 )}
             >
                 <button

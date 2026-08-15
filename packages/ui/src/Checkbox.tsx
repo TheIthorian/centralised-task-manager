@@ -19,7 +19,8 @@ export function Checkbox({ checked, onChange, label, disabled }: CheckboxProps):
             onClick={() => onChange(!checked)}
             className={clsx(
                 'relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px]',
-                'cursor-pointer transition-colors duration-press',
+                'cursor-pointer motion-safe:transition-[color,background-color,border-color,transform] duration-press',
+                !disabled && 'motion-safe:active:scale-90',
                 // The box stays 18px because a 44px square would dominate the row. The hit
                 // area is grown instead, so a thumb has the full target the box does not show.
                 'before:absolute before:-inset-[13px] before:content-[""] md:before:hidden',
@@ -29,7 +30,14 @@ export function Checkbox({ checked, onChange, label, disabled }: CheckboxProps):
             )}
         >
             {checked && (
-                <svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true" className="text-accent-fg">
+                <svg
+                    width="12"
+                    height="10"
+                    viewBox="0 0 12 10"
+                    fill="none"
+                    aria-hidden="true"
+                    className="text-accent-fg motion-safe:animate-[ctm-pop_var(--duration-surface)_var(--ease-surface)]"
+                >
                     <path
                         d="M1 5L4.5 8.5L11 1"
                         stroke="currentColor"

@@ -22,12 +22,18 @@ export function TopBar(): React.JSX.Element {
             <button
                 type="button"
                 onClick={() => setPanelOpen(true)}
-                className="fixed right-4 top-3 z-30 flex h-11 w-11 items-center justify-center md:h-9 md:w-9 rounded-ctm border border-line bg-panel text-muted transition-colors duration-press hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="fixed right-4 top-3 z-30 flex h-11 w-11 items-center justify-center md:h-9 md:w-9 rounded-ctm border border-line bg-panel text-muted motion-safe:transition-[color,background-color,transform] duration-press hover:text-fg motion-safe:active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 aria-label={t('nav.notifications')}
             >
                 <span className="text-xl leading-none">🔔</span>
                 {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold leading-none text-accent-fg">
+                    <span
+                        // Keyed on the count so an arriving notification replays the pop rather
+                        // than silently swapping the number.
+                        key={unreadCount}
+                        aria-live="polite"
+                        className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold leading-none text-accent-fg motion-safe:animate-[ctm-pop_var(--duration-surface)_var(--ease-surface)]"
+                    >
                         {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                 )}
