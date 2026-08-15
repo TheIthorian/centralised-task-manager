@@ -4,7 +4,12 @@ import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NotFoundError } from '@ctm/errors';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
-import { RefreshToken, RefreshTokenSchema, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
+import {
+    RefreshToken,
+    RefreshTokenGrant,
+    RefreshTokenSchema,
+    type RefreshTokenDocument,
+} from './schemas/refresh-token.schema.js';
 import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
 import {
     AuthorizedClient,
@@ -111,7 +116,7 @@ describe('AuthorizedAppsService', () => {
 
         await refreshTokenModel.create({
             tokenHash: `hash_noclient_${Date.now()}`,
-            grant: 'session',
+            grant: RefreshTokenGrant.Session,
             userId,
             scopes: [],
             expiresAt: new Date(Date.now() + 86400_000),
@@ -144,7 +149,7 @@ describe('AuthorizedAppsService', () => {
         for (const suffix of ['a', 'b']) {
             await refreshTokenModel.create({
                 tokenHash: `hash_${suffix}_${Date.now()}`,
-                grant: 'oauth',
+                grant: RefreshTokenGrant.OAuth,
                 userId,
                 clientId,
                 scopes: ['openid'],
@@ -227,7 +232,7 @@ describe('AuthorizedAppsService', () => {
 
             await refreshTokenModel.create({
                 tokenHash: `hash_${userId}_${Date.now()}`,
-                grant: 'oauth',
+                grant: RefreshTokenGrant.OAuth,
                 userId,
                 clientId,
                 scopes: ['openid'],
@@ -265,7 +270,7 @@ describe('AuthorizedAppsService', () => {
 
             await refreshTokenModel.create({
                 tokenHash: `hash_s_${userId}_${Date.now()}`,
-                grant: 'oauth',
+                grant: RefreshTokenGrant.OAuth,
                 userId,
                 clientId,
                 scopes: ['openid'],

@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 import { randomBytes, createHash } from 'crypto';
 import { AuthCode, type AuthCodeDocument } from './schemas/auth-code.schema.js';
-import { RefreshToken, type RefreshTokenDocument } from '../auth/schemas/refresh-token.schema.js';
+import { RefreshToken, RefreshTokenGrant, type RefreshTokenDocument } from '../auth/schemas/refresh-token.schema.js';
 import { AuthorizedClientService } from '../auth/authorized-client.service.js';
 import { OAuthClientService } from '../auth/oauth-client.service.js';
 import { UsersService } from '../users/users.service.js';
@@ -161,7 +161,14 @@ export class OAuthService {
         const expiresInDays = this.config.get<number>('REFRESH_TOKEN_EXPIRES_DAYS', 30);
         const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-        await this.refreshTokenModel.create({ tokenHash, grant: 'oauth', userId, expiresAt, scopes, clientId });
+        await this.refreshTokenModel.create({
+            tokenHash,
+            grant: RefreshTokenGrant.OAuth,
+            userId,
+            expiresAt,
+            scopes,
+            clientId,
+        });
 
         if (clientId) await this.recordGrant({ userId, clientId, scopes });
 
@@ -201,7 +208,7 @@ export class OAuthService {
     /** Exchange a refresh token for a new token set (rotates the refresh token). */
     async refreshAccessToken({ refreshToken }: { refreshToken: string }): Promise<TokenResponse> {
         const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
-        const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash, grant: 'oauth' });
+        const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash, grant: RefreshTokenGrant.OAuth });
 
         if (!record || record.expiresAt < new Date()) {
             throw new UnauthorizedException('Invalid or expired refresh token');
