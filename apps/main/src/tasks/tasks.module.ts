@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Task, TaskSchema } from './schemas/task.schema.js';
+import { Task, TaskSchema } from '@ctm/db';
 import { TasksService } from './tasks.service.js';
 import { TasksController } from './tasks.controller.js';
 import { AuthModule } from '../auth/auth.module.js';

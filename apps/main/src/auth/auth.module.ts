@@ -7,7 +7,7 @@ import { OAuthModule } from '../oauth/oauth.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { LocalStrategy } from './strategies/local.strategy.js';
-import { LoginAttempt, LoginAttemptSchema } from './schemas/login-attempt.schema.js';
+import { LoginAttempt, LoginAttemptSchema } from '@ctm/db';
 import { LoginAttemptsService } from './login-attempts.service.js';
 
 /** Owns the user's own credentials, sessions and login lockout. Third-party delegation is `oauth`. */

@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ConnectorConfig } from '../../connectors/schemas/connector-config.schema.js';
-import { DiscordConnectorConfig } from '../../connectors/schemas/types.js';
+import { ConnectorConfig, DiscordConnectorConfig } from '@ctm/db';
 import type { SendNotificationDto } from '../dto/send-notification.dto.js';
 import { ConnectorName, DiscordMessageClient } from '@ctm/connectors';
 import { appLogger } from '../../logging/app-logger.js';

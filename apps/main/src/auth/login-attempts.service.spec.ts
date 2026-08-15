@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 import { RateLimitError } from '@ctm/errors';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { LoginAttemptsService } from './login-attempts.service.js';
-import { LoginAttempt, LoginAttemptSchema, type LoginAttemptDocument } from './schemas/login-attempt.schema.js';
+import { LoginAttempt, LoginAttemptSchema, type LoginAttemptDocument } from '@ctm/db';
 
 const MAX_ATTEMPTS = Number(process.env['LOGIN_MAX_FAILED_ATTEMPTS']);
 

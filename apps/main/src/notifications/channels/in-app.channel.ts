@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Notification, type NotificationDocument } from '../schemas/notification.schema.js';
+import { Notification, type NotificationDocument } from '@ctm/db';
 import { NotificationsGateway } from '../notifications.gateway.js';
 import type { SendNotificationDto } from '../dto/send-notification.dto.js';
 

@@ -8,7 +8,7 @@ import { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
 import { SetTaskStatusDto } from './dto/set-task-status.dto.js';
 import { TaskRelationDto } from './dto/task-relation.dto.js';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
-import type { TaskDocument } from './schemas/task.schema.js';
+import type { TaskDocument } from '@ctm/db';
 import type { JwtPayload } from '../tokens/token-claims.js';
 import { AddReminderDto } from './dto/add-reminder.dto.js';
 import { TaskDto, ReminderDto } from './dto/task-response.dto.js';

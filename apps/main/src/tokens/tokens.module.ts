@@ -6,7 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AccessTokenService } from './access-token.service.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { RefreshTokenService } from './refresh-token.service.js';
-import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema.js';
+import { RefreshToken, RefreshTokenSchema } from '@ctm/db';
 
 /**
  * Owns the tokens themselves: how they are signed, what they claim, how long they live and how a

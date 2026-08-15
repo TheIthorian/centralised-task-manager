@@ -4,7 +4,7 @@ import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { InAppChannel } from './in-app.channel.js';
 import { NotificationsGateway } from '../notifications.gateway.js';
-import { Notification, NotificationSchema, type NotificationDocument } from '../schemas/notification.schema.js';
+import { Notification, NotificationSchema, type NotificationDocument } from '@ctm/db';
 
 describe('InAppChannel', () => {
     let module: TestingModule;

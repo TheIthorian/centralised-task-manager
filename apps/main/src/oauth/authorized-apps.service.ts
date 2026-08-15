@@ -4,8 +4,7 @@ import { Model } from 'mongoose';
 import { NotFoundError } from '@ctm/errors';
 import type { AuthorizedAppDto } from '@ctm/api-client';
 import { RefreshTokenService } from '../tokens/refresh-token.service.js';
-import { OAuthClient, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
-import { AuthorizedClient, type AuthorizedClientDocument } from './schemas/authorized-client.schema.js';
+import { AuthorizedClient, type AuthorizedClientDocument, OAuthClient, type OAuthClientDocument } from '@ctm/db';
 
 @Injectable()
 export class AuthorizedAppsService {

@@ -2,12 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { randomUUID } from 'crypto';
-import { User, type UserDocument } from '../users/schemas/user.schema.js';
-import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
-import { Notification, type NotificationDocument } from '../notifications/schemas/notification.schema.js';
-import { Export, type ExportDocument } from './schemas/export.schema.js';
+import {
+    Export,
+    type ExportDocument,
+    Notification,
+    type NotificationDocument,
+    type StoredFile,
+    Task,
+    type TaskDocument,
+    User,
+    type UserDocument,
+} from '@ctm/db';
 import { FilesService } from '../files/files.service.js';
-import type { StoredFile } from '../files/schemas/stored-file.schema.js';
 import type {
     ExportEnvelopeDto,
     ExportProfileDto,

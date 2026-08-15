@@ -6,8 +6,7 @@ import { NotificationsService } from './notifications.service.js';
 import { InAppChannel } from './channels/in-app.channel.js';
 import { EmailChannel } from './channels/email.channel.js';
 import { DiscordChannel, DiscordAuthExpiredError } from './channels/discord.channel.js';
-import { User, UserSchema, type UserDocument } from '../users/schemas/user.schema.js';
-import { Notification, NotificationSchema } from './schemas/notification.schema.js';
+import { Notification, NotificationSchema, User, type UserDocument, UserSchema } from '@ctm/db';
 
 describe('NotificationsService', () => {
     let module: TestingModule;

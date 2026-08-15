@@ -13,7 +13,7 @@ import {
     DiscordOAuthConnector,
 } from '@ctm/connectors';
 import { appLogger } from '../logging/app-logger.js';
-import { ConnectorConfig, ConnectorConfigSchema } from './schemas/connector-config.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema } from '@ctm/db';
 import { ConnectorsService } from './connectors.service.js';
 import { ConnectorsController } from './connectors.controller.js';
 import { EncryptionService } from './encryption.service.js';

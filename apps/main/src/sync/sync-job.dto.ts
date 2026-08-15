@@ -1,5 +1,5 @@
 import type { TaskSyncJobDto } from '@ctm/api-client';
-import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
+import type { TaskSyncJobDocument } from '@ctm/db';
 
 /** Serialize a TaskSyncJobDocument to the wire DTO. */
 export function toSyncJobDto(job: TaskSyncJobDocument): TaskSyncJobDto {

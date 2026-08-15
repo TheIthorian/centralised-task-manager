@@ -5,7 +5,7 @@ import { Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
 import { ConnectorName } from '@ctm/connectors';
-import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
+import { ConnectorConfig, type ConnectorConfigDocument } from '@ctm/db';
 
 describe('ConnectorsModule', () => {
     let app: NestFastifyApplication;

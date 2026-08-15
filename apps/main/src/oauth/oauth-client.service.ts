@@ -3,8 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'node:crypto';
 import type { OAuthClientInfoDto } from '@ctm/api-client';
-import type { OAuthClientDocument } from './schemas/oauth-client.schema.js';
-import { OAuthClient } from './schemas/oauth-client.schema.js';
+import { OAuthClient, type OAuthClientDocument } from '@ctm/db';
 import type { FirstPartyClient } from '../oauth/first-party-clients.js';
 
 /** Input payload for RFC 7591 dynamic client registration. */

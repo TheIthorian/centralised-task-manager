@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { FILE_STORAGE, type FileStorage } from './storage/file-storage.interface.js';
-import type { StoredFile } from './schemas/stored-file.schema.js';
+import type { StoredFile } from '@ctm/db';
 
 @Injectable()
 export class FilesService {

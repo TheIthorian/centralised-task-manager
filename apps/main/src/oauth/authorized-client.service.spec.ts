@@ -3,11 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AuthorizedClientService } from './authorized-client.service.js';
-import {
-    AuthorizedClient,
-    AuthorizedClientSchema,
-    type AuthorizedClientDocument,
-} from './schemas/authorized-client.schema.js';
+import { AuthorizedClient, AuthorizedClientSchema, type AuthorizedClientDocument } from '@ctm/db';
 
 describe('AuthorizedClientService', () => {
     let module: TestingModule;

@@ -4,11 +4,7 @@ import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { DiscordMessageClient } from '@ctm/connectors';
 import { DiscordChannel } from './discord.channel.js';
-import {
-    ConnectorConfig,
-    ConnectorConfigSchema,
-    type ConnectorConfigDocument,
-} from '../../connectors/schemas/connector-config.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema, type ConnectorConfigDocument } from '@ctm/db';
 
 describe('DiscordChannel (NestJS wrapper)', () => {
     let module: TestingModule;

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Job, JobSchema } from './schemas/job.schema.js';
-import { TASK_SYNC_JOB_MODEL, TaskSyncJobSchema } from './schemas/task-sync-job.schema.js';
+import { Job, JobSchema, TASK_SYNC_JOB_MODEL, TaskSyncJobSchema } from '@ctm/db';
 
 @Module({
     imports: [

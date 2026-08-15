@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { CODE_CHALLENGE_METHODS, type CodeChallengeMethod } from '../pkce.js';
+import { CODE_CHALLENGE_METHODS, type CodeChallengeMethod } from '../code-challenge.js';
 
 /** Hydrated Mongoose document type for an AuthCode. */
 export type AuthCodeDocument = HydratedDocument<AuthCode>;

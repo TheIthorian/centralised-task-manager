@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { isRedirectUriPermitted, OAuthClientService, UNUSED_CLIENT_TTL_DAYS } from './oauth-client.service.js';
-import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
+import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from '@ctm/db';
 
 describe('isRedirectUriPermitted', () => {
     it('exact-matches non-loopback URIs', () => {

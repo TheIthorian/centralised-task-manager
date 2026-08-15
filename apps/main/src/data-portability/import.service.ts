@@ -3,9 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ValidationError } from '@ctm/errors';
 import { appLogger } from '../logging/app-logger.js';
-import { User, type UserDocument } from '../users/schemas/user.schema.js';
-import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
-import { Notification, type NotificationDocument } from '../notifications/schemas/notification.schema.js';
+import { Notification, type NotificationDocument, Task, type TaskDocument, User, type UserDocument } from '@ctm/db';
 import type {
     ExportEnvelopeDto,
     ExportProfileDto,

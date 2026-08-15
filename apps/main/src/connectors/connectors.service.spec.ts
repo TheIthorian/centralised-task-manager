@@ -7,11 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConnectorsService } from './connectors.service.js';
-import {
-    ConnectorConfig,
-    ConnectorConfigSchema,
-    type ConnectorConfigDocument,
-} from './schemas/connector-config.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema, type ConnectorConfigDocument } from '@ctm/db';
 import { EncryptionService } from './encryption.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { OAuthConnectorRegistry, ConnectorName } from '@ctm/connectors';

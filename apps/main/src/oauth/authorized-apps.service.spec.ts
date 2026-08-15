@@ -8,17 +8,17 @@ import { FIRST_PARTY_CLIENT } from '../rate-limit/principal-resolver.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import { RefreshTokenService } from '../tokens/refresh-token.service.js';
 import {
+    AuthorizedClient,
+    type AuthorizedClientDocument,
+    AuthorizedClientSchema,
+    OAuthClient,
+    type OAuthClientDocument,
+    OAuthClientSchema,
     RefreshToken,
+    type RefreshTokenDocument,
     RefreshTokenGrant,
     RefreshTokenSchema,
-    type RefreshTokenDocument,
-} from '../tokens/schemas/refresh-token.schema.js';
-import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
-import {
-    AuthorizedClient,
-    AuthorizedClientSchema,
-    type AuthorizedClientDocument,
-} from './schemas/authorized-client.schema.js';
+} from '@ctm/db';
 
 describe('AuthorizedAppsService', () => {
     let module: TestingModule;

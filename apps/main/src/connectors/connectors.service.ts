@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Model, Types } from 'mongoose';
 import { ConnectorName, OAuthConnectorRegistry } from '@ctm/connectors';
 import type { OAuthTokens } from '@ctm/connectors';
-import { ConnectorConfig, type ConnectorConfigDocument } from './schemas/connector-config.schema.js';
+import { ConnectorConfig, type ConnectorConfigDocument } from '@ctm/db';
 import { EncryptionService } from './encryption.service.js';
 import { MAX_CONNECTIONS_PER_CONNECTOR } from '../config/limits.js';
 

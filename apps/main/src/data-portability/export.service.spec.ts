@@ -4,14 +4,20 @@ import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { type Model } from 'mongoose';
 import { ExportService } from './export.service.js';
 import { FilesService } from '../files/files.service.js';
-import { Export, ExportSchema, type ExportDocument } from './schemas/export.schema.js';
-import { User, UserSchema, type UserDocument } from '../users/schemas/user.schema.js';
-import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
 import {
+    Export,
+    type ExportDocument,
+    ExportSchema,
     Notification,
-    NotificationSchema,
     type NotificationDocument,
-} from '../notifications/schemas/notification.schema.js';
+    NotificationSchema,
+    Task,
+    type TaskDocument,
+    TaskSchema,
+    User,
+    type UserDocument,
+    UserSchema,
+} from '@ctm/db';
 
 const mockFilesService = {
     save: vi

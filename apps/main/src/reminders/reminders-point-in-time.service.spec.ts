@@ -3,8 +3,7 @@ import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
 import { RemindersService } from './reminders.service.js';
-import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
-import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema, Task, type TaskDocument, TaskSchema } from '@ctm/db';
 import { NotificationsService } from '../notifications/notifications.service.js';
 
 describe('RemindersService – runPointInTimeReminders', () => {

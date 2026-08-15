@@ -11,7 +11,7 @@ import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
 import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
 import { AuthorizedAppsService } from '../oauth/authorized-apps.service.js';
-import type { UserDocument } from '../users/schemas/user.schema.js';
+import type { UserDocument } from '@ctm/db';
 import type { JwtPayload } from '../tokens/token-claims.js';
 import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
 import { RefreshRateLimit, StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';

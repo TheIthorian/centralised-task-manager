@@ -2,13 +2,12 @@ import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'node:crypto';
-import { AuthCode, type AuthCodeDocument } from './schemas/auth-code.schema.js';
+import { AuthCode, type AuthCodeDocument, RefreshTokenGrant } from '@ctm/db';
 import { AuthorizedClientService } from './authorized-client.service.js';
 import { OAuthClientService } from './oauth-client.service.js';
 import { UsersService } from '../users/users.service.js';
 import { AccessTokenService } from '../tokens/access-token.service.js';
 import { RefreshTokenService } from '../tokens/refresh-token.service.js';
-import { RefreshTokenGrant } from '../tokens/schemas/refresh-token.schema.js';
 import {
     CODE_CHALLENGE_METHODS,
     isSupportedCodeChallengeMethod,

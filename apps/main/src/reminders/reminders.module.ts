@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Task, TaskSchema } from '../tasks/schemas/task.schema.js';
-import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema, Task, TaskSchema } from '@ctm/db';
 import { RemindersService } from './reminders.service.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 

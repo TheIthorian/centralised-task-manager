@@ -1,10 +1,6 @@
-export type NotificationType = 'connector_reconnect' | 'daily_summary' | 'reminder' | 'upcoming_deadline';
+import type { NotificationData, NotificationType } from '@ctm/db';
 
-export type NotificationData =
-    | { type: 'reminder'; taskId?: string }
-    | { type: 'upcoming_deadline' }
-    | { type: 'connector_reconnect'; source?: string }
-    | { type: 'daily_summary' };
+export type { NotificationData, NotificationType };
 
 export type SendNotificationDto = {
     userId: string;

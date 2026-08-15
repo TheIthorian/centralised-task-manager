@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { StoredFile, StoredFileSchema } from '../../files/schemas/stored-file.schema.js';
+import { StoredFile, StoredFileSchema } from './stored-file.schema.js';
 
 export type ExportDocument = HydratedDocument<Export>;
 

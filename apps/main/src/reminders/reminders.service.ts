@@ -3,8 +3,7 @@ import { appLogger } from '../logging/app-logger.js';
 import { Cron } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Task, type TaskDocument, type RemindEvery } from '../tasks/schemas/task.schema.js';
-import { ConnectorConfig, type ConnectorConfigDocument } from '../connectors/schemas/connector-config.schema.js';
+import { ConnectorConfig, type ConnectorConfigDocument, type RemindEvery, Task, type TaskDocument } from '@ctm/db';
 import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
