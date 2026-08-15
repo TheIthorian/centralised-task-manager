@@ -34,6 +34,11 @@ export type {
     ImportDataParams,
 } from './client.types.js';
 export type {
+    AdminLoginDto,
+    AdminSessionDto,
+    AuditLogEntryDto,
+    AuditLogPageDto,
+    ListAuditLogQueryDto,
     RelationType,
     TaskRelationDto,
     AuthorizedAppDto,

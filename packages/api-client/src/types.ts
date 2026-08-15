@@ -5,6 +5,13 @@
 
 export { ConnectorType } from './domains/connectors/connectors.types.js';
 
+export type {
+    AdminLoginDto,
+    AdminSessionDto,
+    AuditLogEntryDto,
+    AuditLogPageDto,
+    ListAuditLogQueryDto,
+} from './domains/admin/admin.types.js';
 export type { AppConfigDto, HealthDto } from './domains/app-config/app-config.types.js';
 export type {
     AuthorizedAppDto,
