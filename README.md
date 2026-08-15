@@ -13,6 +13,8 @@ Managed with **pnpm workspaces** + **Turborepo**.
 | [`apps/main`](apps/main/README.md)           | NestJS REST API: auth, OAuth 2.1 authorization server, task aggregation, connector sync, reminders and notifications |
 | [`apps/mcp`](apps/mcp)                       | MCP server: exposes tasks, connectors and notifications to MCP clients over Streamable HTTP                          |
 | [`apps/web`](apps/web/README.md)             | Vite + React SPA: task management UI, deployed to Cloudflare Pages                                                   |
+| [`apps/admin`](apps/admin/README.md)         | NestJS operator API: deployment metrics, OAuth client management, audit log. Behind Cloudflare Access                |
+| [`apps/admin-web`](apps/admin-web/README.md) | Vite + React SPA: the operator console for `apps/admin`, deployed to Cloudflare Pages                                |
 | [`apps/cli`](apps/cli/README.md)             | Node.js CLI (`ctm`): task and connector management                                                                   |
 | [`apps/docs`](apps/docs/README.md)           | Docusaurus site: user-facing docs and generated OpenAPI reference                                                    |
 | [`apps/landing`](apps/landing/README.md)     | Landing / marketing page                                                                                             |
