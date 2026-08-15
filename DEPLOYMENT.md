@@ -6,8 +6,10 @@ Production topology:
 | ----------------- | ------------------------ | -------------------------------------------------- |
 | `apps/main` (API) | Railway (Docker service) | Railway GitHub integration, auto-deploys on `main` |
 | `apps/mcp`        | Railway (Docker service) | Railway GitHub integration, auto-deploys on `main` |
+| `apps/admin`      | Railway (Docker service) | Railway GitHub integration, auto-deploys on `main` |
 | MongoDB           | MongoDB Atlas            | managed                                            |
 | `apps/web` (SPA)  | Cloudflare Pages         | `.github/workflows/deploy-cloudflare.yml`          |
+| `apps/admin-web`  | Cloudflare Pages         | same workflow, behind Cloudflare Access            |
 | `apps/landing`    | Cloudflare Pages         | same workflow                                      |
 | `apps/docs`       | Cloudflare Pages         | same workflow                                      |
 
@@ -79,10 +81,24 @@ separate worker service (`apps/sync` is an unimplemented stub).
   required — Railway's private network is IPv6-only).
 - `RSA_PUBLIC_KEY` must be byte-identical to the one on `main`.
 
-## 4. Cloudflare Pages
+## 4. Railway — `admin` service
 
-Create three Pages projects (direct upload, no build step — CI uploads the built assets):
-`ctm-web`, `ctm-landing`, `ctm-docs`.
+- Same repo, config-as-code path `railway.admin.json` (builds `apps/admin/Dockerfile`).
+- Variables: see `apps/admin/.env.example`. `MONGODB_URI` is the same Atlas database as
+  `main` — the operator API reads the live collections through `@ctm/db`.
+- **`ADMIN_DEV_BYPASS_EMAIL` must not be set.** The env schema refuses to start when it is
+  set and `NODE_ENV=production`, because it disables authentication outright.
+- `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` come from the Access application created in
+  §6, so that section has to be done before this service will serve a request.
+- There is **no healthcheck path**. `AdminGuard` is global and has no public escape hatch,
+  so any probe endpoint would answer 403 to Railway and fail the deploy. Judge the service
+  by its logs and by the console loading.
+- Single replica is enough; nothing here holds in-process state.
+
+## 5. Cloudflare Pages
+
+Create four Pages projects (direct upload, no build step — CI uploads the built assets):
+`ctm-web`, `ctm-admin`, `ctm-landing`, `ctm-docs`.
 
 GitHub repo **secrets**:
 
@@ -109,10 +125,44 @@ edit that file and redeploy.
 path (see `apps/web/src/config.ts`), and the GitHub repo variable of that name is
 no longer read by the workflow.
 
-Then set `CORS_ORIGIN` and `WEB_URL` on the Railway `main` service to the Pages
-origin of the SPA.
+`ADMIN_API_ORIGIN` is the same arrangement for the operator console, in
+`apps/admin-web/wrangler.toml`. Point it at the Railway `admin` service's public domain,
+not its private one: the request is made by the Pages Function, which runs at the edge
+rather than inside Railway's network.
 
-## 5. Smoke test
+Then set `CORS_ORIGIN` and `WEB_URL` on the Railway `main` service to the Pages
+origin of the SPA, and `ADMIN_WEB_URL` on the `admin` service to the origin of
+`ctm-admin`.
+
+## 6. Cloudflare Access — the operator console
+
+`apps/admin` has no login route and stores no credential. Access is the authentication,
+so this step is not optional hardening: without it the console is unauthenticated.
+
+1. Zero Trust → Access → Applications → **Add a self-hosted application**.
+2. Application domain: the `ctm-admin` Pages hostname (including any custom domain you
+   add later — an unlisted hostname is an unprotected one).
+3. Policy: **Allow**, with an `Emails` rule listing the operators. There are no roles in
+   this system; the allowlist is the role.
+4. Copy the application's **Application Audience (AUD) tag** into `CF_ACCESS_AUD` on the
+   Railway `admin` service, and your team domain into `CF_ACCESS_TEAM_DOMAIN`.
+
+`CF_ACCESS_AUD` is not optional. Every application in a team is signed by the same keys,
+so without an audience check a token minted for any other application in the team
+verifies against the operator API.
+
+The API is reachable on its Railway domain as well as through the console. That is safe:
+it accepts nothing without an Access-signed assertion, and the signature is verified
+against the team JWKS rather than trusted because the header exists. If you would rather
+it not be reachable at all, put the Railway domain behind Cloudflare too and restrict the
+origin.
+
+The console's own `/api/*` calls go through a Pages Function on the console's origin, so
+they pass Access first and arrive at the API already signed. That is why the browser never
+calls the Railway domain directly: the Access cookie belongs to the Pages hostname, and a
+cross-origin call would carry no operator identity at all.
+
+## 7. Smoke test
 
 ```bash
 curl https://<main>.up.railway.app/health   # {"status":"ok","database":"up",...}
@@ -122,18 +172,30 @@ curl https://<mcp>.up.railway.app/health    # {"status":"ok",...}
 Then load the SPA and log in — the network tab should hit same-origin `/api/...`
 requests, which the Pages Function forwards to `API_ORIGIN`.
 
+For the operator console, check the two failure modes that matter:
+
+```bash
+# No Access assertion, so the API refuses it. Anything else means the API is unprotected.
+curl -i https://<admin>.up.railway.app/metrics    # 401
+```
+
+Then load the console in a browser. Access should challenge before any of it renders, and
+the sidebar should name the email you signed in with. If it says the identity is
+unavailable, the assertion is reaching the API but failing verification — check
+`CF_ACCESS_AUD` against the application's AUD tag.
+
 ---
 
-## 6. Observability
+## 8. Observability
 
-Both Node services log JSON to stdout. Railway captures stdout per service, so the
+Every Node service logs JSON to stdout. Railway captures stdout per service, so the
 deployment's **Logs** tab is where you read them; there is no log shipping and no log
 file on disk.
 
 ### Variables
 
-Three variables configure logging, on both `main` and `mcp`. Nothing is inferred from
-`NODE_ENV`.
+Three variables configure logging, on `main`, `mcp` and `admin` alike. Nothing is inferred
+from `NODE_ENV`.
 
 | Variable     | Values                                        | Absent          | In production   |
 | ------------ | --------------------------------------------- | --------------- | --------------- |

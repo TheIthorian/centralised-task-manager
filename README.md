@@ -60,5 +60,5 @@ pnpm turbo run dev --filter=@ctm/docs   # docs: regenerates openapi.json first
 
 ## Deployment
 
-Railway (`main` + `mcp`) · MongoDB Atlas · Cloudflare Pages (web, landing, docs).
+Railway (`main` + `mcp` + `admin`) · MongoDB Atlas · Cloudflare Pages (web, admin-web, landing, docs).
 See [DEPLOYMENT.md](DEPLOYMENT.md).
