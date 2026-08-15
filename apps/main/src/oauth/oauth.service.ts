@@ -10,7 +10,6 @@ import { OAuthClientService } from '../auth/oauth-client.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ConfigService } from '@nestjs/config';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
-import { UNREGISTERED_CLIENT } from '../rate-limit/principal-resolver.js';
 import {
     CODE_CHALLENGE_METHODS,
     isSupportedCodeChallengeMethod,
@@ -57,7 +56,7 @@ export class OAuthService {
         codeChallenge: string;
         codeChallengeMethod: CodeChallengeMethod;
         scopes: string[];
-        clientId?: string;
+        clientId: string;
     }): Promise<string> {
         const code = randomBytes(32).toString('hex');
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
@@ -135,7 +134,7 @@ export class OAuthService {
         userId: string;
         email: string;
         scopes: string[];
-        clientId?: string;
+        clientId: string;
     }): Promise<TokenResponse> {
         const issuer = this.config.get<string>('REDIRECT_BASE_URL')!;
         const expiresInSeconds = this.config.get<number>('JWT_ACCESS_EXPIRES', 120);
@@ -150,10 +149,8 @@ export class OAuthService {
         const signOptions = { expiresIn: expiresInSeconds };
 
         // client_id rides on the access token so rate limiting can fence one client's traffic
-        // off from the same user's other clients (RFC 9068 §2.2). The claim is always set:
-        // /oauth/authorize accepts callers that do not identify themselves, and without it
-        // their tokens would be indistinguishable from first-party ones and share that fence.
-        const accessToken = this.jwt.sign({ ...payload, client_id: clientId ?? UNREGISTERED_CLIENT }, signOptions);
+        // off from the same user's other clients (RFC 9068 §2.2).
+        const accessToken = this.jwt.sign({ ...payload, client_id: clientId }, signOptions);
         const idToken = this.jwt.sign(payload, signOptions);
 
         const rawRefresh = `rt_${randomBytes(32).toString('hex')}`;
@@ -170,7 +167,7 @@ export class OAuthService {
             clientId,
         });
 
-        if (clientId) await this.recordGrant({ userId, clientId, scopes });
+        await this.recordGrant({ userId, clientId, scopes });
 
         return {
             access_token: accessToken,

@@ -23,8 +23,10 @@ export class RefreshToken {
     @Prop({ type: String, required: true, index: true })
     userId!: string;
 
-    @Prop({ type: String })
-    clientId?: string;
+    // `FIRST_PARTY_CLIENT` for a session grant, a registered client id for an OAuth grant. Always
+    // set, so a token can be attributed and revoked by client without a presence check.
+    @Prop({ type: String, required: true, index: true })
+    clientId!: string;
 
     @Prop({ type: [String], default: [] })
     scopes!: string[];

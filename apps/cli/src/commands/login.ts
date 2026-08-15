@@ -4,7 +4,7 @@ import { CtmApiClient } from '@ctm/api-client';
 import { writeConfig } from '../auth.js';
 import { bakedBaseUrl } from '../baked-config.js';
 import { print } from '../output.js';
-import { registerClient, performOAuthLogin } from '../oauth.js';
+import { CLI_CLIENT_ID, performOAuthLogin } from '../oauth.js';
 
 /** Register `ctm login` on the given commander program. */
 export function registerLoginCommand(program: Command): void {
@@ -28,20 +28,10 @@ export function registerLoginCommand(program: Command): void {
 }
 
 async function oauthLogin(baseUrl: string): Promise<void> {
-    let clientId: string;
-
     try {
-        clientId = await registerClient(baseUrl);
-    } catch (err: unknown) {
-        console.error('Client registration failed:', err instanceof Error ? err.message : String(err));
-        console.error('Try: ctm login --password');
-        process.exit(1);
-    }
+        const { accessToken, refreshToken } = await performOAuthLogin({ baseUrl, clientId: CLI_CLIENT_ID });
 
-    try {
-        const { accessToken, refreshToken } = await performOAuthLogin({ baseUrl, clientId });
-
-        writeConfig({ accessToken, refreshToken, baseUrl, clientId });
+        writeConfig({ accessToken, refreshToken, baseUrl, clientId: CLI_CLIENT_ID });
 
         const client = new CtmApiClient({ baseUrl, accessToken });
         const me = await client.getMe();

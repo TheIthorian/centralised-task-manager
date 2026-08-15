@@ -56,7 +56,7 @@ export class OAuthController {
             code_challenge_method: query.code_challenge_method ?? DEFAULT_CODE_CHALLENGE_METHOD,
             scope: query.scope ?? 'openid',
             state: query.state ?? '',
-            ...(query.client_id ? { client_id: query.client_id } : {}),
+            client_id: query.client_id,
         });
 
         res.redirect(`${webUrl}/oauth/consent?${consentParams.toString()}`, 302);
@@ -80,27 +80,25 @@ export class OAuthController {
         // Routine protocol detail: interesting while debugging a client, noise in an incident.
         this.logger.debug({ clientId: query.client_id ?? null }, 'Authorization request received');
 
-        if (query.client_id) {
-            const client = await this.oauthClient.findByClientId(query.client_id);
+        const client = await this.oauthClient.findByClientId(query.client_id);
 
-            if (!client) {
-                this.logger.warn({ clientId: query.client_id }, 'Authorization request from unknown client');
+        if (!client) {
+            this.logger.warn({ clientId: query.client_id }, 'Authorization request from unknown client');
 
-                throw new BadRequestException('Unrecognised client');
-            }
+            throw new BadRequestException('Unrecognised client');
+        }
 
-            if (!isRedirectUriPermitted(client.redirectUris, query.redirect_uri)) {
-                this.logger.warn(
-                    {
-                        clientId: query.client_id,
-                        redirectUri: query.redirect_uri,
-                        registeredRedirectUris: client.redirectUris,
-                    },
-                    'Authorization request with an unregistered redirect_uri',
-                );
+        if (!isRedirectUriPermitted(client.redirectUris, query.redirect_uri)) {
+            this.logger.warn(
+                {
+                    clientId: query.client_id,
+                    redirectUri: query.redirect_uri,
+                    registeredRedirectUris: client.redirectUris,
+                },
+                'Authorization request with an unregistered redirect_uri',
+            );
 
-                throw new BadRequestException('redirect_uri not permitted for this client');
-            }
+            throw new BadRequestException('redirect_uri not permitted for this client');
         }
 
         const requestedScopes = (query.scope ?? 'openid').split(/\s+/);
@@ -115,7 +113,7 @@ export class OAuthController {
             clientId: query.client_id,
         });
 
-        if (query.client_id) await this.oauthClient.markUsed({ clientId: query.client_id });
+        await this.oauthClient.markUsed({ clientId: query.client_id });
 
         const redirectUrl = new URL(query.redirect_uri);
         redirectUrl.searchParams.set('code', code);

@@ -92,13 +92,20 @@ describe('handler input validation', () => {
 
     describe('/oauth/authorize query', () => {
         const challenge = createHash('sha256').update(randomBytes(32).toString('base64url')).digest('base64url');
-        const base = `response_type=code&redirect_uri=${encodeURIComponent('http://localhost:4000/cb')}&code_challenge=${challenge}`;
+        const base = `response_type=code&client_id=ctm-cli&redirect_uri=${encodeURIComponent('http://localhost:4000/cb')}&code_challenge=${challenge}`;
 
         it.each([
-            ['a missing redirect_uri', `response_type=code&code_challenge=${challenge}`],
-            ['a non-URL redirect_uri', `response_type=code&redirect_uri=not-a-url&code_challenge=${challenge}`],
+            ['a missing client_id', base.replace('client_id=ctm-cli&', '')],
+            ['a missing redirect_uri', `response_type=code&client_id=ctm-cli&code_challenge=${challenge}`],
+            [
+                'a non-URL redirect_uri',
+                `response_type=code&client_id=ctm-cli&redirect_uri=not-a-url&code_challenge=${challenge}`,
+            ],
             ['an unsupported response_type', base.replace('response_type=code', 'response_type=token')],
-            ['a missing code_challenge', `response_type=code&redirect_uri=${encodeURIComponent('http://x/cb')}`],
+            [
+                'a missing code_challenge',
+                `response_type=code&client_id=ctm-cli&redirect_uri=${encodeURIComponent('http://x/cb')}`,
+            ],
             ['a truncated code_challenge', `${base.split('&code_challenge=')[0]}&code_challenge=tooshort`],
             ['an unsupported code_challenge_method', `${base}&code_challenge_method=plain`],
             ['an over-long state', `${base}&state=${'x'.repeat(513)}`],
