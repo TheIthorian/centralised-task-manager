@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** An operator surface (`apps/admin`) with reversible account deletion, site metrics, and OAuth client management, backed by an audit log.
+**Goal:** An operator surface (`apps/admin`) with site metrics and OAuth client management, backed by an audit log. Reversible account deletion is deferred: see Phase 3.
+
+**Status:** Phases 1, 1b and 2 are open as PRs #87, #88 and #89. Phases 3-6 are not started.
 
 **Architecture:** Mongoose schemas move out of `apps/main/src/**/schemas` into a new `packages/db`, and the shared Nest request-validation helpers into `packages/nest-common`, so a second backend can own its own connection to the same MongoDB. `apps/admin` is a NestJS backend serving a React SPA on its own origin, behind a single operator credential that `apps/main` knows nothing about.
 
@@ -56,7 +58,7 @@ same files Phase 1 relocates into `packages/db`. Rebase the stack if #86 is forc
 
 | File                                                   | Responsibility                       |
 | ------------------------------------------------------ | ------------------------------------ |
-| `src/schemas/user.schema.ts`                           | moved + `deletedAt`                  |
+| `src/schemas/user.schema.ts`                           | moved verbatim                       |
 | `src/schemas/task.schema.ts`                           | moved verbatim                       |
 | `src/schemas/connector-config.schema.ts`               | moved verbatim                       |
 | `src/schemas/notification.schema.ts`                   | moved verbatim                       |
@@ -88,7 +90,7 @@ conventions; frontend `web/` mirrors `apps/web`.
 | ----------------------------------------- | -------------------------------------------------- |
 | `src/auth/admin-auth.service.ts`          | checks the credential, mints the session           |
 | `src/auth/admin.guard.ts`                 | rejects any request without a valid session cookie |
-| `src/users/admin-users.controller.ts`     | list / soft-delete / restore                       |
+| `src/users/admin-users.controller.ts`     | list (deletion deferred, see Phase 3)              |
 | `src/metrics/admin-metrics.controller.ts` | aggregate site data                                |
 | `src/clients/admin-clients.controller.ts` | OAuth client CRUD                                  |
 | `src/audit/audit.controller.ts`           | audit log read                                     |
@@ -96,8 +98,8 @@ conventions; frontend `web/` mirrors `apps/web`.
 
 ### `apps/main` additions
 
-Only what the shared data model forces: `users.service.ts` filters soft-deleted users out of every
-lookup, and the account-deletion endpoint becomes a soft delete.
+None, beyond the two extractions. Phases 1 and 1b move code out of it; nothing in the admin feature
+adds behaviour to it, now that reversible deletion is deferred.
 
 ### Admin auth
 
@@ -139,17 +141,22 @@ behaviour change beyond the filter's logger arriving by injection.
 `AdminGuard`, the audit writer, and a read endpoint over the log. No user-facing capability yet,
 so the phase lands as a gated but empty operator API.
 
-### Phase 3 — reversible account deletion
+### Phase 3 — reversible account deletion (deferred)
 
-`deletedAt` on the user document, `users.delete` becomes a soft delete with a retention window,
-a restore path, a reaper that hard-deletes past retention, and every existing query filtered to
-exclude soft-deleted users.
+**Not started, and deliberately not decided here.** Soft deletion is not a user-account question:
+tasks, connector configs and exports each face the same choice, and answering it once inside an
+admin PR would set a precedent for all of them by accident. It needs its own design pass covering
+where the filter lives, what the retention window is per resource, and what a reaper does about
+rows whose owner is itself soft-deleted.
 
-### Phase 4 — site metrics
+Until then `apps/main` keeps its hard `users.delete`, and the admin app offers no deletion.
 
-Aggregate counts (users, tasks, connectors), sync health, growth buckets over time.
+### Phase 4 — site metrics (not started)
 
-### Phase 5 — OAuth client management
+Aggregate counts (users, tasks, connectors), sync health, growth buckets over time. Read-only, so
+it does not wait on the soft-delete decision.
+
+### Phase 5 — OAuth client management (not started)
 
 Admin CRUD over `OAuthClient`, with first-party clients seeded from code marked `isFirstParty`
 and rejected by every write path.
