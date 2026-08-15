@@ -36,13 +36,17 @@ export function readTokens({ baseUrl }: { baseUrl: string }): StoredTokens | nul
 
     if (raw === null) return null;
 
-    try {
-        const parsed: unknown = JSON.parse(raw);
+    const parsed = parseTokens(raw);
 
-        return isStoredTokens(parsed) ? parsed : null;
-    } catch {
-        return null;
+    // Something else owns this entry, or an interrupted write left it half-formed. Either way the
+    // user cannot act on "not logged in" when the store plainly holds an entry for this server.
+    if (parsed === null) {
+        throw new ConfigurationError(
+            `The credentials stored for ${normalizeBaseUrl(baseUrl)} are not readable. Run \`ctm login\` to replace them.`,
+        );
     }
+
+    return parsed;
 }
 
 /**
@@ -275,6 +279,16 @@ function run({
         throw new InternalError(
             `${command} failed while accessing the secret store: ${err instanceof Error ? err.message : String(err)}`,
         );
+    }
+}
+
+function parseTokens(raw: string): StoredTokens | null {
+    try {
+        const parsed: unknown = JSON.parse(raw);
+
+        return isStoredTokens(parsed) ? parsed : null;
+    } catch {
+        return null;
     }
 }
 

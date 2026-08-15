@@ -34,7 +34,13 @@ export function buildClient({ token, baseUrl }: ClientOptions): CtmApiClient {
 
     const session = readSession();
 
-    if (!session) return new CtmApiClient({ baseUrl: resolvedBaseUrl, accessToken: null });
+    // Going out unauthenticated only turns a missing login into a 401 from the server, which
+    // reads like a broken account rather than a command the user has not run yet.
+    if (!session) {
+        throw new ConfigurationError(
+            `Not logged in to ${resolvedBaseUrl}. Run \`ctm login\`, or pass --token.`,
+        );
+    }
 
     return new CtmApiClient({
         baseUrl: resolvedBaseUrl,

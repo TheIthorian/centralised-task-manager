@@ -45,10 +45,16 @@ describe('readTokens', () => {
         expect(readTokens({ baseUrl })).toBeNull();
     });
 
-    it('returns null when the stored value is not a token set', () => {
+    it('says the entry is unreadable rather than reporting no login', () => {
         vi.mocked(execFileSync).mockReturnValue(JSON.stringify({ accessToken: 'at' }));
 
-        expect(readTokens({ baseUrl })).toBeNull();
+        expect(() => readTokens({ baseUrl })).toThrow(ConfigurationError);
+    });
+
+    it('says the same for an entry that is not JSON at all', () => {
+        vi.mocked(execFileSync).mockReturnValue('Mbcxabs3');
+
+        expect(() => readTokens({ baseUrl })).toThrow(ConfigurationError);
     });
 
     it('explains what to install when the platform tool is missing', () => {
