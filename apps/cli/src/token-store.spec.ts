@@ -96,14 +96,13 @@ describe('writeTokens', () => {
         expect(args).toContain(baseUrl);
     });
 
-    it('never puts the secret in an argument', () => {
+    it('passes the secret without waiting on a terminal prompt', () => {
         vi.mocked(execFileSync).mockReturnValue('');
 
         writeTokens({ baseUrl, tokens });
 
-        const [, args, options] = vi.mocked(execFileSync).mock.calls[0]!;
+        const [, args] = vi.mocked(execFileSync).mock.calls[0]!;
 
-        expect(args?.join(' ')).not.toContain(tokens.refreshToken);
-        expect((options as { input?: string }).input).toContain(tokens.refreshToken);
+        expect(args?.join(' ')).toContain(tokens.refreshToken);
     });
 });

@@ -108,12 +108,14 @@ function readSecret({ account }: { account: string }): string | null {
 function writeSecret({ account, secret }: { account: string; secret: string }): void {
     switch (activeBackend()) {
         case TokenStoreBackend.MacosKeychain:
-            // `-U` updates in place. `-w` with no value reads the secret from stdin, twice for
-            // the confirmation prompt, which keeps it off argv where any process could read it.
+            // `-U` updates in place. The secret has to ride on argv: `-w` with no value prompts on
+            // /dev/tty and reads the reply from the terminal rather than from stdin, so a piped
+            // secret is ignored and whatever the tty yields is stored instead. macOS shows process
+            // arguments only to the same user and to root, and either can read an unlocked
+            // keychain anyway.
             run({
                 command: 'security',
-                args: ['add-generic-password', '-U', '-s', SERVICE, '-a', account, '-w'],
-                stdin: `${secret}\n${secret}\n`,
+                args: ['add-generic-password', '-U', '-s', SERVICE, '-a', account, '-w', secret],
             });
 
             return;
