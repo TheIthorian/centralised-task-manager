@@ -88,8 +88,8 @@ export class CtmApiClient {
     private readonly notifications: NotificationsClient;
     private readonly appConfig: AppConfigClient;
 
-    constructor({ baseUrl, accessToken, refreshToken }: ApiClientOptions) {
-        const http = new ApiHttpClient({ baseUrl, accessToken });
+    constructor({ baseUrl, accessToken, refreshToken, grant, persistence }: ApiClientOptions) {
+        const http = new ApiHttpClient({ baseUrl, accessToken, refreshToken, grant, persistence });
 
         this.auth = new AuthClient({ http, refreshToken: refreshToken ?? null });
         this.tasks = new TasksClient({ http });

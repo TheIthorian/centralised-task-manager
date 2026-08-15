@@ -2,6 +2,7 @@
 .data/
 node_modules/
 dist/
+apps/cli/release/
 apps/main/dist-scripts/
 .turbo/
 !.env.test

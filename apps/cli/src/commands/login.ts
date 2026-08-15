@@ -1,8 +1,9 @@
 import type { Command } from 'commander';
 import { input, password } from '@inquirer/prompts';
-import { CtmApiClient } from '@ctm/api-client';
-import { writeConfig } from '../auth.js';
+import { CtmApiClient, TokenGrant } from '@ctm/api-client';
+import { writeSession } from '../auth.js';
 import { bakedBaseUrl } from '../baked-config.js';
+import { normalizeBaseUrl } from '../base-url.js';
 import { print } from '../output.js';
 import { CLI_CLIENT_ID, performOAuthLogin } from '../oauth.js';
 
@@ -19,10 +20,14 @@ export function registerLoginCommand(program: Command): void {
                 process.exit(1);
             }
 
+            // Validated before it reaches the browser launcher or the secret store, both of
+            // which take it as a command argument.
+            const baseUrl = normalizeBaseUrl(opts.baseUrl);
+
             if (opts.password) {
-                await passwordLogin(opts.baseUrl);
+                await passwordLogin(baseUrl);
             } else {
-                await oauthLogin(opts.baseUrl);
+                await oauthLogin(baseUrl);
             }
         });
 }
@@ -31,7 +36,7 @@ async function oauthLogin(baseUrl: string): Promise<void> {
     try {
         const { accessToken, refreshToken } = await performOAuthLogin({ baseUrl, clientId: CLI_CLIENT_ID });
 
-        writeConfig({ accessToken, refreshToken, baseUrl, clientId: CLI_CLIENT_ID });
+        writeSession({ accessToken, refreshToken, grant: TokenGrant.OAuth, baseUrl, clientId: CLI_CLIENT_ID });
 
         const client = new CtmApiClient({ baseUrl, accessToken });
         const me = await client.getMe();
@@ -57,9 +62,10 @@ async function passwordLogin(baseUrl: string): Promise<void> {
             process.exit(1);
         }
 
-        writeConfig({
+        writeSession({
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
+            grant: TokenGrant.Session,
             baseUrl,
         });
 

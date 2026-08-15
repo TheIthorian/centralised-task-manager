@@ -8,6 +8,7 @@
     "type": "module",
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
+        "ctm": "node --experimental-transform-types --disable-warning=ExperimentalWarning --import ./dev-loader.mjs src/main.ts",
         "bundle": "node scripts/bundle.mjs",
         "test": "vitest run",
         "lint": "oxlint .",

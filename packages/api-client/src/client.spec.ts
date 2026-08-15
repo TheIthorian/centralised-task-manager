@@ -19,10 +19,7 @@ describe('CtmApiClient', () => {
         new CtmApiClient({ baseUrl: 'http://localhost:3000', accessToken: 'acc-token' });
 
         expect(mockedAxios.create).toHaveBeenCalledTimes(1);
-        expect(mockedAxios.create).toHaveBeenCalledWith({
-            baseURL: 'http://localhost:3000',
-            headers: { Authorization: 'Bearer acc-token' },
-        });
+        expect(mockedAxios.create).toHaveBeenCalledWith({ baseURL: 'http://localhost:3000' });
     });
 
     it('passes the constructor refresh token through to the auth domain', async () => {

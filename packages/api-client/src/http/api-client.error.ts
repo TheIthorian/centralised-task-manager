@@ -1,6 +1,7 @@
 import type { ApiClientErrorOptions } from './http.types.js';
 
 export const RATE_LIMITED_STATUS = 429;
+export const UNAUTHORIZED_STATUS = 401;
 
 /** Structured HTTP error returned by the REST wrapper. */
 export class ApiClientError extends Error {

@@ -1,7 +1,10 @@
 export { ApiClientError, CtmApiClient } from './client.js';
 export { ConnectorType } from './types.js';
+export { TokenGrant } from './client.types.js';
 export type {
     ApiClientOptions,
+    AuthTokens,
+    TokenPersistence,
     AddReminderParams,
     GetTaskParams,
     CancelSyncJobParams,
