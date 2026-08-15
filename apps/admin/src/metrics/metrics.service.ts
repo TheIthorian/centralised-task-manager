@@ -3,8 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import type {
     ConnectorMetricsDto,
-    GrowthMetricsDto,
-    GrowthPointDto,
     MetricBucketDto,
     SiteMetricsDto,
     SyncMetricsDto,
@@ -26,9 +24,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** One `$group` result: the grouping key, and how many documents fell into it. */
 type GroupCount = { _id: string | null; count: number };
-
-/** One `$group` result keyed by calendar day. */
-type DayCount = { _id: string; count: number };
 
 @Injectable()
 export class MetricsService {
@@ -52,31 +47,6 @@ export class MetricsService {
         ]);
 
         return { users, tasks, connectors, sync, generatedAt: now.toISOString() };
-    }
-
-    /** New users and tasks per calendar day, oldest first, including days with no activity. */
-    async growthMetrics({ days }: { days: number }): Promise<GrowthMetricsDto> {
-        const since = new Date(Date.now() - days * DAY_MS);
-
-        const [userDays, taskDays] = await Promise.all([
-            this.countByDay({ model: this.userModel, since }),
-            this.countByDay({ model: this.taskModel, since }),
-        ]);
-
-        const usersByDate = new Map(userDays.map((day) => [day._id, day.count]));
-        const tasksByDate = new Map(taskDays.map((day) => [day._id, day.count]));
-
-        // A day with no rows is absent from the aggregation, but a growth chart needs the zero:
-        // without it the gap closes up and the line implies activity that did not happen.
-        const points: GrowthPointDto[] = [];
-
-        for (let offset = days - 1; offset >= 0; offset--) {
-            const date = isoDate(new Date(Date.now() - offset * DAY_MS));
-
-            points.push({ date, users: usersByDate.get(date) ?? 0, tasks: tasksByDate.get(date) ?? 0 });
-        }
-
-        return { points };
     }
 
     private async userMetrics(now: Date): Promise<UserMetricsDto> {
@@ -143,20 +113,4 @@ export class MetricsService {
         return groups.map((group) => ({ key: group._id ?? 'unknown', count: group.count }));
     }
 
-    private countByDay({
-        model,
-        since,
-    }: {
-        model: Model<UserDocument> | Model<TaskDocument>;
-        since: Date;
-    }): Promise<DayCount[]> {
-        return model.aggregate<DayCount>([
-            { $match: { createdAt: { $gte: since } } },
-            { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
-        ]);
-    }
-}
-
-function isoDate(date: Date): string {
-    return date.toISOString().slice(0, 10);
 }

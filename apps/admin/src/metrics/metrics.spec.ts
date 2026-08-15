@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import {
     ConnectorConfig,
     ConnectorConfigSchema,
+    ConnectorName,
     Job,
     JobSchema,
     Task,
@@ -73,25 +74,25 @@ describe('MetricsService', () => {
         ]);
 
         // ConnectorConfig.source is constrained to the ConnectorName enum, unlike Task.source.
-        await connectors.create([
-            {
-                userId,
-                source: 'todoist',
-                externalAccountId: `${run}-healthy`,
-                accessToken: 'x',
-                tokenExpiresAt: new Date(),
-                enabled: true,
-            },
-            {
-                userId,
-                source: 'todoist',
-                externalAccountId: `${run}-broken`,
-                accessToken: 'x',
-                tokenExpiresAt: new Date(),
-                enabled: false,
-                lastError: 'token expired',
-            },
-        ]);
+        // Created one at a time: a mixed-shape array makes mongoose's create() overloads ambiguous.
+        await connectors.create({
+            userId,
+            source: ConnectorName.Todoist,
+            externalAccountId: `${run}-healthy`,
+            accessToken: 'x',
+            tokenExpiresAt: new Date(),
+            enabled: true,
+        });
+
+        await connectors.create({
+            userId,
+            source: ConnectorName.Todoist,
+            externalAccountId: `${run}-broken`,
+            accessToken: 'x',
+            tokenExpiresAt: new Date(),
+            enabled: false,
+            lastError: 'token expired',
+        });
 
         await jobs.create([
             { userId, type: 'task-sync', status: 'done', completedAt: new Date() },
@@ -137,27 +138,8 @@ describe('MetricsService', () => {
         expect(Date.parse(after.generatedAt)).toBeGreaterThan(0);
     });
 
-    it('returns one growth point per day, including days with no activity', async () => {
-        const { points } = await metrics.growthMetrics({ days: 7 });
-
-        expect(points).toHaveLength(7);
-        expect(points.map((point) => point.date)).toEqual([...points.map((point) => point.date)].sort());
-    });
-
-    it('attributes the new rows to today', async () => {
-        const { points } = await metrics.growthMetrics({ days: 2 });
-        const today = points.at(-1);
-
-        expect(today?.date).toBe(new Date().toISOString().slice(0, 10));
-        expect(today?.users).toBeGreaterThanOrEqual(1);
-        expect(today?.tasks).toBeGreaterThanOrEqual(3);
-    });
-
-    it('excludes rows created before the window', async () => {
-        // Each window is compared against its own baseline: a 7-day and a 90-day window hold
-        // different amounts of pre-existing data, so their totals are not comparable to each other.
-        const shortBefore = await totalUsers({ days: 7 });
-        const longBefore = await totalUsers({ days: 90 });
+    it('excludes accounts older than the recent-signup windows', async () => {
+        const before = await metrics.siteMetrics();
 
         // insertOne rather than create: mongoose's timestamps would overwrite an explicit
         // createdAt, and backdating is the whole point of the row.
@@ -168,15 +150,12 @@ describe('MetricsService', () => {
             updatedAt: new Date(),
         });
 
-        expect(await totalUsers({ days: 7 })).toBe(shortBefore);
-        expect(await totalUsers({ days: 90 })).toBe(longBefore + 1);
+        const withOldUser = await metrics.siteMetrics();
+
+        expect(withOldUser.users.total - before.users.total).toBe(1);
+        expect(withOldUser.users.createdLast7Days).toBe(before.users.createdLast7Days);
+        expect(withOldUser.users.createdLast30Days).toBe(before.users.createdLast30Days);
     });
-
-    async function totalUsers({ days }: { days: number }): Promise<number> {
-        const { points } = await metrics.growthMetrics({ days });
-
-        return points.reduce((sum, point) => sum + point.users, 0);
-    }
 });
 
 function bucket(buckets: { key: string; count: number }[], key: string): number {
