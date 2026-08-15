@@ -15,16 +15,16 @@ jobs:
     lint:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
             # Restores turbo's local cache so unchanged packages skip their build.
             # Read-only here; only pushes to main write it, so a pull request can
             # never leave a cache entry behind for later runs to pick up.
-            - uses: actions/cache/restore@v4
+            - uses: actions/cache/restore@v6
               with:
                   path: .turbo/cache
                   key: turbo-${{ runner.os }}-lint-${{ github.sha }}
@@ -32,7 +32,7 @@ jobs:
                       turbo-${{ runner.os }}-lint-
             - run: pnpm install --frozen-lockfile --prefer-offline
             - run: pnpm exec turbo run lint
-            - uses: actions/cache/save@v4
+            - uses: actions/cache/save@v6
               if: github.event_name == 'push' && github.ref == 'refs/heads/main'
               with:
                   path: .turbo/cache
@@ -54,13 +54,13 @@ jobs:
                     --health-timeout 5s
                     --health-retries 20
         steps:
-            - uses: actions/checkout@v4
-            - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - uses: actions/cache/restore@v4
+            - uses: actions/cache/restore@v6
               with:
                   path: .turbo/cache
                   key: turbo-${{ runner.os }}-test-${{ github.sha }}
@@ -68,7 +68,7 @@ jobs:
                       turbo-${{ runner.os }}-test-
             - run: pnpm install --frozen-lockfile --prefer-offline
             - run: pnpm exec turbo run test
-            - uses: actions/cache/save@v4
+            - uses: actions/cache/save@v6
               if: github.event_name == 'push' && github.ref == 'refs/heads/main'
               with:
                   path: .turbo/cache
