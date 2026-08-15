@@ -24,7 +24,15 @@ export function AppShell(): React.JSX.Element {
             {/* pt on mobile reserves room for the fixed notification bell, which would
                 otherwise sit on top of page headers. */}
             <main id="main" tabIndex={-1} className="flex-1 overflow-y-auto pb-16 pt-12 md:pb-0 md:pt-0">
-                <div className={clsx('w-full', !fullWidth && 'mx-auto max-w-4xl')}>
+                {/* Keyed on the path so each navigation replays the entrance: without the key
+                    React reuses the node and the new page appears with no transition at all. */}
+                <div
+                    key={pathname}
+                    className={clsx(
+                        'w-full motion-safe:animate-[ctm-rise_var(--duration-surface)_var(--ease-surface)]',
+                        !fullWidth && 'mx-auto max-w-4xl',
+                    )}
+                >
                     <Outlet />
                 </div>
             </main>
