@@ -26,6 +26,11 @@
     --duration-press: 120ms;
     --duration-surface: 180ms;
     --duration-leave: 240ms;
+
+    /* Decelerating: a surface arrives fast and settles, rather than easing in from nothing. */
+    --ease-surface: cubic-bezier(0.2, 0.8, 0.3, 1);
+    /* Accelerating, for anything leaving: it should look like it is being taken away. */
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
 /*
@@ -125,5 +130,94 @@
     }
     to {
         transform: none;
+    }
+}
+
+/*
+ * Exits mirror their entrance rather than fading in place: a surface that arrived from the
+ * right has to leave to the right, or dismissing it reads as the app losing the panel.
+ */
+@keyframes ctm-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes ctm-slide-out {
+    from {
+        opacity: 1;
+        transform: none;
+    }
+    to {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+}
+
+@keyframes ctm-slide-down {
+    from {
+        transform: none;
+    }
+    to {
+        transform: translateY(100%);
+    }
+}
+
+/* Edge-anchored panels travel their own width, not the 16px nudge an inline surface uses. */
+@keyframes ctm-panel-in {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: none;
+    }
+}
+
+@keyframes ctm-panel-out {
+    from {
+        transform: none;
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes ctm-sink {
+    from {
+        opacity: 1;
+        transform: none;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.985);
+    }
+}
+
+/* Confirms a state flip the eye would otherwise miss on an 18px box. */
+@keyframes ctm-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+    60% {
+        transform: scale(1.08);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Placeholder rows breathe so a slow response reads as loading, not as an empty list. */
+@keyframes ctm-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.45;
     }
 }
