@@ -218,7 +218,8 @@ export class CreateTaskDto extends createZodDto<ICreateTaskDto>({
 ### Client Boundaries
 
 - `packages/api-client` must remain a pure typed REST wrapper with no UI/browser concerns (no cookies, redirects, toasts, or window usage); it should be safe for web, CLI, and MCP consumers.
-- UI-specific API behavior lives in `apps/web`, including auth token persistence, refresh handling, redirect-on-unauthenticated flows, and surfacing structured errors to the user.
+- UI-specific API behavior lives in `apps/web`: redirect-on-unauthenticated flows, and surfacing structured errors to the user.
+- Token refresh belongs to `packages/api-client`, because which endpoint redeems a refresh token is protocol, not presentation. It refreshes an expiring access token before a call and retries a 401 once. Where the rotated pair is stored is the consumer's decision, injected as `persistence.onTokensRefreshed`: the package never touches a keychain, a cookie, or `localStorage`.
 - API clients should be class-based; pass access/refresh tokens into the client constructor instead of relying on shared mutable singleton state.
 
 ### UI Text and Translations

@@ -15,6 +15,24 @@ ctm login
 
 The download is a single self-contained file and needs only Node.js 24 on `PATH`.
 
+## Running from source
+
+No build step. Node strips the types and a resolve hook points the compiled-output `.js`
+specifiers back at their `.ts` files:
+
+```bash
+pnpm --filter @ctm/cli ctm tasks list
+pnpm --filter @ctm/cli ctm login --base-url http://localhost:3000
+```
+
+From `apps/cli`, `pnpm ctm <args>` is the same thing. The flags behind it (`dev-loader.mjs`,
+`--experimental-transform-types`) are in the `ctm` script; `--experimental-transform-types` is
+needed because `enum` is not erasable syntax.
+
+Point it at a local API with `--base-url http://localhost:3000` or `CTM_BASE_URL`, and keep
+development credentials separate from your real ones by logging in against that URL: tokens are
+stored per base URL.
+
 ## API base URL
 
 Resolved in this order, first match wins:
@@ -23,6 +41,17 @@ Resolved in this order, first match wins:
 2. `CTM_BASE_URL`
 3. `baseUrl` in `~/.config/ctm/config.json`, written by `ctm login`
 4. The URL baked in when the release was bundled
+
+## Credential storage
+
+`ctm login` puts the access and refresh tokens in the operating system's secret store, keyed by
+base URL: Keychain on macOS, the Secret Service (`secret-tool`) on Linux, DPAPI on Windows.
+`~/.config/ctm/config.json` holds only the base URL and client id. An earlier version kept the
+tokens in that file; they are ignored, so log in again once to move to the secret store.
+
+Set `CTM_TOKEN_STORE=file` to keep them in `~/.config/ctm/credentials.json` instead, for CI and
+headless machines with no secret service. That file is not encrypted on macOS or Linux, so it is
+opt-in rather than a fallback: without it, an unreachable secret store is an error.
 
 Release builds bake the production URL, so a downloaded `ctm` needs no configuration. The stored
 config outranks it: logging into a different server keeps you on that server.

@@ -1,28 +1,68 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
-import { ApiClientError, RATE_LIMITED_STATUS } from './api-client.error.js';
-import type { ApiClientOptions, RequestOptions } from './http.types.js';
+import { ApiClientError, RATE_LIMITED_STATUS, UNAUTHORIZED_STATUS } from './api-client.error.js';
+import { TokenGrant, type ApiClientOptions, type RequestOptions } from './http.types.js';
+import { TokenRefresher } from './token-refresh.js';
 
 /** Request plumbing shared by every domain client: one axios instance and one error shape. */
 export class ApiHttpClient {
     private readonly client: AxiosInstance;
     private readonly baseUrl: string;
+    private readonly tokens: TokenRefresher | null;
 
-    constructor({ baseUrl, accessToken }: ApiClientOptions) {
+    constructor({ baseUrl, accessToken, refreshToken, grant, persistence }: ApiClientOptions) {
         this.baseUrl = baseUrl;
-        this.client = axios.create({
-            baseURL: baseUrl,
-            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        });
+        this.client = axios.create({ baseURL: baseUrl });
+
+        this.tokens =
+            accessToken || refreshToken
+                ? new TokenRefresher({
+                      baseUrl,
+                      tokens: {
+                          accessToken: accessToken ?? null,
+                          refreshToken: refreshToken ?? null,
+                          grant: grant ?? TokenGrant.Session,
+                      },
+                      ...(persistence ? { persistence } : {}),
+                  })
+                : null;
     }
 
-    /** Issue a REST call, returning the response body or throwing an {@link ApiClientError}. */
-    async request<T>({ method, path, body, params, responseType }: RequestOptions): Promise<T> {
+    /**
+     * Issue a REST call, returning the response body or throwing an {@link ApiClientError}.
+     *
+     * An expired access token is refreshed before the call when a refresh token is available, and
+     * a 401 from a token that looked valid is retried once behind a forced refresh.
+     */
+    async request<T>(options: RequestOptions): Promise<T> {
+        try {
+            return await this.send<T>({ options, accessToken: await this.tokens?.accessToken() });
+        } catch (error) {
+            if (!this.canRetry(error)) throw error;
+
+            try {
+                const { accessToken } = await this.tokens!.refresh();
+
+                return await this.send<T>({ options, accessToken });
+            } catch {
+                throw error;
+            }
+        }
+    }
+
+    private async send<T>({
+        options: { method, path, body, params, responseType },
+        accessToken,
+    }: {
+        options: RequestOptions;
+        accessToken?: string | null;
+    }): Promise<T> {
         try {
             const response = await this.client.request<T>({
                 method,
                 url: path,
                 data: body,
                 params,
+                ...(accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {}),
                 ...(responseType !== undefined ? { responseType } : {}),
             });
 
@@ -30,6 +70,10 @@ export class ApiHttpClient {
         } catch (error) {
             throw toApiClientError({ error, method, path, baseUrl: this.baseUrl });
         }
+    }
+
+    private canRetry(error: unknown): boolean {
+        return error instanceof ApiClientError && error.statusCode === UNAUTHORIZED_STATUS && this.tokens !== null;
     }
 }
 

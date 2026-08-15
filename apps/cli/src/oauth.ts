@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import http from 'node:http';
-import { AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
 import open from 'open';
 
 export type PkceChallenge = {

@@ -6,6 +6,15 @@ import { ApiHttpClient } from './api-http-client.js';
 vi.mock('axios');
 const mockedAxios = vi.mocked(axios, true);
 
+function unexpiredToken(): string {
+    const payload = btoa(JSON.stringify({ exp: 4_102_444_800 }))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+    return `header.${payload}.signature`;
+}
+
 describe('ApiHttpClient', () => {
     const mockInstance = {
         request: vi.fn(),
@@ -16,22 +25,71 @@ describe('ApiHttpClient', () => {
         mockedAxios.create.mockReturnValue(mockInstance as never);
     });
 
-    it('sets the bearer token from constructor options', () => {
-        new ApiHttpClient({ baseUrl: 'http://localhost:3000', accessToken: 'acc-token' });
+    it('sends the bearer token from constructor options', async () => {
+        const http = new ApiHttpClient({ baseUrl: 'http://localhost:3000', accessToken: unexpiredToken() });
 
-        expect(mockedAxios.create).toHaveBeenCalledWith({
-            baseURL: 'http://localhost:3000',
-            headers: { Authorization: 'Bearer acc-token' },
-        });
+        mockInstance.request.mockResolvedValueOnce({ data: {} });
+
+        await http.request({ method: 'GET', path: '/users/me' });
+
+        expect(mockInstance.request).toHaveBeenCalledWith(
+            expect.objectContaining({ headers: { Authorization: `Bearer ${unexpiredToken()}` } }),
+        );
     });
 
-    it('sends no authorization header when no access token is given', () => {
-        new ApiHttpClient({ baseUrl: 'http://localhost:3000' });
+    it('sends no authorization header when no access token is given', async () => {
+        const http = new ApiHttpClient({ baseUrl: 'http://localhost:3000' });
 
-        expect(mockedAxios.create).toHaveBeenCalledWith({
-            baseURL: 'http://localhost:3000',
-            headers: undefined,
+        mockInstance.request.mockResolvedValueOnce({ data: {} });
+
+        await http.request({ method: 'GET', path: '/users/me' });
+
+        expect(mockInstance.request).toHaveBeenCalledWith(expect.not.objectContaining({ headers: expect.anything() }));
+    });
+
+    it('retries once behind a forced refresh when a valid-looking token is rejected', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({ accessToken: 'refreshed-token', refreshToken: 'new-rt' }),
+            }),
+        );
+
+        const http = new ApiHttpClient({
+            baseUrl: 'http://localhost:3000',
+            accessToken: unexpiredToken(),
+            refreshToken: 'rt',
         });
+
+        mockedAxios.isAxiosError.mockReturnValue(true);
+        mockInstance.request
+            .mockRejectedValueOnce({ isAxiosError: true, message: 'Unauthorized', response: { status: 401, data: {} } })
+            .mockResolvedValueOnce({ data: { id: 'user-1' } });
+
+        expect(await http.request({ method: 'GET', path: '/users/me' })).toEqual({ id: 'user-1' });
+        expect(mockInstance.request).toHaveBeenLastCalledWith(
+            expect.objectContaining({ headers: { Authorization: 'Bearer refreshed-token' } }),
+        );
+    });
+
+    it('reports the original 401 when the refresh also fails', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401 }));
+
+        const http = new ApiHttpClient({
+            baseUrl: 'http://localhost:3000',
+            accessToken: unexpiredToken(),
+            refreshToken: 'rt',
+        });
+
+        mockedAxios.isAxiosError.mockReturnValue(true);
+        mockInstance.request.mockRejectedValue({
+            isAxiosError: true,
+            message: 'Unauthorized',
+            response: { status: 401, data: { message: 'Unauthorized' } },
+        });
+
+        await expect(http.request({ method: 'GET', path: '/users/me' })).rejects.toBeInstanceOf(ApiClientError);
     });
 
     it('throws a structured error on failed requests', async () => {
