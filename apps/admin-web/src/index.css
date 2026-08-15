@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+@source "../../../packages/ui/src";
+@import '../../../packages/ui/src/styles/tokens.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+* {
+    box-sizing: border-box;
+}
+
+button,
+a,
+input[type='checkbox'],
+input[type='radio'],
+select,
+label[for] {
+    cursor: pointer;
+}
+
+input[type='text'],
+input[type='search'],
+input[type='url'],
+textarea {
+    cursor: text;
+}
+
+body {
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}

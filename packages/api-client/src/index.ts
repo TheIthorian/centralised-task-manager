@@ -1,10 +1,15 @@
 export { ApiClientError, CtmApiClient } from './client.js';
+export { CtmAdminClient } from './admin-client.js';
 export { ConnectorType } from './types.js';
 export { TokenGrant } from './client.types.js';
 export type {
+    AdminApiClientOptions,
     ApiClientOptions,
     AuthTokens,
     TokenPersistence,
+    CreateAdminOAuthClientParams,
+    GetAdminOAuthClientParams,
+    UpdateAdminOAuthClientParams,
     AddReminderParams,
     GetTaskParams,
     CancelSyncJobParams,

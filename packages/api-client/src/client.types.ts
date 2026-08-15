@@ -6,6 +6,12 @@
 export type { ApiClientErrorOptions, ApiClientOptions, AuthTokens, TokenPersistence } from './http/http.types.js';
 export { TokenGrant } from './http/http.types.js';
 export type {
+    AdminApiClientOptions,
+    CreateAdminOAuthClientParams,
+    GetAdminOAuthClientParams,
+    UpdateAdminOAuthClientParams,
+} from './domains/admin/admin.types.js';
+export type {
     GetOAuthClientInfoParams,
     LoginParams,
     RefreshParams,
