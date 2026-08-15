@@ -55,7 +55,7 @@ same files Phase 1 relocates into `packages/db`. Rebase the stack if #86 is forc
 
 | File                                                   | Responsibility                       |
 | ------------------------------------------------------ | ------------------------------------ |
-| `src/schemas/user.schema.ts`                           | `User` + `role` + `deletedAt`        |
+| `src/schemas/user.schema.ts`                           | moved + `deletedAt`                  |
 | `src/schemas/task.schema.ts`                           | moved verbatim                       |
 | `src/schemas/connector-config.schema.ts`               | moved verbatim                       |
 | `src/schemas/notification.schema.ts`                   | moved verbatim                       |
@@ -67,25 +67,44 @@ same files Phase 1 relocates into `packages/db`. Rebase the stack if #86 is forc
 | `src/schemas/authorized-client.schema.ts`              | moved verbatim                       |
 | `src/schemas/refresh-token.schema.ts`                  | moved verbatim                       |
 | `src/schemas/audit-log.schema.ts`                      | **new**                              |
-| `src/roles.ts`                                         | `UserRole` enum                      |
 | `src/audit.ts`                                         | `AuditAction` enum                   |
 | `src/index.ts`                                         | barrel                               |
 
-### `apps/main` additions
-
-| File                                    | Responsibility                                  |
-| --------------------------------------- | ----------------------------------------------- |
-| `src/admin/admin.module.ts`             | wires the admin surface                         |
-| `src/admin/admin.guard.ts`              | `RequireAdmin` guard reading `role` off the JWT |
-| `src/admin/admin-users.controller.ts`   | list / grant / revoke / soft-delete / restore   |
-| `src/admin/admin-metrics.controller.ts` | aggregate site data                             |
-| `src/admin/admin-clients.controller.ts` | OAuth client CRUD                               |
-| `src/admin/admin-audit.controller.ts`   | audit log read                                  |
-| `src/audit/audit.service.ts`            | append-only writer                              |
-
 ### New app: `apps/admin`
 
-Backend `src/` mirrors `apps/main` conventions; frontend `web/` mirrors `apps/web`.
+Every admin endpoint lives here, not in `apps/main`. Backend `src/` mirrors `apps/main`
+conventions; frontend `web/` mirrors `apps/web`.
+
+| File                                    | Responsibility                                       |
+| --------------------------------------- | ---------------------------------------------------- |
+| `src/auth/admin-jwt.strategy.ts`        | verifies `aud: ctm-admin` against the admin keypair  |
+| `src/auth/admin.guard.ts`               | rejects a user whose `role` is not `UserRole.Admin`  |
+| `src/users/admin-users.controller.ts`   | list / grant / revoke / soft-delete / restore        |
+| `src/metrics/admin-metrics.controller.ts` | aggregate site data                                |
+| `src/clients/admin-clients.controller.ts` | OAuth client CRUD                                  |
+| `src/audit/audit.controller.ts`         | audit log read                                       |
+| `src/audit/audit.service.ts`            | append-only writer                                   |
+
+### `apps/main` additions
+
+Only what the shared data model forces: `users.service.ts` filters soft-deleted users out of every
+lookup, and the account-deletion endpoint becomes a soft delete.
+
+### Admin auth
+
+A single operator, so a single credential: `ADMIN_USERNAME` and a bcrypt `ADMIN_PASSWORD_HASH` in
+the environment. `POST /admin/auth/login` checks them and sets a short-lived httpOnly session
+cookie signed with `ADMIN_JWT_SECRET` (HS256, `aud: ctm-admin`); `AdminGuard` covers every other
+route.
+
+There is no admin role on the user document and no grant/revoke: who the operator is, is an
+environment decision, not data. That removes "admins managing other admins" from #82's scope.
+
+`apps/main` never learns `ADMIN_JWT_SECRET`, so an admin session is not a bearer token for the task
+API, and an app token cannot reach the operator surface.
+
+Repeated failures lock the credential out for a window, reusing the `LoginAttempt` collection
+rather than inventing a second mechanism.
 
 ---
 
@@ -100,11 +119,11 @@ old `schemas/` directories. `config/env.schema.ts` is a Zod env schema, not Mong
 `apps/main`. No behaviour change: `pnpm test` green before and after at 17 tasks / 522 `@ctm/main`
 tests.
 
-### Phase 2 — roles + audit log
+### Phase 2 — `apps/admin` backend, audit log
 
-`UserRole` enum on the user document, `role` claim in both signing sites
-(`auth.service.ts:39`, `oauth.service.ts:153`), `AdminGuard`, `AuditLog` schema + service,
-admin grant/revoke/list endpoints.
+`AuditLog` schema and `AuditAction` enum in `packages/db`. A NestJS app with the login route,
+`AdminGuard`, the audit writer, and a read endpoint over the log. No user-facing capability yet,
+so the phase lands as a gated but empty operator API.
 
 ### Phase 3 — reversible account deletion
 
@@ -121,7 +140,7 @@ Aggregate counts (users, tasks, connectors), sync health, growth buckets over ti
 Admin CRUD over `OAuthClient`, with first-party clients seeded from code marked `isFirstParty`
 and rejected by every write path.
 
-### Phase 6 — `apps/admin`
+### Phase 6 — admin SPA
 
 NestJS backend + React SPA, separate origin, admin-only token audience.
 
