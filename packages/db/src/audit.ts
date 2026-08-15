@@ -1,7 +1,5 @@
 /** An operator action worth a permanent record. */
 export enum AuditAction {
-    AdminLoggedIn = 'admin.logged_in',
-    AdminLoginFailed = 'admin.login_failed',
     UserDeleted = 'user.deleted',
     UserRestored = 'user.restored',
     UserPurged = 'user.purged',
@@ -14,5 +12,4 @@ export enum AuditAction {
 export enum AuditTargetType {
     User = 'user',
     OAuthClient = 'oauth_client',
-    Session = 'session',
 }

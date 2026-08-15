@@ -1,13 +1,7 @@
-/** Credentials for the single operator account. */
-export type AdminLoginDto = {
-    username: string;
-    password: string;
-};
-
-/** Result of a successful operator login. */
-export type AdminSessionDto = {
-    username: string;
-    expiresInSeconds: number;
+/** The operator behind a request, as Cloudflare Access identified them. */
+export type AdminIdentityDto = {
+    email: string;
+    subject: string;
 };
 
 /** One recorded operator action. */

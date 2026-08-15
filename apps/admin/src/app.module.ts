@@ -26,8 +26,8 @@ import { AdminGuard } from './auth/admin.guard.js';
     providers: [
         { provide: APP_FILTER, useClass: AppErrorFilter },
         { provide: APP_LOGGER, useFactory: rootLogger },
-        // Global rather than per controller, so a new admin endpoint is closed by default and
-        // opening one takes the deliberate act of marking it @Public().
+        // Global and without exception: nothing on an operator surface should be reachable
+        // without an identity, so there is no route-level opt-out.
         { provide: APP_GUARD, useClass: AdminGuard },
     ],
 })

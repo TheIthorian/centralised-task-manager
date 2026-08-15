@@ -16,8 +16,8 @@ export class AuditLog {
     @Prop({ type: String, required: true, enum: AuditAction, index: true })
     action!: AuditAction;
 
-    /** Who acted. The admin credential is a single operator, so this is its username. */
-    @Prop({ type: String, required: true, maxlength: 200 })
+    /** Who acted, as the verified email from their Cloudflare Access identity. */
+    @Prop({ type: String, required: true, maxlength: 320 })
     actor!: string;
 
     @Prop({ type: String, required: true, enum: AuditTargetType })

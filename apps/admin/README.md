@@ -7,18 +7,24 @@ Runs on its own origin, against the same MongoDB as `apps/main`, reading its col
 
 ## Auth
 
-One operator, so one credential: `ADMIN_USERNAME` and a bcrypt `ADMIN_PASSWORD_HASH`.
-`POST /auth/login` checks it and sets a short-lived httpOnly, `SameSite=Strict` session cookie
-signed with `ADMIN_JWT_SECRET`.
+Cloudflare Access authenticates the operator. This app stores no credential and has no login route:
+it verifies the RS256 token Access signs, against the team's JWKS, checking issuer, audience and
+expiry. The verified `email` claim becomes the audit log's actor.
 
-`apps/main` never learns `ADMIN_JWT_SECRET` and this app never learns main's signing key, so an
-admin session is not a bearer token for the task API and an app token cannot reach this surface.
+`CF_ACCESS_AUD` is not optional. Every Access application in a team is signed by the same keys, so
+without an audience check a token minted for any other application in the team would verify here.
 
-`AdminGuard` is registered globally: a new endpoint is closed by default, and opening one takes the
-deliberate act of marking it `@Public()`. Only the login and logout routes are public.
+`AdminGuard` is registered globally and has no `@Public()` escape hatch: nothing on an operator
+surface should be reachable without an identity.
 
-Repeated failures lock the credential out for `ADMIN_LOCKOUT_MINUTES`, counted in the shared
-`LoginAttempt` collection under an `admin:` key so it cannot collide with an app user.
+> **Deployment requirement:** this app must only ever be reachable through Access. If its origin is
+> exposed directly, the `Cf-Access-Jwt-Assertion` header is the only thing in front of it, and a
+> header is trivial to forge. Put it behind an Access application and restrict the origin to
+> Cloudflare.
+
+For local development there is no Access in front of a laptop, so `ADMIN_DEV_BYPASS_EMAIL` treats
+every request as that operator. The env schema refuses to start when it is set and
+`NODE_ENV=production`.
 
 ## Audit log
 
@@ -34,7 +40,7 @@ account it describes is purged.
 ## Running it
 
 ```bash
-cp .env.example .env        # then fill in ADMIN_PASSWORD_HASH and ADMIN_JWT_SECRET
+cp .env.example .env        # then fill in CF_ACCESS_AUD, or set ADMIN_DEV_BYPASS_EMAIL
 pnpm --filter @ctm/admin dev
 ```
 
@@ -44,5 +50,6 @@ pnpm --filter @ctm/admin dev
 pnpm --filter @ctm/admin test
 ```
 
-Specs run against a real MongoDB at `MONGODB_URI` (see `.env.test`) and leave their data behind, so
-give fixtures unique identifiers.
+The Access specs stub only the JWKS network fetch; signature, issuer, audience and expiry checks
+run for real against a locally generated key. Other specs use a real MongoDB at `MONGODB_URI` (see
+`.env.test`) and leave their data behind, so give fixtures unique identifiers.

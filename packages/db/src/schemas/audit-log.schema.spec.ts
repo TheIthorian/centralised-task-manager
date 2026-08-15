@@ -34,7 +34,7 @@ describe('AuditLogSchema', () => {
     });
 
     it('bounds every stored string', () => {
-        expect(AuditLogSchema.path('actor').options.maxlength).toBe(200);
+        expect(AuditLogSchema.path('actor').options.maxlength).toBe(320);
         expect(AuditLogSchema.path('targetId').options.maxlength).toBe(200);
         expect(AuditLogSchema.path('targetLabel').options.maxlength).toBe(320);
         expect(AuditLogSchema.path('ip').options.maxlength).toBe(45);
