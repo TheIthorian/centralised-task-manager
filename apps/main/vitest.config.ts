@@ -10,6 +10,7 @@ export default defineConfig({
             // built entry point each gets its own copy of `@ctm/errors`, and then `@Catch(AppError)`
             // and `instanceof ValidationError` are both false for errors the package itself threw.
             '@ctm/nest-common': resolve(import.meta.dirname, '../../packages/nest-common/src/index.ts'),
+            '@ctm/env': resolve(import.meta.dirname, '../../packages/env/src/index.ts'),
         },
     },
     test: {

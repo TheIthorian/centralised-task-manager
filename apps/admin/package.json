@@ -13,6 +13,7 @@
     "dependencies": {
         "@ctm/api-client": "workspace:*",
         "@ctm/db": "workspace:*",
+        "@ctm/env": "workspace:*",
         "@ctm/errors": "workspace:*",
         "@ctm/logger": "workspace:*",
         "@ctm/nest-common": "workspace:*",
