@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../../users/users.service.js';
-import type { UserDocument } from '../../users/schemas/user.schema.js';
+import type { UserDocument } from '@ctm/db';
 import { LoginAttemptsService } from '../login-attempts.service.js';
 
 @Injectable()

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AuthorizedClient, type AuthorizedClientDocument } from './schemas/authorized-client.schema.js';
+import { AuthorizedClient, type AuthorizedClientDocument } from '@ctm/db';
 
 /** Reads and writes the explicit user to OAuth client grant records. */
 @Injectable()

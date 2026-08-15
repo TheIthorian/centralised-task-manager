@@ -7,10 +7,9 @@ import { ExportService } from './export.service.js';
 import { ImportService } from './import.service.js';
 import { FilesService } from '../files/files.service.js';
 import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
-import { Export, ExportSchema } from './schemas/export.schema.js';
+import { Export, type ExportDocument, ExportSchema } from '@ctm/db';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
-import type { ExportDocument } from './schemas/export.schema.js';
 
 const userId = new Types.ObjectId().toHexString();
 const authReq = { user: { sub: userId, email: 'test@test.com' } };

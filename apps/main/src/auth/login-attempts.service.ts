@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { RateLimitError } from '@ctm/errors';
-import { LoginAttempt, type LoginAttemptDocument } from './schemas/login-attempt.schema.js';
+import { LoginAttempt, type LoginAttemptDocument } from '@ctm/db';
 
 const MINUTE_MS = 60_000;
 

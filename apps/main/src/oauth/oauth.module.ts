@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AuthCode, AuthCodeSchema } from './schemas/auth-code.schema.js';
-import { AuthorizedClient, AuthorizedClientSchema } from './schemas/authorized-client.schema.js';
-import { OAuthClient, OAuthClientSchema } from './schemas/oauth-client.schema.js';
+import {
+    AuthCode,
+    AuthCodeSchema,
+    AuthorizedClient,
+    AuthorizedClientSchema,
+    OAuthClient,
+    OAuthClientSchema,
+} from '@ctm/db';
 import { OAuthKeyService } from './oauth-key.service.js';
 import { FirstPartyClientsService } from './first-party-clients.service.js';
 import { OAuthService } from './oauth.service.js';

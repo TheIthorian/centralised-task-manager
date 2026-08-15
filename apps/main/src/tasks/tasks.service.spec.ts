@@ -4,7 +4,7 @@ import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskConnectorName } from '@ctm/connectors';
 import { TasksService } from './tasks.service.js';
-import { Task, TaskSchema, type TaskDocument } from './schemas/task.schema.js';
+import { Task, TaskSchema, type TaskDocument } from '@ctm/db';
 
 describe('TasksService upsertFromRemote', () => {
     let service: TasksService;

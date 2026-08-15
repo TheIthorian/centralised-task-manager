@@ -5,7 +5,7 @@ import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { TasksService } from './tasks.service.js';
-import { Task, TaskSchema, type TaskDocument } from './schemas/task.schema.js';
+import { Task, TaskSchema, type TaskDocument } from '@ctm/db';
 
 describe('TasksService – reminders', () => {
     let module: TestingModule;

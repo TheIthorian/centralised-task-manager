@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './schemas/user.schema.js';
-import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
-import { Task, TaskSchema } from '../tasks/schemas/task.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema, Task, TaskSchema, User, UserSchema } from '@ctm/db';
 import { UsersService } from './users.service.js';
 import { UsersController } from './users.controller.js';
 import { TokensModule } from '../tokens/tokens.module.js';

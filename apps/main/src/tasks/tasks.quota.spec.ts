@@ -5,7 +5,7 @@ import { QuotaExceededError } from '@ctm/errors';
 import { TaskConnectorName } from '@ctm/connectors';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { TasksService } from './tasks.service.js';
-import { Task, TaskSchema, type TaskDocument } from './schemas/task.schema.js';
+import { Task, TaskSchema, type TaskDocument } from '@ctm/db';
 import { MAX_TASKS_PER_USER } from '../config/limits.js';
 
 // The real cap is far too large to fill from a test, so the constant module is stubbed.

@@ -2,9 +2,15 @@ import { Injectable, ConflictException, NotFoundException, UnauthorizedException
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { User, type UserDocument, type NotificationPreferences } from './schemas/user.schema.js';
-import { ConnectorConfig, type ConnectorConfigDocument } from '../connectors/schemas/connector-config.schema.js';
-import { Task, type TaskDocument } from '../tasks/schemas/task.schema.js';
+import {
+    ConnectorConfig,
+    type ConnectorConfigDocument,
+    type NotificationPreferences,
+    Task,
+    type TaskDocument,
+    User,
+    type UserDocument,
+} from '@ctm/db';
 import { appLogger } from '../logging/app-logger.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import type { UpdatePreferencesDto } from '../notifications/dto/update-preferences.dto.js';

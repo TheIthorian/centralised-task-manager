@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TasksService } from './tasks.service.js';
-import { Task, TaskSchema, type TaskDocument } from './schemas/task.schema.js';
+import { Task, TaskSchema, type TaskDocument } from '@ctm/db';
 
 describe('TasksService relations', () => {
     let service: TasksService;

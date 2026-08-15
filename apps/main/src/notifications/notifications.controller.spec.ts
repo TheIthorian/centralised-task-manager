@@ -5,7 +5,7 @@ import { type Model, Types } from 'mongoose';
 import { NotificationsController } from './notifications.controller.js';
 import { NotificationsService } from './notifications.service.js';
 import { UsersService } from '../users/users.service.js';
-import { Notification, NotificationSchema, type NotificationDocument } from './schemas/notification.schema.js';
+import { Notification, NotificationSchema, type NotificationDocument } from '@ctm/db';
 import { ListNotificationsQueryDto } from './dto/list-notifications-query.dto.js';
 
 const userId = new Types.ObjectId().toHexString();

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { createHash, randomBytes } from 'node:crypto';
-import { RefreshToken, RefreshTokenGrant, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
+import { RefreshToken, RefreshTokenGrant, type RefreshTokenDocument } from '@ctm/db';
 
 @Injectable()
 export class RefreshTokenService {

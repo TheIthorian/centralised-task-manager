@@ -3,13 +3,17 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { ImportService } from './import.service.js';
-import { User, UserSchema, type UserDocument } from '../users/schemas/user.schema.js';
-import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
 import {
     Notification,
-    NotificationSchema,
     type NotificationDocument,
-} from '../notifications/schemas/notification.schema.js';
+    NotificationSchema,
+    Task,
+    type TaskDocument,
+    TaskSchema,
+    User,
+    type UserDocument,
+    UserSchema,
+} from '@ctm/db';
 import type { ExportEnvelopeDto, ExportTaskDto, NotificationDto } from '@ctm/api-client';
 
 function makeEnvelope(overrides: Partial<ExportEnvelopeDto> = {}): ExportEnvelopeDto {

@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { ConnectorName } from '@ctm/connectors';
-import { ConnectorSettings } from './types';
+import { ConnectorSettings } from './types.js';
 
 @Schema({ timestamps: true })
 export class ConnectorConfig<TConfig extends ConnectorSettings = ConnectorSettings> {

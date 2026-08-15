@@ -1,0 +1,31 @@
+{
+    "name": "@ctm/db",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json . '**/*.md'",
+        "dev": "tsc -p tsconfig.build.json --watch"
+    },
+    "dependencies": {
+        "@ctm/connectors": "workspace:*"
+    },
+    "peerDependencies": {
+        "@nestjs/mongoose": "11.0.4",
+        "mongoose": "9.8.0"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "@nestjs/mongoose": "11.0.4",
+        "@nestjs/testing": "11.1.28",
+        "@swc/core": "1.15.47",
+        "mongoose": "9.8.0",
+        "typescript": "6.0.3",
+        "unplugin-swc": "1.5.9",
+        "vitest": "4.1.10"
+    }
+}

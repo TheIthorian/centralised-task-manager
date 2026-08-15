@@ -4,8 +4,13 @@ import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
-import { OAuthClient, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
-import { RefreshToken, RefreshTokenGrant, type RefreshTokenDocument } from '../tokens/schemas/refresh-token.schema.js';
+import {
+    OAuthClient,
+    type OAuthClientDocument,
+    RefreshToken,
+    type RefreshTokenDocument,
+    RefreshTokenGrant,
+} from '@ctm/db';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import { FIRST_PARTY_CLIENT } from '../rate-limit/principal-resolver.js';
 import { CLI_CLIENT_ID } from './first-party-clients.js';

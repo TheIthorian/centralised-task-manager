@@ -3,7 +3,7 @@ import { QuotaExceededError } from '@ctm/errors';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
-import { Task, RELATION_INVERSE, type RelationType, type TaskDocument } from './schemas/task.schema.js';
+import { Task, RELATION_INVERSE, type RelationType, type TaskDocument } from '@ctm/db';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
 import type { UpdateTaskDto } from './dto/update-task.dto.js';
 import type { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';

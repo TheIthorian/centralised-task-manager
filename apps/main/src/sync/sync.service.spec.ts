@@ -4,13 +4,16 @@ import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ExternalTaskSourceRegistry } from '@ctm/connectors';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { Job, JobSchema } from '../jobs/schemas/job.schema.js';
 import {
+    Job,
+    JobSchema,
+    Task,
     TASK_SYNC_JOB_MODEL,
-    TaskSyncJobSchema,
+    type TaskDocument,
+    TaskSchema,
     type TaskSyncJobDocument,
-} from '../jobs/schemas/task-sync-job.schema.js';
-import { Task, TaskSchema, type TaskDocument } from '../tasks/schemas/task.schema.js';
+    TaskSyncJobSchema,
+} from '@ctm/db';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import { TasksService } from '../tasks/tasks.service.js';
 import { SyncGateway } from './sync.gateway.js';

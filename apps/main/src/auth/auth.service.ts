@@ -3,8 +3,7 @@ import type { TokenPair as TokenPairDto } from '@ctm/api-client';
 import { UsersService } from '../users/users.service.js';
 import { AccessTokenService } from '../tokens/access-token.service.js';
 import { RefreshTokenService } from '../tokens/refresh-token.service.js';
-import { RefreshTokenGrant } from '../tokens/schemas/refresh-token.schema.js';
-import type { UserDocument } from '../users/schemas/user.schema.js';
+import { RefreshTokenGrant, type UserDocument } from '@ctm/db';
 import { FIRST_PARTY_CLIENT } from '../rate-limit/principal-resolver.js';
 
 /**

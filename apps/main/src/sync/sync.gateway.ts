@@ -2,7 +2,7 @@ import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDiscon
 import { appLogger } from '../logging/app-logger.js';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
-import type { TaskSyncJobDocument } from '../jobs/schemas/task-sync-job.schema.js';
+import type { TaskSyncJobDocument } from '@ctm/db';
 import { toSyncJobDto } from './sync-job.dto.js';
 
 @WebSocketGateway({

@@ -6,7 +6,7 @@ import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
 import type { JwtPayload } from '../tokens/token-claims.js';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Export, type ExportDocument } from './schemas/export.schema.js';
+import { Export, type ExportDocument } from '@ctm/db';
 import { ExportService } from './export.service.js';
 import { ImportService } from './import.service.js';
 import { FilesService } from '../files/files.service.js';

@@ -3,9 +3,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service.js';
-import { User, UserSchema } from './schemas/user.schema.js';
-import { ConnectorConfig, ConnectorConfigSchema } from '../connectors/schemas/connector-config.schema.js';
-import { Task, TaskSchema } from '../tasks/schemas/task.schema.js';
+import { ConnectorConfig, ConnectorConfigSchema, Task, TaskSchema, User, UserSchema } from '@ctm/db';
 
 describe('UsersService — notification preferences', () => {
     let module: TestingModule;

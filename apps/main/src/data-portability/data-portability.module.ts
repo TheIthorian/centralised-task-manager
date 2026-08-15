@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from '../users/schemas/user.schema.js';
-import { Task, TaskSchema } from '../tasks/schemas/task.schema.js';
-import { Notification, NotificationSchema } from '../notifications/schemas/notification.schema.js';
-import { Export, ExportSchema } from './schemas/export.schema.js';
+import { Export, ExportSchema, Notification, NotificationSchema, Task, TaskSchema, User, UserSchema } from '@ctm/db';
 import { FilesModule } from '../files/files.module.js';
 import { ExportService } from './export.service.js';
 import { ImportService } from './import.service.js';
