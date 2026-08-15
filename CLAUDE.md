@@ -122,6 +122,7 @@ Docusaurus site. **This directory is for compiled/generated user-facing document
 
 - **Never use `any`.** Not in source, not in tests, and never with an `eslint-disable` for `no-explicit-any`. Avoid `unknown` where possible. When the type is not statically known, perform runtime validation (e.g. Zod, class-validator, or a type guard) rather than casting. When a cast is genuinely unavoidable (e.g. a third-party plugin type that does not line up), use `as unknown as X` — never `as any`.
 - **Prefer `type` over `interface`.** Use `type` aliases by default; only use `interface` when a class must implement it.
+- **`enum` for closed sets of values.** Use a TypeScript `enum`, not a `const` array with a derived literal union. Zod reads an enum directly (`z.enum(MyEnum)`), and the import forces the dependency to point at whichever package owns the vocabulary instead of each call site restating the literals.
 - **Explicit return types** — every function and method must have an explicit return type annotation.
 - **Object arguments** — when a function has two or more parameters, use a single object argument instead of positional params.
 - **Docstrings** — add a JSDoc comment to every public method on a class or interface, and every exported module-level function. Keep them concise: only document parameters, return value, or thrown errors when it genuinely adds information beyond the name.
