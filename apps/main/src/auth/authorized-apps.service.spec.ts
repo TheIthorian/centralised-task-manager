@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NotFoundError } from '@ctm/errors';
+import { FIRST_PARTY_CLIENT } from '../rate-limit/principal-resolver.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import {
     RefreshToken,
@@ -111,12 +112,13 @@ describe('AuthorizedAppsService', () => {
         expect(JSON.stringify(app)).not.toContain('logo.png');
     });
 
-    it('getAuthorizedApps ignores refresh tokens with no clientId', async () => {
+    it('getAuthorizedApps ignores first-party session tokens', async () => {
         const userId = new Types.ObjectId().toHexString();
 
         await refreshTokenModel.create({
             tokenHash: `hash_noclient_${Date.now()}`,
             grant: RefreshTokenGrant.Session,
+            clientId: FIRST_PARTY_CLIENT,
             userId,
             scopes: [],
             expiresAt: new Date(Date.now() + 86400_000),

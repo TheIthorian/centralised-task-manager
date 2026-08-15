@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto';
 import type { OAuthClientInfoDto } from '@ctm/api-client';
 import type { OAuthClientDocument } from './schemas/oauth-client.schema.js';
 import { OAuthClient } from './schemas/oauth-client.schema.js';
+import type { FirstPartyClient } from '../oauth/first-party-clients.js';
 
 /** Input payload for RFC 7591 dynamic client registration. */
 export type RegisterClientInput = {
@@ -128,6 +129,32 @@ export class OAuthClientService {
             contacts: doc.contacts,
             software_id: doc.softwareId,
         };
+    }
+
+    /**
+     * Register the clients this project ships, so they never have to register themselves.
+     * Idempotent: an upsert per client, run on every boot, and the definition in code wins.
+     */
+    async ensureFirstPartyClients(clients: FirstPartyClient[]): Promise<void> {
+        for (const client of clients) {
+            await this.model.updateOne(
+                { clientId: client.clientId },
+                {
+                    $set: {
+                        clientName: client.clientName,
+                        redirectUris: client.redirectUris,
+                        scopes: client.scopes,
+                        grantTypes: ['authorization_code', 'refresh_token'],
+                        responseTypes: ['code'],
+                        isDynamic: false,
+                    },
+                    $setOnInsert: { issuedAt: new Date() },
+                    // Never reaped: a first-party client has to exist before its first use.
+                    $unset: { unusedExpiresAt: '' },
+                },
+                { upsert: true },
+            );
+        }
     }
 
     /** Find a registered client by its client_id. */

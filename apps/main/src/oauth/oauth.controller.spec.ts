@@ -16,6 +16,8 @@ function makeCodeChallenge(verifier: string): string {
     return createHash('sha256').update(verifier).digest('base64url');
 }
 
+const TEST_CLIENT_ID = 'client_oauth_spec';
+
 describe('OAuth endpoints', () => {
     let app: NestFastifyApplication;
     let jwt: string;
@@ -27,6 +29,14 @@ describe('OAuth endpoints', () => {
         app = module.createNestApplication(new FastifyAdapter());
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
+
+        await app
+            .get<Model<OAuthClientDocument>>(getModelToken(OAuthClient.name))
+            .updateOne(
+                { clientId: TEST_CLIENT_ID },
+                { $set: { clientName: 'Spec Client', redirectUris: ['http://localhost', 'http://127.0.0.1'] } },
+                { upsert: true },
+            );
 
         await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'OAuth Tester', email, password } });
         const loginRes = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password } });
@@ -42,7 +52,7 @@ describe('OAuth endpoints', () => {
         const challenge = makeCodeChallenge(verifier);
         const res = await app.inject({
             method: 'GET',
-            url: `/oauth/authorize?response_type=code&redirect_uri=http://localhost:4000/cb&code_challenge=${challenge}&code_challenge_method=S256&scope=tasks:read`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=http://localhost:4000/cb&code_challenge=${challenge}&code_challenge_method=S256&scope=tasks:read`,
         });
         expect(res.statusCode).toBe(302);
         const location = res.headers['location'] as string;
@@ -59,7 +69,7 @@ describe('OAuth endpoints', () => {
 
         const res = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid&state=xyz`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid&state=xyz`,
             headers: { authorization: `Bearer ${jwt}` },
         });
         expect(res.statusCode).toBe(302);
@@ -75,7 +85,7 @@ describe('OAuth endpoints', () => {
 
         const res = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
             headers: { authorization: `Bearer ${jwt}`, accept: 'application/json' },
         });
 
@@ -90,7 +100,7 @@ describe('OAuth endpoints', () => {
 
         const res = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
             headers: { authorization: `Bearer ${jwt}`, accept: '' },
         });
 
@@ -104,7 +114,7 @@ describe('OAuth endpoints', () => {
 
         const res = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
         });
         expect(res.statusCode).toBe(401);
     });
@@ -116,7 +126,7 @@ describe('OAuth endpoints', () => {
 
         const authorizeRes = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
             headers: { authorization: `Bearer ${jwt}` },
         });
         const location = authorizeRes.headers['location'] as string;
@@ -142,7 +152,7 @@ describe('OAuth endpoints', () => {
 
         const authorizeRes = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
             headers: { authorization: `Bearer ${jwt}` },
         });
         const code = new URL(authorizeRes.headers['location'] as string).searchParams.get('code')!;
@@ -189,7 +199,7 @@ describe('OAuth endpoints', () => {
 
         const authorizeRes = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=openid`,
             headers: { authorization: `Bearer ${jwt}` },
         });
         const location = authorizeRes.headers['location'] as string;
@@ -215,7 +225,7 @@ describe('OAuth endpoints', () => {
 
         const res = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=plain&scope=openid`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=plain&scope=openid`,
             headers: { authorization: `Bearer ${jwt}` },
         });
 
@@ -229,7 +239,7 @@ describe('OAuth endpoints', () => {
 
         const authorizeRes = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&scope=openid`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&scope=openid`,
             headers: { authorization: `Bearer ${jwt}` },
         });
         const code = new URL(authorizeRes.headers['location'] as string).searchParams.get('code')!;
@@ -267,7 +277,7 @@ describe('OAuth endpoints', () => {
 
         const authorizeRes = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read tasks:write')}`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read tasks:write')}`,
             headers: { authorization: `Bearer ${jwt}` },
             payload: { selected_scopes: 'tasks:read' },
         });
@@ -298,7 +308,7 @@ describe('OAuth endpoints', () => {
 
         const authorizeRes = await app.inject({
             method: 'POST',
-            url: `/oauth/authorize?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read')}`,
+            url: `/oauth/authorize?response_type=code&client_id=${TEST_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256&scope=${encodeURIComponent('tasks:read')}`,
             headers: { authorization: `Bearer ${jwt}` },
             payload: { selected_scopes: 'tasks:read tasks:write' },
         });

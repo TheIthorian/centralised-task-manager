@@ -9,6 +9,7 @@ import { UsersService } from '../users/users.service.js';
 import { RefreshToken, RefreshTokenGrant, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
+import { FIRST_PARTY_CLIENT } from '../rate-limit/principal-resolver.js';
 
 /**
  * A newly issued token pair. `refreshToken` is optional on the wire type because
@@ -45,6 +46,7 @@ export class AuthService {
         await this.refreshTokenModel.create({
             tokenHash,
             grant: RefreshTokenGrant.Session,
+            clientId: FIRST_PARTY_CLIENT,
             userId: String(user._id),
             expiresAt,
         });

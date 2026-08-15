@@ -7,7 +7,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppErrorFilter } from '../common/filters/app-error.filter.js';
 import { CtmThrottlerGuard } from './ctm-throttler.guard.js';
-import { PrincipalResolver, UNREGISTERED_CLIENT } from './principal-resolver.js';
+import { PrincipalResolver } from './principal-resolver.js';
 import { resolveRateLimitProfile } from './resolve-rate-limit-profile.js';
 import {
     BURST_THROTTLER,
@@ -273,16 +273,16 @@ describe('CtmThrottlerGuard', () => {
             expect(blocked.json().message).not.toContain('This client');
         });
 
-        it('keeps a token with no client id off the first-party fence', async () => {
+        it('keeps an OAuth client off the fence a first-party login sits on', async () => {
             const ip = '10.2.0.4';
             const login = token({ sub: 'user-mixed' });
-            const unregistered = token({ sub: 'user-mixed', clientId: UNREGISTERED_CLIENT });
+            const oauthClient = token({ sub: 'user-mixed', clientId: 'client_mixed' });
 
             for (let i = 0; i < CLIENT_LIMIT; i++) {
-                expect((await call({ path: '/probe/open', token: unregistered, ip })).statusCode).toBe(200);
+                expect((await call({ path: '/probe/open', token: oauthClient, ip })).statusCode).toBe(200);
             }
 
-            expect((await call({ path: '/probe/open', token: unregistered, ip })).statusCode).toBe(429);
+            expect((await call({ path: '/probe/open', token: oauthClient, ip })).statusCode).toBe(429);
             expect((await call({ path: '/probe/open', token: login, ip })).statusCode).toBe(200);
         });
 

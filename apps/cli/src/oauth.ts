@@ -34,31 +34,8 @@ export type CallbackServer = {
 const CLI_SCOPES =
     'openid tasks:read tasks:write connectors:read connectors:write notifications:read notification-config:read notification-config:write profile:read';
 
-type RegisterClientResponse = {
-    client_id: string;
-    redirect_uris: string[];
-};
-
-/** Register the CLI as an OAuth client via RFC 7591 dynamic client registration. */
-export async function registerClient(baseUrl: string): Promise<string> {
-    const res = await fetch(`${baseUrl}/.well-known/oauth-client`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            client_name: 'CTM CLI',
-            redirect_uris: ['http://127.0.0.1'],
-            grant_types: ['authorization_code'],
-            response_types: ['code'],
-            scopes: CLI_SCOPES.split(' '),
-        }),
-    });
-
-    if (!res.ok) throw new Error(`Client registration failed: ${res.status}`);
-
-    const body = (await res.json()) as RegisterClientResponse;
-
-    return body.client_id;
-}
+/** Registered by `apps/main` at boot, so the CLI never registers itself. */
+export const CLI_CLIENT_ID = 'ctm-cli';
 
 type OAuthTokenResponse = {
     access_token: string;

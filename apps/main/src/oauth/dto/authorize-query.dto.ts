@@ -10,7 +10,7 @@ import { codeChallengeMethodSchema } from '../pkce.js';
  * would fail otherwise valid authorization requests.
  */
 export const authorizeQuerySchema = z.object({
-    client_id: z.string().max(128).optional(),
+    client_id: z.string().min(1).max(128),
     redirect_uri: z
         .string()
         .max(2048)

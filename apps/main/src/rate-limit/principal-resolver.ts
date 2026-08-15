@@ -5,12 +5,6 @@ const BEARER_PREFIX = 'Bearer ';
 /** Client id recorded for tokens issued by first-party login rather than the OAuth flow. */
 export const FIRST_PARTY_CLIENT = 'first-party';
 
-/**
- * Client id stamped on OAuth tokens whose caller did not identify itself. They all share one
- * fence, which is the point: an unidentified client gets no isolation of its own.
- */
-export const UNREGISTERED_CLIENT = 'unregistered';
-
 /** Marks a tracker as the per-client fence rather than the account ceiling. */
 export const CLIENT_TRACKER_MARKER = '|client:';
 
