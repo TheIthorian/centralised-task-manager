@@ -3,17 +3,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { NotFoundError } from '@ctm/errors';
 import type { AuthorizedAppDto } from '@ctm/api-client';
-import { RefreshToken, type RefreshTokenDocument } from './schemas/refresh-token.schema.js';
+import { RefreshTokenService } from '../tokens/refresh-token.service.js';
 import { OAuthClient, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
 import { AuthorizedClient, type AuthorizedClientDocument } from './schemas/authorized-client.schema.js';
 
 @Injectable()
 export class AuthorizedAppsService {
     constructor(
-        @InjectModel(RefreshToken.name) private readonly refreshTokenModel: Model<RefreshTokenDocument>,
         @InjectModel(OAuthClient.name) private readonly oauthClientModel: Model<OAuthClientDocument>,
         @InjectModel(AuthorizedClient.name)
         private readonly authorizedClientModel: Model<AuthorizedClientDocument>,
+        private readonly refreshTokens: RefreshTokenService,
     ) {}
 
     /** List OAuth clients the given user has authorized. */
@@ -70,12 +70,12 @@ export class AuthorizedAppsService {
         if (isDynamic) {
             await this.oauthClientModel.deleteOne({ clientId });
             await this.authorizedClientModel.deleteMany({ clientId });
-            await this.refreshTokenModel.deleteMany({ clientId });
+            await this.refreshTokens.revokeAllForClient(clientId);
 
             return;
         }
 
         await this.authorizedClientModel.deleteOne({ userId, clientId });
-        await this.refreshTokenModel.deleteMany({ userId, clientId });
+        await this.refreshTokens.revokeForUserAndClient({ userId, clientId });
     }
 }

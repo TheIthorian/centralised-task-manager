@@ -3,7 +3,7 @@ import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fa
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
 
-describe('WellKnownController', () => {
+describe('Dynamic client registration', () => {
     let app: NestFastifyApplication;
 
     beforeAll(async () => {

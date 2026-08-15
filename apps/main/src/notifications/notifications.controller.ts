@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Patch, Request, UseGuards, HttpCode, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
 import { UsersService } from '../users/users.service.js';
 import { Channel, NotificationsService } from './notifications.service.js';
 import { ListNotificationsQueryDto } from './dto/list-notifications-query.dto.js';
 // Value import, not `import type`: a type-only import is erased, so the pipe would see a bare
 // Object metatype and validate nothing.
 import { UpdatePreferencesDto } from './dto/update-preferences.dto.js';
-import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import type { JwtPayload } from '../tokens/token-claims.js';
 import {
     MarkAllReadResultDto,
     MarkReadResultDto,

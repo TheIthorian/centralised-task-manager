@@ -1,15 +1,14 @@
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { AuthCode, type AuthCodeDocument } from './schemas/auth-code.schema.js';
-import { RefreshToken, RefreshTokenGrant, type RefreshTokenDocument } from '../auth/schemas/refresh-token.schema.js';
-import { AuthorizedClientService } from '../auth/authorized-client.service.js';
-import { OAuthClientService } from '../auth/oauth-client.service.js';
+import { AuthorizedClientService } from './authorized-client.service.js';
+import { OAuthClientService } from './oauth-client.service.js';
 import { UsersService } from '../users/users.service.js';
-import { ConfigService } from '@nestjs/config';
-import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import { AccessTokenService } from '../tokens/access-token.service.js';
+import { RefreshTokenService } from '../tokens/refresh-token.service.js';
+import { RefreshTokenGrant } from '../tokens/schemas/refresh-token.schema.js';
 import {
     CODE_CHALLENGE_METHODS,
     isSupportedCodeChallengeMethod,
@@ -31,10 +30,9 @@ export interface TokenResponse {
 export class OAuthService {
     constructor(
         @InjectModel(AuthCode.name) private readonly authCodeModel: Model<AuthCodeDocument>,
-        @InjectModel(RefreshToken.name) private readonly refreshTokenModel: Model<RefreshTokenDocument>,
         private readonly users: UsersService,
-        private readonly jwt: JwtService,
-        private readonly config: ConfigService,
+        private readonly accessTokens: AccessTokenService,
+        private readonly refreshTokens: RefreshTokenService,
         private readonly authorizedClients: AuthorizedClientService,
         private readonly oauthClients: OAuthClientService,
     ) {}
@@ -136,35 +134,14 @@ export class OAuthService {
         scopes: string[];
         clientId: string;
     }): Promise<TokenResponse> {
-        const issuer = this.config.get<string>('REDIRECT_BASE_URL')!;
-        const expiresInSeconds = this.config.get<number>('JWT_ACCESS_EXPIRES', 120);
+        const accessToken = this.accessTokens.signAccessToken({ userId, email, clientId });
+        const idToken = this.accessTokens.signIdToken({ userId, email });
 
-        const payload: JwtPayload & Record<string, unknown> = {
-            sub: userId,
-            email,
-            iss: issuer,
-            aud: issuer,
-        };
-
-        const signOptions = { expiresIn: expiresInSeconds };
-
-        // client_id rides on the access token so rate limiting can fence one client's traffic
-        // off from the same user's other clients (RFC 9068 §2.2).
-        const accessToken = this.jwt.sign({ ...payload, client_id: clientId }, signOptions);
-        const idToken = this.jwt.sign(payload, signOptions);
-
-        const rawRefresh = `rt_${randomBytes(32).toString('hex')}`;
-        const tokenHash = createHash('sha256').update(rawRefresh).digest('hex');
-        const expiresInDays = this.config.get<number>('REFRESH_TOKEN_EXPIRES_DAYS', 30);
-        const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
-
-        await this.refreshTokenModel.create({
-            tokenHash,
-            grant: RefreshTokenGrant.OAuth,
+        const refreshToken = await this.refreshTokens.issue({
             userId,
-            expiresAt,
-            scopes,
             clientId,
+            grant: RefreshTokenGrant.OAuth,
+            scopes,
         });
 
         await this.recordGrant({ userId, clientId, scopes });
@@ -173,10 +150,25 @@ export class OAuthService {
             access_token: accessToken,
             id_token: idToken,
             token_type: 'Bearer',
-            expires_in: expiresInSeconds,
+            expires_in: this.accessTokens.expiresInSeconds,
             scope: scopes.join(' '),
-            refresh_token: rawRefresh,
+            refresh_token: refreshToken,
         };
+    }
+
+    /** Exchange a refresh token for a new token set (rotates the refresh token). */
+    async refreshAccessToken({ refreshToken }: { refreshToken: string }): Promise<TokenResponse> {
+        const record = await this.refreshTokens.redeem({ rawToken: refreshToken, grant: RefreshTokenGrant.OAuth });
+        const user = await this.users.findById(record.userId);
+
+        if (!user) throw new UnauthorizedException('User not found');
+
+        return this.issueTokens({
+            userId: record.userId,
+            email: user.email,
+            scopes: record.scopes,
+            clientId: record.clientId,
+        });
     }
 
     /**
@@ -199,27 +191,6 @@ export class OAuthService {
             clientId,
             scopes,
             isDynamic: client?.isDynamic ?? true,
-        });
-    }
-
-    /** Exchange a refresh token for a new token set (rotates the refresh token). */
-    async refreshAccessToken({ refreshToken }: { refreshToken: string }): Promise<TokenResponse> {
-        const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
-        const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash, grant: RefreshTokenGrant.OAuth });
-
-        if (!record || record.expiresAt < new Date()) {
-            throw new UnauthorizedException('Invalid or expired refresh token');
-        }
-
-        const user = await this.users.findById(record.userId);
-
-        if (!user) throw new UnauthorizedException('User not found');
-
-        return this.issueTokens({
-            userId: record.userId,
-            email: user.email,
-            scopes: record.scopes,
-            clientId: record.clientId,
         });
     }
 }

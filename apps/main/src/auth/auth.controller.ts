@@ -9,10 +9,10 @@ import { TokenPairDto, AuthorizedAppDto } from './dto/auth-response.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
-import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
-import { AuthorizedAppsService } from './authorized-apps.service.js';
+import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
+import { AuthorizedAppsService } from '../oauth/authorized-apps.service.js';
 import type { UserDocument } from '../users/schemas/user.schema.js';
-import type { JwtPayload } from './strategies/jwt.strategy.js';
+import type { JwtPayload } from '../tokens/token-claims.js';
 import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
 import { RefreshRateLimit, StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 import { ValidatedBody, ValidatedParam } from '../common/validation/validated.decorators.js';
@@ -124,7 +124,7 @@ export class AuthController {
             throw new ValidationError('refreshToken should not be empty');
         }
 
-        const tokens = await this.auth.refreshTokens(token);
+        const tokens = await this.auth.refreshSession(token);
 
         return this.applyRefreshTransport({ tokens, request, reply });
     }

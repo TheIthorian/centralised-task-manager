@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import type { OAuthClientInfoDto } from '@ctm/api-client';
 import type { OAuthClientDocument } from './schemas/oauth-client.schema.js';
 import { OAuthClient } from './schemas/oauth-client.schema.js';

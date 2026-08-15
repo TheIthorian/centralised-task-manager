@@ -4,6 +4,8 @@ OAuth 2.0 authorization server module for `apps/main`.
 
 Allows the MCP app to authenticate users through a standard browser-based flow rather than requiring them to share API tokens directly. Implements authorization code + PKCE so the flow is safe for public clients. Tokens are RSA-signed so the MCP app can verify them offline via the JWKS endpoint without round-tripping to the auth server.
 
+This module owns third-party delegation end to end: client registration, the user's grants, authorization codes, and the `.well-known` protocol metadata. It signs nothing itself — tokens come from `tokens` — and it knows nothing about first-party sessions, which are `auth`.
+
 ## Authorization code flow
 
 ```mermaid

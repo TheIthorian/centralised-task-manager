@@ -1,6 +1,6 @@
 import { Injectable, type OnApplicationBootstrap } from '@nestjs/common';
 import { appLogger } from '../logging/app-logger.js';
-import { OAuthClientService } from '../auth/oauth-client.service.js';
+import { OAuthClientService } from './oauth-client.service.js';
 import { FIRST_PARTY_CLIENTS } from './first-party-clients.js';
 
 /** Registers the clients this project ships, before any of them can reach `/oauth/authorize`. */
