@@ -1,7 +1,7 @@
 FROM node:26.7.0-alpine3.23 AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
-RUN apk upgrade --no-cache && npm i -g corepack@0.35.0 && corepack enable
+RUN apk upgrade --no-cache && npm i -g pnpm@11.1.3
 
 # ---- prune: extract only what apps/sync needs ----
 FROM base AS pruner
@@ -26,7 +26,6 @@ RUN pnpm build --filter=@ctm/sync...
 FROM node:26.7.0-alpine3.23 AS runner
 ENV NODE_ENV=production
 WORKDIR /app
-RUN corepack enable
 COPY --from=builder /app/apps/sync/dist ./dist
 COPY --from=builder /app/apps/sync/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
