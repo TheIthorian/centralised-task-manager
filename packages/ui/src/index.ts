@@ -29,3 +29,5 @@ export { TaskRow } from './TaskRow.js';
 export type { TaskRowSwipeLabels } from './TaskRow.js';
 export { Toast } from './Toast.js';
 export { UnverifiedAppNotice } from './UnverifiedAppNotice.js';
+export { usePresence } from './usePresence.js';
+export type { Presence } from './usePresence.js';
