@@ -4,20 +4,16 @@
 
 ## Install
 
-Download the archive for your platform from the latest release, e.g.
-`ctm-cli-darwin-arm64.tar.gz`, then:
+Download `ctm-cli.tar.gz` from the latest release (or from the `ctm-cli` artifact of a
+`release-cli` workflow run), then:
 
 ```bash
-sudo mkdir -p /usr/local/lib/ctm
-sudo tar -xzf ctm-cli-darwin-arm64.tar.gz -C /usr/local/lib/ctm
-sudo ln -sf /usr/local/lib/ctm/ctm /usr/local/bin/ctm
+tar -xzf ctm-cli.tar.gz
+sudo mv ctm /usr/local/bin/ctm
 ctm login
 ```
 
-Needs Node.js 24 on `PATH`. The archive is a directory rather than one file, and each build is
-platform-specific: credentials are kept in the OS keyring through a native addon, which cannot be
-bundled into the JavaScript. Keep `ctm` next to the `node_modules` it ships with; the symlink is
-fine, moving the file alone is not.
+The download is a single self-contained file and needs only Node.js 24 on `PATH`.
 
 ## Running from source
 
@@ -55,15 +51,12 @@ Resolved in this order, first match wins:
 
 ## Credential storage
 
-`ctm login` puts the access and refresh tokens in the operating system's secret store through
-`@napi-rs/keyring`, keyed by base URL: Keychain on macOS, the Secret Service on Linux, Credential
-Manager on Windows.
-`~/.config/ctm/config.json` holds only the base URL and client id. An earlier version kept the
-tokens in that file; they are ignored, so log in again once to move to the secret store.
+`ctm login` writes the access and refresh tokens to `~/.config/ctm/config.json`, alongside the
+base URL and client id, and the file is created `0600`.
 
-Set `CTM_TOKEN_STORE=file` to keep them in `~/.config/ctm/credentials.json` instead, for CI and
-headless machines with no secret service. That file is not encrypted on macOS or Linux, so it is
-opt-in rather than a fallback: without it, an unreachable secret store is an error.
+They are stored in the clear, so anything running as you can read them, and they travel with the
+file into backups and synced home directories. Treat them as you would an SSH key: `ctm logout`
+deletes the file, and revoking the app from the web UI invalidates the tokens outright.
 
 Release builds bake the production URL, so a downloaded `ctm` needs no configuration. The stored
 config outranks it: logging into a different server keeps you on that server.
@@ -71,7 +64,7 @@ config outranks it: logging into a different server keeps you on that server.
 ## Local build
 
 ```bash
-pnpm exec turbo run package --filter=@ctm/cli   # -> apps/cli/release/
+pnpm exec turbo run bundle --filter=@ctm/cli   # -> apps/cli/dist/ctm.cjs
 ```
 
 Set `CTM_DEFAULT_BASE_URL` to bake a default into a local bundle. Without it the bundle has no

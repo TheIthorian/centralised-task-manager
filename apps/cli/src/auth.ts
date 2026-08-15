@@ -1,21 +1,33 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { TokenGrant } from '@ctm/api-client';
 import { InternalError } from '@ctm/errors';
-import { clearTokens, readTokens, writeTokens, type StoredTokens } from './token-store.js';
+import { normalizeBaseUrl } from './base-url.js';
 
-/** Non-secret CLI state, persisted to ~/.config/ctm/config.json. */
+/** The credentials half of the config: how to prove who you are, and where they can be spent. */
+export type StoredTokens = {
+    accessToken: string;
+    refreshToken: string;
+    grant: TokenGrant;
+};
+
+/** Which server the CLI talks to, and as which client. */
 export type CliConfig = {
     baseUrl: string;
     clientId?: string;
 };
 
-/** Everything a command needs to talk to the API: config plus the tokens from the secret store. */
+/** Everything `ctm login` persists to ~/.config/ctm/config.json. */
 export type CliSession = CliConfig & StoredTokens;
 
 const CONFIG_PATH = path.join(os.homedir(), '.config', 'ctm', 'config.json');
 
-/** Read stored config, or null if not present. */
+// Tokens live in this file in the clear, so it is owner-only. Anything running as this user can
+// still read them; the CLI does not try to defend against that.
+const CONFIG_MODE = 0o600;
+
+/** Read the stored base URL and client id, or null when the CLI has never been logged in. */
 export function readConfig(): CliConfig | null {
     const raw = readConfigFile();
 
@@ -30,49 +42,64 @@ export function readConfig(): CliConfig | null {
     return { baseUrl, ...(typeof clientId === 'string' ? { clientId } : {}) };
 }
 
-/** Read the full session: config plus tokens. Returns null when the user is not logged in. */
+/** Read the full session. Returns null when there is no config, or no credentials in it. */
 export function readSession(): CliSession | null {
     const config = readConfig();
+    const raw = readConfigFile();
 
-    if (!config) return null;
+    if (!config || raw === null) return null;
 
-    const stored = readTokens({ baseUrl: config.baseUrl });
+    const accessToken = raw['accessToken'];
+    const refreshToken = raw['refreshToken'];
+    const grant = raw['grant'];
 
-    return stored ? { ...config, ...stored } : null;
+    if (typeof accessToken !== 'string' || typeof refreshToken !== 'string') return null;
+
+    return {
+        ...config,
+        accessToken,
+        refreshToken,
+        // A file written before the grant was recorded came from the browser flow, the only login
+        // that stored a client id.
+        grant: isGrant(grant) ? grant : inferGrant(config),
+    };
 }
 
-/** Persist config and tokens, putting the tokens in the OS secret store. */
+/** Persist config and credentials together. */
 export function writeSession(session: CliSession): void {
-    const { accessToken, refreshToken, grant, ...config } = session;
-
-    writeTokens({ baseUrl: config.baseUrl, tokens: { accessToken, refreshToken, grant } });
-    writeConfig(config);
+    writeConfigFile({ ...session, baseUrl: normalizeBaseUrl(session.baseUrl) });
 }
 
-/** Replace the stored tokens for the current base URL, leaving the rest of the config alone. */
+/** Replace the stored tokens, leaving the rest of the config alone. */
 export function updateStoredTokens({ baseUrl, tokens }: { baseUrl: string; tokens: StoredTokens }): void {
-    writeTokens({ baseUrl, tokens });
+    const config = readConfig() ?? { baseUrl: normalizeBaseUrl(baseUrl) };
+
+    writeConfigFile({ ...config, ...tokens });
 }
 
-/** Write non-secret config to disk, creating parent dirs as needed. */
+/** Write config without credentials, dropping any that were stored with it. */
 export function writeConfig(config: CliConfig): void {
+    writeConfigFile(config);
+}
+
+/** Delete the stored config and credentials. */
+export function clearConfig(): void {
+    if (fs.existsSync(CONFIG_PATH)) fs.rmSync(CONFIG_PATH);
+}
+
+function writeConfigFile(contents: CliConfig | CliSession): void {
     try {
         fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(contents, null, 2), { encoding: 'utf-8', mode: CONFIG_MODE });
+
+        // The mode argument only applies when writeFileSync creates the file, so a config written
+        // by an older version would otherwise keep whatever permissions it already had.
+        fs.chmodSync(CONFIG_PATH, CONFIG_MODE);
     } catch (err: unknown) {
         throw new InternalError(
             `Failed to write CLI config to ${CONFIG_PATH}: ${err instanceof Error ? err.message : String(err)}`,
         );
     }
-}
-
-/** Delete the config file and the stored tokens. */
-export function clearConfig(): void {
-    const config = readConfig();
-
-    if (config) clearTokens({ baseUrl: config.baseUrl });
-
-    if (fs.existsSync(CONFIG_PATH)) fs.rmSync(CONFIG_PATH);
 }
 
 function readConfigFile(): Record<string, unknown> | null {
@@ -85,4 +112,12 @@ function readConfigFile(): Record<string, unknown> | null {
     } catch {
         return null;
     }
+}
+
+function inferGrant(config: CliConfig): TokenGrant {
+    return config.clientId === undefined ? TokenGrant.Session : TokenGrant.OAuth;
+}
+
+function isGrant(value: unknown): value is TokenGrant {
+    return Object.values(TokenGrant).includes(value as TokenGrant);
 }

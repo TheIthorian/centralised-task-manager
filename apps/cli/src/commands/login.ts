@@ -1,8 +1,7 @@
 import type { Command } from 'commander';
 import { input, password } from '@inquirer/prompts';
-import { CtmApiClient } from '@ctm/api-client';
+import { CtmApiClient, TokenGrant } from '@ctm/api-client';
 import { writeSession } from '../auth.js';
-import { TokenGrant } from '../token-store.js';
 import { bakedBaseUrl } from '../baked-config.js';
 import { normalizeBaseUrl } from '../base-url.js';
 import { print } from '../output.js';

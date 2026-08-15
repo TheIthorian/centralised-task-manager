@@ -23,9 +23,6 @@ async function main() {
         entryPoints: ['src/main.ts'],
         outfile: OUTFILE,
         bundle: true,
-        // The keyring is a native addon: its .node binary cannot be inlined, so it stays a runtime
-        // require and `packageKeyring` copies the platform's binding next to the bundle.
-        external: ['@napi-rs/keyring'],
         platform: 'node',
         // CJS: several transitive deps (mute-stream and friends) call require() at load time, which
         // an ESM bundle cannot satisfy.
