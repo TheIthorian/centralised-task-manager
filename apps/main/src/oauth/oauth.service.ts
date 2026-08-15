@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 import { randomBytes, createHash } from 'crypto';
-import * as bcrypt from 'bcrypt';
 import { AuthCode, type AuthCodeDocument } from './schemas/auth-code.schema.js';
 import { RefreshToken, type RefreshTokenDocument } from '../auth/schemas/refresh-token.schema.js';
 import { AuthorizedClientService } from '../auth/authorized-client.service.js';
@@ -218,24 +217,5 @@ export class OAuthService {
             scopes: record.scopes,
             clientId: record.clientId,
         });
-    }
-
-    /** Validate a password and return user info (for the login form submission). */
-    async validatePassword({
-        email,
-        password,
-    }: {
-        email: string;
-        password: string;
-    }): Promise<{ id: string; email: string }> {
-        const user = await this.users.findByEmail(email);
-
-        if (!user) throw new UnauthorizedException('Invalid credentials');
-
-        const valid = await bcrypt.compare(password, user.passwordHash);
-
-        if (!valid) throw new UnauthorizedException('Invalid credentials');
-
-        return { id: String(user._id), email: user.email };
     }
 }
