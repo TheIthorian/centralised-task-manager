@@ -23,6 +23,7 @@
 ## File Structure
 
 **`packages/connectors`**
+
 - `src/types.ts` — add `AccountIdentity` type + `resolveAccountIdentity` to `OAuthConnector`.
 - `src/google-tasks/google-tasks.oauth.ts` — add email scope + identity via userinfo.
 - `src/google-tasks/google-tasks.types.ts` — add `GoogleUserInfo`.
@@ -32,6 +33,7 @@
 - `src/todoist/todoist.types.ts` — add `TodoistUser`.
 
 **`apps/main`**
+
 - `src/connectors/schemas/connector-config.schema.ts` — new fields + indexes.
 - `src/connectors/connectors.service.ts` — re-key to connection.
 - `src/connectors/connectors.controller.ts` — `accounts[]` + per-connection routes.
@@ -43,10 +45,12 @@
 - `src/sync/sync-job.dto.ts` — expose `connectionId`.
 
 **`packages/api-client`**
+
 - `src/types.ts` — `ConnectorAccountDto`, updated `ConnectorStatusDto`, `TaskSyncJobDto`, `TaskDto`.
 - `src/index.ts` — export new types; client methods take `connectionId`.
 
 **`apps/web`**
+
 - `src/pages/SourcesPage.tsx` — group by source, track jobs by connectionId.
 - `src/components/sources/SourceCard.tsx` — source group with account rows + "+ Add account".
 
@@ -57,6 +61,7 @@
 ### Task 1: Add `AccountIdentity` type + interface method
 
 **Files:**
+
 - Modify: `packages/connectors/src/types.ts`
 
 - [ ] **Step 1: Add the type and interface method**
@@ -101,6 +106,7 @@ git commit -m "feat(connectors): add AccountIdentity type and resolveAccountIden
 ### Task 2: Google Tasks identity (userinfo + email scope)
 
 **Files:**
+
 - Modify: `packages/connectors/src/google-tasks/google-tasks.types.ts`
 - Modify: `packages/connectors/src/google-tasks/google-tasks.oauth.ts`
 - Test: `packages/connectors/src/google-tasks/google-tasks.oauth.spec.ts`
@@ -179,10 +185,10 @@ In `google-tasks.oauth.ts`:
 In the constructor body, after `this.http = ...`:
 
 ```ts
-        this.userInfoHttp = new HttpClient({
-            baseUrl: 'https://www.googleapis.com',
-            logger: config.logger,
-        });
+this.userInfoHttp = new HttpClient({
+    baseUrl: 'https://www.googleapis.com',
+    logger: config.logger,
+});
 ```
 
 Add the method:
@@ -217,6 +223,7 @@ git commit -m "feat(connectors): resolve google account identity via userinfo"
 ### Task 3: Notion identity (`/v1/users/me`)
 
 **Files:**
+
 - Modify: `packages/connectors/src/notion/notion.types.ts`
 - Modify: `packages/connectors/src/notion/notion.oauth.ts`
 - Test: `packages/connectors/src/notion/notion.oauth.spec.ts`
@@ -313,6 +320,7 @@ git commit -m "feat(connectors): resolve notion account identity via users/me"
 ### Task 4: Todoist identity (sync user)
 
 **Files:**
+
 - Modify: `packages/connectors/src/todoist/todoist.types.ts`
 - Modify: `packages/connectors/src/todoist/todoist.oauth.ts`
 - Test: `packages/connectors/src/todoist/todoist.oauth.spec.ts`
@@ -406,6 +414,7 @@ git commit -m "feat(connectors): resolve todoist account identity via sync user"
 ### Task 5: Discord identity (stub to satisfy interface)
 
 **Files:**
+
 - Modify: `packages/connectors/src/discord/discord.oauth.ts`
 - Test: `packages/connectors/src/discord/discord.oauth.spec.ts`
 
@@ -466,6 +475,7 @@ git commit -m "feat(connectors): resolve discord account identity"
 ### Task 6: Connection schema — fields + indexes
 
 **Files:**
+
 - Modify: `apps/main/src/connectors/schemas/connector-config.schema.ts`
 
 - [ ] **Step 1: Add fields and swap indexes**
@@ -515,6 +525,7 @@ git commit -m "feat(main): connection schema fields + per-account unique index"
 ### Task 7: ConnectorsService — re-key to connection
 
 **Files:**
+
 - Modify: `apps/main/src/connectors/connectors.service.ts`
 - Test: `apps/main/src/connectors/connectors.service.spec.ts`
 
@@ -707,6 +718,7 @@ git commit -m "feat(main): re-key connectors service to per-account connections"
 ### Task 8: api-client — account DTOs
 
 **Files:**
+
 - Modify: `packages/api-client/src/types.ts`
 - Modify: `packages/api-client/src/index.ts` (exports + client method signatures)
 - Test: none (types only); compile is the gate.
@@ -755,6 +767,7 @@ Add `externalAccountId: string;` to `TaskDto` after `sourceId`.
 - [ ] **Step 2: Update client methods in `index.ts`**
 
 Change connection-scoped methods to take `connectionId` instead of `source`:
+
 - `disconnectConnector({ connectionId })` → `DELETE /connectors/connections/{connectionId}`
 - `syncConnector({ connectionId })` → `POST /connectors/connections/{connectionId}/sync`
 - `cancelSyncJob({ connectionId, jobId })` → `DELETE /connectors/connections/{connectionId}/sync/{jobId}`
@@ -780,6 +793,7 @@ git commit -m "feat(api-client): per-account connector DTOs and connection-scope
 ### Task 9: ConnectorsController — accounts[] + per-connection routes
 
 **Files:**
+
 - Modify: `apps/main/src/connectors/connectors.controller.ts`
 - Test: `apps/main/src/connectors/connectors.controller.spec.ts`
 
@@ -940,6 +954,7 @@ git commit -m "feat(main): connectors controller exposes per-account accounts an
 ### Task 10: Task schema — externalAccountId + index
 
 **Files:**
+
 - Modify: `apps/main/src/tasks/schemas/task.schema.ts`
 
 - [ ] **Step 1: Add field + swap index**
@@ -954,10 +969,7 @@ Add after `sourceId!`:
 Replace the unique index line:
 
 ```ts
-TaskSchema.index(
-    { userId: 1, source: 1, externalAccountId: 1, sourceId: 1 },
-    { unique: true },
-);
+TaskSchema.index({ userId: 1, source: 1, externalAccountId: 1, sourceId: 1 }, { unique: true });
 ```
 
 > Legacy tasks have `externalAccountId: null`; the compound index still permits one null-account task per `(userId, source, sourceId)` until backfilled (Task 11).
@@ -979,6 +991,7 @@ git commit -m "feat(main): task externalAccountId field + per-account unique ind
 ### Task 11: upsertFromRemote — stamp externalAccountId
 
 **Files:**
+
 - Modify: `apps/main/src/tasks/tasks.service.ts`
 - Test: `apps/main/src/tasks/tasks.service.spec.ts`
 
@@ -988,12 +1001,30 @@ git commit -m "feat(main): task externalAccountId field + per-account unique ind
 it('upsertFromRemote stamps externalAccountId and isolates accounts', async () => {
     const userId = new Types.ObjectId().toString();
     const remote = {
-        sourceId: 'r1', title: 'T', description: null, status: 'open' as const,
-        priority: null, due: null, deadline: null, duration: null, parentSourceId: null, tags: [],
+        sourceId: 'r1',
+        title: 'T',
+        description: null,
+        status: 'open' as const,
+        priority: null,
+        due: null,
+        deadline: null,
+        duration: null,
+        parentSourceId: null,
+        tags: [],
     };
 
-    await service.upsertFromRemote({ userId, source: TaskConnectorName.GoogleTasks, externalAccountId: 'acct-A', remoteTasks: [remote] });
-    await service.upsertFromRemote({ userId, source: TaskConnectorName.GoogleTasks, externalAccountId: 'acct-B', remoteTasks: [remote] });
+    await service.upsertFromRemote({
+        userId,
+        source: TaskConnectorName.GoogleTasks,
+        externalAccountId: 'acct-A',
+        remoteTasks: [remote],
+    });
+    await service.upsertFromRemote({
+        userId,
+        source: TaskConnectorName.GoogleTasks,
+        externalAccountId: 'acct-B',
+        remoteTasks: [remote],
+    });
 
     const tasks = await taskModel.find({ userId: new Types.ObjectId(userId), source: 'google_tasks', sourceId: 'r1' });
     expect(tasks).toHaveLength(2); // same sourceId, different account => two distinct tasks
@@ -1012,12 +1043,12 @@ Expected: FAIL — `externalAccountId` not accepted / E11000 duplicate (old inde
 (b) Scope `existingTasks` query by account:
 
 ```ts
-        const existingTasks = await this.taskModel.find({
-            userId: userObjectId,
-            source,
-            externalAccountId,
-            sourceId: { $in: sourceIds },
-        });
+const existingTasks = await this.taskModel.find({
+    userId: userObjectId,
+    source,
+    externalAccountId,
+    sourceId: { $in: sourceIds },
+});
 ```
 
 (c) In `buildInsert`, add `externalAccountId,` to the returned document (after `sourceId`).
@@ -1040,6 +1071,7 @@ git commit -m "feat(main): upsertFromRemote stamps externalAccountId per account
 ### Task 12: Sync job + service + controller per connection
 
 **Files:**
+
 - Modify: `apps/main/src/jobs/schemas/task-sync-job.schema.ts`
 - Modify: `apps/main/src/sync/sync-job.dto.ts`
 - Modify: `apps/main/src/sync/sync.service.ts`
@@ -1080,35 +1112,35 @@ Expected: FAIL — `createJob` signature is `{ userId, source }`.
 Change `createJob` and `runSync` to take `connectionId`. Inside `runSync`:
 
 ```ts
-        const connection = await this.connectors.getConnectionForSync({ userId, connectionId });
-        const source = connection.source as ConnectorName;
-        const tokens = await this.connectors.ensureFreshTokens({ userId, connectionId });
-        const settings = await this.connectors.getSettings({ userId, connectionId });
-        const connector = this.registry.get(source as unknown as TaskConnectorName);
-        const remoteTasks = await connector.fetchTasks(tokens, settings);
-        // ...
-        const { synced, skipped } = await this.tasks.upsertFromRemote({
-            userId,
-            source: source as unknown as TaskConnectorName,
-            externalAccountId: connection.externalAccountId ?? '',
-            remoteTasks,
-        });
-        // ...
-        await this.connectors.updateLastSyncedAt({ userId, connectionId });
+const connection = await this.connectors.getConnectionForSync({ userId, connectionId });
+const source = connection.source as ConnectorName;
+const tokens = await this.connectors.ensureFreshTokens({ userId, connectionId });
+const settings = await this.connectors.getSettings({ userId, connectionId });
+const connector = this.registry.get(source as unknown as TaskConnectorName);
+const remoteTasks = await connector.fetchTasks(tokens, settings);
+// ...
+const { synced, skipped } = await this.tasks.upsertFromRemote({
+    userId,
+    source: source as unknown as TaskConnectorName,
+    externalAccountId: connection.externalAccountId ?? '',
+    remoteTasks,
+});
+// ...
+await this.connectors.updateLastSyncedAt({ userId, connectionId });
 ```
 
 Persist `connectionId` (and keep `source` for display) when creating the job:
 
 ```ts
-        const job = await this.taskSyncModel.create({
-            userId: new Types.ObjectId(userId),
-            connectionId,
-            source,
-            status: 'queued',
-            stage: null,
-            synced: 0,
-            skipped: 0,
-        });
+const job = await this.taskSyncModel.create({
+    userId: new Types.ObjectId(userId),
+    connectionId,
+    source,
+    status: 'queued',
+    stage: null,
+    synced: 0,
+    skipped: 0,
+});
 ```
 
 Add `getConnectionForSync({ userId, connectionId })` to `connectors.service.ts` returning the document (reuse the private `getConnection` via a public wrapper), OR widen `getConnection` to public. The job needs `source` + `externalAccountId`.
@@ -1153,6 +1185,7 @@ git commit -m "feat(main): sync jobs run per connection and stamp account"
 ### Task 13: SourceCard becomes a source group with account rows + "+"
 
 **Files:**
+
 - Modify: `apps/web/src/components/sources/SourceCard.tsx`
 - Modify: `apps/web/src/components/sources/SourceCard.spec.tsx`
 - Modify: `apps/web/src/pages/SourcesPage.tsx`
@@ -1173,7 +1206,18 @@ it('lists each connected account and an add-account button', () => {
         ],
     };
 
-    render(<SourceCard connector={connector} onConnect={() => {}} onDisconnect={() => {}} onSync={() => {}} onCancelSync={() => {}} isPending={false} syncJobs={new Map()} healthByConnection={new Map()} />);
+    render(
+        <SourceCard
+            connector={connector}
+            onConnect={() => {}}
+            onDisconnect={() => {}}
+            onSync={() => {}}
+            onCancelSync={() => {}}
+            isPending={false}
+            syncJobs={new Map()}
+            healthByConnection={new Map()}
+        />,
+    );
 
     expect(screen.getByText('a@x.com')).toBeInTheDocument();
     expect(screen.getByText('b@x.com')).toBeInTheDocument();
@@ -1193,13 +1237,13 @@ Rewrite props:
 ```tsx
 type SourceCardProps = {
     connector: ConnectorStatusDto;
-    onConnect: (source: string) => void;            // add-account (OAuth)
+    onConnect: (source: string) => void; // add-account (OAuth)
     onDisconnect: (connectionId: string) => void;
     onSync: (connectionId: string) => void;
     onCancelSync: (connectionId: string, jobId: string) => void;
     onConfigure?: (connectionId: string) => void;
     onTest?: (source: string) => void;
-    syncJobs: Map<string, TaskSyncJobDto>;          // keyed by connectionId
+    syncJobs: Map<string, TaskSyncJobDto>; // keyed by connectionId
     healthByConnection?: Map<string, ConnectorHealthDto>;
     isPending: boolean;
     isHealthLoading?: boolean;
@@ -1239,6 +1283,7 @@ git commit -m "feat(web): per-account source groups with add-account action"
 ### Task 14: MCP / CLI parity (connection-scoped)
 
 **Files:**
+
 - Modify: MCP connector tools (`list_connectors`, `sync_connector`, `disconnect_connector`, `set_connection_details`, `get_connector_health`) — locate under `apps/main` MCP module or `apps/cli`.
 - Test: corresponding spec files.
 

@@ -30,11 +30,13 @@
 ### Task 1: Fastify plugins — compression and cookies
 
 **Files:**
+
 - Modify: `apps/main/package.json` (dependencies)
 - Modify: `apps/main/src/bootstrap.ts`
 - Test: `apps/main/src/bootstrap.spec.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `createApp()` returns an app with `@fastify/compress` and `@fastify/cookie` registered. Later tasks call `reply.setCookie(...)` / `reply.clearCookie(...)` and read `request.cookies`.
 
@@ -68,11 +70,14 @@ describe('createApp plugin registration', () => {
         await app.init();
         await app.getHttpAdapter().getInstance().ready();
 
-        const response = await app.getHttpAdapter().getInstance().inject({
-            method: 'GET',
-            url: '/health',
-            headers: { 'accept-encoding': 'gzip, br' },
-        });
+        const response = await app
+            .getHttpAdapter()
+            .getInstance()
+            .inject({
+                method: 'GET',
+                url: '/health',
+                headers: { 'accept-encoding': 'gzip, br' },
+            });
 
         expect(response.statusCode).toBe(200);
         expect(response.headers['content-encoding']).toBeUndefined();
@@ -119,15 +124,15 @@ import cookie from '@fastify/cookie';
 Inside `createApp()`, immediately before the existing `app.register(multipart ...)` line:
 
 ```ts
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await app.register(compress as any, {
-        global: true,
-        threshold: 1024,
-        encodings: ['br', 'gzip', 'deflate'],
-    });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+await app.register(compress as any, {
+    global: true,
+    threshold: 1024,
+    encodings: ['br', 'gzip', 'deflate'],
+});
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await app.register(cookie as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+await app.register(cookie as any);
 ```
 
 The `as any` casts match the existing `multipart` registration — Nest's `register` signature does not line up with Fastify plugin types.
@@ -149,12 +154,14 @@ git commit -m "feat(main): register compression and cookie plugins"
 ### Task 2: Cookie-mode env configuration
 
 **Files:**
+
 - Modify: `apps/main/src/config/env.schema.ts`
 - Modify: `apps/main/.env.example`
 - Modify: `apps/main/.env.test`
 - Test: `apps/main/src/config/env.schema.spec.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: validated `COOKIE_PATH: string` and `COOKIE_SECURE: boolean` available via `ConfigService`.
 
@@ -163,25 +170,25 @@ git commit -m "feat(main): register compression and cookie plugins"
 Append to `apps/main/src/config/env.schema.spec.ts` (follow the existing valid-env fixture in that file — add both keys to it):
 
 ```ts
-    it('rejects an env without COOKIE_PATH', () => {
-        const { COOKIE_PATH, ...withoutCookiePath } = validEnv;
-        const { error } = envSchema.validate(withoutCookiePath);
+it('rejects an env without COOKIE_PATH', () => {
+    const { COOKIE_PATH, ...withoutCookiePath } = validEnv;
+    const { error } = envSchema.validate(withoutCookiePath);
 
-        expect(error?.message).toContain('COOKIE_PATH');
-    });
+    expect(error?.message).toContain('COOKIE_PATH');
+});
 
-    it('rejects an env without COOKIE_SECURE', () => {
-        const { COOKIE_SECURE, ...withoutCookieSecure } = validEnv;
-        const { error } = envSchema.validate(withoutCookieSecure);
+it('rejects an env without COOKIE_SECURE', () => {
+    const { COOKIE_SECURE, ...withoutCookieSecure } = validEnv;
+    const { error } = envSchema.validate(withoutCookieSecure);
 
-        expect(error?.message).toContain('COOKIE_SECURE');
-    });
+    expect(error?.message).toContain('COOKIE_SECURE');
+});
 
-    it('coerces COOKIE_SECURE to a boolean', () => {
-        const { value } = envSchema.validate({ ...validEnv, COOKIE_SECURE: 'true' });
+it('coerces COOKIE_SECURE to a boolean', () => {
+    const { value } = envSchema.validate({ ...validEnv, COOKIE_SECURE: 'true' });
 
-        expect(value.COOKIE_SECURE).toBe(true);
-    });
+    expect(value.COOKIE_SECURE).toBe(true);
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -242,6 +249,7 @@ git commit -m "feat(main): require COOKIE_PATH and COOKIE_SECURE"
 ### Task 3: Cookie mode in the auth controller
 
 **Files:**
+
 - Modify: `packages/api-client/src/types.ts`
 - Modify: `apps/main/src/auth/auth.controller.ts`
 - Modify: `apps/main/src/auth/auth.service.ts`
@@ -251,13 +259,14 @@ git commit -m "feat(main): require COOKIE_PATH and COOKIE_SECURE"
 - Test: `apps/main/src/auth/auth.controller.spec.ts`
 
 **Interfaces:**
+
 - Consumes: cookie plugin from Task 1; `COOKIE_PATH` / `COOKIE_SECURE` from Task 2.
 - Produces:
-  - `REFRESH_COOKIE_NAME = 'ctm_refresh'`, `WEB_CLIENT_HEADER = 'x-ctm-client'`, `WEB_CLIENT_VALUE = 'web'`
-  - `isWebClient({ headers }: { headers: Record<string, string | string[] | undefined> }): boolean`
-  - `buildRefreshCookieOptions({ path, secure, maxAgeDays }: { path: string; secure: boolean; maxAgeDays: number }): CookieSerializeOptions`
-  - `AuthService.revokeRefreshToken({ rawRefreshToken }: { rawRefreshToken: string }): Promise<void>`
-  - `TokenPair.refreshToken` becomes optional (`refreshToken?: string`)
+    - `REFRESH_COOKIE_NAME = 'ctm_refresh'`, `WEB_CLIENT_HEADER = 'x-ctm-client'`, `WEB_CLIENT_VALUE = 'web'`
+    - `isWebClient({ headers }: { headers: Record<string, string | string[] | undefined> }): boolean`
+    - `buildRefreshCookieOptions({ path, secure, maxAgeDays }: { path: string; secure: boolean; maxAgeDays: number }): CookieSerializeOptions`
+    - `AuthService.revokeRefreshToken({ rawRefreshToken }: { rawRefreshToken: string }): Promise<void>`
+    - `TokenPair.refreshToken` becomes optional (`refreshToken?: string`)
 
 - [ ] **Step 1: Write the failing test for the cookie helpers**
 
@@ -331,11 +340,7 @@ export const WEB_CLIENT_VALUE = 'web';
  * Whether the request arrived through the web proxy and should get a cookie
  * instead of a refresh token in the response body.
  */
-export function isWebClient({
-    headers,
-}: {
-    headers: Record<string, string | string[] | undefined>;
-}): boolean {
+export function isWebClient({ headers }: { headers: Record<string, string | string[] | undefined> }): boolean {
     return headers[WEB_CLIENT_HEADER] === WEB_CLIENT_VALUE;
 }
 
@@ -402,88 +407,83 @@ export class RefreshDto {
 Add to `apps/main/src/auth/auth.controller.spec.ts`, following the existing suite's app-bootstrap and unique-email (`Date.now()`) patterns:
 
 ```ts
-    it('returns the refresh token in the body for bearer clients', async () => {
-        const email = `bearer-${Date.now()}@example.com`;
-        const response = await request(server)
-            .post('/auth/register')
-            .send({ email, password: 'password123', name: 'Bearer' })
-            .expect(201);
+it('returns the refresh token in the body for bearer clients', async () => {
+    const email = `bearer-${Date.now()}@example.com`;
+    const response = await request(server)
+        .post('/auth/register')
+        .send({ email, password: 'password123', name: 'Bearer' })
+        .expect(201);
 
-        expect(typeof response.body.refreshToken).toBe('string');
-        expect(response.headers['set-cookie']).toBeUndefined();
-    });
+    expect(typeof response.body.refreshToken).toBe('string');
+    expect(response.headers['set-cookie']).toBeUndefined();
+});
 
-    it('returns an HttpOnly cookie and no body token for web clients', async () => {
-        const email = `web-${Date.now()}@example.com`;
-        const response = await request(server)
-            .post('/auth/register')
-            .set('X-Ctm-Client', 'web')
-            .send({ email, password: 'password123', name: 'Web' })
-            .expect(201);
+it('returns an HttpOnly cookie and no body token for web clients', async () => {
+    const email = `web-${Date.now()}@example.com`;
+    const response = await request(server)
+        .post('/auth/register')
+        .set('X-Ctm-Client', 'web')
+        .send({ email, password: 'password123', name: 'Web' })
+        .expect(201);
 
-        expect(response.body.refreshToken).toBeUndefined();
-        expect(typeof response.body.accessToken).toBe('string');
+    expect(response.body.refreshToken).toBeUndefined();
+    expect(typeof response.body.accessToken).toBe('string');
 
-        const cookie = response.headers['set-cookie'][0];
+    const cookie = response.headers['set-cookie'][0];
 
-        expect(cookie).toContain('ctm_refresh=');
-        expect(cookie).toContain('HttpOnly');
-        expect(cookie).toContain('SameSite=Lax');
-        expect(cookie).toContain('Path=/api/auth');
-    });
+    expect(cookie).toContain('ctm_refresh=');
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('SameSite=Lax');
+    expect(cookie).toContain('Path=/api/auth');
+});
 
-    it('refreshes from the cookie with no request body', async () => {
-        const email = `web-refresh-${Date.now()}@example.com`;
-        const registerResponse = await request(server)
-            .post('/auth/register')
-            .set('X-Ctm-Client', 'web')
-            .send({ email, password: 'password123', name: 'Web Refresh' })
-            .expect(201);
+it('refreshes from the cookie with no request body', async () => {
+    const email = `web-refresh-${Date.now()}@example.com`;
+    const registerResponse = await request(server)
+        .post('/auth/register')
+        .set('X-Ctm-Client', 'web')
+        .send({ email, password: 'password123', name: 'Web Refresh' })
+        .expect(201);
 
-        const cookie = registerResponse.headers['set-cookie'][0].split(';')[0];
+    const cookie = registerResponse.headers['set-cookie'][0].split(';')[0];
 
-        const refreshResponse = await request(server)
-            .post('/auth/refresh')
-            .set('X-Ctm-Client', 'web')
-            .set('Cookie', cookie)
-            .send({})
-            .expect(200);
+    const refreshResponse = await request(server)
+        .post('/auth/refresh')
+        .set('X-Ctm-Client', 'web')
+        .set('Cookie', cookie)
+        .send({})
+        .expect(200);
 
-        expect(refreshResponse.body.refreshToken).toBeUndefined();
-        expect(typeof refreshResponse.body.accessToken).toBe('string');
-        expect(refreshResponse.headers['set-cookie'][0]).toContain('ctm_refresh=');
-    });
+    expect(refreshResponse.body.refreshToken).toBeUndefined();
+    expect(typeof refreshResponse.body.accessToken).toBe('string');
+    expect(refreshResponse.headers['set-cookie'][0]).toContain('ctm_refresh=');
+});
 
-    it('rejects a web refresh with no cookie and no body token', async () => {
-        await request(server).post('/auth/refresh').set('X-Ctm-Client', 'web').send({}).expect(401);
-    });
+it('rejects a web refresh with no cookie and no body token', async () => {
+    await request(server).post('/auth/refresh').set('X-Ctm-Client', 'web').send({}).expect(401);
+});
 
-    it('clears the cookie and revokes the token on logout', async () => {
-        const email = `web-logout-${Date.now()}@example.com`;
-        const registerResponse = await request(server)
-            .post('/auth/register')
-            .set('X-Ctm-Client', 'web')
-            .send({ email, password: 'password123', name: 'Web Logout' })
-            .expect(201);
+it('clears the cookie and revokes the token on logout', async () => {
+    const email = `web-logout-${Date.now()}@example.com`;
+    const registerResponse = await request(server)
+        .post('/auth/register')
+        .set('X-Ctm-Client', 'web')
+        .send({ email, password: 'password123', name: 'Web Logout' })
+        .expect(201);
 
-        const cookie = registerResponse.headers['set-cookie'][0].split(';')[0];
+    const cookie = registerResponse.headers['set-cookie'][0].split(';')[0];
 
-        const logoutResponse = await request(server)
-            .post('/auth/logout')
-            .set('X-Ctm-Client', 'web')
-            .set('Cookie', cookie)
-            .send()
-            .expect(204);
+    const logoutResponse = await request(server)
+        .post('/auth/logout')
+        .set('X-Ctm-Client', 'web')
+        .set('Cookie', cookie)
+        .send()
+        .expect(204);
 
-        expect(logoutResponse.headers['set-cookie'][0]).toContain('ctm_refresh=;');
+    expect(logoutResponse.headers['set-cookie'][0]).toContain('ctm_refresh=;');
 
-        await request(server)
-            .post('/auth/refresh')
-            .set('X-Ctm-Client', 'web')
-            .set('Cookie', cookie)
-            .send({})
-            .expect(401);
-    });
+    await request(server).post('/auth/refresh').set('X-Ctm-Client', 'web').set('Cookie', cookie).send({}).expect(401);
+});
 ```
 
 - [ ] **Step 7: Run the tests to verify they fail**
@@ -514,11 +514,7 @@ In `apps/main/src/auth/auth.controller.ts`:
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedError } from '@ctm/errors';
-import {
-    buildRefreshCookieOptions,
-    isWebClient,
-    REFRESH_COOKIE_NAME,
-} from './auth-cookie.js';
+import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
 ```
 
 Inject `ConfigService` into the constructor. Add one private helper and use it from `register`, `login`, and `refresh`:
@@ -628,84 +624,86 @@ git commit -m "feat(auth): issue the refresh token as an HttpOnly cookie for web
 ### Task 4: Add the refresh endpoints to the API client
 
 **Files:**
+
 - Modify: `packages/api-client/src/client.ts`
 - Modify: `packages/api-client/src/client.types.ts`
 - Test: `packages/api-client/src/client.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `TokenPair` from Task 3.
 - Produces:
-  - `CtmApiClient.refresh({ refreshToken }?: RefreshParams): Promise<TokenPair>` — no longer throws when no token is available, so the cookie can carry it
-  - `CtmApiClient.logout({ refreshToken }?: RefreshParams): Promise<void>`
+    - `CtmApiClient.refresh({ refreshToken }?: RefreshParams): Promise<TokenPair>` — no longer throws when no token is available, so the cookie can carry it
+    - `CtmApiClient.logout({ refreshToken }?: RefreshParams): Promise<void>`
 
 - [ ] **Step 1: Write the failing test**
 
 Add to the `describe('CtmApiClient', ...)` block in `packages/api-client/src/client.spec.ts`. That suite mocks `axios` and asserts on `mockInstance.request` — reuse it as-is.
 
 ```ts
-    it('posts an empty body to refresh when no token is held', async () => {
-        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
-        const payload = { accessToken: 'acc', user: { id: '1', email: 'a@b.com' } };
+it('posts an empty body to refresh when no token is held', async () => {
+    const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
+    const payload = { accessToken: 'acc', user: { id: '1', email: 'a@b.com' } };
 
-        mockInstance.request.mockResolvedValueOnce({ data: payload });
+    mockInstance.request.mockResolvedValueOnce({ data: payload });
 
-        const result = await client.refresh();
+    const result = await client.refresh();
 
-        expect(mockInstance.request).toHaveBeenCalledWith({
-            method: 'POST',
-            url: '/auth/refresh',
-            data: {},
-            params: undefined,
-        });
-        expect(result).toEqual(payload);
+    expect(mockInstance.request).toHaveBeenCalledWith({
+        method: 'POST',
+        url: '/auth/refresh',
+        data: {},
+        params: undefined,
+    });
+    expect(result).toEqual(payload);
+});
+
+it('posts the refresh token when one is held', async () => {
+    const client = new CtmApiClient({ baseUrl: 'http://localhost:3000', refreshToken: 'rt' });
+
+    mockInstance.request.mockResolvedValueOnce({
+        data: { accessToken: 'acc', refreshToken: 'rt2', user: { id: '1', email: 'a@b.com' } },
     });
 
-    it('posts the refresh token when one is held', async () => {
-        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000', refreshToken: 'rt' });
+    await client.refresh();
 
-        mockInstance.request.mockResolvedValueOnce({
-            data: { accessToken: 'acc', refreshToken: 'rt2', user: { id: '1', email: 'a@b.com' } },
-        });
-
-        await client.refresh();
-
-        expect(mockInstance.request).toHaveBeenCalledWith({
-            method: 'POST',
-            url: '/auth/refresh',
-            data: { refreshToken: 'rt' },
-            params: undefined,
-        });
+    expect(mockInstance.request).toHaveBeenCalledWith({
+        method: 'POST',
+        url: '/auth/refresh',
+        data: { refreshToken: 'rt' },
+        params: undefined,
     });
+});
 
-    it('posts the held token to logout', async () => {
-        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000', refreshToken: 'rt' });
+it('posts the held token to logout', async () => {
+    const client = new CtmApiClient({ baseUrl: 'http://localhost:3000', refreshToken: 'rt' });
 
-        mockInstance.request.mockResolvedValueOnce({ data: undefined });
+    mockInstance.request.mockResolvedValueOnce({ data: undefined });
 
-        await client.logout();
+    await client.logout();
 
-        expect(mockInstance.request).toHaveBeenCalledWith({
-            method: 'POST',
-            url: '/auth/logout',
-            data: { refreshToken: 'rt' },
-            params: undefined,
-        });
+    expect(mockInstance.request).toHaveBeenCalledWith({
+        method: 'POST',
+        url: '/auth/logout',
+        data: { refreshToken: 'rt' },
+        params: undefined,
     });
+});
 
-    it('posts an empty body to logout when no token is held', async () => {
-        const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
+it('posts an empty body to logout when no token is held', async () => {
+    const client = new CtmApiClient({ baseUrl: 'http://localhost:3000' });
 
-        mockInstance.request.mockResolvedValueOnce({ data: undefined });
+    mockInstance.request.mockResolvedValueOnce({ data: undefined });
 
-        await client.logout();
+    await client.logout();
 
-        expect(mockInstance.request).toHaveBeenCalledWith({
-            method: 'POST',
-            url: '/auth/logout',
-            data: {},
-            params: undefined,
-        });
+    expect(mockInstance.request).toHaveBeenCalledWith({
+        method: 'POST',
+        url: '/auth/logout',
+        data: {},
+        params: undefined,
     });
+});
 ```
 
 If the `params: undefined` key does not match how the private `request` helper builds its config, copy the exact shape asserted by the neighbouring `posts login credentials` test.
@@ -763,6 +761,7 @@ git commit -m "feat(api-client): support cookie-based refresh and add logout"
 ### Task 5: The proxies
 
 **Files:**
+
 - Create: `apps/web/functions/api/[[path]].ts`
 - Create: `apps/web/functions/api/proxy.ts`
 - Create: `apps/web/functions/api/proxy.spec.ts`
@@ -773,6 +772,7 @@ git commit -m "feat(api-client): support cookie-based refresh and add logout"
 - Modify: `apps/web/package.json` (add `@cloudflare/workers-types`)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `buildProxyRequest({ request, apiOrigin }: { request: Request; apiOrigin: string }): Request` — the pure, testable core of the Pages Function.
 
@@ -999,6 +999,7 @@ git commit -m "feat(web): proxy /api to the backend in dev and on Pages"
 ### Task 6: Move the web client off token storage
 
 **Files:**
+
 - Modify: `apps/web/src/config.ts`
 - Modify: `apps/web/src/auth/AuthContext.tsx`
 - Delete: `apps/web/src/auth/auth-storage.ts`
@@ -1010,6 +1011,7 @@ git commit -m "feat(web): proxy /api to the backend in dev and on Pages"
 - Test: `apps/web/src/auth/AuthContext.spec.tsx`
 
 **Interfaces:**
+
 - Consumes: `CtmApiClient.refresh()` / `.logout()` from Task 4; the `/api` proxy from Task 5.
 - Produces: `AuthProvider` holding `accessToken` in React state only; `WebApiClient` constructed without `refreshToken`.
 
@@ -1029,92 +1031,92 @@ const mockApi = {
 `beforeEach` becomes just `vi.clearAllMocks()` plus a default rejection, so tests that do not care about bootstrap still land in the logged-out state:
 
 ```tsx
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockApi.refresh.mockRejectedValue({ statusCode: 401, code: 'unauthorized', message: 'Unauthorized' });
-    });
+beforeEach(() => {
+    vi.clearAllMocks();
+    mockApi.refresh.mockRejectedValue({ statusCode: 401, code: 'unauthorized', message: 'Unauthorized' });
+});
 ```
 
 New tests:
 
 ```tsx
-    it('bootstraps the session from the refresh cookie on mount', async () => {
-        mockApi.refresh.mockResolvedValueOnce({
-            accessToken: 'acc',
-            user: { id: '1', email: 'a@b.com' },
-        });
-
-        render(
-            <ToastProvider>
-                <AuthProvider>
-                    <TestConsumer />
-                </AuthProvider>
-            </ToastProvider>,
-        );
-
-        expect(await screen.findByText('a@b.com')).toBeInTheDocument();
-        expect(mockApi.refresh).toHaveBeenCalledTimes(1);
+it('bootstraps the session from the refresh cookie on mount', async () => {
+    mockApi.refresh.mockResolvedValueOnce({
+        accessToken: 'acc',
+        user: { id: '1', email: 'a@b.com' },
     });
 
-    it('treats a failed bootstrap refresh as logged out', async () => {
-        render(
-            <ToastProvider>
-                <AuthProvider>
-                    <TestConsumer />
-                </AuthProvider>
-            </ToastProvider>,
-        );
+    render(
+        <ToastProvider>
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>
+        </ToastProvider>,
+    );
 
-        await waitFor(() => expect(mockApi.refresh).toHaveBeenCalled());
-        expect(screen.getByTestId('user').textContent).toBe('none');
+    expect(await screen.findByText('a@b.com')).toBeInTheDocument();
+    expect(mockApi.refresh).toHaveBeenCalledTimes(1);
+});
+
+it('treats a failed bootstrap refresh as logged out', async () => {
+    render(
+        <ToastProvider>
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>
+        </ToastProvider>,
+    );
+
+    await waitFor(() => expect(mockApi.refresh).toHaveBeenCalled());
+    expect(screen.getByTestId('user').textContent).toBe('none');
+});
+
+it('writes no auth cookie on login', async () => {
+    const user = userEvent.setup();
+
+    mockApi.login.mockResolvedValueOnce({
+        accessToken: 'acc',
+        user: { id: '1', email: 'a@b.com' },
     });
 
-    it('writes no auth cookie on login', async () => {
-        const user = userEvent.setup();
+    render(
+        <ToastProvider>
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>
+        </ToastProvider>,
+    );
 
-        mockApi.login.mockResolvedValueOnce({
-            accessToken: 'acc',
-            user: { id: '1', email: 'a@b.com' },
-        });
+    await user.click(screen.getByText('Login'));
 
-        render(
-            <ToastProvider>
-                <AuthProvider>
-                    <TestConsumer />
-                </AuthProvider>
-            </ToastProvider>,
-        );
+    expect(await screen.findByText('a@b.com')).toBeInTheDocument();
+    expect(document.cookie).not.toContain('ctm_');
+});
 
-        await user.click(screen.getByText('Login'));
+it('calls the logout endpoint and clears the user', async () => {
+    const user = userEvent.setup();
 
-        expect(await screen.findByText('a@b.com')).toBeInTheDocument();
-        expect(document.cookie).not.toContain('ctm_');
+    mockApi.refresh.mockResolvedValueOnce({
+        accessToken: 'acc',
+        user: { id: '1', email: 'a@b.com' },
     });
+    mockApi.logout.mockResolvedValueOnce(undefined);
 
-    it('calls the logout endpoint and clears the user', async () => {
-        const user = userEvent.setup();
+    render(
+        <ToastProvider>
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>
+        </ToastProvider>,
+    );
 
-        mockApi.refresh.mockResolvedValueOnce({
-            accessToken: 'acc',
-            user: { id: '1', email: 'a@b.com' },
-        });
-        mockApi.logout.mockResolvedValueOnce(undefined);
+    expect(await screen.findByText('a@b.com')).toBeInTheDocument();
 
-        render(
-            <ToastProvider>
-                <AuthProvider>
-                    <TestConsumer />
-                </AuthProvider>
-            </ToastProvider>,
-        );
+    await user.click(screen.getByText('Logout'));
 
-        expect(await screen.findByText('a@b.com')).toBeInTheDocument();
-
-        await user.click(screen.getByText('Logout'));
-
-        expect(mockApi.logout).toHaveBeenCalledTimes(1);
-        await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('none'));
-    });
+    expect(mockApi.logout).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('none'));
+});
 ```
 
 Add `waitFor` to the `@testing-library/react` import. The existing `TestConsumer` already renders `user.email`, so `findByText('a@b.com')` works without changing it.
@@ -1142,33 +1144,33 @@ export default config;
 Hold `accessToken` and `user` in state; no reads or writes to storage. On mount, bootstrap via refresh using the `api` instance the provider already builds:
 
 ```tsx
-    useEffect(() => {
-        let cancelled = false;
+useEffect(() => {
+    let cancelled = false;
 
-        const bootstrap = async (): Promise<void> => {
-            try {
-                const result = await api.refresh();
+    const bootstrap = async (): Promise<void> => {
+        try {
+            const result = await api.refresh();
 
-                if (cancelled) return;
+            if (cancelled) return;
 
-                setAccessToken(result.accessToken);
-                setUser(result.user);
-            } catch {
-                if (cancelled) return;
+            setAccessToken(result.accessToken);
+            setUser(result.user);
+        } catch {
+            if (cancelled) return;
 
-                setAccessToken(null);
-                setUser(null);
-            } finally {
-                if (!cancelled) setIsLoading(false);
-            }
-        };
+            setAccessToken(null);
+            setUser(null);
+        } finally {
+            if (!cancelled) setIsLoading(false);
+        }
+    };
 
-        void bootstrap();
+    void bootstrap();
 
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+    return () => {
+        cancelled = true;
+    };
+}, []);
 ```
 
 `login` and `register` store `result.accessToken` and `result.user` in state and nothing else. `logout` calls `api.logout()` and then clears state. `handleUnauthorized` clears state and redirects to `/login` as it does today, minus the `clearAuthStorage()` call.
@@ -1231,21 +1233,21 @@ export type WebAuthTokens = {
 `apps/web/src/hooks/useNotificationSocket.ts` — socket.io ignores the base URL when choosing its handshake path, so it must be told explicitly:
 
 ```ts
-        const socket = io(`${baseUrl}/notifications`, {
-            path: '/api/socket.io',
-            transports: ['websocket'],
-            auth: { token },
-        });
+const socket = io(`${baseUrl}/notifications`, {
+    path: '/api/socket.io',
+    transports: ['websocket'],
+    auth: { token },
+});
 ```
 
 `apps/web/src/pages/SourcesPage.tsx` — same `path` option, and the `readTokens()` call must go. Take the access token from the auth context's api client instead:
 
 ```ts
-        const socket = io(config.apiUrl, {
-            path: '/api/socket.io',
-            auth: { token: api.getAccessToken() },
-            transports: ['websocket'],
-        });
+const socket = io(config.apiUrl, {
+    path: '/api/socket.io',
+    auth: { token: api.getAccessToken() },
+    transports: ['websocket'],
+});
 ```
 
 Add `api` to that effect's dependency array.
@@ -1266,6 +1268,7 @@ Expected: no output.
 - [ ] **Step 10: Manual end-to-end check**
 
 With both dev servers running, in the browser at `http://localhost:5173`: register, then confirm in DevTools that
+
 - Application → Cookies shows `ctm_refresh` with HttpOnly ticked, and no `ctm_access_token` / `ctm_user`
 - `document.cookie` in the console does not contain `ctm_refresh`
 - a page reload keeps you logged in (bootstrap refresh works)
@@ -1283,11 +1286,13 @@ git commit -m "feat(web): hold the access token in memory and drop cookie storag
 ### Task 7: Deployment configuration and docs
 
 **Files:**
+
 - Modify: `.github/workflows/deploy-cloudflare.yml`
 - Modify: `DEPLOYMENT.md`
 - Modify: `apps/web/README.md`
 
 **Interfaces:**
+
 - Consumes: `wrangler.toml` from Task 5.
 - Produces: a deploy pipeline that no longer injects `VITE_API_URL`.
 
@@ -1296,9 +1301,9 @@ git commit -m "feat(web): hold the access token in memory and drop cookie storag
 In `.github/workflows/deploy-cloudflare.yml`, the `web` job: drop the `env:` block carrying `VITE_API_URL` from the build step, and run wrangler from `apps/web` so `functions/` and `wrangler.toml` are picked up:
 
 ```yaml
-            - run: pnpm exec turbo run build --filter=@ctm/web
-            - run: pnpm exec wrangler pages deploy --branch=main
-              working-directory: apps/web
+- run: pnpm exec turbo run build --filter=@ctm/web
+- run: pnpm exec wrangler pages deploy --branch=main
+  working-directory: apps/web
 ```
 
 `pages_build_output_dir` in `wrangler.toml` supplies the directory, and `name` supplies the project, so both flags drop off.

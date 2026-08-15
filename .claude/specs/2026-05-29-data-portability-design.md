@@ -49,10 +49,10 @@ Each file is a self-contained JSON envelope:
 
 ```ts
 interface FileStorage {
-  save(exportId: string, filename: string, data: Buffer): Promise<void>;
-  read(exportId: string, filename: string): Promise<Buffer>;
-  list(exportId: string): Promise<string[]>;
-  delete(exportId: string): Promise<void>;
+    save(exportId: string, filename: string, data: Buffer): Promise<void>;
+    read(exportId: string, filename: string): Promise<Buffer>;
+    list(exportId: string): Promise<string[]>;
+    delete(exportId: string): Promise<void>;
 }
 ```
 
@@ -75,8 +75,8 @@ Response `200`:
 
 ```json
 {
-  "exportId": "uuid",
-  "files": [{ "name": "export-part-1.json", "sizeBytes": 12345 }]
+    "exportId": "uuid",
+    "files": [{ "name": "export-part-1.json", "sizeBytes": 12345 }]
 }
 ```
 
@@ -120,11 +120,11 @@ A reusable `StoredFile` embedded sub-document schema is defined once (in `apps/m
 ```ts
 @Schema({ _id: false })
 class StoredFile {
-  storagePath: string; // opaque key for FileStorage (e.g. "exports/{exportId}/export-part-1.json")
-  filename: string; // display filename
-  sizeBytes: number;
-  contentType: string; // MIME type
-  sha256: string; // hex SHA-256 for integrity verification
+    storagePath: string; // opaque key for FileStorage (e.g. "exports/{exportId}/export-part-1.json")
+    filename: string; // display filename
+    sizeBytes: number;
+    contentType: string; // MIME type
+    sha256: string; // hex SHA-256 for integrity verification
 }
 ```
 
@@ -133,9 +133,9 @@ The `Export` schema embeds `StoredFile[]` directly:
 ```ts
 @Schema({ timestamps: true })
 class Export {
-  userId: Types.ObjectId;
-  exportId: string; // uuid, used as storage path prefix
-  files: StoredFile[];
+    userId: Types.ObjectId;
+    exportId: string; // uuid, used as storage path prefix
+    files: StoredFile[];
 }
 ```
 

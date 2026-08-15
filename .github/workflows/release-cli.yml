@@ -22,9 +22,9 @@ jobs:
     bundle:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
@@ -45,7 +45,7 @@ jobs:
                   tar -czf ctm-cli.tar.gz -C release ctm
                   sha256sum ctm-cli.tar.gz > ctm-cli.tar.gz.sha256
 
-            - uses: actions/upload-artifact@v4
+            - uses: actions/upload-artifact@v7
               with:
                   name: ctm-cli
                   path: |
@@ -62,10 +62,10 @@ jobs:
         permissions:
             contents: write
         steps:
-            - uses: actions/download-artifact@v4
+            - uses: actions/download-artifact@v8
               with:
                   name: ctm-cli
-            - uses: softprops/action-gh-release@v2
+            - uses: softprops/action-gh-release@v3
               with:
                   files: |
                       ctm-cli.tar.gz
