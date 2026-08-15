@@ -1,6 +1,8 @@
+export * from './audit.js';
 export * from './code-challenge.js';
 export * from './notification-types.js';
 
+export * from './schemas/audit-log.schema.js';
 export * from './schemas/auth-code.schema.js';
 export * from './schemas/authorized-client.schema.js';
 export * from './schemas/connector-config.schema.js';

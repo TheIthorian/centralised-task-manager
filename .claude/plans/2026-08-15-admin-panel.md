@@ -2,9 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** An operator surface (`apps/admin`) with reversible account deletion, site metrics, and OAuth client management, backed by an audit log.
+**Goal:** An operator surface (`apps/admin`) with site metrics and OAuth client management, backed by an audit log. Reversible account deletion is deferred: see Phase 3.
 
-**Architecture:** Mongoose schemas move out of `apps/main/src/**/schemas` into a new `packages/db`, and the shared Nest request-validation helpers into `packages/nest-common`, so a second backend can own its own connection to the same MongoDB. `apps/admin` is a NestJS backend serving a React SPA on its own origin, behind a single operator credential that `apps/main` knows nothing about.
+**Status:** Phases 1, 1b and 2 are open as PRs #87, #88 and #89. Phases 3-6 are not started.
+
+**Architecture:** Mongoose schemas move out of `apps/main/src/**/schemas` into a new `packages/db`, and the shared Nest request-validation helpers into `packages/nest-common`, so a second backend can own its own connection to the same MongoDB. `apps/admin` is a NestJS backend serving a React SPA on its own origin, behind Cloudflare Access.
 
 **Tech Stack:** NestJS (Fastify), Mongoose, Zod + `nestjs-zod`, Vite + React, Tailwind v4, `@ctm/ui`, vitest.
 
@@ -56,7 +58,7 @@ same files Phase 1 relocates into `packages/db`. Rebase the stack if #86 is forc
 
 | File                                                   | Responsibility                       |
 | ------------------------------------------------------ | ------------------------------------ |
-| `src/schemas/user.schema.ts`                           | moved + `deletedAt`                  |
+| `src/schemas/user.schema.ts`                           | moved verbatim                       |
 | `src/schemas/task.schema.ts`                           | moved verbatim                       |
 | `src/schemas/connector-config.schema.ts`               | moved verbatim                       |
 | `src/schemas/notification.schema.ts`                   | moved verbatim                       |
@@ -84,36 +86,40 @@ of whichever app installs it.
 Every admin endpoint lives here, not in `apps/main`. Backend `src/` mirrors `apps/main`
 conventions; frontend `web/` mirrors `apps/web`.
 
-| File                                      | Responsibility                                     |
-| ----------------------------------------- | -------------------------------------------------- |
-| `src/auth/admin-auth.service.ts`          | checks the credential, mints the session           |
-| `src/auth/admin.guard.ts`                 | rejects any request without a valid session cookie |
-| `src/users/admin-users.controller.ts`     | list / soft-delete / restore                       |
-| `src/metrics/admin-metrics.controller.ts` | aggregate site data                                |
-| `src/clients/admin-clients.controller.ts` | OAuth client CRUD                                  |
-| `src/audit/audit.controller.ts`           | audit log read                                     |
-| `src/audit/audit.service.ts`              | append-only writer                                 |
+| File                                      | Responsibility                                    |
+| ----------------------------------------- | ------------------------------------------------- |
+| `src/auth/access-verifier.service.ts`     | verifies the Cloudflare Access token against JWKS |
+| `src/auth/admin.guard.ts`                 | rejects any request Access did not vouch for      |
+| `src/users/admin-users.controller.ts`     | list (deletion deferred, see Phase 3)             |
+| `src/metrics/admin-metrics.controller.ts` | aggregate site data                               |
+| `src/clients/admin-clients.controller.ts` | OAuth client CRUD                                 |
+| `src/audit/audit.controller.ts`           | audit log read                                    |
+| `src/audit/audit.service.ts`              | append-only writer                                |
 
 ### `apps/main` additions
 
-Only what the shared data model forces: `users.service.ts` filters soft-deleted users out of every
-lookup, and the account-deletion endpoint becomes a soft delete.
+None, beyond the two extractions. Phases 1 and 1b move code out of it; nothing in the admin feature
+adds behaviour to it, now that reversible deletion is deferred.
 
 ### Admin auth
 
-A single operator, so a single credential: `ADMIN_USERNAME` and a bcrypt `ADMIN_PASSWORD_HASH` in
-the environment. `POST /admin/auth/login` checks them and sets a short-lived httpOnly session
-cookie signed with `ADMIN_JWT_SECRET` (HS256, `aud: ctm-admin`); `AdminGuard` covers every other
-route.
+Cloudflare Access authenticates the operator. This app stores no credential and has no login route:
+it verifies the RS256 token Access signs against the team's JWKS, checking issuer, audience and
+expiry, and takes the operator's identity from the verified `email` claim.
 
-There is no admin role on the user document and no grant/revoke: who the operator is, is an
-environment decision, not data. That removes "admins managing other admins" from #82's scope.
+`CF_ACCESS_AUD` is required. Every Access application in a team shares the team's signing keys, so
+without an audience check a token minted for any other application would verify here.
 
-`apps/main` never learns `ADMIN_JWT_SECRET`, so an admin session is not a bearer token for the task
-API, and an app token cannot reach the operator surface.
+There is no admin role on the user document and no grant/revoke: who the operator is, is Access's
+allowlist, not data. That removes "admins managing other admins" from #82's scope.
 
-Repeated failures lock the credential out for a window, reusing the `LoginAttempt` collection
-rather than inventing a second mechanism.
+The guard is global with no `@Public()` escape hatch. Nothing on an operator surface should be
+reachable without an identity.
+
+**Deployment requirement:** the app must only ever be reachable through Access. Expose the origin
+directly and the `Cf-Access-Jwt-Assertion` header is the only thing in front of it, which is
+trivially forged. `ADMIN_DEV_BYPASS_EMAIL` covers local development and the env schema forbids it
+when `NODE_ENV=production`.
 
 ---
 
@@ -135,21 +141,26 @@ behaviour change beyond the filter's logger arriving by injection.
 
 ### Phase 2 — `apps/admin` backend, audit log
 
-`AuditLog` schema and `AuditAction` enum in `packages/db`. A NestJS app with the login route,
-`AdminGuard`, the audit writer, and a read endpoint over the log. No user-facing capability yet,
-so the phase lands as a gated but empty operator API.
+`AuditLog` schema and `AuditAction` enum in `packages/db`. A NestJS app with the Access verifier,
+the global `AdminGuard`, the audit writer, and a read endpoint over the log. No operator capability
+yet, so the phase lands as a gated but nearly empty API.
 
-### Phase 3 — reversible account deletion
+### Phase 3 — reversible account deletion (deferred)
 
-`deletedAt` on the user document, `users.delete` becomes a soft delete with a retention window,
-a restore path, a reaper that hard-deletes past retention, and every existing query filtered to
-exclude soft-deleted users.
+**Not started, and deliberately not decided here.** Soft deletion is not a user-account question:
+tasks, connector configs and exports each face the same choice, and answering it once inside an
+admin PR would set a precedent for all of them by accident. It needs its own design pass covering
+where the filter lives, what the retention window is per resource, and what a reaper does about
+rows whose owner is itself soft-deleted.
 
-### Phase 4 — site metrics
+Until then `apps/main` keeps its hard `users.delete`, and the admin app offers no deletion.
 
-Aggregate counts (users, tasks, connectors), sync health, growth buckets over time.
+### Phase 4 — site metrics (not started)
 
-### Phase 5 — OAuth client management
+Aggregate counts (users, tasks, connectors), sync health, growth buckets over time. Read-only, so
+it does not wait on the soft-delete decision.
+
+### Phase 5 — OAuth client management (not started)
 
 Admin CRUD over `OAuthClient`, with first-party clients seeded from code marked `isFirstParty`
 and rejected by every write path.

@@ -1,0 +1,45 @@
+{
+    "name": "@ctm/admin",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "start": "node dist/main.js",
+        "dev": "node --watch -r ./register.cjs src/main.ts",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json . '**/*.md'"
+    },
+    "dependencies": {
+        "@ctm/api-client": "workspace:*",
+        "@ctm/db": "workspace:*",
+        "@ctm/errors": "workspace:*",
+        "@ctm/logger": "workspace:*",
+        "@ctm/nest-common": "workspace:*",
+        "@ctm/request-logger": "workspace:*",
+        "@fastify/cookie": "11.0.2",
+        "@nestjs/common": "11.1.28",
+        "@nestjs/config": "4.0.4",
+        "@nestjs/core": "11.1.28",
+        "@nestjs/mongoose": "11.0.4",
+        "@nestjs/platform-fastify": "11.1.28",
+        "joi": "18.2.3",
+        "jose": "6.2.8",
+        "mongoose": "9.8.0",
+        "nestjs-zod": "5.5.0",
+        "reflect-metadata": "0.2.2",
+        "rxjs": "7.8.2",
+        "zod": "4.4.3"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "@nestjs/testing": "11.1.28",
+        "@swc/core": "1.15.47",
+        "@types/node": "26.1.1",
+        "fastify": "5.10.0",
+        "ts-node": "10.9.2",
+        "typescript": "6.0.3",
+        "unplugin-swc": "1.5.9",
+        "vitest": "4.1.10"
+    }
+}
