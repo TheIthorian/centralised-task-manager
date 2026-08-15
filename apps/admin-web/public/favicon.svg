@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#FFDE59"/>
+  <rect width="32" height="32" fill="#A78BFA"/>
   <rect width="32" height="32" fill="none" stroke="#111111" stroke-width="2"/>
   <text x="16" y="22" font-family="system-ui" font-weight="900" font-size="12" fill="#111111" text-anchor="middle">CTM</text>
 </svg>
