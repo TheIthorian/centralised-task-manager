@@ -152,7 +152,7 @@ export function OAuthConsentPage(): React.JSX.Element {
 
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-panel border border-line shadow-[6px_6px_0px_#111] p-8 rounded-ctm">
+            <div className="w-full max-w-sm bg-panel border border-line p-8 rounded-ctm">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em]st text-muted mb-1">
                     {appName
                         ? t('oauth.consent.requestingAccess', { app: appName })
@@ -175,21 +175,21 @@ export function OAuthConsentPage(): React.JSX.Element {
                 )}
 
                 {/* Permissions box */}
-                <div className="border border-line mb-5 rounded-ctm" style={{ background: '#fffbe8' }}>
-                    <div className="px-3 py-2 border-b border-line bg-[#f5f5f5]">
+                <div className="border border-line bg-panel mb-5 rounded-ctm">
+                    <div className="px-3 py-2 border-b border-line bg-hair">
                         <span className="text-xs font-semibold uppercase tracking-[0.12em]st text-muted">
                             {t('oauth.consent.permissions')}
                         </span>
                     </div>
 
                     {/* openid — locked */}
-                    <div className="px-3 py-2.5 border-b border-[#e8e0b0] flex gap-3 items-center opacity-50">
-                        <div className="w-4 h-4 border-2 border-[#ccc] bg-[#eee] flex-shrink-0 flex items-center justify-center">
-                            <div className="w-2 h-2 bg-[#ccc]" />
+                    <div className="px-3 py-2.5 border-b border-line flex gap-3 items-center opacity-50">
+                        <div className="w-4 h-4 border border-line bg-hair flex-shrink-0 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-muted" />
                         </div>
                         <div>
-                            <p className="text-xs font-semibold text-[#aaa]">{t('oauth.consent.scopes.openid')}</p>
-                            <p className="text-[10px] font-medium text-[#ccc] uppercase tracking-wide">
+                            <p className="text-xs font-semibold text-muted">{t('oauth.consent.scopes.openid')}</p>
+                            <p className="text-[10px] font-medium text-muted uppercase tracking-wide">
                                 {t('oauth.consent.required', { scope: 'openid' })}
                             </p>
                         </div>
@@ -199,7 +199,7 @@ export function OAuthConsentPage(): React.JSX.Element {
                     {scopeGroups.map((group, idx, arr) => (
                         <div
                             key={group.resource}
-                            className={idx < arr.length - 1 ? 'px-3 py-2.5 border-b border-[#e8e0b0]' : 'px-3 py-2.5'}
+                            className={idx < arr.length - 1 ? 'px-3 py-2.5 border-b border-line' : 'px-3 py-2.5'}
                         >
                             <p className="text-[10px] font-semibold uppercase tracking-[0.12em]st text-fg mb-2">
                                 {group.label}
@@ -219,10 +219,10 @@ export function OAuthConsentPage(): React.JSX.Element {
                                         >
                                             <div
                                                 className={`w-4 h-4 border border-line flex-shrink-0 flex items-center justify-center ${
-                                                    checked ? 'bg-accent' : 'bg-white'
+                                                    checked ? 'bg-accent' : 'bg-panel'
                                                 }`}
                                             >
-                                                {checked && <div className="w-2 h-2 bg-fg" />}
+                                                {checked && <div className="w-2 h-2 bg-accent-fg" />}
                                             </div>
                                             <span className="text-xs font-medium text-fg">{entry.label}</span>
                                         </button>

@@ -95,7 +95,7 @@ export function DataSection(): React.JSX.Element {
                     accept="application/json,.json"
                     multiple
                     onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                    className="block min-h-11 w-full text-sm font-medium text-fg mb-3 md:min-h-0 file:mr-3 file:border-2 file:border-line file:bg-white file:px-3 file:py-1 file:font-semibold file:uppercase file:text-xs dark:file:border-white/20 dark:file:bg-neutral-800 dark:file:text-white rounded-ctm"
+                    className="block min-h-11 w-full text-sm font-medium text-fg mb-3 md:min-h-0 file:mr-3 file:border file:border-line file:bg-panel file:px-3 file:py-1 file:font-semibold file:uppercase file:text-xs file:text-fg rounded-ctm"
                 />
 
                 <fieldset className="mb-3">

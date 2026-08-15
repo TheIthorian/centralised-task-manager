@@ -120,7 +120,7 @@ function AccountRow({
             )}
 
             {isUnhealthy && (
-                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                <p className="text-xs font-medium text-warn">
                     Connection issue — reconnect to restore sync.
                 </p>
             )}
@@ -142,7 +142,7 @@ function AccountRow({
 
             {syncJob?.status === 'done' && (
                 <>
-                    <p className="text-xs font-medium text-green-700 dark:text-green-400">
+                    <p className="text-xs font-medium text-accent">
                         Synced {syncJob.synced} task{syncJob.synced !== 1 ? 's' : ''}
                         {syncJob.skipped > 0 ? `, skipped ${syncJob.skipped} (local changes preserved)` : ''}
                     </p>

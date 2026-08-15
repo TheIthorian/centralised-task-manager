@@ -11,7 +11,7 @@ export function NotFoundPage(): React.JSX.Element {
                 <div className="text-[8rem] font-semibold leading-none text-fg select-none">404</div>
 
                 {/* Broken task card illustration */}
-                <div className="w-full border border-line bg-panel shadow-[6px_6px_0px_#111] p-4 rounded-ctm">
+                <div className="w-full border border-line bg-panel p-4 rounded-ctm">
                     <div className="flex items-center gap-3">
                         <div className="w-5 h-5 border border-line bg-warn flex items-center justify-center flex-shrink-0 rounded-ctm">
                             <span className="text-white font-semibold text-xs leading-none">✗</span>

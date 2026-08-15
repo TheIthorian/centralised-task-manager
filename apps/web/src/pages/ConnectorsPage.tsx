@@ -4,8 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { io, type Socket } from 'socket.io-client';
 import { ConnectorType } from '@ctm/api-client';
 import type { ConnectorStatusDto, ConnectorHealthDto, TaskSyncJobDto } from '@ctm/api-client';
+import { Banner } from '@ctm/ui';
 import { getErrorMessage } from '../api/error-message.js';
 import { useAuth } from '../auth/AuthContext.js';
+import { useToast } from '../toast/ToastContext.js';
 import { SourceCard } from '../components/sources/SourceCard.js';
 import { NotionSetupModal } from '../components/sources/NotionSetupModal.js';
 import { McpConnectorCard } from '../components/sources/McpConnectorCard.js';
@@ -14,8 +16,9 @@ import { McpConnectorCard } from '../components/sources/McpConnectorCard.js';
 export function ConnectorsPage(): React.JSX.Element {
     const qc = useQueryClient();
     const { api } = useAuth();
+    const { showToast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [banner, setBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [banner, setBanner] = useState<string | null>(null);
     const [syncJobs, setSyncJobs] = useState<Map<string, TaskSyncJobDto>>(new Map());
     const socketRef = useRef<Socket | null>(null);
 
@@ -103,17 +106,17 @@ export function ConnectorsPage(): React.JSX.Element {
         mutationFn: ({ connectionId, jobId }: { connectionId: string; jobId: string }) =>
             api.cancelSyncJob({ connectionId, jobId }),
         onError: (err) => {
-            setBanner({ type: 'error', message: getErrorMessage(err, 'Failed to cancel sync.') });
+            setBanner(getErrorMessage(err, 'Failed to cancel sync.'));
         },
     });
 
     const testChannelMutation = useMutation({
         mutationFn: (source: string) => api.testNotificationChannel({ channel: source }),
         onSuccess: (_data, source) => {
-            setBanner({ type: 'success', message: `Test notification sent via ${source}.` });
+            showToast({ title: 'Test notification sent', description: `Sent via ${source}.` });
         },
         onError: (err) => {
-            setBanner({ type: 'error', message: getErrorMessage(err, 'Failed to send test notification.') });
+            setBanner(getErrorMessage(err, 'Failed to send test notification.'));
         },
     });
 
@@ -142,10 +145,10 @@ export function ConnectorsPage(): React.JSX.Element {
             setPendingSetupSource(connected);
             setSearchParams({}, { replace: true });
         } else if (connected) {
-            setBanner({ type: 'success', message: `${connected} connected successfully.` });
+            showToast({ title: 'Connected', description: `${connected} connected successfully.` });
             setSearchParams({}, { replace: true });
         } else if (errorParam) {
-            setBanner({ type: 'error', message: errorParam });
+            setBanner(errorParam);
             setSearchParams({}, { replace: true });
         }
     }, []);
@@ -169,20 +172,20 @@ export function ConnectorsPage(): React.JSX.Element {
             </div>
 
             {banner && (
-                <div
-                    className={`mb-4 border-2 p-3 flex items-center justify-between ${banner.type === 'success' ? 'border-green-600 bg-green-50 dark:bg-green-900/20' : 'border-warn bg-warn-bg rounded-ctm'}`}
-                >
-                    <p
-                        className={`font-medium text-sm ${banner.type === 'success' ? 'text-green-700 dark:text-green-400' : 'text-warn'}`}
-                    >
-                        {banner.message}
-                    </p>
-                    <button
-                        onClick={() => setBanner(null)}
-                        className="ml-4 text-xs font-medium opacity-60 hover:opacity-100"
-                    >
-                        ✕
-                    </button>
+                <div className="mb-4">
+                    <Banner
+                        tone="warn"
+                        title="Something went wrong"
+                        body={banner}
+                        action={
+                            <button
+                                onClick={() => setBanner(null)}
+                                className="self-start text-xs font-medium opacity-60 hover:opacity-100"
+                            >
+                                Dismiss
+                            </button>
+                        }
+                    />
                 </div>
             )}
 
@@ -283,12 +286,12 @@ export function ConnectorsPage(): React.JSX.Element {
                 <NotionSetupModal
                     connectionId={setupConnectionId}
                     onComplete={() => {
-                        setBanner({ type: 'success', message: 'Account connected successfully.' });
+                        showToast({ title: 'Connected', description: 'Account connected successfully.' });
                         setSetupConnectionId(null);
                         void qc.invalidateQueries({ queryKey: ['connectors'] });
                     }}
                     onClose={() => {
-                        setBanner({ type: 'error', message: 'Setup cancelled. Notion was not fully configured.' });
+                        setBanner('Setup cancelled. Notion was not fully configured.');
                         setSetupConnectionId(null);
                     }}
                 />
