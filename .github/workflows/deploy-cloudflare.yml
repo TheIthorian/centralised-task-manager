@@ -5,6 +5,7 @@ on:
         branches: [main]
         paths:
             - 'apps/web/**'
+            - 'apps/admin-web/**'
             - 'apps/landing/**'
             - 'apps/docs/**'
             - 'apps/main/src/**'
@@ -53,6 +54,22 @@ jobs:
             - run: pnpm exec turbo run build --filter=@ctm/web
             - run: pnpm exec wrangler pages deploy --branch=main
               working-directory: apps/web
+
+    admin-web:
+        needs: [ci, changes]
+        if: contains(fromJSON(needs.changes.outputs.affected), '*') || contains(fromJSON(needs.changes.outputs.affected), '@ctm/admin-web')
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile --prefer-offline --filter '@ctm/admin-web...'
+            - run: pnpm exec turbo run build --filter=@ctm/admin-web
+            - run: pnpm exec wrangler pages deploy --branch=main
+              working-directory: apps/admin-web
 
     landing:
         needs: [ci, changes]
