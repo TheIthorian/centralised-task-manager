@@ -5,10 +5,10 @@ import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestj
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { NotFoundError } from '@ctm/errors';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { OAuthClientService, isRedirectUriPermitted } from '../auth/oauth-client.service.js';
+import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
+import { OAuthClientService, isRedirectUriPermitted } from './oauth-client.service.js';
 import { OAuthService } from './oauth.service.js';
-import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import type { JwtPayload } from '../tokens/token-claims.js';
 import { filterScopes } from './scopes.js';
 import { StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 import { AuthorizeQueryDto } from './dto/authorize-query.dto.js';
@@ -47,7 +47,7 @@ export class OAuthController {
     @ApiExcludeEndpoint()
     @Get('authorize')
     authorizeGet(@ValidatedQuery(AuthorizeQueryDto) query: AuthorizeQueryDto, @Res() res: FastifyReply): void {
-        const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:5173');
+        const webUrl = this.config.getOrThrow<string>('WEB_URL');
 
         const consentParams = new URLSearchParams({
             response_type: query.response_type,

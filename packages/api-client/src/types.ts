@@ -47,6 +47,12 @@ export type {
     UpdateChannelPrefsDto,
     UpdateNotificationPreferencesDto,
 } from './domains/notifications/notifications.types.js';
+export type {
+    AuthorizationServerMetadataDto,
+    JsonWebKeyDto,
+    JwksDto,
+    OpenIdConfigurationDto,
+} from './domains/oauth/oauth.types.js';
 export type { OkDto } from './domains/shared.types.js';
 export type { TaskSyncJobDto } from './domains/sync/sync.types.js';
 export type {

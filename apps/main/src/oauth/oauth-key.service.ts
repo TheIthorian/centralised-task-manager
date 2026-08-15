@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createPublicKey } from 'crypto';
+import { createPublicKey } from 'node:crypto';
+import type { JwksDto } from '@ctm/api-client';
 
 @Injectable()
 export class OAuthKeyService {
@@ -23,9 +24,10 @@ export class OAuthKeyService {
     }
 
     /** Return the JWKS representation of the public key. */
-    getJwks(): { keys: object[] } {
+    getJwks(): JwksDto {
         const keyObject = createPublicKey(this.publicKeyPem);
-        const jwk = keyObject.export({ format: 'jwk' }) as Record<string, string>;
+        const jwk = keyObject.export({ format: 'jwk' }) as unknown as { kty: string; n: string; e: string };
+
         return {
             keys: [
                 {

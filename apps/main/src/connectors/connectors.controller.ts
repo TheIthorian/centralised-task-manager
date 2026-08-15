@@ -25,11 +25,11 @@ import {
     UpdateConnectorResponseDto,
 } from './dto/connector-response.dto.js';
 import { OkDto } from '../common/dto/ok.dto.js';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
 import { ConnectorsService } from './connectors.service.js';
 import { ConnectionDetailsValidator } from './connection-details-validator.service.js';
 import { UpdateConnectorDto } from './dto/update-connector.dto.js';
-import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import type { JwtPayload } from '../tokens/token-claims.js';
 import { objectIdSchema } from '../common/zod/param-schemas.js';
 import { UnvalidatedInput } from '../common/validation/unvalidated-input.decorator.js';
 import { z } from 'zod';

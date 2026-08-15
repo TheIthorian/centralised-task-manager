@@ -4,8 +4,8 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { AppModule } from '../app.module.js';
-import { OAuthClient, type OAuthClientDocument } from '../auth/schemas/oauth-client.schema.js';
-import { createHash, randomBytes } from 'crypto';
+import { OAuthClient, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
+import { createHash, randomBytes } from 'node:crypto';
 import { SCOPE_REGISTRY, filterScopes, groupScopesByResource } from './scopes.js';
 
 function makeCodeVerifier(): string {

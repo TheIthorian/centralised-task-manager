@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import {
     CODE_CHALLENGE_METHODS,
     codeChallengeMethodSchema,

@@ -1,16 +1,18 @@
 import { Test, type TestingModule } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NotFoundError } from '@ctm/errors';
 import { FIRST_PARTY_CLIENT } from '../rate-limit/principal-resolver.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
+import { RefreshTokenService } from '../tokens/refresh-token.service.js';
 import {
     RefreshToken,
     RefreshTokenGrant,
     RefreshTokenSchema,
     type RefreshTokenDocument,
-} from './schemas/refresh-token.schema.js';
+} from '../tokens/schemas/refresh-token.schema.js';
 import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from './schemas/oauth-client.schema.js';
 import {
     AuthorizedClient,
@@ -28,6 +30,7 @@ describe('AuthorizedAppsService', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                ConfigModule.forRoot(),
                 MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
                 MongooseModule.forFeature([
                     { name: RefreshToken.name, schema: RefreshTokenSchema },
@@ -35,7 +38,7 @@ describe('AuthorizedAppsService', () => {
                     { name: AuthorizedClient.name, schema: AuthorizedClientSchema },
                 ]),
             ],
-            providers: [AuthorizedAppsService],
+            providers: [AuthorizedAppsService, RefreshTokenService],
         }).compile();
 
         service = module.get(AuthorizedAppsService);

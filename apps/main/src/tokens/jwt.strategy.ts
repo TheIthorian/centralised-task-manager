@@ -3,12 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { bindRequestUser } from '@ctm/logger';
-
-/** Decoded payload stored inside a signed JWT. */
-export interface JwtPayload {
-    sub: string;
-    email: string;
-}
+import type { JwtPayload } from './token-claims.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

@@ -2,7 +2,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppModule } from '../app.module.js';
-import { AuthService } from './auth.service.js';
+import { AuthService } from '../auth/auth.service.js';
 import { OAuthService } from '../oauth/oauth.service.js';
 import { UsersService } from '../users/users.service.js';
 
@@ -46,7 +46,7 @@ describe('Refresh tokens are fenced to the flow that issued them', () => {
     it('rejects an OAuth refresh token at the first-party refresh endpoint', async () => {
         const refreshToken = await issueOAuthRefreshToken();
 
-        await expect(auth.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
+        await expect(auth.refreshSession(refreshToken)).rejects.toThrow(UnauthorizedException);
     });
 
     it('rejects a session refresh token at the OAuth token endpoint', async () => {
@@ -58,7 +58,7 @@ describe('Refresh tokens are fenced to the flow that issued them', () => {
     it('leaves an OAuth refresh token usable after a rejected first-party refresh', async () => {
         const refreshToken = await issueOAuthRefreshToken();
 
-        await expect(auth.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
+        await expect(auth.refreshSession(refreshToken)).rejects.toThrow(UnauthorizedException);
 
         const tokens = await oauth.refreshAccessToken({ refreshToken });
 
@@ -70,7 +70,7 @@ describe('Refresh tokens are fenced to the flow that issued them', () => {
 
         await expect(oauth.refreshAccessToken({ refreshToken })).rejects.toThrow(UnauthorizedException);
 
-        const pair = await auth.refreshTokens(refreshToken);
+        const pair = await auth.refreshSession(refreshToken);
 
         expect(pair.refreshToken).toMatch(/^rt_/);
     });

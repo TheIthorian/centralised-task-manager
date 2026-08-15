@@ -86,4 +86,8 @@ export type {
     ImportResponseDto,
     HealthDto,
     AppConfigDto,
+    OpenIdConfigurationDto,
+    AuthorizationServerMetadataDto,
+    JsonWebKeyDto,
+    JwksDto,
 } from './types.js';

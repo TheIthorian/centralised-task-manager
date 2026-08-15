@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Put, Request, UseGuards, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
 import { TasksService } from './tasks.service.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
@@ -9,7 +9,7 @@ import { SetTaskStatusDto } from './dto/set-task-status.dto.js';
 import { TaskRelationDto } from './dto/task-relation.dto.js';
 import { ListTasksQueryDto } from './dto/list-tasks-query.dto.js';
 import type { TaskDocument } from './schemas/task.schema.js';
-import type { JwtPayload } from '../auth/strategies/jwt.strategy.js';
+import type { JwtPayload } from '../tokens/token-claims.js';
 import { AddReminderDto } from './dto/add-reminder.dto.js';
 import { TaskDto, ReminderDto } from './dto/task-response.dto.js';
 import { OkDto } from '../common/dto/ok.dto.js';
