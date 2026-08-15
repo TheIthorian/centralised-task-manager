@@ -111,6 +111,7 @@ describe('AuthorizedAppsService', () => {
 
         await refreshTokenModel.create({
             tokenHash: `hash_noclient_${Date.now()}`,
+            grant: 'session',
             userId,
             scopes: [],
             expiresAt: new Date(Date.now() + 86400_000),
@@ -143,6 +144,7 @@ describe('AuthorizedAppsService', () => {
         for (const suffix of ['a', 'b']) {
             await refreshTokenModel.create({
                 tokenHash: `hash_${suffix}_${Date.now()}`,
+                grant: 'oauth',
                 userId,
                 clientId,
                 scopes: ['openid'],
@@ -225,6 +227,7 @@ describe('AuthorizedAppsService', () => {
 
             await refreshTokenModel.create({
                 tokenHash: `hash_${userId}_${Date.now()}`,
+                grant: 'oauth',
                 userId,
                 clientId,
                 scopes: ['openid'],
@@ -262,6 +265,7 @@ describe('AuthorizedAppsService', () => {
 
             await refreshTokenModel.create({
                 tokenHash: `hash_s_${userId}_${Date.now()}`,
+                grant: 'oauth',
                 userId,
                 clientId,
                 scopes: ['openid'],

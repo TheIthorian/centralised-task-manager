@@ -161,7 +161,7 @@ export class OAuthService {
         const expiresInDays = this.config.get<number>('REFRESH_TOKEN_EXPIRES_DAYS', 30);
         const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-        await this.refreshTokenModel.create({ tokenHash, userId, expiresAt, scopes, clientId });
+        await this.refreshTokenModel.create({ tokenHash, grant: 'oauth', userId, expiresAt, scopes, clientId });
 
         if (clientId) await this.recordGrant({ userId, clientId, scopes });
 
@@ -201,7 +201,7 @@ export class OAuthService {
     /** Exchange a refresh token for a new token set (rotates the refresh token). */
     async refreshAccessToken({ refreshToken }: { refreshToken: string }): Promise<TokenResponse> {
         const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
-        const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash });
+        const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash, grant: 'oauth' });
 
         if (!record || record.expiresAt < new Date()) {
             throw new UnauthorizedException('Invalid or expired refresh token');

@@ -42,7 +42,7 @@ export class AuthService {
         const expiresInDays = this.config.getOrThrow<number>('REFRESH_TOKEN_EXPIRES_DAYS');
         const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-        await this.refreshTokenModel.create({ tokenHash, userId: String(user._id), expiresAt });
+        await this.refreshTokenModel.create({ tokenHash, grant: 'session', userId: String(user._id), expiresAt });
 
         return {
             accessToken,
@@ -55,7 +55,7 @@ export class AuthService {
     /** Validate a refresh token and issue a new token pair. Old token is deleted (rotation). */
     async refreshTokens(rawRefreshToken: string): Promise<TokenPair> {
         const tokenHash = this.hashToken(rawRefreshToken);
-        const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash });
+        const record = await this.refreshTokenModel.findOneAndDelete({ tokenHash, grant: 'session' });
 
         if (!record || record.expiresAt < new Date()) {
             throw new UnauthorizedException('Invalid or expired refresh token');
@@ -68,7 +68,7 @@ export class AuthService {
         return this.issueTokens(user);
     }
 
-    /** Delete all refresh tokens for a user (logout everywhere). */
+    /** Delete every refresh token for a user, of either grant (logout everywhere, account deletion). */
     async revokeAllRefreshTokens(userId: string): Promise<void> {
         await this.refreshTokenModel.deleteMany({ userId });
     }
@@ -77,7 +77,7 @@ export class AuthService {
     async revokeRefreshToken({ rawRefreshToken }: { rawRefreshToken: string }): Promise<void> {
         const tokenHash = this.hashToken(rawRefreshToken);
 
-        await this.refreshTokenModel.deleteOne({ tokenHash });
+        await this.refreshTokenModel.deleteOne({ tokenHash, grant: 'session' });
     }
 
     /** SHA-256 hash of a raw refresh token, used as the stored lookup key. */
