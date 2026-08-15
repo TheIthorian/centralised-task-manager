@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Header } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppConfigDto } from './dto/app-config.dto.js';
@@ -10,6 +10,9 @@ export class AppConfigController {
 
     /** Public client configuration — values the SPA needs but must not hardcode. */
     @Get()
+    // Values come from deploy-time env, so they only change on redeploy; a stale
+    // window is acceptable and keeps this off the critical path of every SPA boot.
+    @Header('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600')
     @ApiOperation({ summary: 'Public client configuration' })
     @ApiResponse({ status: 200, description: 'Client configuration', type: AppConfigDto })
     get(): AppConfigDto {
