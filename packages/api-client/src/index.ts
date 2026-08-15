@@ -35,6 +35,12 @@ export type {
 } from './client.types.js';
 export type {
     AdminIdentityDto,
+    AdminOAuthClientDto,
+    AdminOAuthClientPageDto,
+    AvailableScopeDto,
+    CreateOAuthClientDto,
+    ListOAuthClientsQueryDto,
+    UpdateOAuthClientDto,
     AuditLogEntryDto,
     AuditLogPageDto,
     ConnectorMetricsDto,

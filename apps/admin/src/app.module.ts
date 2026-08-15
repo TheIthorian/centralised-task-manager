@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { MetricsModule } from './metrics/metrics.module.js';
+import { ClientsModule } from './clients/clients.module.js';
 import { AdminGuard } from './auth/admin.guard.js';
 
 @Module({
@@ -22,6 +23,7 @@ import { AdminGuard } from './auth/admin.guard.js';
         AuthModule,
         AuditModule,
         MetricsModule,
+        ClientsModule,
         // Last, so it audits every controller the modules above registered.
         HandlerValidationModule,
     ],
