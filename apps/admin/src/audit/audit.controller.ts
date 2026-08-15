@@ -1,9 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
+import type { AuditLogEntryDto, AuditLogPageDto } from '@ctm/api-client';
 import type { AuditLogDocument } from '@ctm/db';
 import { ValidatedQuery } from '@ctm/nest-common';
 import { AuditService } from './audit.service.js';
 import { ListAuditLogQueryDto } from './dto/list-audit-log-query.dto.js';
-import { AuditLogEntryDto, AuditLogPageDto } from './dto/audit-log-response.dto.js';
 
 @Controller('audit-log')
 export class AuditController {

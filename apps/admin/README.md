@@ -26,6 +26,16 @@ For local development there is no Access in front of a laptop, so `ADMIN_DEV_BYP
 every request as that operator. The env schema refuses to start when it is set and
 `NODE_ENV=production`.
 
+## No OpenAPI
+
+This app publishes no OpenAPI document and is absent from `apps/docs`. Its only client is the admin
+SPA in this repo, which imports the response types from `@ctm/api-client` directly.
+
+So the rule in `CLAUDE.md` about controllers returning a DTO **class** does not apply here — that
+rule exists because `@nestjs/swagger` cannot see an erased type alias. Controllers return the
+`@ctm/api-client` type. Request DTOs still go through `createZodDto`, which Nest needs for parameter
+metatypes regardless.
+
 ## Audit log
 
 Every operator action is recorded, append-only, in the `auditlogs` collection. There is no update

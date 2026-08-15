@@ -1,7 +1,7 @@
 import { Controller, Get, Req } from '@nestjs/common';
+import type { AdminIdentityDto } from '@ctm/api-client';
 import { UnvalidatedInput } from '@ctm/nest-common';
 import type { AdminRequest } from './admin.guard.js';
-import { AdminIdentityDto } from './dto/admin-identity-response.dto.js';
 
 @Controller('auth')
 export class AdminIdentityController {
