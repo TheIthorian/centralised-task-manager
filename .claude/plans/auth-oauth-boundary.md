@@ -34,11 +34,11 @@ Fix: a single token-minting service owns claims and lifetimes; both flows call i
 
 Fix: `getOrThrow` everywhere, or move these into the env validator.
 
-### 4. Login lockout does not cover the OAuth login form
+### 4. A second credential path that skips login lockout
 
-`LocalStrategy` calls `LoginAttemptsService.assertNotLocked` / `recordFailure` / `clear`. `POST /oauth/authorize` authenticates through `OAuthService.validatePassword`, which is a third bcrypt comparison with no lockout, no failure recording, and no attempt clearing. The consent screen is an unthrottled password oracle for the same accounts the login endpoint protects.
+`LocalStrategy` calls `LoginAttemptsService.assertNotLocked` / `recordFailure` / `clear`. `OAuthService.validatePassword` is a second bcrypt comparison with none of that. It has no callers today: `GET /oauth/authorize` sends unauthenticated users to the SPA login and the POST handler is behind `JwtAuthGuard`, so nothing is currently exploitable. It is a trap for the next login surface.
 
-Fix: one credential-validation path used by both, with lockout inside it.
+Fix: delete it. If a server-rendered OAuth login form returns, it calls the same credential path as `LocalStrategy`.
 
 ### 5. The OAuth data model lives in `auth`
 
@@ -60,7 +60,7 @@ Fix: one `WellKnownController` in `oauth`. It is all OAuth protocol surface.
 
 ## Suggested order
 
-1. Refresh-token issuer fence (#1) and lockout on the OAuth login form (#4). These are behavioural and worth landing on their own, before anything moves.
+1. Refresh-token issuer fence (#1) and deleting the second credential path (#4). Worth landing on their own, before anything moves.
 2. Config strictness (#3) and the small items (#7).
 3. Single token-minting service (#2).
 4. Move the client/authorization data model and the well-known controller into `oauth` (#5, #6). Mongoose collection names are unchanged by the move, so no migration; it is imports plus module wiring.
