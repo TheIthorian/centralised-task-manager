@@ -20,7 +20,21 @@ permissions:
 
 jobs:
     bundle:
-        runs-on: ubuntu-latest
+        # The keyring is a native addon, so each artifact carries the binding for one
+        # platform and has to be built on it.
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - runner: macos-latest
+                      target: darwin-arm64
+                    - runner: macos-13
+                      target: darwin-x64
+                    - runner: ubuntu-latest
+                      target: linux-x64
+                    - runner: windows-latest
+                      target: win32-x64
+        runs-on: ${{ matrix.runner }}
         steps:
             - uses: actions/checkout@v7
             - uses: pnpm/action-setup@v6
@@ -30,27 +44,27 @@ jobs:
                   cache: pnpm
             - run: pnpm install --frozen-lockfile --prefer-offline
 
-            - name: Bundle CLI
+            - name: Package CLI
               env:
                   # Baked in as the last-resort API base URL. Unset produces a bundle that still
                   # requires --base-url or CTM_BASE_URL, so a missing variable is not silent.
                   CTM_DEFAULT_BASE_URL: ${{ vars.CTM_DEFAULT_BASE_URL }}
-              run: pnpm exec turbo run bundle --filter=@ctm/cli
+              run: pnpm exec turbo run package --filter=@ctm/cli
 
-            - name: Package
-              run: |
-                  mkdir -p release
-                  cp apps/cli/dist/ctm.cjs release/ctm
-                  chmod +x release/ctm
-                  tar -czf ctm-cli.tar.gz -C release ctm
-                  sha256sum ctm-cli.tar.gz > ctm-cli.tar.gz.sha256
+            - name: Archive
+              shell: bash
+              run: tar -czf ctm-cli-${{ matrix.target }}.tar.gz -C apps/cli/release .
+
+            - name: Checksum
+              shell: bash
+              run: shasum -a 256 ctm-cli-${{ matrix.target }}.tar.gz > ctm-cli-${{ matrix.target }}.tar.gz.sha256
 
             - uses: actions/upload-artifact@v7
               with:
-                  name: ctm-cli
+                  name: ctm-cli-${{ matrix.target }}
                   path: |
-                      ctm-cli.tar.gz
-                      ctm-cli.tar.gz.sha256
+                      ctm-cli-${{ matrix.target }}.tar.gz
+                      ctm-cli-${{ matrix.target }}.tar.gz.sha256
                   if-no-files-found: error
                   retention-days: 7
 
@@ -64,9 +78,10 @@ jobs:
         steps:
             - uses: actions/download-artifact@v8
               with:
-                  name: ctm-cli
+                  pattern: ctm-cli-*
+                  merge-multiple: true
             - uses: softprops/action-gh-release@v3
               with:
                   files: |
-                      ctm-cli.tar.gz
-                      ctm-cli.tar.gz.sha256
+                      ctm-cli-*.tar.gz
+                      ctm-cli-*.tar.gz.sha256

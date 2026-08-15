@@ -1,9 +1,9 @@
-import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { Entry } from '@napi-rs/keyring';
 import { TokenGrant } from '@ctm/api-client';
-import { ConfigurationError, InternalError } from '@ctm/errors';
+import { ConfigurationError } from '@ctm/errors';
 import { normalizeBaseUrl } from './base-url.js';
 
 /** The secret half of the CLI's credentials. Never written to the config file. */
@@ -15,11 +15,9 @@ export type StoredTokens = {
 
 export { TokenGrant };
 
-/** Backends the CLI knows how to talk to. `file` is opt-in and unencrypted on macOS and Linux. */
+/** Where credentials are kept. `File` is opt-in and unencrypted. */
 export enum TokenStoreBackend {
-    MacosKeychain = 'macos-keychain',
-    Libsecret = 'libsecret',
-    WindowsDpapi = 'windows-dpapi',
+    Keyring = 'keyring',
     File = 'file',
 }
 
@@ -29,179 +27,71 @@ const FILE_STORE_PATH = path.join(os.homedir(), '.config', 'ctm', 'credentials.j
 /**
  * Read the tokens stored for a base URL, or null when nothing is stored.
  *
- * @throws ConfigurationError when the platform's secret store is unavailable.
+ * @throws ConfigurationError when an entry exists but cannot be read as a token set.
  */
 export function readTokens({ baseUrl }: { baseUrl: string }): StoredTokens | null {
-    const raw = readSecret({ account: normalizeBaseUrl(baseUrl) });
+    const account = normalizeBaseUrl(baseUrl);
+    const raw =
+        activeBackend() === TokenStoreBackend.File ? readFileStore({ account }) : entryFor(account).getPassword();
 
-    if (raw === null) return null;
+    if (raw === null || raw === undefined) return null;
 
     const parsed = parseTokens(raw);
 
-    // Something else owns this entry, or an interrupted write left it half-formed. Either way the
-    // user cannot act on "not logged in" when the store plainly holds an entry for this server.
+    // Something else owns this entry, or a half-formed write left it unusable. Either way the user
+    // cannot act on "not logged in" when the store plainly holds an entry for this server.
     if (parsed === null) {
         throw new ConfigurationError(
-            `The credentials stored for ${normalizeBaseUrl(baseUrl)} are not readable. Run \`ctm login\` to replace them.`,
+            `The credentials stored for ${account} are not readable. Run \`ctm login\` to replace them.`,
         );
     }
 
     return parsed;
 }
 
-/**
- * Store tokens for a base URL, replacing anything already held.
- *
- * @throws ConfigurationError when the platform's secret store is unavailable.
- */
+/** Store tokens for a base URL, replacing anything already held. */
 export function writeTokens({ baseUrl, tokens }: { baseUrl: string; tokens: StoredTokens }): void {
-    writeSecret({ account: normalizeBaseUrl(baseUrl), secret: JSON.stringify(tokens) });
+    const account = normalizeBaseUrl(baseUrl);
+    const secret = JSON.stringify(tokens);
+
+    if (activeBackend() === TokenStoreBackend.File) {
+        writeFileStore({ account, secret });
+
+        return;
+    }
+
+    entryFor(account).setPassword(secret);
 }
 
 /** Remove stored tokens for a base URL. No-op when nothing is stored. */
 export function clearTokens({ baseUrl }: { baseUrl: string }): void {
-    deleteSecret({ account: normalizeBaseUrl(baseUrl) });
+    const account = normalizeBaseUrl(baseUrl);
+
+    if (activeBackend() === TokenStoreBackend.File) {
+        removeFromFileStore({ account });
+
+        return;
+    }
+
+    entryFor(account).deletePassword();
 }
 
 /**
- * The backend in use. `CTM_TOKEN_STORE=file` forces the plain file, for CI and headless boxes
- * where no secret service is running; there is no silent fallback, so a broken keychain is an
- * error the user sees rather than a credential quietly written to disk in the clear.
+ * The backend in use. `CTM_TOKEN_STORE=file` forces the plain file, for CI and headless boxes with
+ * no secret service running; there is no automatic fallback, so a keyring that cannot be reached
+ * is an error the user sees rather than a credential quietly written to disk in the clear.
  */
 export function activeBackend(): TokenStoreBackend {
-    if (process.env['CTM_TOKEN_STORE'] === 'file') return TokenStoreBackend.File;
-
-    switch (process.platform) {
-        case 'darwin':
-            return TokenStoreBackend.MacosKeychain;
-        case 'win32':
-            return TokenStoreBackend.WindowsDpapi;
-        default:
-            return TokenStoreBackend.Libsecret;
-    }
+    return process.env['CTM_TOKEN_STORE'] === 'file' ? TokenStoreBackend.File : TokenStoreBackend.Keyring;
 }
 
-function readSecret({ account }: { account: string }): string | null {
-    switch (activeBackend()) {
-        case TokenStoreBackend.MacosKeychain:
-            // Exit code 44 is "item not found", which is a miss rather than a failure.
-            return run({
-                command: 'security',
-                args: ['find-generic-password', '-s', SERVICE, '-a', account, '-w'],
-                allowedFailureCodes: [44],
-            });
-        case TokenStoreBackend.Libsecret:
-            return (
-                run({
-                    command: 'secret-tool',
-                    args: ['lookup', 'service', SERVICE, 'account', account],
-                    allowedFailureCodes: [1],
-                }) || null
-            );
-        case TokenStoreBackend.WindowsDpapi:
-            return readDpapiFile({ account });
-        case TokenStoreBackend.File:
-            return readFileStore({ account });
-    }
-}
-
-function writeSecret({ account, secret }: { account: string; secret: string }): void {
-    switch (activeBackend()) {
-        case TokenStoreBackend.MacosKeychain:
-            // `-U` updates in place. The secret has to ride on argv: `-w` with no value prompts on
-            // /dev/tty and reads the reply from the terminal rather than from stdin, so a piped
-            // secret is ignored and whatever the tty yields is stored instead. macOS shows process
-            // arguments only to the same user and to root, and either can read an unlocked
-            // keychain anyway.
-            run({
-                command: 'security',
-                args: ['add-generic-password', '-U', '-s', SERVICE, '-a', account, '-w', secret],
-            });
-
-            return;
-        case TokenStoreBackend.Libsecret:
-            run({
-                command: 'secret-tool',
-                args: ['store', '--label', `${SERVICE} (${account})`, 'service', SERVICE, 'account', account],
-                stdin: secret,
-            });
-
-            return;
-        case TokenStoreBackend.WindowsDpapi:
-            writeDpapiFile({ account, secret });
-
-            return;
-        case TokenStoreBackend.File:
-            writeFileStore({ account, secret });
-
-            return;
-    }
-}
-
-function deleteSecret({ account }: { account: string }): void {
-    switch (activeBackend()) {
-        case TokenStoreBackend.MacosKeychain:
-            run({
-                command: 'security',
-                args: ['delete-generic-password', '-s', SERVICE, '-a', account],
-                allowedFailureCodes: [44],
-            });
-
-            return;
-        case TokenStoreBackend.Libsecret:
-            run({
-                command: 'secret-tool',
-                args: ['clear', 'service', SERVICE, 'account', account],
-                allowedFailureCodes: [1],
-            });
-
-            return;
-        case TokenStoreBackend.WindowsDpapi:
-        case TokenStoreBackend.File:
-            removeFromFileStore({ account });
-
-            return;
-    }
-}
-
-/**
- * Windows has no command that reads an arbitrary secret back out of Credential Manager, so the
- * blob is encrypted with user-scoped DPAPI and kept in a file only this user's account can decrypt.
- */
-function writeDpapiFile({ account, secret }: { account: string; secret: string }): void {
-    const encrypted = runPowerShell({
-        script: '$plain = [Console]::In.ReadToEnd(); ConvertTo-SecureString $plain -AsPlainText -Force | ConvertFrom-SecureString',
-        stdin: secret,
-    });
-
-    writeFileStore({ account, secret: encrypted });
-}
-
-function readDpapiFile({ account }: { account: string }): string | null {
-    const encrypted = readFileStore({ account });
-
-    if (encrypted === null) return null;
-
-    return runPowerShell({
-        script: '$enc = [Console]::In.ReadToEnd().Trim(); $sec = ConvertTo-SecureString $enc; [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))',
-        stdin: encrypted,
-    });
+/** One item per server, so logging into a second server does not evict the first. */
+function entryFor(account: string): Entry {
+    return new Entry(SERVICE, account);
 }
 
 function readFileStore({ account }: { account: string }): string | null {
-    if (!fs.existsSync(FILE_STORE_PATH)) return null;
-
-    try {
-        const parsed: unknown = JSON.parse(fs.readFileSync(FILE_STORE_PATH, 'utf-8'));
-
-        if (typeof parsed !== 'object' || parsed === null) return null;
-
-        const value = (parsed as Record<string, unknown>)[account];
-
-        return typeof value === 'string' ? value : null;
-    } catch {
-        return null;
-    }
+    return readWholeFileStore()[account] ?? null;
 }
 
 function writeFileStore({ account, secret }: { account: string; secret: string }): void {
@@ -240,47 +130,6 @@ function readWholeFileStore(): Record<string, string> {
         return result;
     } catch {
         return {};
-    }
-}
-
-function runPowerShell({ script, stdin }: { script: string; stdin: string }): string {
-    return run({ command: 'powershell', args: ['-NoProfile', '-NonInteractive', '-Command', script], stdin }) ?? '';
-}
-
-function run({
-    command,
-    args,
-    stdin,
-    allowedFailureCodes = [],
-}: {
-    command: string;
-    args: string[];
-    stdin?: string;
-    allowedFailureCodes?: number[];
-}): string | null {
-    try {
-        const output = execFileSync(command, args, {
-            encoding: 'utf-8',
-            input: stdin,
-            stdio: ['pipe', 'pipe', 'pipe'],
-        });
-
-        return output.replace(/\r?\n$/, '');
-    } catch (err: unknown) {
-        const status = (err as { status?: number }).status;
-
-        if (typeof status === 'number' && allowedFailureCodes.includes(status)) return null;
-
-        if ((err as { code?: string }).code === 'ENOENT') {
-            throw new ConfigurationError(
-                `${command} is not available, so the CLI cannot reach this system's secret store. ` +
-                    'Install it, or set CTM_TOKEN_STORE=file to keep credentials in a plain file.',
-            );
-        }
-
-        throw new InternalError(
-            `${command} failed while accessing the secret store: ${err instanceof Error ? err.message : String(err)}`,
-        );
     }
 }
 

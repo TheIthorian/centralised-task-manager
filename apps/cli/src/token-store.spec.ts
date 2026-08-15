@@ -1,10 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { execFileSync } from 'node:child_process';
+import { Entry } from '@napi-rs/keyring';
 import { ConfigurationError } from '@ctm/errors';
-import { TokenGrant, TokenStoreBackend, activeBackend, readTokens, writeTokens } from './token-store.js';
+import { TokenGrant, TokenStoreBackend, activeBackend, clearTokens, readTokens, writeTokens } from './token-store.js';
 
-vi.mock('node:child_process');
-vi.mock('node:os', () => ({ homedir: () => '/mock-home' }));
+const getPassword = vi.fn<() => string | null>();
+const setPassword = vi.fn();
+const deletePassword = vi.fn();
+
+vi.mock('@napi-rs/keyring', () => ({
+    Entry: vi.fn(function MockEntry() {
+        return { getPassword, setPassword, deletePassword };
+    }),
+}));
 
 const baseUrl = 'http://localhost:3000';
 const tokens = { accessToken: 'at', refreshToken: 'rt', grant: TokenGrant.OAuth };
@@ -19,90 +26,68 @@ afterEach(() => {
 });
 
 describe('activeBackend', () => {
+    it('uses the OS keyring by default', () => {
+        expect(activeBackend()).toBe(TokenStoreBackend.Keyring);
+    });
+
     it('uses the plain file only when explicitly asked', () => {
         process.env['CTM_TOKEN_STORE'] = 'file';
 
         expect(activeBackend()).toBe(TokenStoreBackend.File);
     });
-
-    it('picks a real secret store by default', () => {
-        expect(activeBackend()).not.toBe(TokenStoreBackend.File);
-    });
 });
 
 describe('readTokens', () => {
     it('returns the stored token set', () => {
-        vi.mocked(execFileSync).mockReturnValue(JSON.stringify(tokens));
+        getPassword.mockReturnValue(JSON.stringify(tokens));
 
         expect(readTokens({ baseUrl })).toEqual(tokens);
     });
 
-    it('returns null when the store holds nothing for this base URL', () => {
-        vi.mocked(execFileSync).mockImplementation(() => {
-            throw Object.assign(new Error('not found'), { status: 44 });
-        });
+    it('returns null when the keyring holds nothing for this base URL', () => {
+        getPassword.mockReturnValue(null);
 
         expect(readTokens({ baseUrl })).toBeNull();
     });
 
     it('says the entry is unreadable rather than reporting no login', () => {
-        vi.mocked(execFileSync).mockReturnValue(JSON.stringify({ accessToken: 'at' }));
+        getPassword.mockReturnValue(JSON.stringify({ accessToken: 'at' }));
 
         expect(() => readTokens({ baseUrl })).toThrow(ConfigurationError);
     });
 
     it('says the same for an entry that is not JSON at all', () => {
-        vi.mocked(execFileSync).mockReturnValue('Mbcxabs3');
+        getPassword.mockReturnValue('Mbcxabs3');
 
         expect(() => readTokens({ baseUrl })).toThrow(ConfigurationError);
-    });
-
-    it('explains what to install when the platform tool is missing', () => {
-        vi.mocked(execFileSync).mockImplementation(() => {
-            throw Object.assign(new Error('spawn ENOENT'), { code: 'ENOENT' });
-        });
-
-        expect(() => readTokens({ baseUrl })).toThrow(ConfigurationError);
-    });
-});
-
-describe('account key', () => {
-    it('refuses a base URL that would be read as a flag by the store command', () => {
-        vi.mocked(execFileSync).mockReturnValue('');
-
-        expect(() => writeTokens({ baseUrl: '-D', tokens })).toThrow(ConfigurationError);
-        expect(execFileSync).not.toHaveBeenCalled();
-    });
-
-    it('keys a trailing-slash URL the same as one without', () => {
-        vi.mocked(execFileSync).mockReturnValue('');
-
-        writeTokens({ baseUrl: `${baseUrl}/`, tokens });
-
-        const [, args] = vi.mocked(execFileSync).mock.calls[0]!;
-
-        expect(args).toContain(baseUrl);
     });
 });
 
 describe('writeTokens', () => {
-    it('hands the secret to the platform tool, keyed by base URL', () => {
-        vi.mocked(execFileSync).mockReturnValue('');
-
+    it('keys the entry by service and base URL', () => {
         writeTokens({ baseUrl, tokens });
 
-        const [, args] = vi.mocked(execFileSync).mock.calls[0]!;
-
-        expect(args).toContain(baseUrl);
+        expect(Entry).toHaveBeenCalledWith('ctm', baseUrl);
+        expect(setPassword).toHaveBeenCalledWith(JSON.stringify(tokens));
     });
 
-    it('passes the secret without waiting on a terminal prompt', () => {
-        vi.mocked(execFileSync).mockReturnValue('');
+    it('keys a trailing-slash URL the same as one without', () => {
+        writeTokens({ baseUrl: `${baseUrl}/`, tokens });
 
-        writeTokens({ baseUrl, tokens });
+        expect(Entry).toHaveBeenCalledWith('ctm', baseUrl);
+    });
 
-        const [, args] = vi.mocked(execFileSync).mock.calls[0]!;
+    it('refuses a base URL that is not an absolute http(s) URL', () => {
+        expect(() => writeTokens({ baseUrl: '-D', tokens })).toThrow(ConfigurationError);
+        expect(setPassword).not.toHaveBeenCalled();
+    });
+});
 
-        expect(args?.join(' ')).toContain(tokens.refreshToken);
+describe('clearTokens', () => {
+    it('deletes the entry for that base URL', () => {
+        clearTokens({ baseUrl });
+
+        expect(Entry).toHaveBeenCalledWith('ctm', baseUrl);
+        expect(deletePassword).toHaveBeenCalled();
     });
 });
