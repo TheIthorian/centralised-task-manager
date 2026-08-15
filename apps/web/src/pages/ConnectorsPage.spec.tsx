@@ -3,6 +3,7 @@ import { render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 import { ConnectorsPage } from './ConnectorsPage.js';
+import { ToastProvider } from '../toast/ToastContext.js';
 
 const mockSocket = { on: vi.fn(), disconnect: vi.fn() };
 const mockIo = vi.fn(() => mockSocket);
@@ -27,7 +28,9 @@ function wrapper({ children }: { children: React.ReactNode }): React.JSX.Element
 
     return (
         <MemoryRouter>
-            <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+            <QueryClientProvider client={qc}>
+                <ToastProvider>{children}</ToastProvider>
+            </QueryClientProvider>
         </MemoryRouter>
     );
 }

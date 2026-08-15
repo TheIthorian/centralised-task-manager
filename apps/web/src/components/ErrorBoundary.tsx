@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
         return (
             <div
                 role="alert"
-                className="m-4 border border-line bg-panel shadow-[4px_4px_0px_#111] p-6 max-w-lg rounded-ctm"
+                className="m-4 border border-line bg-panel p-6 max-w-lg rounded-ctm"
             >
                 <h2 className="text-xl font-semibold text-fg mb-2">
                     Something went wrong

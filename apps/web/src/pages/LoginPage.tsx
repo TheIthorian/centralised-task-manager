@@ -32,7 +32,7 @@ export function LoginPage(): React.JSX.Element {
 
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-panel border border-line shadow-[6px_6px_0px_#111] p-8 rounded-ctm">
+            <div className="w-full max-w-sm bg-panel border border-line p-8 rounded-ctm">
                 <h1 className="text-3xl font-semibold tracking-tight text-fg mb-6">
                     CTM Login
                 </h1>

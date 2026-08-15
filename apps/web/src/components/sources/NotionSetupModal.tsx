@@ -42,7 +42,7 @@ export function NotionSetupModal({ connectionId, onComplete, onClose }: NotionSe
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-panel border border-line shadow-[4px_4px_0px_#111] p-6 max-w-md w-full mx-4 rounded-ctm">
+            <div className="bg-panel border border-line shadow-overlay p-6 max-w-md w-full mx-4 rounded-ctm">
                 <h2 className="text-lg font-semibold text-fg mb-1">
                     Select Notion Database
                 </h2>
@@ -78,10 +78,10 @@ export function NotionSetupModal({ connectionId, onComplete, onClose }: NotionSe
                         {databases.map((db: { id: string; name: string }) => (
                             <label
                                 key={db.id}
-                                className={`flex items-center gap-3 p-3 border-2 cursor-pointer font-medium text-sm ${
+                                className={`flex items-center gap-3 p-3 border rounded-ctm cursor-pointer font-medium text-sm ${
                                     selectedId === db.id
-                                        ? 'border-line dark:border-white bg-accent/30 dark:bg-accent/10 text-fg'
-                                        : 'border-line/20  hover:border-line dark:hover:border-white text-fg'
+                                        ? 'border-accent bg-accent/10 text-fg'
+                                        : 'border-line hover:border-accent text-fg'
                                 }`}
                             >
                                 <input

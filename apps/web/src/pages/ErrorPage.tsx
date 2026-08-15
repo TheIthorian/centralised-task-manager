@@ -13,7 +13,7 @@ export function ErrorPage(): React.JSX.Element {
 
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">
-            <div className="bg-panel border border-line shadow-[6px_6px_0px_#111] p-8 text-center max-w-sm w-full rounded-ctm">
+            <div className="bg-panel border border-line p-8 text-center max-w-sm w-full rounded-ctm">
                 <div className="text-6xl mb-4">⚠</div>
                 <h1 className="text-2xl font-semibold text-fg mb-2">
                     Something went wrong
