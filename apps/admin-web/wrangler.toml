@@ -5,4 +5,4 @@ pages_build_output_dir = "dist"
 # Read at request time by functions/api/[[path]].ts, not baked into the SPA bundle.
 # Not a secret: the operator API rejects anything without an Access-signed assertion.
 [vars]
-ADMIN_API_ORIGIN = "https://admin-production.up.railway.app"
+ADMIN_API_ORIGIN = "https://admin-production-60d7d.up.railway.app"
