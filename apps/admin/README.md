@@ -36,6 +36,22 @@ rule exists because `@nestjs/swagger` cannot see an erased type alias. Controlle
 `@ctm/api-client` type. Request DTOs still go through `createZodDto`, which Nest needs for parameter
 metatypes regardless.
 
+## Metrics
+
+`GET /metrics` returns counts across the deployment: accounts and how many are recent, tasks by
+status and by source, connectors with a separate count of those whose last sync recorded an error,
+and sync health derived from job status over the trailing 24 hours.
+
+`GET /metrics/growth?days=30` returns new users and tasks per calendar day (UTC), oldest first. Days
+with no activity are present with zeroes rather than omitted — a chart that closes the gap implies
+activity that did not happen.
+
+Nothing is cached. `generatedAt` is request time, and the aggregations scan the window each call.
+That is fine at this size; if it stops being fine, cache here rather than in the SPA.
+
+Reads are not written to the audit log. The log records what an operator changed, and a dashboard
+that logs every page view buries the entries that matter.
+
 ## Audit log
 
 Every operator action is recorded, append-only, in the `auditlogs` collection. There is no update
