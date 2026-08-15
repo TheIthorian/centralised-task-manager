@@ -60,6 +60,25 @@ describe('readTokens', () => {
     });
 });
 
+describe('account key', () => {
+    it('refuses a base URL that would be read as a flag by the store command', () => {
+        vi.mocked(execFileSync).mockReturnValue('');
+
+        expect(() => writeTokens({ baseUrl: '-D', tokens })).toThrow(ConfigurationError);
+        expect(execFileSync).not.toHaveBeenCalled();
+    });
+
+    it('keys a trailing-slash URL the same as one without', () => {
+        vi.mocked(execFileSync).mockReturnValue('');
+
+        writeTokens({ baseUrl: `${baseUrl}/`, tokens });
+
+        const [, args] = vi.mocked(execFileSync).mock.calls[0]!;
+
+        expect(args).toContain(baseUrl);
+    });
+});
+
 describe('writeTokens', () => {
     it('hands the secret to the platform tool, keyed by base URL', () => {
         vi.mocked(execFileSync).mockReturnValue('');
@@ -69,5 +88,16 @@ describe('writeTokens', () => {
         const [, args] = vi.mocked(execFileSync).mock.calls[0]!;
 
         expect(args).toContain(baseUrl);
+    });
+
+    it('never puts the secret in an argument', () => {
+        vi.mocked(execFileSync).mockReturnValue('');
+
+        writeTokens({ baseUrl, tokens });
+
+        const [, args, options] = vi.mocked(execFileSync).mock.calls[0]!;
+
+        expect(args?.join(' ')).not.toContain(tokens.refreshToken);
+        expect((options as { input?: string }).input).toContain(tokens.refreshToken);
     });
 });

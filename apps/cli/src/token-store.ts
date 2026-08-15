@@ -4,6 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { TokenGrant } from '@ctm/api-client';
 import { ConfigurationError, InternalError } from '@ctm/errors';
+import { normalizeBaseUrl } from './base-url.js';
 
 /** The secret half of the CLI's credentials. Never written to the config file. */
 export type StoredTokens = {
@@ -31,7 +32,7 @@ const FILE_STORE_PATH = path.join(os.homedir(), '.config', 'ctm', 'credentials.j
  * @throws ConfigurationError when the platform's secret store is unavailable.
  */
 export function readTokens({ baseUrl }: { baseUrl: string }): StoredTokens | null {
-    const raw = readSecret({ account: baseUrl });
+    const raw = readSecret({ account: normalizeBaseUrl(baseUrl) });
 
     if (raw === null) return null;
 
@@ -50,12 +51,12 @@ export function readTokens({ baseUrl }: { baseUrl: string }): StoredTokens | nul
  * @throws ConfigurationError when the platform's secret store is unavailable.
  */
 export function writeTokens({ baseUrl, tokens }: { baseUrl: string; tokens: StoredTokens }): void {
-    writeSecret({ account: baseUrl, secret: JSON.stringify(tokens) });
+    writeSecret({ account: normalizeBaseUrl(baseUrl), secret: JSON.stringify(tokens) });
 }
 
 /** Remove stored tokens for a base URL. No-op when nothing is stored. */
 export function clearTokens({ baseUrl }: { baseUrl: string }): void {
-    deleteSecret({ account: baseUrl });
+    deleteSecret({ account: normalizeBaseUrl(baseUrl) });
 }
 
 /**
@@ -103,11 +104,12 @@ function readSecret({ account }: { account: string }): string | null {
 function writeSecret({ account, secret }: { account: string; secret: string }): void {
     switch (activeBackend()) {
         case TokenStoreBackend.MacosKeychain:
-            // `-U` updates in place. The secret rides on argv, which is readable by this user's
-            // own processes; a process running as this user can unlock the keychain anyway.
+            // `-U` updates in place. `-w` with no value reads the secret from stdin, twice for
+            // the confirmation prompt, which keeps it off argv where any process could read it.
             run({
                 command: 'security',
-                args: ['add-generic-password', '-U', '-s', SERVICE, '-a', account, '-w', secret],
+                args: ['add-generic-password', '-U', '-s', SERVICE, '-a', account, '-w'],
+                stdin: `${secret}\n${secret}\n`,
             });
 
             return;

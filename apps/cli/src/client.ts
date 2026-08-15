@@ -2,6 +2,7 @@ import { CtmApiClient } from '@ctm/api-client';
 import { ConfigurationError } from '@ctm/errors';
 import { readConfig, readSession, updateStoredTokens } from './auth.js';
 import { bakedBaseUrl } from './baked-config.js';
+import { normalizeBaseUrl } from './base-url.js';
 
 /** Options accepted by {@link buildClient}. */
 export type ClientOptions = {
@@ -59,5 +60,5 @@ function resolveBaseUrl({ baseUrl, envBaseUrl }: { baseUrl?: string; envBaseUrl?
         );
     }
 
-    return resolved;
+    return normalizeBaseUrl(resolved);
 }
