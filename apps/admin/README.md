@@ -28,23 +28,9 @@ every request as that operator. The env schema refuses to start when it is set a
 
 ## Database connection
 
-The connection is opened on the first request and closed again `MONGODB_IDLE_TIMEOUT_MS` after the
-last one finishes, rather than held for the process lifetime.
-
-This is about the driver's topology monitor, not the pool. It keeps a socket to every replica-set
-member and sends `hello` on each every `heartbeatFrequencyMS`, so an open connection is constant
-network traffic and the container never looks idle to the platform. Raising the heartbeat interval
-or emptying the pool thins that traffic but never stops it: monitors are separate from the pool and
-outlive it. Scale-to-zero needs silence.
-
-`DatabaseModule` therefore provides a connection built with no URI, which is inert, instead of using
-`MongooseModule.forRoot`. Nothing during bootstrap touches the database, so nothing waits on it.
-`DatabaseConnectionInterceptor` opens the connection before a handler runs and releases it when the
-response completes. Nest runs guards first, so an unauthenticated request is rejected by `AdminGuard`
-without ever waking the database.
-
-The trade is a cold start on the first request after an idle period, which for an internal tool used
-occasionally by one operator is cheaper than an always-on container.
+The connection is opened on the first request that needs it and closed again
+`MONGODB_IDLE_TIMEOUT_MS` after the last one finishes, so an idle container is network-silent and
+the platform can sleep it. The cost is a cold start after an idle period.
 
 ## No OpenAPI
 
