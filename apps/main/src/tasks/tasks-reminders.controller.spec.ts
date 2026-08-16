@@ -2,7 +2,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { ExecutionContext } from '@nestjs/common';
 import { TasksController } from './tasks.controller.js';
-import { TasksService } from './tasks.service.js';
+import { TasksService } from '@ctm/domain';
 import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
 import type { ReminderDto, OkDto } from '@ctm/api-client';
 
@@ -45,7 +45,7 @@ describe('TasksController – reminder endpoints', () => {
         expect(mockService.addReminder).toHaveBeenCalledWith({
             taskId: 'task-1',
             userId: 'user-1',
-            dto: { remindAt: '2026-06-01T14:00:00.000Z' },
+            remindAt: '2026-06-01T14:00:00.000Z',
         });
         expect(result).toEqual(dto);
     });

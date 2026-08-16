@@ -15,7 +15,7 @@ import {
     TaskSyncJobSchema,
 } from '@ctm/db';
 import { ConnectorsService } from '../connectors/connectors.service.js';
-import { TasksService } from '../tasks/tasks.service.js';
+import { TasksService } from '@ctm/domain';
 import { SyncGateway } from './sync.gateway.js';
 import { SyncService } from './sync.service.js';
 
@@ -77,7 +77,11 @@ describe('SyncService per connection', () => {
             ],
             providers: [
                 SyncService,
-                TasksService,
+                {
+                    provide: TasksService,
+                    inject: [getModelToken(Task.name)],
+                    useFactory: (taskModel: Model<TaskDocument>): TasksService => new TasksService({ taskModel }),
+                },
                 { provide: ConnectorsService, useValue: connectorsStub },
                 { provide: ExternalTaskSourceRegistry, useValue: registryStub },
                 { provide: SyncGateway, useValue: { emitProgress: vi.fn() } },

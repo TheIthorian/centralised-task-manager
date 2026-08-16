@@ -20,6 +20,8 @@ apps/
   storybook/        # Storybook harness for @ctm/ui — dev tool only, never deployed
 packages/
   ui/               # Design tokens + presentational React components
+  domain/           # Business logic, one folder per domain — framework-free
+  db/               # Mongoose schemas + the transaction runner
   connectors/       # TaskConnector interface + Todoist + Google Tasks adapters
   logger/           # Shared Pino logger
   errors/           # Shared error types
@@ -116,6 +118,18 @@ Design tokens and presentational components. A component belongs here if it can 
 - Every component ships three co-located files: `Name.tsx`, `Name.spec.tsx`, `Name.stories.tsx`. No story means not finished.
 - Specs assert behaviour only — role, accessible name, ARIA state, keyboard, callbacks, plus `expect(await axe(container)).toHaveNoViolations()`. **Never assert Tailwind class strings or DOM snapshots:** those change with every design pass. Token correctness is judged in Storybook.
 - `packages/ui` never imports i18next. Copy arrives as props.
+
+### packages/domain
+
+Business logic with no framework attached: `src/<domain>/` per domain, starting with `tasks`. Domains share one package because they reference each other freely; separate packages would turn those references into dependency cycles.
+
+- **Services are plain classes.** No `@Injectable`, no `@InjectModel` — dependencies arrive through a single object argument in the constructor. An app wires one up with a factory provider, so the same service is callable from a worker, the CLI, or an agent that never boots Nest.
+- **Never import `@nestjs/*` here.** That is the whole point of the package.
+- **Throw typed errors from `@ctm/errors`.** `AppErrorFilter` maps them to HTTP; a domain that throws `NotFoundException` has an opinion about a transport it should not know exists.
+- **Rules go in the rule modules, IO goes in the service.** The rule modules import no Mongoose and touch no database, so they unit-test with no DB.
+- **Model illegal states out of existence.** A pair of nullable fields that must not both be set is a union with a discriminant, converted to and from its stored shape by a pair of hand-written functions. Write those conversions only where the domain shape and the storage shape actually differ; everything else passes through untouched.
+- **Write back with `doc.set(entity.toState())`.** Mongoose diffs the result and issues a `$set` for changed paths only, so there is no field-by-field mapping to maintain.
+- **A `ClientSession` is not concurrent.** Operations sharing one run sequentially; `Promise.all` over two session-bound queries makes the server reject the second.
 
 ### apps/storybook
 

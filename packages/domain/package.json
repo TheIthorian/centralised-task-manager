@@ -1,0 +1,31 @@
+{
+    "name": "@ctm/domain",
+    "version": "0.0.1",
+    "private": true,
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "test": "vitest run",
+        "lint": "oxlint .",
+        "format": "oxfmt --config ../../.oxfmtrc.json . '**/*.md'",
+        "dev": "tsc -p tsconfig.build.json --watch"
+    },
+    "dependencies": {
+        "@ctm/connectors": "workspace:*",
+        "@ctm/db": "workspace:*",
+        "@ctm/errors": "workspace:*"
+    },
+    "peerDependencies": {
+        "mongoose": "9.8.0"
+    },
+    "devDependencies": {
+        "@ctm/tsconfig": "workspace:*",
+        "@swc/core": "1.15.47",
+        "@types/node": "26.1.1",
+        "mongoose": "9.8.0",
+        "typescript": "6.0.3",
+        "unplugin-swc": "1.5.9",
+        "vitest": "4.1.10"
+    }
+}

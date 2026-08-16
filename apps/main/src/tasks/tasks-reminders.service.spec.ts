@@ -3,8 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { TasksService } from './tasks.service.js';
+import { NotFoundError, ValidationError } from '@ctm/errors';
+import { TasksService } from '@ctm/domain';
 import { Task, TaskSchema, type TaskDocument } from '@ctm/db';
 
 describe('TasksService – reminders', () => {
@@ -20,11 +20,10 @@ describe('TasksService – reminders', () => {
                 MongooseModule.forRoot(process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/ctm-test'),
                 MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
             ],
-            providers: [TasksService],
         }).compile();
 
-        service = module.get(TasksService);
         taskModel = module.get<Model<TaskDocument>>(getModelToken(Task.name));
+        service = new TasksService({ taskModel });
     });
 
     afterAll(async () => {
@@ -49,7 +48,7 @@ describe('TasksService – reminders', () => {
         const result = await service.addReminder({
             taskId: String(task._id),
             userId: String(userId),
-            dto: { remindAt },
+            remindAt,
         });
 
         expect(result.remindAt).toBe(remindAt);
@@ -60,14 +59,14 @@ describe('TasksService – reminders', () => {
         expect(updated!.reminders).toHaveLength(1);
     });
 
-    it('addReminder throws NotFoundException for unknown task', async () => {
+    it('addReminder throws NotFoundError for unknown task', async () => {
         await expect(
             service.addReminder({
                 taskId: String(new Types.ObjectId()),
                 userId: String(userId),
-                dto: { remindAt: new Date().toISOString() },
+                remindAt: new Date().toISOString(),
             }),
-        ).rejects.toThrow(NotFoundException);
+        ).rejects.toThrow(NotFoundError);
     });
 
     it('removeReminder removes by index', async () => {
@@ -75,8 +74,8 @@ describe('TasksService – reminders', () => {
         const remindAt1 = new Date(Date.now() + 60_000).toISOString();
         const remindAt2 = new Date(Date.now() + 120_000).toISOString();
 
-        await service.addReminder({ taskId: String(task._id), userId: String(userId), dto: { remindAt: remindAt1 } });
-        await service.addReminder({ taskId: String(task._id), userId: String(userId), dto: { remindAt: remindAt2 } });
+        await service.addReminder({ taskId: String(task._id), userId: String(userId), remindAt: remindAt1 });
+        await service.addReminder({ taskId: String(task._id), userId: String(userId), remindAt: remindAt2 });
 
         await service.removeReminder({ taskId: String(task._id), userId: String(userId), index: 0 });
 
@@ -86,11 +85,11 @@ describe('TasksService – reminders', () => {
         expect(updated!.reminders[0]!.remindAt.toISOString()).toBe(remindAt2);
     });
 
-    it('removeReminder throws BadRequestException for out-of-range index', async () => {
+    it('removeReminder throws ValidationError for out-of-range index', async () => {
         const task = await makeTask();
 
         await expect(
             service.removeReminder({ taskId: String(task._id), userId: String(userId), index: 5 }),
-        ).rejects.toThrow(BadRequestException);
+        ).rejects.toThrow(ValidationError);
     });
 });

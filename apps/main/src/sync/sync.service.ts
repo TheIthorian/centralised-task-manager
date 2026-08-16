@@ -5,7 +5,7 @@ import { Model, Types } from 'mongoose';
 import { ConnectorName, TaskConnectorName, ExternalTaskSourceRegistry } from '@ctm/connectors';
 import { Job, TASK_SYNC_JOB_MODEL, type TaskSyncJobDocument } from '@ctm/db';
 import { ConnectorsService } from '../connectors/connectors.service.js';
-import { TasksService } from '../tasks/tasks.service.js';
+import { TasksService } from '@ctm/domain';
 import { SyncGateway } from './sync.gateway.js';
 
 @Injectable()

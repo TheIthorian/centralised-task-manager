@@ -343,6 +343,9 @@ importers:
       '@ctm/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@ctm/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@ctm/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -770,6 +773,40 @@ importers:
       '@swc/core':
         specifier: 1.15.47
         version: 1.15.47
+      mongoose:
+        specifier: 9.8.0
+        version: 9.8.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      unplugin-swc:
+        specifier: 1.5.9
+        version: 1.5.9(@swc/core@1.15.47)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.1.1)(jsdom@30.0.1)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.101.7)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/domain:
+    dependencies:
+      '@ctm/connectors':
+        specifier: workspace:*
+        version: link:../connectors
+      '@ctm/db':
+        specifier: workspace:*
+        version: link:../db
+      '@ctm/errors':
+        specifier: workspace:*
+        version: link:../errors
+    devDependencies:
+      '@ctm/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@swc/core':
+        specifier: 1.15.47
+        version: 1.15.47
+      '@types/node':
+        specifier: 26.1.1
+        version: 26.1.1
       mongoose:
         specifier: 9.8.0
         version: 9.8.0
