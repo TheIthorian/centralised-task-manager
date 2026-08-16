@@ -3,6 +3,13 @@ import { LOG_LEVELS } from '@ctm/logger';
 
 export const envSchema = Joi.object({
     MONGODB_URI: Joi.string().required(),
+    /**
+     * How long the MongoDB connection stays open after the last request finishes. The connection is
+     * opened per request and closed again once idle, so the container is network-silent between
+     * requests and the platform can scale it to zero. The right value depends on how the service is
+     * billed, so there is no default.
+     */
+    MONGODB_IDLE_TIMEOUT_MS: Joi.number().integer().min(0).required(),
     PORT: Joi.number().required(),
     NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
 
