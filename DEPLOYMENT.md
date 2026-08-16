@@ -94,6 +94,11 @@ separate worker service (`apps/sync` is an unimplemented stub).
   so any probe endpoint would answer 403 to Railway and fail the deploy. Judge the service
   by its logs and by the console loading.
 - Single replica is enough; nothing here holds in-process state.
+- The MongoDB connection is opened per request and closed `MONGODB_IDLE_TIMEOUT_MS` after the
+  last one finishes, so an idle container sends nothing on 27017 and **serverless / app
+  sleeping can be enabled**. Expect the first request after a sleep to pay a cold start plus
+  a connection handshake. Verify by watching the service's network log: with no request in
+  flight there should be no traffic to the Atlas IPs.
 
 ## 5. Cloudflare Pages
 

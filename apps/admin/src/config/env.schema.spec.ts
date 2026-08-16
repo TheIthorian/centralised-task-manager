@@ -3,6 +3,7 @@ import { envSchema } from './env.schema.js';
 
 const VALID = {
     MONGODB_URI: 'mongodb://localhost:27017/ctm',
+    MONGODB_IDLE_TIMEOUT_MS: '60000',
     PORT: '3100',
     NODE_ENV: 'production',
     CF_ACCESS_TEAM_DOMAIN: 'ctm.cloudflareaccess.com',
