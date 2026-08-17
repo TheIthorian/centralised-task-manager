@@ -87,6 +87,11 @@ export class Task {
         return this.with(toRepresentation(deadline));
     }
 
+    /** Drop the fuzzy bucket, leaving an exact due date in place. */
+    withoutFuzzyDeadline(): Task {
+        return this.with({ fuzzyDeadline: null });
+    }
+
     /** Add a relation to another task. Re-adding an existing pair is a no-op. */
     addRelation({ type, targetTaskId }: { type: RelationType; targetTaskId: TaskId }): Task {
         if (this.hasRelation({ type, targetTaskId })) return this;

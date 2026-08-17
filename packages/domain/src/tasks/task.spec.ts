@@ -37,6 +37,15 @@ describe('Task', () => {
         expect(state.fuzzyDeadline).toEqual(fuzzy);
     });
 
+    it('drops the fuzzy bucket while keeping an exact date, even when a document stores both', () => {
+        const task = makeTask({ due, fuzzyDeadline: { type: 'this_week', remindEvery: 'daily' } });
+
+        const state = task.withoutFuzzyDeadline().toState();
+
+        expect(state.due).toEqual(due);
+        expect(state.fuzzyDeadline).toBeNull();
+    });
+
     it('ignores a relation that is already present', () => {
         const targetTaskId = new Types.ObjectId();
         const task = makeTask({}).addRelation({ type: 'parent', targetTaskId });

@@ -760,6 +760,9 @@ importers:
       '@ctm/connectors':
         specifier: workspace:*
         version: link:../connectors
+      '@ctm/errors':
+        specifier: workspace:*
+        version: link:../errors
     devDependencies:
       '@ctm/tsconfig':
         specifier: workspace:*

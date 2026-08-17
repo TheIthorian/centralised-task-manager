@@ -1,3 +1,4 @@
+import { InternalError } from '@ctm/errors';
 import type { ClientSession, Connection } from 'mongoose';
 
 /** Whether a connection's server can start a transaction, resolved once per connection. */
@@ -57,13 +58,21 @@ export async function supportsTransactions({
 
     transactionSupport.set(connection, probe);
 
+    // A failed probe must not be remembered: one unreachable-server moment would otherwise reject
+    // every transactional write for the life of the process.
+    probe.catch(() => {
+        if (transactionSupport.get(connection) === probe) transactionSupport.delete(connection);
+    });
+
     return probe;
 }
 
 async function probeTransactionSupport(connection: Connection): Promise<boolean> {
+    if (!connection.db) await connection.asPromise();
+
     const db = connection.db;
 
-    if (!db) return false;
+    if (!db) throw new InternalError('Cannot probe transaction support: connection has no database');
 
     // `setName` is only present on a replica set member; `isdbgrid` identifies a mongos.
     const hello = (await db.admin().command({ hello: 1 })) as { setName?: string; msg?: string };

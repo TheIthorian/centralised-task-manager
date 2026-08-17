@@ -211,7 +211,7 @@ export class TasksService {
             doc.set(Task.fromState(doc).withDeadline({ kind: 'exact', due }).toState());
         }
 
-        await doc.save({ session });
+        await doc.save({ session, validateModifiedOnly: true });
 
         return doc;
     }
@@ -235,7 +235,7 @@ export class TasksService {
         // Outbound sync (CTM → external source) is disabled; status changes are local-only.
         doc.set(Task.fromState(doc).withStatus(status).toState());
 
-        await doc.save({ session });
+        await doc.save({ session, validateModifiedOnly: true });
 
         return doc;
     }
@@ -271,13 +271,10 @@ export class TasksService {
         session?: ClientSession;
     }): Promise<TaskDocument> {
         const doc = await this.findOne({ taskId, userId, session });
-        const task = Task.fromState(doc);
 
-        if (task.deadline.kind !== 'fuzzy') return doc;
+        doc.set(Task.fromState(doc).withoutFuzzyDeadline().toState());
 
-        doc.set(task.withDeadline({ kind: 'none' }).toState());
-
-        await doc.save({ session });
+        await doc.save({ session, validateModifiedOnly: true });
 
         return doc;
     }
@@ -290,18 +287,24 @@ export class TasksService {
         type: RelationType;
         targetTaskId: string;
     }): Promise<TaskDocument> {
-        return this.withSession((session) => this.applyRelationChange({ ...args, session, change: relate }));
+        return this.withSession((session) =>
+            this.applyRelationChange({ ...args, session, change: relate, requireTarget: true }),
+        );
     }
 
     /** Remove a typed relation between two tasks, clearing both the relation and its inverse.
-     *  No-op if the relation does not exist. Both writes commit together or not at all. */
+     *  No-op if the relation does not exist. Both writes commit together or not at all.
+     *  A target that no longer exists is not an error: the dangling relation still has to be
+     *  removable from the surviving task. */
     async removeRelation(args: {
         userId: string;
         taskId: string;
         type: RelationType;
         targetTaskId: string;
     }): Promise<TaskDocument> {
-        return this.withSession((session) => this.applyRelationChange({ ...args, session, change: unrelate }));
+        return this.withSession((session) =>
+            this.applyRelationChange({ ...args, session, change: unrelate, requireTarget: false }),
+        );
     }
 
     /** Delete a task and clear every relation pointing at it. Both writes commit together. */
@@ -368,7 +371,7 @@ export class TasksService {
 
         doc.set(Task.fromState(doc).removeReminderAt(index).toState());
 
-        await doc.save({ session });
+        await doc.save({ session, validateModifiedOnly: true });
     }
 
     /** Pull-sync: upsert remote tasks into CTM. CTM-local changes win — any task where
@@ -536,6 +539,7 @@ export class TasksService {
         targetTaskId,
         session,
         change,
+        requireTarget,
     }: {
         userId: string;
         taskId: string;
@@ -543,6 +547,7 @@ export class TasksService {
         targetTaskId: string;
         session: ClientSession;
         change: typeof relate;
+        requireTarget: boolean;
     }): Promise<TaskDocument> {
         if (taskId === targetTaskId) throw new ValidationError('A task cannot relate to itself');
 
@@ -553,7 +558,21 @@ export class TasksService {
         const sourceDoc = await this.taskModel.findOne({ _id: taskId, userId: userObjectId }).session(session);
         const targetDoc = await this.taskModel.findOne({ _id: targetTaskId, userId: userObjectId }).session(session);
 
-        if (!sourceDoc || !targetDoc) throw new NotFoundError('Task');
+        if (!sourceDoc) throw new NotFoundError('Task');
+
+        if (!targetDoc) {
+            if (requireTarget) throw new NotFoundError('Task');
+
+            const danglingTargetId = new Types.ObjectId(targetTaskId);
+
+            sourceDoc.set(
+                Task.fromState(sourceDoc).removeRelation({ type, targetTaskId: danglingTargetId }).toState(),
+            );
+
+            await sourceDoc.save({ session, validateModifiedOnly: true });
+
+            return sourceDoc;
+        }
 
         const sourceId = sourceDoc._id as TaskId;
         const targetId = targetDoc._id as TaskId;
@@ -569,8 +588,8 @@ export class TasksService {
         sourceDoc.set(source.toState());
         targetDoc.set(target.toState());
 
-        await sourceDoc.save({ session });
-        await targetDoc.save({ session });
+        await sourceDoc.save({ session, validateModifiedOnly: true });
+        await targetDoc.save({ session, validateModifiedOnly: true });
 
         return sourceDoc;
     }
@@ -590,7 +609,7 @@ export class TasksService {
 
         doc.set(Task.fromState(doc).withDeadline(deadline).toState());
 
-        await doc.save({ session });
+        await doc.save({ session, validateModifiedOnly: true });
 
         return doc;
     }
