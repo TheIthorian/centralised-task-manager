@@ -3,6 +3,7 @@ import { runInTransaction, type RelationType, type TaskDocument } from '@ctm/db'
 import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
 import { Types, type ClientSession, type Model } from 'mongoose';
 import { Task, relate, unrelate } from './task.js';
+import type { TaskId } from './ids.js';
 import type { Deadline, DueDate } from './deadline.js';
 import { MAX_TASKS_PER_USER } from './limits.js';
 
@@ -450,7 +451,7 @@ export class TasksService {
         let droppedOverQuota = 0;
 
         // Pre-generate _ids for root inserts so child tasks can reference them in the same batch
-        const newIdBySourceId = new Map<string, Types.ObjectId>();
+        const newIdBySourceId = new Map<string, TaskId>();
 
         for (const remote of remoteTasks) {
             if (!existingBySourceId.has(remote.sourceId)) {
@@ -464,15 +465,15 @@ export class TasksService {
         const roots = remoteTasks.filter((r) => r.parentSourceId === null);
         const children = remoteTasks.filter((r) => r.parentSourceId !== null);
 
-        const buildInsert = (remote: RemoteTask, id: Types.ObjectId): object => {
+        const buildInsert = (remote: RemoteTask, id: TaskId): object => {
             const parentSourceId = remote.parentSourceId;
-            let parentObjectId: Types.ObjectId | null = null;
+            let parentObjectId: TaskId | null = null;
 
             if (parentSourceId) {
                 const existingParent = existingBySourceId.get(parentSourceId);
 
                 if (existingParent) {
-                    parentObjectId = existingParent._id as Types.ObjectId;
+                    parentObjectId = existingParent._id as TaskId;
                 } else {
                     parentObjectId = newIdBySourceId.get(parentSourceId) ?? null;
                 }
@@ -594,8 +595,8 @@ export class TasksService {
 
         if (!sourceDoc || !targetDoc) throw new NotFoundError('Task');
 
-        const sourceId = sourceDoc._id as Types.ObjectId;
-        const targetId = targetDoc._id as Types.ObjectId;
+        const sourceId = sourceDoc._id as TaskId;
+        const targetId = targetDoc._id as TaskId;
 
         const { source, target } = change({
             source: Task.fromState(sourceDoc),

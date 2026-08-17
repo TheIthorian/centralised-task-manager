@@ -1,6 +1,6 @@
 import { ValidationError } from '@ctm/errors';
 import type { RelationType } from '@ctm/db';
-import type { Types } from 'mongoose';
+import type { TaskId } from './ids.js';
 import {
     fromRepresentation,
     toRepresentation,
@@ -88,14 +88,14 @@ export class Task {
     }
 
     /** Add a relation to another task. Re-adding an existing pair is a no-op. */
-    addRelation({ type, targetTaskId }: { type: RelationType; targetTaskId: Types.ObjectId }): Task {
+    addRelation({ type, targetTaskId }: { type: RelationType; targetTaskId: TaskId }): Task {
         if (this.hasRelation({ type, targetTaskId })) return this;
 
         return this.with({ relations: [...this.state.relations, { type, targetTaskId }] });
     }
 
     /** Drop a relation to another task. Removing one that is not there is a no-op. */
-    removeRelation({ type, targetTaskId }: { type: RelationType; targetTaskId: Types.ObjectId }): Task {
+    removeRelation({ type, targetTaskId }: { type: RelationType; targetTaskId: TaskId }): Task {
         const relations = this.state.relations.filter(
             (relation) => !(relation.type === type && relation.targetTaskId.equals(targetTaskId)),
         );
@@ -104,7 +104,7 @@ export class Task {
     }
 
     /** Drop every relation pointing at a task, whatever its type. Used when that task is deleted. */
-    removeRelationsTo(targetTaskId: Types.ObjectId): Task {
+    removeRelationsTo(targetTaskId: TaskId): Task {
         return this.with({
             relations: this.state.relations.filter((relation) => !relation.targetTaskId.equals(targetTaskId)),
         });
@@ -137,7 +137,7 @@ export class Task {
         };
     }
 
-    private hasRelation({ type, targetTaskId }: { type: RelationType; targetTaskId: Types.ObjectId }): boolean {
+    private hasRelation({ type, targetTaskId }: { type: RelationType; targetTaskId: TaskId }): boolean {
         return this.state.relations.some(
             (relation) => relation.type === type && relation.targetTaskId.equals(targetTaskId),
         );
@@ -166,9 +166,9 @@ export function relate({
     type,
 }: {
     source: Task;
-    sourceId: Types.ObjectId;
+    sourceId: TaskId;
     target: Task;
-    targetId: Types.ObjectId;
+    targetId: TaskId;
     type: RelationType;
 }): RelatedPair {
     if (sourceId.equals(targetId)) throw new ValidationError('A task cannot relate to itself');
@@ -188,9 +188,9 @@ export function unrelate({
     type,
 }: {
     source: Task;
-    sourceId: Types.ObjectId;
+    sourceId: TaskId;
     target: Task;
-    targetId: Types.ObjectId;
+    targetId: TaskId;
     type: RelationType;
 }): RelatedPair {
     return {

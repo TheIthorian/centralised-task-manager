@@ -1,10 +1,10 @@
 import type { RelationType } from '@ctm/db';
-import type { Types } from 'mongoose';
+import type { TaskId } from './ids.js';
 
 /** A typed edge from one task to another. */
 export type TaskRelation = {
     type: RelationType;
-    targetTaskId: Types.ObjectId;
+    targetTaskId: TaskId;
 };
 
 /** Maps each relation type to the inverse type stored on the target task. */
