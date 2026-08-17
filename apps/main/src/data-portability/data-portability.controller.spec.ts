@@ -22,9 +22,7 @@ const mockExportService = {
 };
 
 const mockImportService = {
-    import: vi
-        .fn()
-        .mockResolvedValue({ imported: { tasks: 2, notifications: 1 }, skipped: { tasks: 0, notifications: 0 } }),
+    import: vi.fn().mockResolvedValue({ imported: { tasks: 2 }, skipped: { tasks: 0 } }),
 };
 
 const mockFilesService = {
@@ -119,6 +117,21 @@ describe('DataPortabilityController', () => {
             await expect(controller.import(importRequest({ onConflict: 'overwrite' }) as never)).rejects.toThrow(
                 ValidationError,
             );
+        });
+
+        it('rejects a file whose envelope fails schema validation', async () => {
+            const badRequest = {
+                user: { sub: userId },
+                parts: async function* () {
+                    yield {
+                        type: 'file',
+                        filename: 'part-1.json',
+                        toBuffer: async () => Buffer.from(JSON.stringify({ version: '1', tasks: 'nope' })),
+                    };
+                },
+            };
+
+            await expect(controller.import(badRequest as never)).rejects.toThrow(ValidationError);
         });
 
         it('rejects an unrecognised form field', async () => {

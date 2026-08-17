@@ -14,24 +14,21 @@ import {
     type UserDocument,
     UserSchema,
 } from '@ctm/db';
-import type { ExportEnvelopeDto, ExportTaskDto, NotificationDto } from '@ctm/api-client';
+import type { ImportEnvelope, ImportTask } from './dto/import-envelope.schema.js';
 
-function makeEnvelope(overrides: Partial<ExportEnvelopeDto> = {}): ExportEnvelopeDto {
+function makeEnvelope(overrides: Partial<ImportEnvelope> = {}): ImportEnvelope {
     return {
         version: '1',
-        exportedAt: new Date().toISOString(),
         exportId: 'test-export-id',
         part: 1,
         totalParts: 1,
         tasks: [],
-        notifications: [],
         ...overrides,
     };
 }
 
-function makeTask(overrides: Partial<ExportTaskDto> = {}): ExportTaskDto {
+function makeTask(overrides: Partial<ImportTask> = {}): ImportTask {
     return {
-        id: new Types.ObjectId().toHexString(),
         source: 'local',
         sourceId: `task-${Date.now()}`,
         title: 'Test Task',
@@ -47,21 +44,6 @@ function makeTask(overrides: Partial<ExportTaskDto> = {}): ExportTaskDto {
         dueDateNotifiedAt: null,
         locations: [],
         syncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        ...overrides,
-    };
-}
-
-function makeNotification(overrides: Partial<NotificationDto> = {}): NotificationDto {
-    return {
-        id: new Types.ObjectId().toHexString(),
-        type: 'reminder',
-        title: 'Test Notification',
-        body: 'Body text',
-        data: null,
-        read: false,
-        createdAt: new Date().toISOString(),
         ...overrides,
     };
 }
@@ -95,7 +77,7 @@ describe('ImportService', () => {
     afterAll(() => module.close());
 
     it('rejects unknown version', async () => {
-        const envelope = makeEnvelope({ version: '99' as '1' });
+        const envelope = makeEnvelope({ version: '99' });
         await expect(
             service.import({ userId: new Types.ObjectId().toHexString(), envelopes: [envelope], onConflict: 'ignore' }),
         ).rejects.toThrow('Unsupported export version');
@@ -167,84 +149,27 @@ describe('ImportService', () => {
         expect(task?.title).toBe('New Title');
     });
 
-    it('imports notifications and deduplicates by _id with ignore', async () => {
+    it('ignores notifications and profile carried by the envelope', async () => {
         const ts = Date.now();
-        const user = await userModel.create({ email: `import-notif-${ts}@test.com`, passwordHash: 'x', name: 'N' });
+        const user = await userModel.create({ email: `import-skip-${ts}@test.com`, passwordHash: 'x', name: 'Keep' });
         const notifId = new Types.ObjectId();
-        await notificationModel.create({ _id: notifId, userId: user._id, type: 'reminder', title: 'Old', body: 'B' });
 
         const result = await service.import({
             userId: String(user._id),
             envelopes: [
-                makeEnvelope({ notifications: [makeNotification({ id: notifId.toHexString(), title: 'New' })] }),
-            ],
-            onConflict: 'ignore',
-        });
-
-        expect(result.skipped.notifications).toBe(1);
-        const n = await notificationModel.findById(notifId);
-        expect(n?.title).toBe('Old');
-    });
-
-    it('onConflict=replace updates profile name and notificationPreferences', async () => {
-        const ts = Date.now();
-        const user = await userModel.create({
-            email: `import-profile-${ts}@test.com`,
-            passwordHash: 'x',
-            name: 'Old Name',
-        });
-
-        await service.import({
-            userId: String(user._id),
-            envelopes: [
-                makeEnvelope({
-                    profile: {
-                        email: user.email,
-                        name: 'New Name',
-                        notificationPreferences: {
-                            connectorReconnect: { inApp: false, discord: false, email: false },
-                            dailySummary: { inApp: false, discord: false, email: false },
-                            reminder: { inApp: false, discord: false, email: false },
-                            upcomingDeadline: { inApp: false, discord: false, email: false },
-                        },
+                {
+                    ...makeEnvelope({ tasks: [makeTask({ sourceId: `skip-${ts}` })] }),
+                    ...{
+                        notifications: [{ id: notifId.toHexString(), type: 'reminder', title: 'N', body: 'B' }],
+                        profile: { email: user.email, name: 'Changed' },
                     },
-                }),
+                },
             ],
             onConflict: 'replace',
         });
 
-        const updated = await userModel.findById(user._id);
-        expect(updated?.name).toBe('New Name');
-    });
-
-    it('onConflict=ignore skips profile update', async () => {
-        const ts = Date.now();
-        const user = await userModel.create({
-            email: `import-profile-ignore-${ts}@test.com`,
-            passwordHash: 'x',
-            name: 'Keep',
-        });
-
-        await service.import({
-            userId: String(user._id),
-            envelopes: [
-                makeEnvelope({
-                    profile: {
-                        email: user.email,
-                        name: 'Changed',
-                        notificationPreferences: {
-                            connectorReconnect: { inApp: false, discord: false, email: false },
-                            dailySummary: { inApp: false, discord: false, email: false },
-                            reminder: { inApp: false, discord: false, email: false },
-                            upcomingDeadline: { inApp: false, discord: false, email: false },
-                        },
-                    },
-                }),
-            ],
-            onConflict: 'ignore',
-        });
-
-        const updated = await userModel.findById(user._id);
-        expect(updated?.name).toBe('Keep');
+        expect(result.imported.tasks).toBe(1);
+        expect(await notificationModel.findById(notifId)).toBeNull();
+        expect((await userModel.findById(user._id))?.name).toBe('Keep');
     });
 });

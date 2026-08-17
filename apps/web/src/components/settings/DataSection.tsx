@@ -61,7 +61,7 @@ export function DataSection(): React.JSX.Element {
                 Your Data
             </h2>
             <p className="text-muted font-medium text-xs mb-4">
-                Export all your tasks, notifications, and profile as JSON, or import them back.
+                Export all your tasks, notifications, and profile as JSON. Importing restores your tasks.
             </p>
 
             {/* Export */}
@@ -143,11 +143,8 @@ export function DataSection(): React.JSX.Element {
 
                 {summary && (
                     <p className="text-accent font-medium text-sm mt-2">
-                        Imported {summary.imported.tasks} task{summary.imported.tasks === 1 ? '' : 's'} and{' '}
-                        {summary.imported.notifications} notification
-                        {summary.imported.notifications === 1 ? '' : 's'}. Skipped {summary.skipped.tasks} task
-                        {summary.skipped.tasks === 1 ? '' : 's'} and {summary.skipped.notifications} notification
-                        {summary.skipped.notifications === 1 ? '' : 's'}.
+                        Imported {summary.imported.tasks} task{summary.imported.tasks === 1 ? '' : 's'}. Skipped{' '}
+                        {summary.skipped.tasks} task{summary.skipped.tasks === 1 ? '' : 's'}.
                     </p>
                 )}
             </div>

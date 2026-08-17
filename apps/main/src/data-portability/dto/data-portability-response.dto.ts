@@ -22,7 +22,6 @@ export class ExportResponseDto implements IExportResponseDto {
 /** Per-collection counts for an import run. */
 export class ImportSummaryDto implements IImportSummaryDto {
     tasks!: number;
-    notifications!: number;
 }
 
 /** Response from POST /users/me/import. */
