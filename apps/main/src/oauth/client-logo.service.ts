@@ -25,6 +25,8 @@ export class ClientLogoService {
      * Never throws: a logo that cannot be fetched leaves the client without one.
      */
     async storeLogo({ clientId, logoUri }: { clientId: string; logoUri: string }): Promise<void> {
+        this.logger.debug({ clientId, logoUri }, 'Fetching client logo');
+
         const result = await this.assets.fetchAsset({
             uri: logoUri,
             allowedContentTypes: ALLOWED_LOGO_CONTENT_TYPES,

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AssetFetcher } from '@ctm/server-utility';
+import { HttpClient } from '@ctm/http-client';
 import { MongooseModule } from '@nestjs/mongoose';
+import { appLogger } from '../logging/app-logger.js';
 import {
     AuthCode,
     AuthCodeSchema,
@@ -34,7 +36,11 @@ import { UsersModule } from '../users/users.module.js';
     ],
     controllers: [OAuthController, WellKnownController],
     providers: [
-        { provide: AssetFetcher, useFactory: (): AssetFetcher => new AssetFetcher() },
+        {
+            provide: AssetFetcher,
+            useFactory: (): AssetFetcher =>
+                new AssetFetcher({ http: new HttpClient({ logger: appLogger('AssetFetcher') }) }),
+        },
         OAuthKeyService,
         OAuthService,
         FirstPartyClientsService,
