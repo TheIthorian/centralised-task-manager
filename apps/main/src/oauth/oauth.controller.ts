@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { NotFoundError } from '@ctm/errors';
 import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
 import { OAuthClientService, isRedirectUriPermitted } from './oauth-client.service.js';
+import { ClientLogoService } from './client-logo.service.js';
 import { OAuthService } from './oauth.service.js';
 import type { JwtPayload } from '../tokens/token-claims.js';
 import { filterScopes } from './scopes.js';
@@ -18,6 +19,7 @@ import {
     acceptHeaderSchema,
     ValidatedBody,
     ValidatedHeader,
+    ValidatedParam,
     ValidatedQuery,
     ValidatedQueryValue,
 } from '@ctm/nest-common';
@@ -38,6 +40,7 @@ export class OAuthController {
         private readonly oauth: OAuthService,
         private readonly config: ConfigService,
         private readonly oauthClient: OAuthClientService,
+        private readonly clientLogos: ClientLogoService,
     ) {}
 
     /**
@@ -148,6 +151,34 @@ export class OAuthController {
         if (!info) throw new NotFoundError(`OAuth client ${clientId}`);
 
         return info;
+    }
+
+    /**
+     * Serves the logo a client declared at registration, after this server fetched, validated and
+     * re-encoded it.
+     *
+     * Unauthenticated, unlike `client-info`: it is loaded as an `<img src>`, which cannot carry a
+     * bearer token. A client with no usable logo is indistinguishable from an unknown one, so this
+     * is not an existence oracle either.
+     */
+    @ApiExcludeEndpoint()
+    @Get('clients/:clientId/logo')
+    async clientLogo(
+        @ValidatedParam({ name: 'clientId', schema: clientIdSchema }) clientId: string,
+        @Res() res: FastifyReply,
+    ): Promise<void> {
+        const logo = await this.clientLogos.getLogo({ clientId });
+
+        if (!logo) throw new NotFoundError(`Logo for OAuth client ${clientId}`);
+
+        await res
+            .header('content-type', logo.contentType)
+            .header('cache-control', 'public, max-age=86400')
+            .header('x-content-type-options', 'nosniff')
+            .header('content-security-policy', "default-src 'none'; sandbox")
+            // The web app is served from a different origin to this API.
+            .header('cross-origin-resource-policy', 'cross-origin')
+            .send(logo.data);
     }
 
     /**

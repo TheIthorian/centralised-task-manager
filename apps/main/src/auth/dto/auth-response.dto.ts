@@ -22,6 +22,9 @@ export class AuthorizedAppDto implements IAuthorizedAppDto {
     authorizedAt!: string;
     type!: 'oauth';
 
+    /** Path on this origin serving the re-encoded copy of the client's declared logo. */
+    logoPath?: string;
+
     /** Unverified RFC 7591 metadata the client declared about itself. `logo_uri` is not exposed. */
     clientUri?: string;
     tosUri?: string;

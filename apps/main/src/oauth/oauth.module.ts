@@ -12,6 +12,7 @@ import { OAuthKeyService } from './oauth-key.service.js';
 import { FirstPartyClientsService } from './first-party-clients.service.js';
 import { OAuthService } from './oauth.service.js';
 import { OAuthClientService } from './oauth-client.service.js';
+import { ClientLogoService } from './client-logo.service.js';
 import { AuthorizedClientService } from './authorized-client.service.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import { OAuthController } from './oauth.controller.js';
@@ -36,9 +37,10 @@ import { UsersModule } from '../users/users.module.js';
         OAuthService,
         FirstPartyClientsService,
         OAuthClientService,
+        ClientLogoService,
         AuthorizedClientService,
         AuthorizedAppsService,
     ],
-    exports: [OAuthKeyService, OAuthService, OAuthClientService, AuthorizedAppsService],
+    exports: [OAuthKeyService, OAuthService, OAuthClientService, ClientLogoService, AuthorizedAppsService],
 })
 export class OAuthModule {}

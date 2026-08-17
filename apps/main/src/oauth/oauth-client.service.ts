@@ -5,6 +5,7 @@ import { randomBytes } from 'node:crypto';
 import type { OAuthClientInfoDto } from '@ctm/api-client';
 import { OAuthClient, type OAuthClientDocument } from '@ctm/db';
 import type { FirstPartyClient } from '../oauth/first-party-clients.js';
+import { ClientLogoService } from './client-logo.service.js';
 
 /** Input payload for RFC 7591 dynamic client registration. */
 export type RegisterClientInput = {
@@ -85,7 +86,10 @@ export const UNUSED_CLIENT_TTL_DAYS = 30;
 
 @Injectable()
 export class OAuthClientService {
-    constructor(@InjectModel(OAuthClient.name) private readonly model: Model<OAuthClientDocument>) {}
+    constructor(
+        @InjectModel(OAuthClient.name) private readonly model: Model<OAuthClientDocument>,
+        private readonly logos: ClientLogoService,
+    ) {}
 
     /** Register a new OAuth client per RFC 7591. */
     async register(input: RegisterClientInput): Promise<RegisterClientOutput> {
@@ -110,6 +114,10 @@ export class OAuthClientService {
         });
 
         await doc.save();
+
+        // Fetched once here rather than per page view, so no user's browser ever contacts the
+        // client's host.
+        if (input.logo_uri) await this.logos.storeLogo({ clientId, logoUri: input.logo_uri });
 
         return {
             client_id: clientId,

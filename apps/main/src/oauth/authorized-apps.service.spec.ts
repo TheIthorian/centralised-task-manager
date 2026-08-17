@@ -113,6 +113,34 @@ describe('AuthorizedAppsService', () => {
         expect(app!.contacts).toEqual(['ops@example.com']);
         expect(app!.softwareId).toBe('example-client');
         expect(JSON.stringify(app)).not.toContain('logo.png');
+        expect(app!.logoPath).toBeUndefined();
+    });
+
+    it('getAuthorizedApps points at this origin for a client with a stored logo', async () => {
+        const userId = new Types.ObjectId().toHexString();
+        const clientId = `client_logo_${Date.now()}`;
+
+        await oauthClientModel.create({
+            clientId,
+            clientName: 'Logo App',
+            redirectUris: ['https://example.com/cb'],
+            isDynamic: true,
+            logoUri: 'https://example.com/logo.png',
+            logo: { data: Buffer.from([1, 2, 3]), contentType: 'image/png', fetchedAt: new Date() },
+        });
+
+        await authorizedClientModel.create({
+            userId,
+            clientId,
+            scopes: ['openid'],
+            isDynamic: true,
+            authorizedAt: new Date(),
+        });
+
+        const [app] = await service.getAuthorizedApps(userId);
+
+        expect(app!.logoPath).toBe(`/oauth/clients/${clientId}/logo`);
+        expect(JSON.stringify(app)).not.toContain('logo.png');
     });
 
     it('getAuthorizedApps ignores first-party session tokens', async () => {

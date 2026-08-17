@@ -4,6 +4,7 @@ import type { Model } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { isRedirectUriPermitted, OAuthClientService, UNUSED_CLIENT_TTL_DAYS } from './oauth-client.service.js';
 import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from '@ctm/db';
+import { ClientLogoService } from './client-logo.service.js';
 
 describe('isRedirectUriPermitted', () => {
     it('exact-matches non-loopback URIs', () => {
@@ -61,7 +62,7 @@ describe('OAuthClientService unused-client reaping', () => {
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
                 MongooseModule.forFeature([{ name: OAuthClient.name, schema: OAuthClientSchema }]),
             ],
-            providers: [OAuthClientService],
+            providers: [OAuthClientService, ClientLogoService],
         }).compile();
 
         service = module.get(OAuthClientService);

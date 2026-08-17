@@ -442,6 +442,9 @@ importers:
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
+      sharp:
+        specifier: 0.35.3
+        version: 0.35.3(@types/node@26.1.1)
       socket.io:
         specifier: 4.8.3
         version: 4.8.3
@@ -21830,7 +21833,6 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.3
       '@img/sharp-win32-x64': 0.35.3
       '@types/node': 26.1.1
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:
