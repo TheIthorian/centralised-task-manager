@@ -40,20 +40,15 @@ jobs:
 
     test:
         runs-on: ubuntu-latest
-        services:
-            mongodb:
-                image: mongo:7
-                ports:
-                    - 27017:27017
-                # Mongo is ready in a couple of seconds; the default 10s interval
-                # means the job idles waiting for the first probe.
-                options: >-
-                    --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
-                    --health-start-period 2s
-                    --health-interval 3s
-                    --health-timeout 5s
-                    --health-retries 20
         steps:
+            # Started by hand rather than as a service container: transactions need a replica set,
+            # and `services` cannot pass `--replSet` through to mongod.
+            - name: Start MongoDB replica set
+              run: |
+                  docker run -d --name mongodb -p 27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+                  until docker exec mongodb mongosh --quiet --eval 'db.runCommand({ ping: 1 })' >/dev/null 2>&1; do sleep 1; done
+                  docker exec mongodb mongosh --quiet --eval 'rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "localhost:27017" }] })'
+                  until [ "$(docker exec mongodb mongosh --quiet --eval 'db.hello().isWritablePrimary')" = "true" ]; do sleep 1; done
             - uses: actions/checkout@v7
             - uses: pnpm/action-setup@v6
             - uses: actions/setup-node@v7
