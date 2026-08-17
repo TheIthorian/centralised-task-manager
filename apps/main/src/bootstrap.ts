@@ -5,7 +5,7 @@ import multipart from '@fastify/multipart';
 import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
 import { installProcessErrorHandlers } from '@ctm/logger';
-import { PinoLoggerService } from '@ctm/request-logger';
+import { PinoLoggerService, registerPayloadLogging } from '@ctm/request-logger';
 import { AppModule } from './app.module.js';
 import { loadEnv, toLoggerConfig } from './config/load-env.js';
 import { rootLogger } from './logging/app-logger.js';
@@ -50,6 +50,8 @@ export async function createApp(): Promise<NestFastifyApplication> {
     await app.register(cookie);
 
     await app.register(multipart, { limits: { fileSize: 60 * 1024 * 1024 } });
+
+    registerPayloadLogging({ app: app.getHttpAdapter().getInstance(), logger: rootLogger() });
 
     app.enableCors(buildCorsOptions(process.env));
     app.useWebSocketAdapter(new IoAdapter(app));

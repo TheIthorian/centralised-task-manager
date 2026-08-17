@@ -943,6 +943,12 @@ importers:
       '@types/node':
         specifier: 26.1.1
         version: 26.1.1
+      fastify:
+        specifier: 5.10.0
+        version: 5.10.0
+      pino:
+        specifier: 10.3.1
+        version: 10.3.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3
