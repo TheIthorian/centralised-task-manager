@@ -2,7 +2,8 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import pino from 'pino';
 import { describe, it, expect, afterEach } from 'vitest';
 import { MAX_LOGGED_PAYLOAD_BYTES, registerPayloadLogging } from './payload-logging.js';
-import { REDACT_PATHS, REDACTION_PLACEHOLDER } from '@ctm/logger';
+import { runRequestWithLogging } from './logging.js';
+import { getRequestContext, REDACT_PATHS, REDACTION_PLACEHOLDER } from '@ctm/logger';
 
 type LogLine = Record<string, unknown>;
 
@@ -46,9 +47,8 @@ describe('registerPayloadLogging', () => {
 
         const request = lines.find((line) => line.msg === 'inbound request');
 
-        expect((request?.headers as Record<string, string>).authorization).toBe(REDACTION_PLACEHOLDER);
-        expect((request?.body as Record<string, string>).password).toBe(REDACTION_PLACEHOLDER);
-        expect((request?.body as Record<string, string>).name).toBe('Ada');
+        expect(request?.headers).toMatchObject({ authorization: REDACTION_PLACEHOLDER });
+        expect(request?.body).toEqual({ name: 'Ada', password: REDACTION_PLACEHOLDER });
     });
 
     it('describes a payload that is too large instead of printing it', async () => {
@@ -75,12 +75,28 @@ describe('registerPayloadLogging', () => {
         expect(sent?.responseBody).toBe('image/png of length 4');
     });
 
+    it('carries the correlation id opened by the request middleware', async () => {
+        const { lines, instance } = await buildApp({ level: 'debug' });
+
+        await instance.inject({
+            method: 'POST',
+            url: '/echo',
+            headers: { 'x-request-id': 'trace-42' },
+            payload: { name: 'Ada' },
+        });
+
+        const payloadLines = lines.filter((line) => line.msg === 'inbound request' || line.msg === 'outbound response');
+
+        expect(payloadLines).toHaveLength(2);
+        expect(payloadLines.every((line) => line.requestId === 'trace-42')).toBe(true);
+    });
+
     it('logs nothing when the logger is above debug', async () => {
         const { lines, instance } = await buildApp({ level: 'info' });
 
         await instance.inject({ method: 'POST', url: '/echo', payload: { name: 'Ada' } });
 
-        expect(lines).toEqual([]);
+        expect(lines.filter((line) => line.msg === 'inbound request' || line.msg === 'outbound response')).toEqual([]);
     });
 });
 
@@ -92,8 +108,19 @@ async function buildApp({ level }: { level: string }): Promise<{ lines: LogLine[
         },
     };
 
-    const logger = pino({ level, redact: { paths: REDACT_PATHS, censor: REDACTION_PLACEHOLDER } }, stream);
+    const logger = pino(
+        {
+            level,
+            redact: { paths: REDACT_PATHS, censor: REDACTION_PLACEHOLDER },
+            mixin: () => ({ ...getRequestContext() }),
+        },
+        stream,
+    );
     const instance = Fastify();
+
+    instance.addHook('onRequest', (request, reply, done) => {
+        runRequestWithLogging({ logger, req: request.raw, res: reply.raw, next: done });
+    });
 
     instance.post('/echo', (request) => ({ echoed: (request.body as { name: string }).name }));
     instance.get('/logo', (_request, reply) => reply.type('image/png').send(Buffer.from([1, 2, 3, 4])));
