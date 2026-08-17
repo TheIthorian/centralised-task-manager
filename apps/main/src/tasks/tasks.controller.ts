@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Put, Request, UseGuards, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
-import { TasksService } from './tasks.service.js';
+import { TasksService } from '@ctm/domain';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
 import { SetFuzzyDeadlineDto } from './dto/set-fuzzy-deadline.dto.js';
@@ -66,7 +66,7 @@ export class TasksController {
         @Request() req: AuthRequest,
         @ValidatedQuery(ListTasksQueryDto) query: ListTasksQueryDto,
     ): Promise<TaskDto[]> {
-        const tasks = await this.tasks.list(req.user.sub, query);
+        const tasks = await this.tasks.list({ userId: req.user.sub, query });
         return tasks.map((t) => this.toResponse(t));
     }
 
@@ -86,7 +86,7 @@ export class TasksController {
     @ApiOperation({ summary: 'Create a task' })
     @Post()
     async create(@Request() req: AuthRequest, @ValidatedBody(CreateTaskDto) dto: CreateTaskDto): Promise<TaskDto> {
-        const t = await this.tasks.create({ userId: req.user.sub, dto });
+        const t = await this.tasks.create({ userId: req.user.sub, input: dto });
         return this.toResponse(t);
     }
 
@@ -98,7 +98,7 @@ export class TasksController {
         @ValidatedParam({ name: 'id', schema: objectIdSchema }) id: string,
         @ValidatedBody(UpdateTaskDto) dto: UpdateTaskDto,
     ): Promise<TaskDto> {
-        const t = await this.tasks.update({ taskId: id, userId: req.user.sub, dto });
+        const t = await this.tasks.update({ taskId: id, userId: req.user.sub, input: dto });
         return this.toResponse(t);
     }
 
@@ -110,7 +110,7 @@ export class TasksController {
         @ValidatedParam({ name: 'id', schema: objectIdSchema }) id: string,
         @ValidatedBody(SetTaskStatusDto) dto: SetTaskStatusDto,
     ): Promise<TaskDto> {
-        const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, dto });
+        const t = await this.tasks.setStatus({ taskId: id, userId: req.user.sub, status: dto.status });
         return this.toResponse(t);
     }
 
@@ -122,7 +122,7 @@ export class TasksController {
         @ValidatedParam({ name: 'id', schema: objectIdSchema }) id: string,
         @ValidatedBody(SetFuzzyDeadlineDto) dto: SetFuzzyDeadlineDto,
     ): Promise<TaskDto> {
-        const t = await this.tasks.setFuzzyDeadline({ taskId: id, userId: req.user.sub, dto });
+        const t = await this.tasks.setFuzzyDeadline({ taskId: id, userId: req.user.sub, fuzzy: dto });
         return this.toResponse(t);
     }
 
@@ -181,7 +181,7 @@ export class TasksController {
         @ValidatedParam({ name: 'id', schema: objectIdSchema }) id: string,
         @ValidatedBody(AddReminderDto) dto: AddReminderDto,
     ): Promise<ReminderDto> {
-        return this.tasks.addReminder({ taskId: id, userId: req.user.sub, dto });
+        return this.tasks.addReminder({ taskId: id, userId: req.user.sub, remindAt: dto.remindAt });
     }
 
     /** Remove a reminder from a task by index. */

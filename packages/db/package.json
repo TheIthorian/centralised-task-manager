@@ -12,7 +12,8 @@
         "dev": "tsc -p tsconfig.build.json --watch"
     },
     "dependencies": {
-        "@ctm/connectors": "workspace:*"
+        "@ctm/connectors": "workspace:*",
+        "@ctm/errors": "workspace:*"
     },
     "peerDependencies": {
         "@nestjs/mongoose": "11.0.4",

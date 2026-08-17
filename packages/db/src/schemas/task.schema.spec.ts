@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { model, Types } from 'mongoose';
-import { TaskSchema, RELATION_INVERSE } from './task.schema.js';
+import { TaskSchema } from './task.schema.js';
 
 describe('TaskSchema', () => {
     it('has compound unique index on userId+source+sourceId', () => {
@@ -61,14 +61,6 @@ describe('TaskSchema', () => {
 
         expect(Array.isArray(t.relations)).toBe(true);
         expect(t.relations).toHaveLength(0);
-    });
-
-    it('exposes RELATION_INVERSE mapping each type to its inverse', () => {
-        expect(RELATION_INVERSE.parent).toBe('child');
-        expect(RELATION_INVERSE.child).toBe('parent');
-        expect(RELATION_INVERSE.next).toBe('previous');
-        expect(RELATION_INVERSE.previous).toBe('next');
-        expect(RELATION_INVERSE.related).toBe('related');
     });
 
     it('does not have sourceDueDate field', () => {

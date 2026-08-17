@@ -2,8 +2,8 @@ import { Test } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { TasksService } from './tasks.service.js';
-import { Task, TaskSchema, type TaskDocument } from '@ctm/db';
+import { TasksService } from '@ctm/domain';
+import { Task, TaskSchema, runInTransaction, supportsTransactions, type TaskDocument } from '@ctm/db';
 
 describe('TasksService relations', () => {
     let service: TasksService;
@@ -27,11 +27,10 @@ describe('TasksService relations', () => {
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
                 MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
             ],
-            providers: [TasksService],
         }).compile();
 
-        service = moduleRef.get(TasksService);
         model = moduleRef.get<Model<TaskDocument>>(getModelToken(Task.name));
+        service = new TasksService({ taskModel: model });
     });
 
     it('addRelation writes both sides with inverse type', async () => {
@@ -102,6 +101,28 @@ describe('TasksService relations', () => {
         await expect(
             service.addRelation({ userId, taskId: String(a._id), type: 'parent', targetTaskId: String(other._id) }),
         ).rejects.toThrow();
+    });
+
+    it('rolls a write back when the transaction body throws', async () => {
+        expect(await supportsTransactions({ connection: model.db })).toBe(true);
+
+        const task = await makeTask('A7-' + Date.now());
+        const title = 'renamed-' + Date.now();
+
+        await expect(
+            runInTransaction({
+                connection: model.db,
+                fn: async (session) => {
+                    await model.updateOne({ _id: task._id }, { $set: { title } }, { session });
+
+                    throw new Error('abort');
+                },
+            }),
+        ).rejects.toThrow('abort');
+
+        const found = await model.findById(task._id);
+
+        expect(found!.title).not.toBe(title);
     });
 
     it('removes dangling relations when a task is deleted', async () => {

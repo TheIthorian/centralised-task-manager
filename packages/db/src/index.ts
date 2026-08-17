@@ -2,6 +2,7 @@ export * from './audit.js';
 export * from './code-challenge.js';
 export * from './notification-types.js';
 export * from './scopes.js';
+export * from './unit-of-work.js';
 
 export * from './schemas/audit-log.schema.js';
 export * from './schemas/auth-code.schema.js';

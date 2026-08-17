@@ -12,15 +12,6 @@ export type RemindEvery = 'daily' | 'weekly';
 /** The kind of relation from one task to another. */
 export type RelationType = 'parent' | 'child' | 'next' | 'previous' | 'related';
 
-/** Maps each relation type to the inverse type stored on the target task. */
-export const RELATION_INVERSE: Record<RelationType, RelationType> = {
-    parent: 'child',
-    child: 'parent',
-    next: 'previous',
-    previous: 'next',
-    related: 'related',
-};
-
 @Schema({ _id: false })
 class Location {
     @Prop({ type: String, required: true, maxlength: 200 })

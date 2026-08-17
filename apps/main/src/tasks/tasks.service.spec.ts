@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TaskConnectorName } from '@ctm/connectors';
-import { TasksService } from './tasks.service.js';
+import { TasksService } from '@ctm/domain';
 import { Task, TaskSchema, type TaskDocument } from '@ctm/db';
 
 describe('TasksService upsertFromRemote', () => {
@@ -17,11 +17,10 @@ describe('TasksService upsertFromRemote', () => {
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
                 MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
             ],
-            providers: [TasksService],
         }).compile();
 
-        service = moduleRef.get(TasksService);
         taskModel = moduleRef.get<Model<TaskDocument>>(getModelToken(Task.name));
+        service = new TasksService({ taskModel });
 
         // Drop the pre-multi-account unique index so the schema's account-scoped index applies.
         await taskModel.syncIndexes();

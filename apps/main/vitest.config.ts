@@ -11,6 +11,7 @@ export default defineConfig({
             // and `instanceof ValidationError` are both false for errors the package itself threw.
             '@ctm/nest-common': resolve(import.meta.dirname, '../../packages/nest-common/src/index.ts'),
             '@ctm/env': resolve(import.meta.dirname, '../../packages/env/src/index.ts'),
+            '@ctm/domain': resolve(import.meta.dirname, '../../packages/domain/src/index.ts'),
         },
     },
     test: {

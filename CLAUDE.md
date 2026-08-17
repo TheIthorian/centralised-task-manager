@@ -20,6 +20,8 @@ apps/
   storybook/        # Storybook harness for @ctm/ui — dev tool only, never deployed
 packages/
   ui/               # Design tokens + presentational React components
+  domain/           # Business logic, one folder per domain — framework-free
+  db/               # Mongoose schemas + the transaction runner
   connectors/       # TaskConnector interface + Todoist + Google Tasks adapters
   logger/           # Shared Pino logger
   errors/           # Shared error types
@@ -117,6 +119,18 @@ Design tokens and presentational components. A component belongs here if it can 
 - Specs assert behaviour only — role, accessible name, ARIA state, keyboard, callbacks, plus `expect(await axe(container)).toHaveNoViolations()`. **Never assert Tailwind class strings or DOM snapshots:** those change with every design pass. Token correctness is judged in Storybook.
 - `packages/ui` never imports i18next. Copy arrives as props.
 
+### packages/domain
+
+Business logic with no framework attached: `src/<domain>/` per domain, starting with `tasks`. Domains share one package because they reference each other freely; separate packages would turn those references into dependency cycles.
+
+- **Services are plain classes.** No `@Injectable`, no `@InjectModel` — dependencies arrive through a single object argument in the constructor. An app wires one up with a factory provider, so the same service is callable from a worker, the CLI, or an agent that never boots Nest.
+- **Never import `@nestjs/*` here.** That is the whole point of the package.
+- **Throw typed errors from `@ctm/errors`.** `AppErrorFilter` maps them to HTTP; a domain that throws `NotFoundException` has an opinion about a transport it should not know exists.
+- **Rules go in the rule modules, IO goes in the service.** The rule modules import no Mongoose and touch no database, so they unit-test with no DB.
+- **Model illegal states out of existence.** A pair of nullable fields that must not both be set is a union with a discriminant, converted to and from its stored shape by a pair of hand-written functions. Write those conversions only where the domain shape and the storage shape actually differ; everything else passes through untouched.
+- **Write back with `doc.set(entity.toState())`.** Mongoose diffs the result and issues a `$set` for changed paths only, so there is no field-by-field mapping to maintain.
+- **A `ClientSession` is not concurrent.** Operations sharing one run sequentially; `Promise.all` over two session-bound queries makes the server reject the second.
+
 ### apps/storybook
 
 `@storybook/react-vite` harness that renders `packages/ui`. Stories live next to their component in `packages/ui/src`; this app is only the configuration. It has no `build` script and no deploy target on purpose.
@@ -135,7 +149,7 @@ Docusaurus site. **This directory is for compiled/generated user-facing document
 - **Explicit return types** — every function and method must have an explicit return type annotation.
 - **Object arguments** — when a function has two or more parameters, use a single object argument instead of positional params.
 - **Docstrings** — add a JSDoc comment to every public method on a class or interface, and every exported module-level function. Keep them concise: only document parameters, return value, or thrown errors when it genuinely adds information beyond the name.
-- **Comments explain why, not how.** The code already says what it does. Comment only what the code cannot: the reason for a non-obvious choice, a constraint from outside the file, a trap someone would otherwise reintroduce. Keep it to a line or two — if a comment needs a paragraph, the reasoning belongs in the spec or the commit message. Never write a comment that describes or justifies the change being made; a reader who never saw the diff gains nothing from it. That reasoning goes in the PR description.
+- **Comments explain why, not how.** The code already says what it does. Comment only what the code cannot: the reason for a non-obvious choice, a constraint from outside the file, a trap someone would otherwise reintroduce. Keep it to a line or two — if a comment needs a paragraph, the reasoning belongs in the spec or the commit message. Never write a comment that describes or justifies the change being made; a reader who never saw the diff gains nothing from it. That reasoning goes in the PR description. The same goes for design rationale — why a class is plain rather than decorated, why a type is an alias rather than a wrapper, why a package is laid out as it is. It reads as a defence of a decision to a reviewer who is no longer there. Put it in the PR, or in the package README if it is a standing convention.
 - **Declaration order** — a helper function is declared _after_ its caller, so a file reads top-down from its entry point to its details. Function declarations hoist, so a module-level helper can sit at the bottom of the file even when the code above it calls it. Values that are not hoisted (`const`, `let`, classes) still have to precede their use.
 - **Trailing commas** — always include trailing commas on the last item of multi-line objects, arrays, and parameter lists.
 - **Logging** — always place a blank line before and after a log statement, and a blank line after a closing scope brace (where the formatter allows).

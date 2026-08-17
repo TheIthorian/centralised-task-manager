@@ -1,9 +1,23 @@
 services:
     mongodb:
         image: mongo:8.3
+        # A single-member replica set rather than a standalone: MongoDB refuses to start a
+        # transaction outside one, and the task service writes both halves of a relation together.
+        command: ['--replSet', 'rs0', '--bind_ip_all']
         ports:
             - '27017:27017'
         volumes:
             # Host bind mount, not a named volume: `docker compose down -v` (or a
             # volume prune) must not be able to wipe local dev data.
             - ./.data/mongodb:/data/db
+        healthcheck:
+            # Doubles as the one-off initiation: rs.status() throws until the set exists, and the
+            # member is addressed as localhost so the host machine and the container agree on it.
+            test: >
+                mongosh --quiet --eval "try { rs.status().ok } catch (e) {
+                  rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] })
+                }"
+            interval: 5s
+            timeout: 5s
+            retries: 12
+            start_period: 10s
