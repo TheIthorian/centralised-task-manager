@@ -287,6 +287,7 @@
         }
     },
     "authorizedApps": {
+        "logoAlt": "Logo declared by {{name}}",
         "declared": {
             "label": "Declared by this app. Not verified.",
             "website": "Website",

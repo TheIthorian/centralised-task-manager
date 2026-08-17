@@ -23,6 +23,7 @@ packages/
   domain/           # Business logic, one folder per domain — framework-free
   db/               # Mongoose schemas + the transaction runner
   connectors/       # TaskConnector interface + Todoist + Google Tasks adapters
+  server-utility/   # Node-only backend helpers — AssetFetcher, IP range checks
   logger/           # Shared Pino logger
   errors/           # Shared error types
   http/             # Shared fetch wrapper

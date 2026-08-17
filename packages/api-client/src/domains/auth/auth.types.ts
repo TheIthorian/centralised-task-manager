@@ -33,7 +33,7 @@ export type RefreshDto = {
  * An OAuth client that a user has authorized. No token data included.
  *
  * Every field below `type` is RFC 7591 metadata the client declared about itself at registration
- * and that this server has not verified. `logo_uri` is deliberately not exposed: it is an
+ * and that this server has not verified. The declared `logo_uri` is never exposed: it is an
  * attacker-controlled URL that would otherwise be fetched by the browser of every user viewing
  * their settings page.
  */
@@ -43,6 +43,12 @@ export type AuthorizedAppDto = {
     scopes: string[];
     authorizedAt: string;
     type: 'oauth';
+
+    /**
+     * Path on the API origin serving this server's own re-encoded copy of the client's logo.
+     * Absent when the client declared no logo, or when the declared one could not be used.
+     */
+    logoPath?: string;
     clientUri?: string;
     tosUri?: string;
     policyUri?: string;

@@ -5,6 +5,7 @@ import { NotFoundError } from '@ctm/errors';
 import type { AuthorizedAppDto } from '@ctm/api-client';
 import { RefreshTokenService } from '../tokens/refresh-token.service.js';
 import { AuthorizedClient, type AuthorizedClientDocument, OAuthClient, type OAuthClientDocument } from '@ctm/db';
+import { clientLogoPath } from './client-logo.service.js';
 
 @Injectable()
 export class AuthorizedAppsService {
@@ -21,9 +22,12 @@ export class AuthorizedAppsService {
 
         if (authorizations.length === 0) return [];
 
-        const clients = await this.oauthClientModel.find({
-            clientId: { $in: authorizations.map((authorization) => authorization.clientId) },
-        });
+        const clients = await this.oauthClientModel
+            .find({
+                clientId: { $in: authorizations.map((authorization) => authorization.clientId) },
+            })
+            // The bytes are served from their own endpoint; this list only needs to know one exists.
+            .select('-logo.data');
 
         const clientsById = new Map(clients.map((client) => [client.clientId, client]));
         const results: AuthorizedAppDto[] = [];
@@ -40,6 +44,7 @@ export class AuthorizedAppsService {
                 scopes: authorization.scopes,
                 authorizedAt: authorization.authorizedAt.toISOString(),
                 type: 'oauth',
+                logoPath: client.logo ? clientLogoPath(client.clientId) : undefined,
                 clientUri: client.clientUri,
                 tosUri: client.tosUri,
                 policyUri: client.policyUri,

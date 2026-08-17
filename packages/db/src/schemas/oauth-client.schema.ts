@@ -4,6 +4,21 @@ import { HydratedDocument } from 'mongoose';
 /** Mongoose document type for OAuthClient. */
 export type OAuthClientDocument = HydratedDocument<OAuthClient>;
 
+/** A client's logo after it has been fetched from `logoUri`, validated and re-encoded. */
+@Schema({ _id: false })
+export class OAuthClientLogo {
+    @Prop({ type: Buffer, required: true })
+    data!: Buffer;
+
+    @Prop({ type: String, required: true })
+    contentType!: string;
+
+    @Prop({ type: Date, required: true })
+    fetchedAt!: Date;
+}
+
+export const OAuthClientLogoSchema = SchemaFactory.createForClass(OAuthClientLogo);
+
 @Schema({ timestamps: true })
 export class OAuthClient {
     @Prop({ type: String, required: true, unique: true })
@@ -29,9 +44,13 @@ export class OAuthClient {
 
     // RFC 7591 §2 display metadata, self-declared by the client and never verified by this server.
 
-    /** Stored but never returned to a browser: see the logo handling in the #28 design spec. */
+    /** The URI the client declared. Never returned to a browser; `logo` is served instead. */
     @Prop({ type: String })
     logoUri?: string;
+
+    /** Absent when no logo was declared, or when fetching or validating it failed. */
+    @Prop({ type: OAuthClientLogoSchema })
+    logo?: OAuthClientLogo;
 
     @Prop({ type: String })
     clientUri?: string;

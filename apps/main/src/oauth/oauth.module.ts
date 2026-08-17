@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
+import { AssetFetcher } from '@ctm/server-utility';
+import { HttpClient } from '@ctm/http-client';
 import { MongooseModule } from '@nestjs/mongoose';
+import { appLogger } from '../logging/app-logger.js';
 import {
     AuthCode,
     AuthCodeSchema,
@@ -12,6 +15,7 @@ import { OAuthKeyService } from './oauth-key.service.js';
 import { FirstPartyClientsService } from './first-party-clients.service.js';
 import { OAuthService } from './oauth.service.js';
 import { OAuthClientService } from './oauth-client.service.js';
+import { ClientLogoService } from './client-logo.service.js';
 import { AuthorizedClientService } from './authorized-client.service.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import { OAuthController } from './oauth.controller.js';
@@ -32,13 +36,19 @@ import { UsersModule } from '../users/users.module.js';
     ],
     controllers: [OAuthController, WellKnownController],
     providers: [
+        {
+            provide: AssetFetcher,
+            useFactory: (): AssetFetcher =>
+                new AssetFetcher({ http: new HttpClient({ logger: appLogger('AssetFetcher') }) }),
+        },
         OAuthKeyService,
         OAuthService,
         FirstPartyClientsService,
         OAuthClientService,
+        ClientLogoService,
         AuthorizedClientService,
         AuthorizedAppsService,
     ],
-    exports: [OAuthKeyService, OAuthService, OAuthClientService, AuthorizedAppsService],
+    exports: [OAuthKeyService, OAuthService, OAuthClientService, ClientLogoService, AuthorizedAppsService],
 })
 export class OAuthModule {}

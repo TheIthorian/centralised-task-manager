@@ -364,6 +364,9 @@ importers:
       '@ctm/request-logger':
         specifier: workspace:*
         version: link:../../packages/request-logger
+      '@ctm/server-utility':
+        specifier: workspace:*
+        version: link:../../packages/server-utility
       '@fastify/compress':
         specifier: 9.1.0
         version: 9.1.0
@@ -445,6 +448,9 @@ importers:
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
+      sharp:
+        specifier: 0.35.3
+        version: 0.35.3(@types/node@26.1.1)
       socket.io:
         specifier: 4.8.3
         version: 4.8.3
@@ -971,6 +977,34 @@ importers:
         specifier: 11.1.28
         version: 11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2)
     devDependencies:
+      '@ctm/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: 26.1.1
+        version: 26.1.1
+      fastify:
+        specifier: 5.10.0
+        version: 5.10.0
+      pino:
+        specifier: 10.3.1
+        version: 10.3.1
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.1.1)(jsdom@30.0.1)(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.101.7)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/server-utility:
+    dependencies:
+      '@ctm/http-client':
+        specifier: workspace:*
+        version: link:../http-client
+    devDependencies:
+      '@ctm/errors':
+        specifier: workspace:*
+        version: link:../errors
       '@ctm/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -21870,7 +21904,6 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.3
       '@img/sharp-win32-x64': 0.35.3
       '@types/node': 26.1.1
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:

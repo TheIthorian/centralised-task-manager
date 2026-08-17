@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import axios, { type AxiosInstance } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -250,6 +251,40 @@ describe('HttpClient', () => {
 
             expect(vi.mocked(instance.interceptors.request.use)).not.toHaveBeenCalled();
             expect(vi.mocked(instance.interceptors.response.use)).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('getStream', () => {
+        it('returns the status, lower-cased headers and unread body', async () => {
+            const body = Readable.from([Buffer.from('bytes')]);
+
+            mockRequest.mockResolvedValue({ status: 200, headers: { 'Content-Type': 'image/png' }, data: body });
+
+            const response = await new HttpClient({}).getStream({ url: 'https://cdn.example.com/logo.png' });
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                expect.objectContaining({ responseType: 'stream', maxRedirects: 0 }),
+            );
+            expect(response).toEqual({ status: 200, headers: { 'content-type': 'image/png' }, body });
+        });
+
+        it('returns a non-2xx status instead of throwing', async () => {
+            mockRequest.mockResolvedValue({ status: 404, headers: {}, data: Readable.from([]) });
+
+            const response = await new HttpClient({}).getStream({ url: 'https://cdn.example.com/logo.png' });
+
+            expect(response.status).toBe(404);
+        });
+
+        it('maps a transport failure to ExternalServiceError', async () => {
+            const error = Object.assign(new Error('ECONNREFUSED'), { isAxiosError: true });
+
+            vi.mocked(axios.isAxiosError).mockReturnValue(true);
+            mockRequest.mockRejectedValue(error);
+
+            await expect(new HttpClient({}).getStream({ url: 'https://cdn.example.com/logo.png' })).rejects.toThrow(
+                ExternalServiceError,
+            );
         });
     });
 });

@@ -92,6 +92,9 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
         },
     });
 
+    // A path on the API origin, not the URL the app declared: the server fetched and re-encoded it.
+    const logoUrl = app.logoPath ? `${api.getBaseUrl()}${app.logoPath}` : null;
+
     const authorizedDate = new Date(app.authorizedAt).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'short',
@@ -101,7 +104,18 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
     return (
         <div className="bg-panel border border-line p-4 flex flex-col gap-2 rounded-ctm">
             <div className="flex items-start justify-between gap-4">
-                <div>
+                <div className="flex items-start gap-3">
+                    {logoUrl && (
+                        <img
+                            src={logoUrl}
+                            alt={t('authorizedApps.logoAlt', { name: app.clientName })}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 shrink-0 border border-line rounded-ctm"
+                        />
+                    )}
+
+                    <div>
                     <div className="flex items-center gap-2 mb-0.5">
                         <p className="font-semibold text-sm tracking-wide text-fg">
                             {app.clientName}
@@ -110,7 +124,8 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
                             OAuth
                         </span>
                     </div>
-                    <p className="text-xs text-muted font-medium">Authorized {authorizedDate}</p>
+                        <p className="text-xs text-muted font-medium">Authorized {authorizedDate}</p>
+                    </div>
                 </div>
 
                 {!confirming && (

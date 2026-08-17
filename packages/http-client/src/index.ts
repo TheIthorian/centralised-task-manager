@@ -1,3 +1,4 @@
+import type { Readable } from 'node:stream';
 import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import type { Logger } from 'pino';
 
@@ -20,9 +21,36 @@ function redactObject(obj: unknown, obfuscate: boolean): unknown {
 
 export type { Logger };
 
+/** A response whose body has not been read, so the caller can bound or abandon it. */
+export type StreamResponse = {
+    status: number;
+    /** Header names are lower-cased; a repeated header keeps only its first value. */
+    headers: Record<string, string>;
+    /** Destroyed when it leaves the `using` block that received it, read or not. */
+    body: DisposableStream;
+};
+
+/** A stream that closes itself at the end of the block that declared it with `using`. */
+export type DisposableStream = Readable & Disposable;
+
+/**
+ * Marks a stream as disposable, so leaving the block destroys it however the block is left.
+ *
+ * Node's own `Symbol.asyncDispose` destroys a stream with an abort error, which nothing is left to
+ * handle once the reader has gone, so the disposal is written here instead.
+ */
+export function disposableStream(stream: Readable): DisposableStream {
+    return Object.assign(stream, {
+        [Symbol.dispose]: (): void => {
+            stream.destroy();
+        },
+    });
+}
+
 /** Options for constructing an {@link HttpClient} instance. */
 export type HttpClientOptions = {
-    baseUrl: string;
+    /** Omit for a client that is only given absolute URLs. */
+    baseUrl?: string;
     headers?: Record<string, string>;
     logger?: Logger;
     obfuscateLogs?: boolean;
@@ -32,7 +60,7 @@ export type HttpClientOptions = {
 export class HttpClient {
     private readonly client: AxiosInstance;
 
-    constructor({ baseUrl, headers, logger, obfuscateLogs = true }: HttpClientOptions) {
+    constructor({ baseUrl = '', headers, logger, obfuscateLogs = true }: HttpClientOptions) {
         this.client = axios.create({
             baseURL: baseUrl,
             headers: {
@@ -64,6 +92,45 @@ export class HttpClient {
     /** Send a DELETE request. Returns undefined (204 No Content). */
     async delete(path: string, headers?: Record<string, string>): Promise<void> {
         await this.send<void>({ method: 'DELETE', url: path, headers });
+    }
+
+    /**
+     * Send a GET request and return the response without reading its body, so the caller can cap
+     * or abandon it. Redirects are never followed, and a non-2xx status is returned rather than
+     * thrown: both are outcomes the caller has to classify.
+     *
+     * The caller owns the body and must destroy it if it does not read it to the end.
+     */
+    async getStream({
+        url,
+        headers,
+        timeoutMs,
+    }: {
+        url: string;
+        headers?: Record<string, string>;
+        timeoutMs?: number;
+    }): Promise<StreamResponse> {
+        try {
+            const response = await this.client.request<Readable>({
+                method: 'GET',
+                url,
+                headers,
+                responseType: 'stream',
+                timeout: timeoutMs,
+                maxRedirects: 0,
+                validateStatus: () => true,
+            });
+
+            return {
+                status: response.status,
+                headers: lowerCaseHeaders(response.headers),
+                body: disposableStream(response.data),
+            };
+        } catch (error) {
+            if (axios.isAxiosError(error)) throw new ExternalServiceError(url, error.message);
+
+            throw error;
+        }
     }
 
     private attachDebugInterceptors(logger: Logger, obfuscate: boolean): void {
@@ -163,4 +230,12 @@ export class HttpClient {
             throw error;
         }
     }
+}
+
+function lowerCaseHeaders(headers: AxiosResponse['headers']): Record<string, string> {
+    const entries = Object.entries(headers as Record<string, unknown>)
+        .map(([key, value]): [string, string] => [key.toLowerCase(), Array.isArray(value) ? String(value[0]) : String(value)])
+        .filter(([, value]) => value !== 'undefined');
+
+    return Object.fromEntries(entries);
 }

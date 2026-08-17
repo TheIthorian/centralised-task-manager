@@ -4,6 +4,8 @@ import type { Model } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { isRedirectUriPermitted, OAuthClientService, UNUSED_CLIENT_TTL_DAYS } from './oauth-client.service.js';
 import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from '@ctm/db';
+import { AssetFetcher } from '@ctm/server-utility';
+import { ClientLogoService } from './client-logo.service.js';
 
 describe('isRedirectUriPermitted', () => {
     it('exact-matches non-loopback URIs', () => {
@@ -45,6 +47,25 @@ describe('isRedirectUriPermitted', () => {
         ).toBe(true);
     });
 
+    it('allows a native app private-use scheme registered exactly', () => {
+        expect(
+            isRedirectUriPermitted(
+                ['cursor://anysphere.cursor-mcp/oauth/callback'],
+                'cursor://anysphere.cursor-mcp/oauth/callback',
+            ),
+        ).toBe(true);
+    });
+
+    it('rejects a private-use scheme URI whose path differs from the registered one', () => {
+        expect(isRedirectUriPermitted(['com.example.app:/oauth'], 'com.example.app:/stolen')).toBe(false);
+        expect(
+            isRedirectUriPermitted(
+                ['cursor://anysphere.cursor-mcp/oauth/callback'],
+                'cursor://anysphere.cursor-mcp/evil',
+            ),
+        ).toBe(false);
+    });
+
     it('returns false for empty registered list', () => {
         expect(isRedirectUriPermitted([], 'http://127.0.0.1:1234/callback')).toBe(false);
     });
@@ -61,7 +82,11 @@ describe('OAuthClientService unused-client reaping', () => {
                 MongooseModule.forRoot(process.env['MONGODB_URI']!),
                 MongooseModule.forFeature([{ name: OAuthClient.name, schema: OAuthClientSchema }]),
             ],
-            providers: [OAuthClientService],
+            providers: [
+                OAuthClientService,
+                ClientLogoService,
+                { provide: AssetFetcher, useFactory: (): AssetFetcher => new AssetFetcher() },
+            ],
         }).compile();
 
         service = module.get(OAuthClientService);

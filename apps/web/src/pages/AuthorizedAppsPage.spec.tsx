@@ -8,6 +8,7 @@ import { AuthorizedAppsPage } from './AuthorizedAppsPage.js';
 const mockApi = {
     getAuthorizedApps: vi.fn(),
     revokeAuthorizedApp: vi.fn(),
+    getBaseUrl: () => 'https://api.example.test',
 };
 
 vi.mock('../auth/AuthContext.js', () => ({
@@ -63,6 +64,18 @@ describe('AuthorizedAppsPage', () => {
 
         expect(screen.queryByRole('link')).not.toBeInTheDocument();
         expect(container.querySelector('img')).toBeNull();
+    });
+
+    it('renders the logo this server serves, never the URL the app declared', async () => {
+        mockApi.getAuthorizedApps.mockResolvedValue([
+            { ...appWithMetadata, logoPath: '/oauth/clients/client_abc/logo' } satisfies AuthorizedAppDto,
+        ]);
+
+        render(<AuthorizedAppsPage />, { wrapper });
+
+        const logo = await screen.findByRole('img', { name: 'Logo declared by Metadata App' });
+
+        expect(logo).toHaveAttribute('src', 'https://api.example.test/oauth/clients/client_abc/logo');
     });
 
     it('omits the metadata block for an app that declared none', async () => {
