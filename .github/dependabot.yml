@@ -1,38 +1,25 @@
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directories:
-      - "/"
-      - "/apps/*"
-      - "/packages/*"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
       dev-dependencies:
         dependency-type: "development"
-        update-types:
-          - "minor"
-          - "patch"
+        update-types: ["minor", "patch"]
       production-minor-patch:
         dependency-type: "production"
-        update-types:
-          - "minor"
-          - "patch"
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
-    directories:
-      - "/apps/main"
-      - "/apps/sync"
-      - "/apps/mcp"
+    directories: ["/apps/main", "/apps/sync", "/apps/mcp", "/apps/admin"]
     schedule:
       interval: "weekly"
     groups:
       docker:
-        patterns:
-          - "*"
+        patterns: ["*"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -40,5 +27,4 @@ updates:
       interval: "weekly"
     groups:
       github-actions:
-        patterns:
-          - "*"
+        patterns: ["*"]
