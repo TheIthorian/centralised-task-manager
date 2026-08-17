@@ -8,10 +8,11 @@ This module owns third-party delegation end to end: client registration, the use
 
 ## Client logos
 
-A registrant's `logo_uri` is never handed to a browser. The URI is fetched once, at registration:
-only over https, only to a host whose every resolved address is publicly routable (re-checked on
-each redirect hop), with the response capped in bytes and decoded dimensions and re-encoded to a
-fixed-size PNG. The stored copy is served from `GET /oauth/clients/:clientId/logo`, and
+A registrant's `logo_uri` is never handed to a browser. The URI is fetched once, at registration,
+by `AssetFetcher` from `@ctm/server-utility`, which admits only https and only hosts that resolve
+entirely to public addresses, and re-checks each redirect hop. `logo-image.ts` then refuses
+anything that is not a decodable image within the dimension cap and re-encodes it to a fixed-size
+PNG. The stored copy is served from `GET /oauth/clients/:clientId/logo`, and
 `AuthorizedAppDto.logoPath` points there. A logo that fails any of this is dropped and the client
 registers without one.
 

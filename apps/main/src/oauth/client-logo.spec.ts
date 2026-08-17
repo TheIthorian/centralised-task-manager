@@ -6,7 +6,7 @@ import sharp from 'sharp';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { OAuthClient, type OAuthClientDocument } from '@ctm/db';
 import { AppModule } from '../app.module.js';
-import { LOGO_CONTENT_TYPE } from './client-logo.fetcher.js';
+import { LOGO_CONTENT_TYPE } from './logo-image.js';
 
 describe('GET /oauth/clients/:clientId/logo', () => {
     let app: NestFastifyApplication;

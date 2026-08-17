@@ -21,6 +21,7 @@
         "@ctm/logger": "workspace:*",
         "@ctm/nest-common": "workspace:*",
         "@ctm/request-logger": "workspace:*",
+        "@ctm/server-utility": "workspace:*",
         "@fastify/compress": "9.1.0",
         "@fastify/cookie": "11.0.2",
         "@fastify/cors": "11.3.0",

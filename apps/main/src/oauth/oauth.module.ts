@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AssetFetcher } from '@ctm/server-utility';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
     AuthCode,
@@ -33,6 +34,7 @@ import { UsersModule } from '../users/users.module.js';
     ],
     controllers: [OAuthController, WellKnownController],
     providers: [
+        { provide: AssetFetcher, useFactory: (): AssetFetcher => new AssetFetcher() },
         OAuthKeyService,
         OAuthService,
         FirstPartyClientsService,
