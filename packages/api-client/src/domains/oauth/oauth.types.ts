@@ -18,6 +18,10 @@ export type OpenIdConfigurationDto = {
     token_endpoint_auth_methods_supported: string[];
     code_challenge_methods_supported: string[];
     claims_supported: string[];
+    /** draft-ietf-oauth-client-id-metadata-document-00: an https URL may be used as a `client_id`. */
+    client_id_metadata_document_supported: boolean;
+    /** RFC 9207: authorization responses carry `iss`. */
+    authorization_response_iss_parameter_supported: boolean;
 };
 
 /**
@@ -35,6 +39,10 @@ export type AuthorizationServerMetadataDto = {
     grant_types_supported: string[];
     token_endpoint_auth_methods_supported: string[];
     code_challenge_methods_supported: string[];
+    /** draft-ietf-oauth-client-id-metadata-document-00: an https URL may be used as a `client_id`. */
+    client_id_metadata_document_supported: boolean;
+    /** RFC 9207: authorization responses carry `iss`. */
+    authorization_response_iss_parameter_supported: boolean;
 };
 
 /**

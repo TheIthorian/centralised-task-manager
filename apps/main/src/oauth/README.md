@@ -6,6 +6,25 @@ Allows the MCP app to authenticate users through a standard browser-based flow r
 
 This module owns third-party delegation end to end: client registration, the user's grants, authorization codes, and the `.well-known` protocol metadata. It signs nothing itself — tokens come from `tokens` — and it knows nothing about first-party sessions, which are `auth`.
 
+## Client registration
+
+A `client_id` reaches this server one of three ways, and `OAuthClientService.resolveByClientId`
+decides which without the caller having to care:
+
+- **First party.** `first-party-clients.ts` names the clients this project ships, upserted at boot.
+- **Client ID Metadata Document.** An https `client_id` URL with a path component is fetched, and
+  the document it returns is validated against the same metadata rules a registration request goes
+  through, plus the requirement that its `client_id` equals the URL it came from. Redirects are
+  refused, since a redirect would break that equality. The result is cached for as long as the
+  origin's `Cache-Control` asks, clamped to between five minutes and a day, and a document that
+  later stops resolving falls back to the last good copy rather than revoking consent the user has
+  already given.
+- **Dynamic client registration.** `POST /.well-known/oauth-client`, kept for clients that predate
+  metadata documents. Deprecated by MCP in its 2026-07-28 revision.
+
+`GET /.well-known/oauth-authorization-server` advertises the middle option through
+`client_id_metadata_document_supported`, which is how a client knows it need not register at all.
+
 ## Client logos
 
 A registrant's `logo_uri` is never handed to a browser. The URI is fetched once, at registration,
@@ -29,7 +48,7 @@ sequenceDiagram
     CTM-->>Browser: Render login form
     Browser->>CTM: POST /oauth/authorize (email + password)
     CTM->>CTM: Validate credentials,<br/>store auth code + code_challenge (5 min TTL)
-    CTM-->>Browser: 302 → redirect_uri?code=…&state=…
+    CTM-->>Browser: 302 → redirect_uri?code=…&state=…&iss=…
     Browser->>MCP: Deliver code + state
     MCP->>CTM: POST /oauth/token<br/>(code, code_verifier, redirect_uri)
     CTM->>CTM: SHA-256(code_verifier) == code_challenge?

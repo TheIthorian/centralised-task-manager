@@ -3,7 +3,6 @@ import { appLogger } from '../logging/app-logger.js';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiBearerAuth } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
-import { z } from 'zod';
 import { NotFoundError } from '@ctm/errors';
 import { JwtAuthGuard } from '../tokens/jwt-auth.guard.js';
 import { OAuthClientService, isRedirectUriPermitted } from './oauth-client.service.js';
@@ -24,12 +23,10 @@ import {
     ValidatedQueryValue,
 } from '@ctm/nest-common';
 import type { CodeChallengeMethod } from './pkce.js';
+import { clientIdSchema } from './client-id.js';
 
 /** Method assumed when the client omits `code_challenge_method`; the server accepts no other. */
 const DEFAULT_CODE_CHALLENGE_METHOD: CodeChallengeMethod = 'S256';
-
-/** Matches the bound `authorizeQuerySchema` puts on `client_id`. */
-const clientIdSchema = z.string().min(1).max(128);
 
 @ApiTags('OAuth 2.0')
 @Controller('oauth')
@@ -83,7 +80,7 @@ export class OAuthController {
         // Routine protocol detail: interesting while debugging a client, noise in an incident.
         this.logger.debug({ clientId: query.client_id ?? null }, 'Authorization request received');
 
-        const client = await this.oauthClient.findByClientId(query.client_id);
+        const client = await this.oauthClient.resolveByClientId(query.client_id);
 
         if (!client) {
             this.logger.warn({ clientId: query.client_id }, 'Authorization request from unknown client');
@@ -120,6 +117,9 @@ export class OAuthController {
 
         const redirectUrl = new URL(query.redirect_uri);
         redirectUrl.searchParams.set('code', code);
+        // RFC 9207: lets the client confirm which authorization server answered before it sends
+        // the code to a token endpoint.
+        redirectUrl.searchParams.set('iss', this.config.getOrThrow<string>('REDIRECT_BASE_URL'));
 
         if (query.state) redirectUrl.searchParams.set('state', query.state);
 

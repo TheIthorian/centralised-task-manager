@@ -23,6 +23,7 @@ describe('AssetFetcher', () => {
                 body: Buffer.from('bytes'),
                 contentType: 'image/png',
                 finalUri: 'https://cdn.example.com/logo.png',
+                headers: expect.any(Object),
             },
         });
     });

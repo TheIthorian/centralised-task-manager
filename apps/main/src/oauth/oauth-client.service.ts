@@ -3,9 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'node:crypto';
 import type { OAuthClientInfoDto } from '@ctm/api-client';
-import { OAuthClient, type OAuthClientDocument } from '@ctm/db';
+import { OAuthClient, OAuthClientRegistration, type OAuthClientDocument } from '@ctm/db';
 import type { FirstPartyClient } from '../oauth/first-party-clients.js';
 import { ClientLogoService } from './client-logo.service.js';
+import { ClientIdMetadataService } from './client-id-metadata.service.js';
+import { isClientIdMetadataDocumentUrl } from './client-id.js';
 
 /** Input payload for RFC 7591 dynamic client registration. */
 export type RegisterClientInput = {
@@ -96,6 +98,7 @@ export class OAuthClientService {
     constructor(
         @InjectModel(OAuthClient.name) private readonly model: Model<OAuthClientDocument>,
         private readonly logos: ClientLogoService,
+        private readonly clientIdMetadata: ClientIdMetadataService,
     ) {}
 
     /** Register a new OAuth client per RFC 7591. */
@@ -111,6 +114,7 @@ export class OAuthClientService {
             responseTypes: input.response_types ?? ['code'],
             scopes: input.scopes ?? ['openid', 'email', 'profile'],
             issuedAt,
+            registrationType: OAuthClientRegistration.Dynamic,
             unusedExpiresAt: new Date(issuedAt.getTime() + UNUSED_CLIENT_TTL_DAYS * 24 * 60 * 60 * 1000),
             logoUri: input.logo_uri,
             clientUri: input.client_uri,
@@ -161,6 +165,7 @@ export class OAuthClientService {
                         grantTypes: ['authorization_code', 'refresh_token'],
                         responseTypes: ['code'],
                         isDynamic: false,
+                        registrationType: OAuthClientRegistration.FirstParty,
                     },
                     $setOnInsert: { issuedAt: new Date() },
                     // Never reaped: a first-party client has to exist before its first use.
@@ -177,6 +182,16 @@ export class OAuthClientService {
     }
 
     /**
+     * Find the client a `client_id` names, resolving it through its Client ID Metadata Document
+     * when the id is a URL rather than an identifier this server issued.
+     */
+    async resolveByClientId(clientId: string): Promise<OAuthClientDocument | null> {
+        if (isClientIdMetadataDocumentUrl(clientId)) return this.clientIdMetadata.resolve({ clientId });
+
+        return this.findByClientId(clientId);
+    }
+
+    /**
      * Public metadata for a client, for a consent screen to describe who is asking. Null when the
      * client_id is not registered.
      *
@@ -184,7 +199,7 @@ export class OAuthClientService {
      * judge, while the host is the part that answers where the authorization code is being sent.
      */
     async getPublicClientInfo({ clientId }: { clientId: string }): Promise<OAuthClientInfoDto | null> {
-        const client = await this.model.findOne({ clientId });
+        const client = await this.resolveByClientId(clientId);
 
         if (!client) return null;
 

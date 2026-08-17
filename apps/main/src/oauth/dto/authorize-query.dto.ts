@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createZodDto } from '@ctm/nest-common';
 import { codeChallengeMethodSchema } from '../pkce.js';
+import { clientIdSchema } from '../client-id.js';
 
 /**
  * Query parameters accepted by `/oauth/authorize`.
@@ -10,7 +11,7 @@ import { codeChallengeMethodSchema } from '../pkce.js';
  * would fail otherwise valid authorization requests.
  */
 export const authorizeQuerySchema = z.object({
-    client_id: z.string().min(1).max(128),
+    client_id: clientIdSchema.describe('An id issued by this server, or a Client ID Metadata Document URL.'),
     redirect_uri: z
         .string()
         .max(2048)
