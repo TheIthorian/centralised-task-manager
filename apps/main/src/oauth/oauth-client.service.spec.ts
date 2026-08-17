@@ -47,6 +47,25 @@ describe('isRedirectUriPermitted', () => {
         ).toBe(true);
     });
 
+    it('allows a native app private-use scheme registered exactly', () => {
+        expect(
+            isRedirectUriPermitted(
+                ['cursor://anysphere.cursor-mcp/oauth/callback'],
+                'cursor://anysphere.cursor-mcp/oauth/callback',
+            ),
+        ).toBe(true);
+    });
+
+    it('rejects a private-use scheme URI whose path differs from the registered one', () => {
+        expect(isRedirectUriPermitted(['com.example.app:/oauth'], 'com.example.app:/stolen')).toBe(false);
+        expect(
+            isRedirectUriPermitted(
+                ['cursor://anysphere.cursor-mcp/oauth/callback'],
+                'cursor://anysphere.cursor-mcp/evil',
+            ),
+        ).toBe(false);
+    });
+
     it('returns false for empty registered list', () => {
         expect(isRedirectUriPermitted([], 'http://127.0.0.1:1234/callback')).toBe(false);
     });

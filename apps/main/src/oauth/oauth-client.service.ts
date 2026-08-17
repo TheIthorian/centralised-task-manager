@@ -47,6 +47,8 @@ export type RegisterClientOutput = {
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '[::1]', 'localhost']);
 
+const WEB_SCHEMES = new Set(['http:', 'https:']);
+
 /**
  * Returns true if requestedUri is permitted by the registered list.
  * For loopback hosts (127.0.0.1, ::1, localhost) the port is ignored per RFC 8252 §7.3.
@@ -73,6 +75,11 @@ export function isRedirectUriPermitted(registeredUris: string[], requestedUri: s
         }
 
         if (reg.protocol !== requested.protocol) return false;
+
+        // A private-use scheme carries no authority to anchor the comparison: `myapp:/a` and
+        // `myapp:/b` differ only in their path, so the whole URI has to match.
+        if (!WEB_SCHEMES.has(requested.protocol)) return reg.href === requested.href;
+
         if (reg.hostname !== requested.hostname) return false;
 
         if (!isLoopback && reg.port !== requested.port) return false;
@@ -209,7 +216,10 @@ function redirectHostsOf(redirectUris: string[]): string[] {
     for (const uri of redirectUris) {
         if (!URL.canParse(uri)) continue;
 
-        hosts.add(new URL(uri).host);
+        const url = new URL(uri);
+
+        // A private-use scheme often carries no authority, and a blank entry tells a user nothing.
+        hosts.add(url.host || url.protocol);
     }
 
     return [...hosts];

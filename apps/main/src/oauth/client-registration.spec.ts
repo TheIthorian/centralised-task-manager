@@ -18,6 +18,24 @@ describe('Dynamic client registration', () => {
         await app.close();
     });
 
+    it('registers a native app that redirects to its own private-use scheme', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/.well-known/oauth-client',
+            payload: {
+                client_name: 'Cursor',
+                redirect_uris: [
+                    'cursor://anysphere.cursor-mcp/oauth/callback',
+                    'https://www.cursor.com/agents/mcp/oauth/callback',
+                    'http://localhost:8787/callback',
+                ],
+            },
+        });
+
+        expect(res.statusCode).toBe(201);
+        expect(JSON.parse(res.body).redirect_uris).toContain('cursor://anysphere.cursor-mcp/oauth/callback');
+    });
+
     it('POST /.well-known/oauth-client registers a public client', async () => {
         const res = await app.inject({
             method: 'POST',
@@ -135,9 +153,10 @@ describe('Dynamic client registration', () => {
         ['javascript scheme', { client_name: 'x', redirect_uris: ['javascript:alert(1)'] }],
         ['data scheme', { client_name: 'x', redirect_uris: ['data:text/html,hi'] }],
         ['a websocket scheme', { client_name: 'x', redirect_uris: ['ws://example.com/cb'] }],
-        ['a private-use scheme', { client_name: 'x', redirect_uris: ['com.example.app:/cb'] }],
         ['http on a non-loopback host', { client_name: 'x', redirect_uris: ['http://evil.example.com/cb'] }],
         ['a fragment', { client_name: 'x', redirect_uris: ['https://example.com/cb#frag'] }],
+        ['a file scheme', { client_name: 'x', redirect_uris: ['file:///etc/passwd'] }],
+        ['a scheme with no destination', { client_name: 'x', redirect_uris: ['myapp:'] }],
         ['a relative uri', { client_name: 'x', redirect_uris: ['/callback'] }],
         [
             'too many redirect_uris',
@@ -187,6 +206,16 @@ describe('Dynamic client registration', () => {
         const res = await app.inject({ method: 'POST', url: '/.well-known/oauth-client', payload });
 
         expect(res.statusCode).toBe(400);
+    });
+
+    it('POST /.well-known/oauth-client accepts a hostless private-use scheme', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/.well-known/oauth-client',
+            payload: { client_name: 'Native App', redirect_uris: ['com.example.app:/oauth/callback'] },
+        });
+
+        expect(res.statusCode).toBe(201);
     });
 
     it('POST /.well-known/oauth-client accepts http on loopback hosts', async () => {

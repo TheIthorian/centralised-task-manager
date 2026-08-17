@@ -2,7 +2,30 @@ import { z } from 'zod';
 import { createZodDto } from '@ctm/nest-common';
 import type { RegisterClientInput } from '../oauth-client.service.js';
 
-const ALLOWED_REDIRECT_SCHEMES = new Set(['http:', 'https:']);
+const WEB_REDIRECT_SCHEMES = new Set(['http:', 'https:']);
+
+/**
+ * Schemes a browser or an OS resolves to something other than an app: they would turn a redirect
+ * into script execution or a file read. Everything else is treated as a native app's private-use
+ * scheme (RFC 8252 §7.1), which is how a desktop MCP client receives its callback.
+ */
+const FORBIDDEN_REDIRECT_SCHEMES = new Set([
+    'javascript:',
+    'data:',
+    'vbscript:',
+    'file:',
+    'filesystem:',
+    'blob:',
+    'about:',
+    'mailto:',
+    'tel:',
+    'ftp:',
+    'ws:',
+    'wss:',
+]);
+
+/** Matches a scheme that could be a private-use one, per RFC 3986 §3.1. */
+const PRIVATE_USE_SCHEME = /^[a-z][a-z0-9+.-]*:$/;
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '[::1]', '::1', 'localhost']);
 
@@ -44,12 +67,15 @@ export const registerClientSchema = z.object({
     redirect_uris: z
         .array(
             z.string().min(1).max(MAX_REDIRECT_URI_LENGTH).refine(isRegisterableRedirectUri, {
-                message: 'must be an http or https URI with no fragment, and must not use http on a non-loopback host',
+                message:
+                    'must be an https URI, an http URI on a loopback host, or a native app private-use scheme, with no fragment',
             }),
         )
         .min(1)
         .max(MAX_REDIRECT_URIS)
-        .describe('Absolute URIs with no fragment. Plain http is accepted only for loopback hosts.'),
+        .describe(
+            'Absolute URIs with no fragment. Plain http is accepted only for loopback hosts. A native app may register a private-use scheme such as myapp://callback.',
+        ),
     grant_types: z.array(z.enum(SUPPORTED_GRANT_TYPES)).max(SUPPORTED_GRANT_TYPES.length).optional(),
     response_types: z.array(z.enum(SUPPORTED_RESPONSE_TYPES)).max(SUPPORTED_RESPONSE_TYPES.length).optional(),
     scopes: z.array(z.string().min(1).max(100)).max(32).optional(),
@@ -74,8 +100,11 @@ export class RegisterClientDto extends createZodDto<RegisterClientInput>({
 
 /**
  * Validates a single registered redirect URI.
- * Plain `http:` is allowed only for loopback hosts, so a dynamically registered client
- * cannot point users at a cleartext third-party host (RFC 8252 §7.3).
+ *
+ * `https:` is unrestricted, plain `http:` is allowed only for loopback hosts so a dynamically
+ * registered client cannot point users at a cleartext third-party host (RFC 8252 §7.3), and a
+ * private-use scheme is accepted for native apps (RFC 8252 §7.1) unless the scheme is one a
+ * browser resolves itself.
  */
 export function isRegisterableRedirectUri(value: string): boolean {
     let url: URL;
@@ -86,14 +115,19 @@ export function isRegisterableRedirectUri(value: string): boolean {
         return false;
     }
 
-    if (!ALLOWED_REDIRECT_SCHEMES.has(url.protocol)) return false;
-
     // RFC 6749 §3.1.2: the redirection endpoint must not include a fragment.
     if (url.hash.length > 0) return false;
 
-    if (url.protocol === 'http:' && !LOOPBACK_HOSTS.has(url.hostname)) return false;
+    if (WEB_REDIRECT_SCHEMES.has(url.protocol)) {
+        return url.protocol === 'https:' || LOOPBACK_HOSTS.has(url.hostname);
+    }
 
-    return true;
+    if (FORBIDDEN_REDIRECT_SCHEMES.has(url.protocol)) return false;
+
+    if (!PRIVATE_USE_SCHEME.test(url.protocol)) return false;
+
+    // `scheme:` on its own names no destination, so it cannot be a callback.
+    return url.href.length > url.protocol.length;
 }
 
 /** Validates a client metadata URI that will be shown to a user (`logo_uri`, `client_uri`, …). */
