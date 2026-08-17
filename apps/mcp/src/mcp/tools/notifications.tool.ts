@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { ToolRegistry } from '../protocol/tool-registry.js';
 import { z } from 'zod';
 import type { CtmApiClient } from '@ctm/api-client';
 
@@ -8,9 +8,9 @@ const channelPrefsSchema = z.object({
     email: z.boolean().optional(),
 });
 
-/** Register all notification-related MCP tools on the given server instance. */
-export function registerNotificationTools(server: McpServer, client: CtmApiClient): void {
-    server.registerTool(
+/** Register all notification-related MCP tools on the given registry. */
+export function registerNotificationTools({ registry, client }: { registry: ToolRegistry; client: CtmApiClient }): void {
+    registry.registerTool(
         'list_notifications',
         {
             description: 'List in-app notifications. Optionally filter to unread only.',
@@ -27,7 +27,7 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'mark_notification_read',
         {
             description: 'Mark a single notification as read by ID.',
@@ -40,7 +40,7 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'mark_all_notifications_read',
         {
             description: 'Mark all notifications as read for the current user.',
@@ -53,7 +53,7 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'get_notification_preferences',
         {
             description: 'Get notification preferences (per trigger and channel) for the current user.',
@@ -66,7 +66,7 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'update_notification_preferences',
         {
             description: 'Update notification preferences. Only provided fields are changed.',
@@ -86,7 +86,7 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'get_discord_status',
         {
             description: 'Get Discord connection status for the current user.',
@@ -99,7 +99,7 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'disconnect_discord',
         {
             description: 'Disconnect Discord from the current user account.',
@@ -112,7 +112,7 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'get_discord_connect_url',
         {
             description:
@@ -126,7 +126,7 @@ export function registerNotificationTools(server: McpServer, client: CtmApiClien
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'test_notification_channel',
         {
             description: 'Send a test notification via a channel to verify it is working (e.g. "discord", "email").',

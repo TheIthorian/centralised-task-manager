@@ -6,8 +6,11 @@ import { registerTaskTools } from './tools/tasks.tool.js';
 import { registerConnectorTools } from './tools/connectors.tool.js';
 import { registerNotificationTools } from './tools/notifications.tool.js';
 import { registerAppsTools } from './tools/apps.tool.js';
+import { ToolRegistry } from './protocol/tool-registry.js';
+import { StatelessDispatcher, type Implementation } from './protocol/dispatcher.js';
 import { appLogger } from '../logging/app-logger.js';
-import type { Logger } from '@ctm/logger';
+
+const SERVER_INFO: Implementation = { name: 'ctm-mcp', version: '1.0.0' };
 
 @Injectable()
 export class McpService {
@@ -15,45 +18,34 @@ export class McpService {
 
     constructor(private readonly config: ConfigService) {}
 
-    /** Create a fully-configured McpServer bound to the caller's access token. */
-    createServer(accessToken: string): McpServer {
+    /** Build the tool set available to the caller of this request. */
+    createToolRegistry(accessToken: string): ToolRegistry {
         const client = new CtmApiClient({
             baseUrl: this.config.getOrThrow<string>('CTM_API_BASE_URL'),
             accessToken,
         });
 
-        const server = new McpServer({ name: 'ctm-mcp', version: '1.0.0' });
+        const registry = new ToolRegistry(this.logger);
 
-        logToolFailures({ server, logger: this.logger });
+        registerTaskTools({ registry, client });
+        registerConnectorTools({ registry, client });
+        registerNotificationTools({ registry, client });
+        registerAppsTools({ registry, client });
 
-        registerTaskTools(server, client);
-        registerConnectorTools(server, client);
-        registerNotificationTools(server, client);
-        registerAppsTools(server, client);
+        return registry;
+    }
+
+    /** Dispatcher for revision 2026-07-28, which the MCP SDK does not yet implement. */
+    createDispatcher(registry: ToolRegistry): StatelessDispatcher {
+        return new StatelessDispatcher(registry, SERVER_INFO);
+    }
+
+    /** SDK server for the revisions that still negotiate through `initialize`. */
+    createServer(registry: ToolRegistry): McpServer {
+        const server = new McpServer(SERVER_INFO);
+
+        registry.applyTo(server);
 
         return server;
     }
-}
-
-/**
- * Log every tool failure before the SDK turns it into an error result. The client only ever sees
- * `error.message`, so without this a failed call leaves no trace of its cause on the server.
- */
-function logToolFailures({ server, logger }: { server: McpServer; logger: Logger }): void {
-    const register = server.registerTool.bind(server);
-
-    server.registerTool = ((name: string, config: unknown, handler: (...args: unknown[]) => unknown) =>
-        register(
-            name as never,
-            config as never,
-            (async (...args: unknown[]): Promise<unknown> => {
-                try {
-                    return await handler(...args);
-                } catch (error) {
-                    logger.error({ err: error, tool: name }, `MCP tool ${name} failed`);
-
-                    throw error;
-                }
-            }) as never,
-        )) as unknown as typeof server.registerTool;
 }

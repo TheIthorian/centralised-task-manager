@@ -1,10 +1,10 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { ToolRegistry } from '../protocol/tool-registry.js';
 import { z } from 'zod';
 import type { CtmApiClient } from '@ctm/api-client';
 
-/** Register all authorized-app MCP tools on the given server instance. */
-export function registerAppsTools(server: McpServer, client: CtmApiClient): void {
-    server.registerTool(
+/** Register all authorized-app MCP tools on the given registry. */
+export function registerAppsTools({ registry, client }: { registry: ToolRegistry; client: CtmApiClient }): void {
+    registry.registerTool(
         'list_authorized_apps',
         {
             description: 'List OAuth applications that the current user has authorized.',
@@ -17,7 +17,7 @@ export function registerAppsTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'revoke_authorized_app',
         {
             description: 'Revoke access for an authorized OAuth application by client ID.',

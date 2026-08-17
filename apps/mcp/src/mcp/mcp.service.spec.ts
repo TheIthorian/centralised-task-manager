@@ -31,30 +31,52 @@ describe('McpService', () => {
     });
 
     it('creates an McpServer with task and connector tools', () => {
-        const server = service.createServer('test-token');
+        const server = service.createServer(service.createToolRegistry('test-token'));
         expect(server).toBeInstanceOf(McpServer);
     });
 
+    it('registers the same tools on the SDK server as it lists to a 2026-07-28 client', async () => {
+        const registry = service.createToolRegistry('test-token');
+        const server = service.createServer(registry);
+
+        const listed = await listTools(server);
+
+        expect(listed).toEqual(registry.list().map((tool) => tool.name));
+    });
+
     it('logs the cause of a failing tool call and still surfaces it to the client', async () => {
-        const server = service.createServer('test-token');
+        const registry = service.createToolRegistry('test-token');
         const failure = new Error('upstream exploded');
 
-        server.registerTool('boom', { description: 'fails', inputSchema: { id: z.string() } }, () => {
+        registry.registerTool('boom', { description: 'fails', inputSchema: { id: z.string() } }, () => {
             throw failure;
         });
 
-        const result = await callTool({ server, name: 'boom' });
+        const result = await callTool({ server: service.createServer(registry), name: 'boom' });
 
         expect(result).toMatchObject({ isError: true, content: [{ type: 'text', text: 'upstream exploded' }] });
         expect(error).toHaveBeenCalledWith(expect.objectContaining({ err: failure, tool: 'boom' }), expect.any(String));
     });
 });
 
+async function listTools(server: McpServer): Promise<string[]> {
+    const client = await connect(server);
+    const { tools } = await client.listTools();
+
+    return tools.map((tool) => tool.name);
+}
+
 async function callTool({ server, name }: { server: McpServer; name: string }): Promise<unknown> {
+    const client = await connect(server);
+
+    return client.callTool({ name, arguments: { id: 'x' } });
+}
+
+async function connect(server: McpServer): Promise<Client> {
     const client = new Client({ name: 'test-client', version: '1.0.0' });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
 
-    return client.callTool({ name, arguments: { id: 'x' } });
+    return client;
 }

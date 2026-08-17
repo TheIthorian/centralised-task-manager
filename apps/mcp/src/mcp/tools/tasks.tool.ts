@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { ToolRegistry } from '../protocol/tool-registry.js';
 import { z } from 'zod';
 import type { CtmApiClient } from '@ctm/api-client';
 
@@ -15,9 +15,9 @@ const durationSchema = z.object({
 
 const relationTypeSchema = z.enum(['parent', 'child', 'next', 'previous', 'related']);
 
-/** Register all task-related MCP tools on the given server instance. */
-export function registerTaskTools(server: McpServer, client: CtmApiClient): void {
-    server.registerTool(
+/** Register all task-related MCP tools on the given registry. */
+export function registerTaskTools({ registry, client }: { registry: ToolRegistry; client: CtmApiClient }): void {
+    registry.registerTool(
         'list_tasks',
         {
             description: 'List tasks. Optionally filter by status or restrict to tasks updated on/after a date.',
@@ -36,7 +36,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'create_task',
         {
             description: 'Create a new task.',
@@ -59,7 +59,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'update_task',
         {
             description: 'Update an existing task by ID.',
@@ -84,7 +84,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'complete_task',
         {
             description: 'Mark a task as complete by ID.',
@@ -97,7 +97,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'delete_task',
         {
             description: 'Permanently delete a task by ID.',
@@ -110,7 +110,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'set_fuzzy_deadline',
         {
             description: 'Set a fuzzy deadline on a task.',
@@ -127,7 +127,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'get_task',
         {
             description: 'Get a single task by ID.',
@@ -140,7 +140,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'remove_fuzzy_deadline',
         {
             description: 'Remove the fuzzy deadline from a task by ID.',
@@ -153,7 +153,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'add_reminder',
         {
             description: 'Add a point-in-time reminder to a task.',
@@ -171,7 +171,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'remove_reminder',
         {
             description: 'Remove a reminder from a task by its zero-based index in the reminders array.',
@@ -187,7 +187,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'add_relation',
         {
             description:
@@ -205,7 +205,7 @@ export function registerTaskTools(server: McpServer, client: CtmApiClient): void
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'remove_relation',
         {
             description: 'Remove a typed relation between two tasks. The inverse relation is removed automatically.',

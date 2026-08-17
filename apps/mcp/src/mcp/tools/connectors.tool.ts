@@ -1,10 +1,10 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { ToolRegistry } from '../protocol/tool-registry.js';
 import { z } from 'zod';
 import type { CtmApiClient } from '@ctm/api-client';
 
-/** Register all connector-related MCP tools on the given server instance. */
-export function registerConnectorTools(server: McpServer, client: CtmApiClient): void {
-    server.registerTool(
+/** Register all connector-related MCP tools on the given registry. */
+export function registerConnectorTools({ registry, client }: { registry: ToolRegistry; client: CtmApiClient }): void {
+    registry.registerTool(
         'list_connectors',
         {
             description:
@@ -18,7 +18,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'get_connector_auth_url',
         {
             description: 'Get the OAuth authorisation URL to connect a task source (e.g. "todoist", "google").',
@@ -31,7 +31,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'disconnect_connector',
         {
             description: 'Disconnect a single connection by its connectionId (from list_connectors).',
@@ -44,7 +44,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'get_connector_health',
         {
             description: 'Health-check all connected task-sync sources for the current user.',
@@ -57,7 +57,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'sync_connector',
         {
             description: 'Trigger a pull-sync job for a connection (connectionId from list_connectors).',
@@ -70,7 +70,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'get_sync_job',
         {
             description: 'Get the current status of a sync job.',
@@ -86,7 +86,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'cancel_sync_job',
         {
             description: 'Cancel an in-progress sync job.',
@@ -102,7 +102,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'set_connection_details',
         {
             description:
@@ -121,7 +121,7 @@ export function registerConnectorTools(server: McpServer, client: CtmApiClient):
         },
     );
 
-    server.registerTool(
+    registry.registerTool(
         'list_notion_databases',
         {
             description: 'List Notion databases accessible via a Notion connection (connectionId from list_connectors).',

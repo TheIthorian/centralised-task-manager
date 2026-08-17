@@ -3,6 +3,9 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { McpService } from './mcp.service.js';
+import { negotiateProtocolVersion } from './protocol/negotiation.js';
+import { unsupportedProtocolVersionError } from './protocol/json-rpc.js';
+import { isPerRequestMetadataVersion, SUPPORTED_PROTOCOL_VERSIONS } from './protocol/versions.js';
 import type { JwtPayload } from '../auth/jwt.strategy.js';
 
 type AuthenticatedRequest = FastifyRequest & { user: JwtPayload };
@@ -15,17 +18,52 @@ export class McpController {
     @Post()
     @UseGuards(JwtAuthGuard)
     async post(@Req() req: AuthenticatedRequest, @Res() reply: FastifyReply): Promise<void> {
-        await this.handle(req, reply, req.body);
+        const negotiated = negotiateProtocolVersion(req.headers);
+
+        if (!negotiated.ok) {
+            await reply.status(400).send(
+                unsupportedProtocolVersionError({
+                    id: null,
+                    requested: negotiated.requested,
+                    supported: SUPPORTED_PROTOCOL_VERSIONS,
+                }),
+            );
+
+            return;
+        }
+
+        if (isPerRequestMetadataVersion(negotiated.version)) {
+            const registry = this.mcpService.createToolRegistry(bearerToken(req));
+            const dispatcher = this.mcpService.createDispatcher(registry);
+            const { status, body } = await dispatcher.dispatch({ headers: req.headers, body: req.body });
+
+            await (body === undefined ? reply.status(status).send() : reply.status(status).send(body));
+
+            return;
+        }
+
+        await this.handleWithSdk(req, reply, req.body);
     }
 
-    /** MCP Streamable HTTP — server-to-client SSE stream. */
+    /**
+     * MCP Streamable HTTP — server-to-client SSE stream, for the revisions that had one. The
+     * standalone GET stream was removed in 2026-07-28.
+     */
     @Get()
     @UseGuards(JwtAuthGuard)
     async get(@Req() req: AuthenticatedRequest, @Res() reply: FastifyReply): Promise<void> {
-        await this.handle(req, reply, undefined);
+        const negotiated = negotiateProtocolVersion(req.headers);
+
+        if (!negotiated.ok || isPerRequestMetadataVersion(negotiated.version)) {
+            await reply.status(405).send();
+
+            return;
+        }
+
+        await this.handleWithSdk(req, reply, undefined);
     }
 
-    private async handle(req: AuthenticatedRequest, reply: FastifyReply, body: unknown): Promise<void> {
+    private async handleWithSdk(req: AuthenticatedRequest, reply: FastifyReply, body: unknown): Promise<void> {
         // reply.raw bypasses Fastify's onSend hooks, so cors plugin headers never reach the wire.
         // Set them explicitly before the transport writes to reply.raw.
         const origin = req.headers.origin as string | undefined;
@@ -36,8 +74,8 @@ export class McpController {
             reply.raw.setHeader('Vary', 'Origin');
         }
 
-        const token = req.headers['authorization']?.slice(7) ?? '';
-        const server = this.mcpService.createServer(token);
+        const registry = this.mcpService.createToolRegistry(bearerToken(req));
+        const server = this.mcpService.createServer(registry);
         const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
         try {
@@ -47,4 +85,8 @@ export class McpController {
             await server.close();
         }
     }
+}
+
+function bearerToken(req: AuthenticatedRequest): string {
+    return req.headers['authorization']?.slice(7) ?? '';
 }
