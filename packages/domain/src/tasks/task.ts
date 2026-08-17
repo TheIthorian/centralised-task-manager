@@ -112,7 +112,7 @@ export class Task {
 
     /** Schedule a reminder. */
     addReminder(remindAt: Date): Task {
-        return this.with({ reminders: [...this.state.reminders, { remindAt, firedAt: null }] });
+        return this.with({ reminders: [...this.state.reminders, newReminder(remindAt)] });
     }
 
     /** Cancel a reminder by its position. Throws `ValidationError` when the index is out of range. */
@@ -146,6 +146,11 @@ export class Task {
     private with(changes: Partial<TaskState>): Task {
         return new Task({ ...this.state, ...changes });
     }
+}
+
+/** A freshly scheduled, not yet delivered reminder. */
+export function newReminder(remindAt: Date): Reminder {
+    return { remindAt, firedAt: null };
 }
 
 /** Both sides of a relation change, so a caller cannot persist one half and forget the other. */

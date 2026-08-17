@@ -2,7 +2,7 @@ import { NotFoundError, QuotaExceededError, ValidationError } from '@ctm/errors'
 import { runInTransaction, type RelationType, type TaskDocument } from '@ctm/db';
 import { TaskConnectorName, type RemoteTask } from '@ctm/connectors';
 import { Types, type ClientSession, type Model } from 'mongoose';
-import { Task, relate, unrelate } from './task.js';
+import { Task, newReminder, relate, unrelate } from './task.js';
 import type { TaskId } from './ids.js';
 import type { Deadline, DueDate } from './deadline.js';
 import { MAX_TASKS_PER_USER } from './limits.js';
@@ -175,7 +175,7 @@ export class TasksService {
                     syncedAt: new Date(),
                 },
             ],
-            { session: session ?? undefined },
+            { session },
         );
 
         return created!;
@@ -211,7 +211,7 @@ export class TasksService {
             doc.set(Task.fromState(doc).withDeadline({ kind: 'exact', due }).toState());
         }
 
-        await doc.save({ session: session ?? undefined });
+        await doc.save({ session });
 
         return doc;
     }
@@ -235,7 +235,7 @@ export class TasksService {
         // Outbound sync (CTM → external source) is disabled; status changes are local-only.
         doc.set(Task.fromState(doc).withStatus(status).toState());
 
-        await doc.save({ session: session ?? undefined });
+        await doc.save({ session });
 
         return doc;
     }
@@ -277,7 +277,7 @@ export class TasksService {
 
         doc.set(task.withDeadline({ kind: 'none' }).toState());
 
-        await doc.save({ session: session ?? undefined });
+        await doc.save({ session });
 
         return doc;
     }
@@ -334,11 +334,15 @@ export class TasksService {
         remindAt: string;
         session?: ClientSession;
     }): Promise<{ remindAt: string; firedAt: string | null }> {
-        const doc = await this.findOne({ taskId, userId, session });
+        // $push rather than a read-modify-write: two reminders added at once cannot clobber
+        // each other, whether or not the caller supplied a session.
+        const doc = await this.taskModel.findOneAndUpdate(
+            { _id: taskId, userId: new Types.ObjectId(userId) },
+            { $push: { reminders: newReminder(new Date(remindAt)) } },
+            { new: true, session },
+        );
 
-        doc.set(Task.fromState(doc).addReminder(new Date(remindAt)).toState());
-
-        await doc.save({ session: session ?? undefined });
+        if (!doc) throw new NotFoundError('Task');
 
         const added = doc.reminders[doc.reminders.length - 1]!;
 
@@ -364,7 +368,7 @@ export class TasksService {
 
         doc.set(Task.fromState(doc).removeReminderAt(index).toState());
 
-        await doc.save({ session: session ?? undefined });
+        await doc.save({ session });
     }
 
     /** Pull-sync: upsert remote tasks into CTM. CTM-local changes win — any task where
@@ -512,7 +516,7 @@ export class TasksService {
 
         if (ops.length > 0) {
             // Cast needed: Mongoose typings don't expose the `timestamps` bulkWrite option
-            await this.taskModel.bulkWrite(ops, { timestamps: false, session: session ?? undefined } as Parameters<
+            await this.taskModel.bulkWrite(ops, { timestamps: false, session } as Parameters<
                 typeof this.taskModel.bulkWrite
             >[1]);
         }
@@ -586,7 +590,7 @@ export class TasksService {
 
         doc.set(Task.fromState(doc).withDeadline(deadline).toState());
 
-        await doc.save({ session: session ?? undefined });
+        await doc.save({ session });
 
         return doc;
     }
