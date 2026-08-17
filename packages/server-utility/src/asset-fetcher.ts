@@ -1,4 +1,5 @@
 import { lookup } from 'node:dns/promises';
+import { type DisposableStream, HttpClient, type StreamResponse } from '@ctm/http-client';
 import { isPublicUnicastAddress } from './ip-address.js';
 
 /** An asset that was fetched within the caller's limits. */
@@ -33,8 +34,8 @@ export type FetchAssetResult = { ok: true; asset: FetchedAsset } | { ok: false; 
 export type HostResolver = (hostname: string) => Promise<string[]>;
 
 export type AssetFetcherOptions = {
-    /** Injected so a test, or a caller with its own agent, can supply another implementation. */
-    fetchImpl?: typeof fetch;
+    /** Injected so a test, or a caller with its own headers or logging, can supply another. */
+    http?: HttpClient;
     resolveHost?: HostResolver;
     /** Defaults applied to every request; each one can be overridden per request. */
     defaults?: Partial<FetchAssetLimits>;
@@ -72,12 +73,12 @@ const DEFAULT_LIMITS: FetchAssetLimits = {
  * a hostile host cannot make the caller buffer an unbounded body.
  */
 export class AssetFetcher {
-    private readonly fetchImpl: typeof fetch;
+    private readonly http: HttpClient;
     private readonly resolveHost: HostResolver;
     private readonly defaults: FetchAssetLimits;
 
-    constructor({ fetchImpl = fetch, resolveHost = resolveHostAddresses, defaults }: AssetFetcherOptions = {}) {
-        this.fetchImpl = fetchImpl;
+    constructor({ http = new HttpClient({}), resolveHost = resolveHostAddresses, defaults }: AssetFetcherOptions = {}) {
+        this.http = http;
         this.resolveHost = resolveHost;
         this.defaults = { ...DEFAULT_LIMITS, ...defaults };
     }
@@ -85,50 +86,19 @@ export class AssetFetcher {
     /** Fetch one asset, or explain why it was refused. Never throws for a remote failure. */
     async fetchAsset(request: FetchAssetRequest): Promise<FetchAssetResult> {
         const limits: FetchAssetLimits = { ...this.defaults, ...stripUndefined(request) };
-        const response = await this.fetchFollowingRedirects({ uri: request.uri, limits });
-
-        if (!response.ok) return response;
-
-        const contentType = mediaType(response.response.headers.get('content-type'));
-
-        if (limits.allowedContentTypes.length > 0 && !limits.allowedContentTypes.includes(contentType)) {
-            return { ok: false, rejection: AssetRejection.ContentTypeNotAllowed };
-        }
-
-        const declaredLength = Number(response.response.headers.get('content-length') ?? Number.NaN);
-
-        if (Number.isFinite(declaredLength) && declaredLength > limits.maxBytes) {
-            return { ok: false, rejection: AssetRejection.TooLarge };
-        }
-
-        const body = await readCappedBody({ response: response.response, maxBytes: limits.maxBytes });
-
-        if (!body.ok) return body;
-
-        return { ok: true, asset: { body: body.body, contentType, finalUri: response.uri } };
-    }
-
-    private async fetchFollowingRedirects({
-        uri,
-        limits,
-    }: {
-        uri: string;
-        limits: FetchAssetLimits;
-    }): Promise<{ ok: true; response: Response; uri: string } | { ok: false; rejection: AssetRejection }> {
-        let current = uri;
+        let current = request.uri;
 
         for (let hop = 0; hop <= limits.maxRedirects; hop++) {
             const rejection = await this.checkUri({ uri: current, limits });
 
             if (rejection) return { ok: false, rejection };
 
-            let response: Response;
+            let response: StreamResponse;
 
             try {
-                response = await this.fetchImpl(current, {
-                    method: 'GET',
-                    redirect: 'manual',
-                    signal: AbortSignal.timeout(limits.timeoutMs),
+                response = await this.http.getStream({
+                    url: current,
+                    timeoutMs: limits.timeoutMs,
                     headers: limits.allowedContentTypes.length > 0
                         ? { accept: limits.allowedContentTypes.join(', ') }
                         : {},
@@ -137,8 +107,10 @@ export class AssetFetcher {
                 return { ok: false, rejection: AssetRejection.Unreachable };
             }
 
+            using body = response.body;
+
             if (response.status >= 300 && response.status < 400) {
-                const location = response.headers.get('location');
+                const location = response.headers['location'];
 
                 if (!location) return { ok: false, rejection: AssetRejection.TooManyRedirects };
 
@@ -151,9 +123,25 @@ export class AssetFetcher {
                 continue;
             }
 
-            if (!response.ok) return { ok: false, rejection: AssetRejection.NotOk };
+            if (response.status < 200 || response.status >= 300) return { ok: false, rejection: AssetRejection.NotOk };
 
-            return { ok: true, response, uri: current };
+            const contentType = mediaType(response.headers['content-type']);
+
+            if (limits.allowedContentTypes.length > 0 && !limits.allowedContentTypes.includes(contentType)) {
+                return { ok: false, rejection: AssetRejection.ContentTypeNotAllowed };
+            }
+
+            const declaredLength = Number(response.headers['content-length'] ?? Number.NaN);
+
+            if (Number.isFinite(declaredLength) && declaredLength > limits.maxBytes) {
+                return { ok: false, rejection: AssetRejection.TooLarge };
+            }
+
+            const read = await readCappedBody({ stream: body, maxBytes: limits.maxBytes });
+
+            if (!read.ok) return read;
+
+            return { ok: true, asset: { body: read.body, contentType, finalUri: current } };
         }
 
         return { ok: false, rejection: AssetRejection.TooManyRedirects };
@@ -200,25 +188,23 @@ function stripUndefined(request: FetchAssetRequest): Partial<FetchAssetLimits> {
     return Object.fromEntries(entries) as Partial<FetchAssetLimits>;
 }
 
-function mediaType(header: string | null): string {
+function mediaType(header: string | undefined): string {
     return (header ?? '').split(';')[0]?.trim().toLowerCase() ?? '';
 }
 
 /** Reads the body, giving up as soon as it exceeds the cap rather than buffering all of it. */
 async function readCappedBody({
-    response,
+    stream,
     maxBytes,
 }: {
-    response: Response;
+    stream: DisposableStream;
     maxBytes: number;
 }): Promise<{ ok: true; body: Buffer } | { ok: false; rejection: AssetRejection }> {
-    if (!response.body) return { ok: true, body: Buffer.alloc(0) };
-
     const chunks: Buffer[] = [];
     let total = 0;
 
     try {
-        for await (const chunk of response.body) {
+        for await (const chunk of stream) {
             const buffer = Buffer.from(chunk);
 
             total += buffer.byteLength;

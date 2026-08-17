@@ -12,9 +12,13 @@
         "dev": "tsc -p tsconfig.build.json --watch"
     },
     "devDependencies": {
+        "@ctm/errors": "workspace:*",
         "@ctm/tsconfig": "workspace:*",
         "@types/node": "26.1.1",
         "typescript": "6.0.3",
         "vitest": "4.1.10"
+    },
+    "dependencies": {
+        "@ctm/http-client": "workspace:*"
     }
 }
