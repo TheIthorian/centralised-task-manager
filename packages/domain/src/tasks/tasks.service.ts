@@ -6,55 +6,15 @@ import { Task, relate, unrelate } from './task.js';
 import type { TaskId } from './ids.js';
 import type { Deadline, DueDate } from './deadline.js';
 import { MAX_TASKS_PER_USER } from './limits.js';
+import type {
+    CreateTaskInput,
+    ListTasksQuery,
+    UpdateTaskInput,
+    UpsertFromRemoteResult,
+} from './tasks.types.js';
 
 /** Source name reserved for tasks stored only in CTM (no external connector). */
 const LOCAL_SOURCE = 'local';
-
-/** Outcome of a pull-sync. `droppedOverQuota` counts remote tasks left unimported at the cap. */
-export type UpsertFromRemoteResult = {
-    synced: number;
-    skipped: number;
-    droppedOverQuota: number;
-};
-
-/** Filters and paging accepted by `list`, matching the API's query string. */
-export type ListTasksQuery = {
-    filter?: 'today' | 'upcoming' | 'done' | 'all';
-    status?: string;
-    source?: string;
-    fuzzy?: string;
-    surfaced?: boolean;
-    lastUpdatedFromDate?: string;
-    dueBefore?: string;
-    dueAfter?: string;
-    noDate?: boolean;
-    page?: number;
-    limit?: number;
-};
-
-/** Fields `create` accepts. Dates arrive as ISO strings, matching the wire format. */
-export type CreateTaskInput = {
-    source: string;
-    title: string;
-    description?: string | null;
-    priority?: 1 | 2 | 3 | 4;
-    locations?: { name: string; googleMapsUrl: string }[];
-    due?: { date: string; timezone?: string; recurrence?: string };
-    deadlineDate?: string;
-    duration?: { amount: number; unit: 'minute' | 'day' } | null;
-};
-
-/** Fields `update` accepts. Every field is optional; absent means "leave alone". */
-export type UpdateTaskInput = {
-    title?: string;
-    description?: string | null;
-    priority?: 1 | 2 | 3 | 4;
-    tags?: string[];
-    locations?: { name: string; googleMapsUrl: string }[];
-    due?: { date: string; timezone?: string; recurrence?: string };
-    deadlineDate?: string;
-    duration?: { amount: number; unit: 'minute' | 'day' } | null;
-};
 
 /** Task reads and writes. Framework-free: construct it with a model and call it from anywhere. */
 export class TasksService {
@@ -374,17 +334,13 @@ export class TasksService {
         remindAt: string;
         session?: ClientSession;
     }): Promise<{ remindAt: string; firedAt: string | null }> {
-        // A positional $push rather than a read-modify-write, so two reminders added at once
-        // cannot overwrite one another.
-        const task = await this.taskModel.findOneAndUpdate(
-            { _id: taskId, userId: new Types.ObjectId(userId) },
-            { $push: { reminders: { remindAt: new Date(remindAt), firedAt: null } } },
-            { new: true, session: session ?? undefined },
-        );
+        const doc = await this.findOne({ taskId, userId, session });
 
-        if (!task) throw new NotFoundError('Task');
+        doc.set(Task.fromState(doc).addReminder(new Date(remindAt)).toState());
 
-        const added = task.reminders[task.reminders.length - 1]!;
+        await doc.save({ session: session ?? undefined });
+
+        const added = doc.reminders[doc.reminders.length - 1]!;
 
         return {
             remindAt: added.remindAt.toISOString(),

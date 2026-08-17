@@ -13,8 +13,6 @@ import { appLogger } from '../logging/app-logger.js';
     controllers: [TasksController],
     providers: [
         {
-            // TasksService is a plain class so it stays callable outside Nest; the app decides
-            // which model, and therefore which connection, it runs against.
             provide: TasksService,
             inject: [getModelToken(Task.name)],
             useFactory: (taskModel: Model<TaskDocument>): TasksService =>
