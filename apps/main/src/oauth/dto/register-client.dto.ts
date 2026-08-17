@@ -37,8 +37,8 @@ export const MAX_CONTACT_LENGTH = 254;
 
 const DISPLAY_URI_MESSAGE = 'must be an absolute https URI with no fragment';
 
-const SUPPORTED_GRANT_TYPES = ['authorization_code', 'refresh_token'] as const;
-const SUPPORTED_RESPONSE_TYPES = ['code'] as const;
+export const SUPPORTED_GRANT_TYPES = ['authorization_code', 'refresh_token'] as const;
+export const SUPPORTED_RESPONSE_TYPES = ['code'] as const;
 
 /**
  * Display metadata a client declares about itself. Unlike `redirect_uris` there is no loopback

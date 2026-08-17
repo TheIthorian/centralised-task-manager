@@ -77,6 +77,45 @@ describe('ClientIdMetadataService', () => {
         expect(requested).toEqual([]);
     });
 
+    it('keeps a document that declares grants this server does not implement', async () => {
+        const clientId = documentUrl();
+
+        result = jsonAsset({
+            clientId,
+            body: {
+                client_id: clientId,
+                client_name: 'Claude',
+                client_uri: 'https://claude.ai',
+                redirect_uris: ['https://claude.ai/api/mcp/auth_callback'],
+                grant_types: ['authorization_code', 'refresh_token', 'urn:ietf:params:oauth:grant-type:jwt-bearer'],
+                response_types: ['code'],
+                token_endpoint_auth_method: 'none',
+            },
+        });
+
+        expect(await service.resolve({ clientId })).toMatchObject({
+            clientName: 'Claude',
+            grantTypes: ['authorization_code', 'refresh_token'],
+            responseTypes: ['code'],
+        });
+    });
+
+    it('refuses a document that declares no grant type this server can honour', async () => {
+        const clientId = documentUrl();
+
+        result = jsonAsset({
+            clientId,
+            body: {
+                client_id: clientId,
+                client_name: 'Machine App',
+                redirect_uris: ['https://app.example.com/cb'],
+                grant_types: ['client_credentials'],
+            },
+        });
+
+        expect(await service.resolve({ clientId })).toBeNull();
+    });
+
     it('refuses a document whose client_id is not the URL it was fetched from', async () => {
         const clientId = documentUrl();
 

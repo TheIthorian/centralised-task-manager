@@ -5,7 +5,12 @@ import { OAuthClient, OAuthClientRegistration, type OAuthClientDocument } from '
 import { AssetFetcher } from '@ctm/server-utility';
 import { appLogger } from '../logging/app-logger.js';
 import { ClientLogoService } from './client-logo.service.js';
-import { clientIdMetadataSchema, type ClientIdMetadata } from './client-id-metadata.schema.js';
+import {
+    clientIdMetadataSchema,
+    supportedGrantTypes,
+    supportedResponseTypes,
+    type ClientIdMetadata,
+} from './client-id-metadata.schema.js';
 
 /** A document larger than this is not a client's metadata, whatever else it is. */
 export const MAX_METADATA_BYTES = 64 * 1024;
@@ -80,6 +85,23 @@ export class ClientIdMetadataService {
             return null;
         }
 
+        const { grant_types: grantTypes, response_types: responseTypes } = parsed.metadata;
+
+        if (!supportedGrantTypes(grantTypes).includes('authorization_code')) {
+            this.logger.warn({ clientId, grantTypes }, 'Client ID metadata document declares no usable grant type');
+
+            return null;
+        }
+
+        if (!supportedResponseTypes(responseTypes).includes('code')) {
+            this.logger.warn(
+                { clientId, responseTypes },
+                'Client ID metadata document declares no usable response type',
+            );
+
+            return null;
+        }
+
         return { metadata: parsed.metadata, ttlMs: cacheTtlMs(result.asset.headers['cache-control']) };
     }
 
@@ -100,8 +122,10 @@ export class ClientIdMetadataService {
                 $set: {
                     clientName: metadata.client_name,
                     redirectUris: metadata.redirect_uris,
-                    grantTypes: metadata.grant_types ?? ['authorization_code'],
-                    responseTypes: metadata.response_types ?? ['code'],
+                    // Only what this server can actually honour, so the stored client never claims
+                    // a grant the token endpoint would refuse.
+                    grantTypes: supportedGrantTypes(metadata.grant_types),
+                    responseTypes: supportedResponseTypes(metadata.response_types),
                     scopes: metadata.scopes ?? ['openid', 'email', 'profile'],
                     isDynamic: true,
                     registrationType: OAuthClientRegistration.ClientIdMetadataDocument,
