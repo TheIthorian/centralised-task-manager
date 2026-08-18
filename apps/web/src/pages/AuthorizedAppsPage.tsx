@@ -162,11 +162,12 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
 
             {declared.length > 0 && (
                 <div className="border-t border-line/20 pt-2">
-                    <p className="text-xs text-muted font-medium mb-1">
-                        {app.isVerified
-                            ? t('authorizedApps.declared.verifiedLabel')
-                            : t('authorizedApps.declared.unverifiedLabel')}
-                    </p>
+                    {/* Only worth saying when it is a caveat; a verified app just shows its details. */}
+                    {!app.isVerified && (
+                        <p className="text-xs text-muted font-medium mb-1">
+                            {t('authorizedApps.declared.unverifiedLabel')}
+                        </p>
+                    )}
 
                     <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
                         {declared.map((entry) => (

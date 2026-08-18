@@ -290,11 +290,10 @@
         "logoAlt": "Logo declared by {{name}}",
         "verified": "Verified",
         "unverified": "Unverified",
-        "verifiedTitle": "This server confirmed who publishes this app.",
-        "unverifiedTitle": "This app registered itself; its name has not been checked.",
+        "verifiedTitle": "We've confirmed this app's identity.",
+        "unverifiedTitle": "We haven't confirmed this app's identity. That is normal for smaller apps, but revoke it if you do not recognise it.",
         "declared": {
-            "unverifiedLabel": "Declared by this app. Not verified.",
-            "verifiedLabel": "Declared by this app, in the metadata published at its verified address.",
+            "unverifiedLabel": "The app supplied these details itself.",
             "website": "Website",
             "terms": "Terms",
             "privacy": "Privacy",
@@ -332,7 +331,7 @@
             "failed": "Something went wrong. Please try again.",
             "unverified": {
                 "title": "Unverified app",
-                "body": "This app registered itself and is not on this server's list of trusted apps, so its name is its own claim and nobody has checked it. Only continue if you started this.",
+                "body": "We have not confirmed who publishes this app, which is common and not in itself a problem. Only continue if you started this.",
                 "hostsLabel": "It will send you to"
             },
             "scopes": {

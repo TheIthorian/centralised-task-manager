@@ -61,13 +61,13 @@ describe('AuthorizedAppsPage', () => {
         expect(await screen.findByText('Unverified')).toBeInTheDocument();
     });
 
-    it('does not call a verified app\'s declared metadata unverified', async () => {
+    it('drops the caveat about an app\'s own metadata once it is verified', async () => {
         mockApi.getAuthorizedApps.mockResolvedValue([{ ...appWithMetadata, isVerified: true }]);
 
         render(<AuthorizedAppsPage />, { wrapper });
 
-        expect(await screen.findByText(/in the metadata published at its verified address/i)).toBeInTheDocument();
-        expect(screen.queryByText('Declared by this app. Not verified.')).not.toBeInTheDocument();
+        expect(await screen.findByText('https://example.com')).toBeInTheDocument();
+        expect(screen.queryByText(/the app supplied these details itself/i)).not.toBeInTheDocument();
     });
 
     it('shows the metadata an app declared about itself', async () => {
@@ -120,6 +120,6 @@ describe('AuthorizedAppsPage', () => {
         render(<AuthorizedAppsPage />, { wrapper });
 
         expect(await screen.findByText('Bare App')).toBeInTheDocument();
-        expect(screen.queryByText('Declared by this app. Not verified.')).not.toBeInTheDocument();
+        expect(screen.queryByText(/the app supplied these details itself/i)).not.toBeInTheDocument();
     });
 });
