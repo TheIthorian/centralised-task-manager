@@ -1,27 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import { ConfigService } from '@nestjs/config';
 import { OAuthClientRegistration, type OAuthClientDocument } from '@ctm/db';
-import { ClientTrustService, parseTrustedOrigins } from './client-trust.service.js';
+import { ClientTrustService, parseTrustedClientIds } from './client-trust.service.js';
 
-describe('parseTrustedOrigins', () => {
-    it('splits, trims and lowercases, dropping empty entries', () => {
-        expect(parseTrustedOrigins(' Claude.ai , ,example.com ')).toEqual([
-            { host: 'claude.ai', pathPrefix: '' },
-            { host: 'example.com', pathPrefix: '' },
-        ]);
-    });
+const CLAUDE_CLIENT_ID = 'https://claude.ai/oauth/mcp-oauth-client-metadata';
 
-    it('separates a path prefix from the host, ignoring a scheme and a trailing slash', () => {
-        expect(parseTrustedOrigins('https://claude.ai/oauth/')).toEqual([{ host: 'claude.ai', pathPrefix: '/oauth' }]);
+describe('parseTrustedClientIds', () => {
+    it('splits and trims, dropping empty entries', () => {
+        expect(parseTrustedClientIds(` ${CLAUDE_CLIENT_ID} , ,https://example.com/client.json `)).toEqual(
+            new Set([CLAUDE_CLIENT_ID, 'https://example.com/client.json']),
+        );
     });
 
     it('reads an empty setting as trusting nobody', () => {
-        expect(parseTrustedOrigins('')).toEqual([]);
+        expect(parseTrustedClientIds('')).toEqual(new Set());
     });
 });
 
 describe('ClientTrustService', () => {
-    const trust = trustService('claude.ai');
+    const trust = trustService(CLAUDE_CLIENT_ID);
 
     it('vouches for a first-party client', () => {
         expect(
@@ -29,49 +26,22 @@ describe('ClientTrustService', () => {
         ).toBe(true);
     });
 
-    it('vouches for a metadata document on a trusted domain', () => {
-        expect(trust.isVerified(cimdClient('https://claude.ai/oauth/mcp-oauth-client-metadata'))).toBe(true);
+    it('vouches for a listed metadata document', () => {
+        expect(trust.isVerified(cimdClient(CLAUDE_CLIENT_ID))).toBe(true);
     });
 
-    it('vouches for a metadata document on a subdomain of a trusted domain', () => {
-        expect(trust.isVerified(cimdClient('https://app.claude.ai/client.json'))).toBe(true);
+    it('does not vouch for another document the same host serves', () => {
+        expect(trust.isVerified(cimdClient('https://claude.ai/public/artifacts/abc/client.json'))).toBe(false);
     });
 
-    it('does not vouch for a lookalike domain that merely ends in the trusted one', () => {
-        expect(trust.isVerified(cimdClient('https://notclaude.ai/client.json'))).toBe(false);
-        expect(trust.isVerified(cimdClient('https://claude.ai.evil.example/client.json'))).toBe(false);
+    it('does not vouch for a document on a lookalike host', () => {
+        expect(trust.isVerified(cimdClient('https://claude.ai.evil.example/oauth/mcp-oauth-client-metadata'))).toBe(
+            false,
+        );
     });
 
-    it('does not vouch for a metadata document on an untrusted domain', () => {
+    it('does not vouch for an unlisted document', () => {
         expect(trust.isVerified(cimdClient('https://someone-else.example/client.json'))).toBe(false);
-    });
-
-    describe("an entry that names a client's whole document URL", () => {
-        const exact = trustService('claude.ai/oauth/mcp-oauth-client-metadata');
-
-        it('vouches for that document', () => {
-            expect(exact.isVerified(cimdClient('https://claude.ai/oauth/mcp-oauth-client-metadata'))).toBe(true);
-        });
-
-        it('does not vouch for another document on the same host', () => {
-            expect(exact.isVerified(cimdClient('https://claude.ai/oauth/someone-elses-metadata'))).toBe(false);
-        });
-    });
-
-    describe('an entry that names a path', () => {
-        const scoped = trustService('claude.ai/oauth');
-
-        it('vouches for a document inside that path', () => {
-            expect(scoped.isVerified(cimdClient('https://claude.ai/oauth/mcp-oauth-client-metadata'))).toBe(true);
-        });
-
-        it('does not vouch for a document the host serves elsewhere', () => {
-            expect(scoped.isVerified(cimdClient('https://claude.ai/public/artifacts/abc/client.json'))).toBe(false);
-        });
-
-        it('stops the prefix at a path segment boundary', () => {
-            expect(scoped.isVerified(cimdClient('https://claude.ai/oauth-impostor/client.json'))).toBe(false);
-        });
     });
 
     it('never vouches for a client that registered itself', () => {
@@ -81,12 +51,12 @@ describe('ClientTrustService', () => {
     });
 
     it('vouches for nothing dynamic when the trust list is empty', () => {
-        expect(trustService('').isVerified(cimdClient('https://claude.ai/client.json'))).toBe(false);
+        expect(trustService('').isVerified(cimdClient(CLAUDE_CLIENT_ID))).toBe(false);
     });
 });
 
-function trustService(trustedDomains: string): ClientTrustService {
-    return new ClientTrustService({ getOrThrow: () => trustedDomains } as unknown as ConfigService);
+function trustService(trustedClientIds: string): ClientTrustService {
+    return new ClientTrustService({ getOrThrow: () => trustedClientIds } as unknown as ConfigService);
 }
 
 function cimdClient(clientId: string): OAuthClientDocument {

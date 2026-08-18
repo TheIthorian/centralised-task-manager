@@ -29,16 +29,14 @@ decides which without the caller having to care:
 
 `ClientTrustService` decides whether this server vouches for a client's identity, and the consent
 screen and Authorized Apps page render that decision. A first-party client is verified. A metadata
-document is verified when its `client_id` URL matches an entry in `CIMD_TRUSTED_DOMAINS`, since
-serving that document is a claim backed by control of the URL. Nothing else is: a dynamic
-registration proves only that someone can post to a public endpoint.
+document is verified when its `client_id` is listed in `CIMD_TRUSTED_CLIENT_IDS`, since serving that
+document is a claim backed by control of the URL. Nothing else is: a dynamic registration proves
+only that someone can post to a public endpoint.
 
-An entry is normally a client's whole `client_id` URL, which trusts exactly the document that URL
-serves. It can be widened to a path prefix (`example.com/oauth`) or to a bare host
-(`example.com`, which also covers subdomains), but only for a host that serves nothing its own
-users publish: `claude.ai` hosts both Claude's metadata document and published Artifacts, and a
-host-only entry cannot tell them apart. A client that moves its document loses the badge until an
-operator updates the list, which is a visible warning rather than a failed authorization.
+Entries are whole `client_id` URLs, compared exactly. A client that moves its document loses the
+badge until an operator updates the list, which is a visible warning rather than a failed
+authorization. Trusting a host instead would vouch for every document it serves: `claude.ai` hosts
+both Claude's metadata document and published Artifacts, and a host cannot tell them apart.
 
 The trust list gates display, not access. An unlisted client still authorizes; its consent screen
 carries the unverified-app warning naming the hosts the user is about to be sent to. Verification is
