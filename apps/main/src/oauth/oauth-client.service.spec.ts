@@ -6,6 +6,9 @@ import { isRedirectUriPermitted, OAuthClientService, UNUSED_CLIENT_TTL_DAYS } fr
 import { OAuthClient, OAuthClientSchema, type OAuthClientDocument } from '@ctm/db';
 import { AssetFetcher } from '@ctm/server-utility';
 import { ClientLogoService } from './client-logo.service.js';
+import { ClientIdMetadataService } from './client-id-metadata.service.js';
+import { ConfigService } from '@nestjs/config';
+import { ClientTrustService } from './client-trust.service.js';
 
 describe('isRedirectUriPermitted', () => {
     it('exact-matches non-loopback URIs', () => {
@@ -85,6 +88,9 @@ describe('OAuthClientService unused-client reaping', () => {
             providers: [
                 OAuthClientService,
                 ClientLogoService,
+                ClientIdMetadataService,
+                ClientTrustService,
+                { provide: ConfigService, useValue: { getOrThrow: (): string => '' } },
                 { provide: AssetFetcher, useFactory: (): AssetFetcher => new AssetFetcher() },
             ],
         }).compile();

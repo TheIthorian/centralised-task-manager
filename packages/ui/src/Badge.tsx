@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-type BadgeVariant = 'priority' | 'source' | 'neutral' | 'warn';
+type BadgeVariant = 'priority' | 'source' | 'neutral' | 'accent' | 'warn';
 
 type BadgeProps = {
     variant: BadgeVariant;
@@ -16,6 +16,7 @@ export function Badge({ variant, children }: BadgeProps): React.JSX.Element {
                 variant === 'priority' && 'bg-warn-bg text-warn',
                 variant === 'source' && 'bg-nav-on-bg text-muted',
                 variant === 'neutral' && 'bg-nav-on-bg text-muted',
+                variant === 'accent' && 'bg-nav-on-bg text-accent',
                 variant === 'warn' && 'bg-warn-bg text-warn',
             )}
         >

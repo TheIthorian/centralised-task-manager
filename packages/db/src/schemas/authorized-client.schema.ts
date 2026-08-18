@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { OAuthClientRegistration } from './oauth-client.schema.js';
 
 /** Mongoose document type for AuthorizedClient. */
 export type AuthorizedClientDocument = HydratedDocument<AuthorizedClient>;
@@ -21,11 +22,11 @@ export class AuthorizedClient {
     scopes!: string[];
 
     /**
-     * Snapshot of the client's registration kind at grant time. Duplicated from `OAuthClient`
+     * Snapshot of how the client was registered at grant time. Duplicated from `OAuthClient`
      * because a dynamic client can be reaped by its TTL index while this link is still readable.
      */
-    @Prop({ type: Boolean, default: true })
-    isDynamic!: boolean;
+    @Prop({ type: String, enum: OAuthClientRegistration, default: OAuthClientRegistration.Dynamic })
+    registrationType!: OAuthClientRegistration;
 
     /** When the user first granted this client. Not moved by later re-authorizations. */
     @Prop({ type: Date, required: true })

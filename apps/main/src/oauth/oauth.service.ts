@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'node:crypto';
-import { AuthCode, type AuthCodeDocument, RefreshTokenGrant } from '@ctm/db';
+import { AuthCode, type AuthCodeDocument, OAuthClientRegistration, RefreshTokenGrant } from '@ctm/db';
 import { AuthorizedClientService } from './authorized-client.service.js';
 import { OAuthClientService } from './oauth-client.service.js';
 import { UsersService } from '../users/users.service.js';
@@ -189,7 +189,7 @@ export class OAuthService {
             userId,
             clientId,
             scopes,
-            isDynamic: client?.isDynamic ?? true,
+            registrationType: client?.registrationType ?? OAuthClientRegistration.Dynamic,
         });
     }
 }

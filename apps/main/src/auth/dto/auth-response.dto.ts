@@ -22,6 +22,9 @@ export class AuthorizedAppDto implements IAuthorizedAppDto {
     authorizedAt!: string;
     type!: 'oauth';
 
+    /** Whether this server vouches for the app's identity, or is only repeating its own claim. */
+    isVerified!: boolean;
+
     /** Path on this origin serving the re-encoded copy of the client's declared logo. */
     logoPath?: string;
 

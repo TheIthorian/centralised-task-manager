@@ -68,7 +68,7 @@ export class AuthClient {
 
     /** Revoke access for an authorized OAuth app. */
     async revokeAuthorizedApp({ clientId }: RevokeAuthorizedAppParams): Promise<void> {
-        await this.http.request<void>({ method: 'DELETE', path: `/auth/me/authorized-apps/${clientId}` });
+        await this.http.request<void>({ method: 'DELETE', path: `/auth/me/authorized-apps/${encodeURIComponent(clientId)}` });
     }
 
     /** Public metadata for an OAuth client, for a consent screen to describe who is asking. */

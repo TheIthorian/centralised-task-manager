@@ -16,7 +16,9 @@ import {
     UpdateOAuthClientDto,
 } from './dto/oauth-client.dto.js';
 
-const clientIdSchema = z.string().min(1).max(200);
+// A Client ID Metadata Document identifies its client by URL, so the bound has to leave room for
+// one. Matches the bound apps/main applies at the authorization endpoint.
+const clientIdSchema = z.string().min(1).max(512);
 
 @Controller('oauth-clients')
 export class OAuthClientsController {

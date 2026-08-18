@@ -120,7 +120,7 @@ describe('OAuthConsentPage', () => {
             mockApi.getOAuthClientInfo.mockResolvedValue({
                 clientId: 'client_abc',
                 clientName: 'Google Tasks (Official)',
-                isDynamic: true,
+                isVerified: false,
                 redirectHosts: ['tasks-officiaI.example.com'],
             });
 
@@ -134,7 +134,7 @@ describe('OAuthConsentPage', () => {
             mockApi.getOAuthClientInfo.mockResolvedValue({
                 clientId: 'client_abc',
                 clientName: 'Claude',
-                isDynamic: true,
+                isVerified: false,
                 redirectHosts: ['claude.ai'],
             });
 
@@ -143,11 +143,11 @@ describe('OAuthConsentPage', () => {
             expect(await screen.findByText(/claude is requesting access/i)).toBeInTheDocument();
         });
 
-        it('shows no warning for a client the operator configured', async () => {
+        it('shows no warning for a client this server vouches for', async () => {
             mockApi.getOAuthClientInfo.mockResolvedValue({
                 clientId: 'client_abc',
                 clientName: 'CTM MCP Server',
-                isDynamic: false,
+                isVerified: true,
                 redirectHosts: ['mcp.example.com'],
             });
 

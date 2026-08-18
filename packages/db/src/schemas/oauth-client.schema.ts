@@ -19,6 +19,16 @@ export class OAuthClientLogo {
 
 export const OAuthClientLogoSchema = SchemaFactory.createForClass(OAuthClientLogo);
 
+/** How a client came to be known to this authorization server. */
+export enum OAuthClientRegistration {
+    /** Shipped by this project and upserted at boot. */
+    FirstParty = 'first_party',
+    /** Registered itself through RFC 7591 dynamic client registration. */
+    Dynamic = 'dynamic',
+    /** Identified by an https URL resolved to a Client ID Metadata Document. */
+    ClientIdMetadataDocument = 'cimd',
+}
+
 @Schema({ timestamps: true })
 export class OAuthClient {
     @Prop({ type: String, required: true, unique: true })
@@ -41,6 +51,16 @@ export class OAuthClient {
 
     @Prop({ type: Boolean, default: true })
     isDynamic!: boolean;
+
+    @Prop({ type: String, enum: OAuthClientRegistration, default: OAuthClientRegistration.Dynamic })
+    registrationType!: OAuthClientRegistration;
+
+    /**
+     * When the cached copy of a Client ID Metadata Document stops being usable and has to be
+     * fetched again. Absent for every other kind of client.
+     */
+    @Prop({ type: Date })
+    metadataExpiresAt?: Date;
 
     // RFC 7591 §2 display metadata, self-declared by the client and never verified by this server.
 

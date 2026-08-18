@@ -8,6 +8,8 @@ export type FetchedAsset = {
     contentType: string;
     /** The URI the bytes actually came from, which differs from the request after a redirect. */
     finalUri: string;
+    /** Response headers, for callers that cache what they fetched. */
+    headers: Record<string, string>;
 };
 
 /** Why a fetch produced no asset. Callers decide which of these are worth reporting. */
@@ -141,7 +143,7 @@ export class AssetFetcher {
 
             if (!read.ok) return read;
 
-            return { ok: true, asset: { body: read.body, contentType, finalUri: current } };
+            return { ok: true, asset: { body: read.body, contentType, finalUri: current, headers: response.headers } };
         }
 
         return { ok: false, rejection: AssetRejection.TooManyRedirects };

@@ -26,6 +26,7 @@ const appWithMetadata: AuthorizedAppDto = {
     policyUri: 'https://example.com/privacy',
     contacts: ['ops@example.com'],
     softwareId: 'example-client',
+    isVerified: false,
 };
 
 function wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -41,6 +42,23 @@ function wrapper({ children }: { children: React.ReactNode }): React.JSX.Element
 describe('AuthorizedAppsPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+    });
+
+    it('marks an app this server vouches for as verified', async () => {
+        mockApi.getAuthorizedApps.mockResolvedValue([{ ...appWithMetadata, isVerified: true }]);
+
+        render(<AuthorizedAppsPage />, { wrapper });
+
+        expect(await screen.findByText('Verified')).toBeInTheDocument();
+        expect(screen.queryByText('Unverified')).not.toBeInTheDocument();
+    });
+
+    it('marks an app that registered itself as unverified', async () => {
+        mockApi.getAuthorizedApps.mockResolvedValue([appWithMetadata]);
+
+        render(<AuthorizedAppsPage />, { wrapper });
+
+        expect(await screen.findByText('Unverified')).toBeInTheDocument();
     });
 
     it('shows the metadata an app declared about itself', async () => {
@@ -86,6 +104,7 @@ describe('AuthorizedAppsPage', () => {
                 scopes: ['openid'],
                 authorizedAt: '2026-07-01T10:00:00.000Z',
                 type: 'oauth',
+                isVerified: false,
             } satisfies AuthorizedAppDto,
         ]);
 

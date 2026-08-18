@@ -16,7 +16,7 @@ import type { JwtPayload } from '../tokens/token-claims.js';
 import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
 import { RefreshRateLimit, StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 import { ValidatedBody, ValidatedParam } from '@ctm/nest-common';
-import { z } from 'zod';
+import { clientIdSchema } from '../oauth/client-id.js';
 
 interface AuthRequest {
     user: UserDocument;
@@ -170,7 +170,7 @@ export class AuthController {
     @UseGuards(JwtAuthGuard)
     async revokeAuthorizedApp(
         @Request() req: JwtRequest,
-        @ValidatedParam({ name: 'clientId', schema: z.string().min(1).max(128) }) clientId: string,
+        @ValidatedParam({ name: 'clientId', schema: clientIdSchema }) clientId: string,
     ): Promise<void> {
         await this.authorizedApps.revokeAuthorizedApp({ userId: req.user.sub, clientId });
     }

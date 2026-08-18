@@ -7,8 +7,8 @@ export class OAuthClientInfoDto implements IOAuthClientInfoDto {
     /** Self-declared by the client at registration, so unverified for a dynamic client. */
     clientName!: string;
 
-    /** True when the client registered itself through the public registration endpoint. */
-    isDynamic!: boolean;
+    /** True when this server vouches for the client's identity rather than taking its word. */
+    isVerified!: boolean;
 
     /** Distinct hosts of the client's registered redirect URIs, in registration order. */
     redirectHosts!: string[];

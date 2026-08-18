@@ -3,7 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AuthorizedClientService } from './authorized-client.service.js';
-import { AuthorizedClient, AuthorizedClientSchema, type AuthorizedClientDocument } from '@ctm/db';
+import {
+    AuthorizedClient,
+    AuthorizedClientSchema,
+    type AuthorizedClientDocument,
+    OAuthClientRegistration,
+} from '@ctm/db';
 
 describe('AuthorizedClientService', () => {
     let module: TestingModule;
@@ -31,13 +36,18 @@ describe('AuthorizedClientService', () => {
         const userId = new Types.ObjectId().toHexString();
         const clientId = `client_grant_${Date.now()}`;
 
-        await service.recordAuthorization({ userId, clientId, scopes: ['openid', 'tasks:read'], isDynamic: true });
+        await service.recordAuthorization({
+            userId,
+            clientId,
+            scopes: ['openid', 'tasks:read'],
+            registrationType: OAuthClientRegistration.Dynamic,
+        });
 
         const grant = await authorizedClientModel.findOne({ userId, clientId });
 
         expect(grant).not.toBeNull();
         expect(grant!.scopes).toEqual(['openid', 'tasks:read']);
-        expect(grant!.isDynamic).toBe(true);
+        expect(grant!.registrationType).toBe(OAuthClientRegistration.Dynamic);
         expect(grant!.authorizedAt).toBeInstanceOf(Date);
     });
 
@@ -45,7 +55,12 @@ describe('AuthorizedClientService', () => {
         const userId = new Types.ObjectId().toHexString();
         const clientId = `client_idem_${Date.now()}`;
 
-        await service.recordAuthorization({ userId, clientId, scopes: ['openid'], isDynamic: true });
+        await service.recordAuthorization({
+            userId,
+            clientId,
+            scopes: ['openid'],
+            registrationType: OAuthClientRegistration.Dynamic,
+        });
 
         const first = await authorizedClientModel.findOne({ userId, clientId });
 
@@ -53,7 +68,7 @@ describe('AuthorizedClientService', () => {
             userId,
             clientId,
             scopes: ['openid', 'tasks:write'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
         });
 
         const grants = await authorizedClientModel.find({ userId, clientId });
@@ -68,8 +83,18 @@ describe('AuthorizedClientService', () => {
         const userId2 = new Types.ObjectId().toHexString();
         const clientId = `client_multiuser_${Date.now()}`;
 
-        await service.recordAuthorization({ userId: userId1, clientId, scopes: ['openid'], isDynamic: false });
-        await service.recordAuthorization({ userId: userId2, clientId, scopes: ['openid'], isDynamic: false });
+        await service.recordAuthorization({
+            userId: userId1,
+            clientId,
+            scopes: ['openid'],
+            registrationType: OAuthClientRegistration.FirstParty,
+        });
+        await service.recordAuthorization({
+            userId: userId2,
+            clientId,
+            scopes: ['openid'],
+            registrationType: OAuthClientRegistration.FirstParty,
+        });
 
         const grants = await authorizedClientModel.find({ clientId });
 
@@ -85,7 +110,7 @@ describe('AuthorizedClientService', () => {
             userId,
             clientId: older,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(Date.now() - 86400_000),
         });
 
@@ -93,7 +118,7 @@ describe('AuthorizedClientService', () => {
             userId,
             clientId: newer,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(),
         });
 
@@ -101,7 +126,7 @@ describe('AuthorizedClientService', () => {
             userId: new Types.ObjectId().toHexString(),
             clientId: `client_other_${Date.now()}`,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
         });
 
         const grants = await service.findByUser(userId);

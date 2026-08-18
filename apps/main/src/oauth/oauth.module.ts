@@ -16,6 +16,8 @@ import { FirstPartyClientsService } from './first-party-clients.service.js';
 import { OAuthService } from './oauth.service.js';
 import { OAuthClientService } from './oauth-client.service.js';
 import { ClientLogoService } from './client-logo.service.js';
+import { ClientIdMetadataService } from './client-id-metadata.service.js';
+import { ClientTrustService } from './client-trust.service.js';
 import { AuthorizedClientService } from './authorized-client.service.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import { OAuthController } from './oauth.controller.js';
@@ -46,6 +48,8 @@ import { UsersModule } from '../users/users.module.js';
         FirstPartyClientsService,
         OAuthClientService,
         ClientLogoService,
+        ClientIdMetadataService,
+        ClientTrustService,
         AuthorizedClientService,
         AuthorizedAppsService,
     ],

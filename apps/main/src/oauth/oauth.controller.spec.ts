@@ -4,7 +4,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { AppModule } from '../app.module.js';
-import { OAuthClient, type OAuthClientDocument } from '@ctm/db';
+import {
+    AuthorizedClient,
+    type AuthorizedClientDocument,
+    OAuthClient,
+    OAuthClientRegistration,
+    type OAuthClientDocument,
+} from '@ctm/db';
 import { createHash, randomBytes } from 'node:crypto';
 import { SCOPE_REGISTRY, filterScopes, groupScopesByResource } from './scopes.js';
 
@@ -21,6 +27,7 @@ const TEST_CLIENT_ID = 'client_oauth_spec';
 describe('OAuth endpoints', () => {
     let app: NestFastifyApplication;
     let jwt: string;
+    let userId: string;
     const email = `oauth+${Date.now()}@example.com`;
     const password = 'password123';
 
@@ -41,6 +48,7 @@ describe('OAuth endpoints', () => {
         await app.inject({ method: 'POST', url: '/auth/register', payload: { name: 'OAuth Tester', email, password } });
         const loginRes = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password } });
         jwt = JSON.parse(loginRes.body).accessToken;
+        userId = JSON.parse(loginRes.body).user.id;
     });
 
     afterAll(async () => {
@@ -422,7 +430,7 @@ describe('OAuth endpoints', () => {
             expect(JSON.parse(res.body)).toEqual({
                 clientId,
                 clientName: 'Google Tasks (Official)',
-                isDynamic: true,
+                isVerified: false,
                 redirectHosts: ['impostor.example.com'],
             });
         });
@@ -430,7 +438,10 @@ describe('OAuth endpoints', () => {
         it('reports an operator-configured client as verified', async () => {
             const clientId = await registerClient(['https://mcp.example.com/cb']);
             const model = app.get<Model<OAuthClientDocument>>(getModelToken(OAuthClient.name));
-            await model.updateOne({ clientId }, { $set: { isDynamic: false } });
+            await model.updateOne(
+                { clientId },
+                { $set: { isDynamic: false, registrationType: OAuthClientRegistration.FirstParty } },
+            );
 
             const res = await app.inject({
                 method: 'GET',
@@ -439,7 +450,7 @@ describe('OAuth endpoints', () => {
             });
 
             expect(res.statusCode).toBe(200);
-            expect(JSON.parse(res.body).isDynamic).toBe(false);
+            expect(JSON.parse(res.body).isVerified).toBe(true);
         });
 
         it('returns 404 for a client_id that was never registered', async () => {
@@ -491,6 +502,69 @@ describe('OAuth endpoints', () => {
                 ],
                 notifications: [{ scope: 'notifications:read', label: 'Read notifications', required: false }],
             });
+        });
+    });
+
+    describe('DELETE /auth/me/authorized-apps/:clientId', () => {
+        const clientModel = (): Model<OAuthClientDocument> =>
+            app.get<Model<OAuthClientDocument>>(getModelToken(OAuthClient.name));
+
+        async function grant({
+            clientId,
+            registrationType,
+        }: {
+            clientId: string;
+            registrationType: OAuthClientRegistration;
+        }): Promise<void> {
+            await clientModel().updateOne(
+                { clientId },
+                {
+                    $set: {
+                        clientName: 'Revoke Spec Client',
+                        redirectUris: ['http://127.0.0.1/cb'],
+                        registrationType,
+                    },
+                },
+                { upsert: true },
+            );
+
+            await app
+                .get<Model<AuthorizedClientDocument>>(getModelToken(AuthorizedClient.name))
+                .updateOne(
+                    { userId, clientId },
+                    { $set: { scopes: ['openid'] }, $setOnInsert: { authorizedAt: new Date() } },
+                    { upsert: true },
+                );
+        }
+
+        it('revokes a client whose id is a metadata document URL without deleting the client', async () => {
+            const clientId = `https://claude.ai/oauth/${Date.now()}/client.json`;
+
+            await grant({ clientId, registrationType: OAuthClientRegistration.ClientIdMetadataDocument });
+
+            const res = await app.inject({
+                method: 'DELETE',
+                url: `/auth/me/authorized-apps/${encodeURIComponent(clientId)}`,
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+
+            expect(res.statusCode).toBe(204);
+            expect(await clientModel().countDocuments({ clientId })).toBe(1);
+        });
+
+        it('deletes a self-registered client along with the last grant', async () => {
+            const clientId = `client_revoke_spec_${Date.now()}`;
+
+            await grant({ clientId, registrationType: OAuthClientRegistration.Dynamic });
+
+            const res = await app.inject({
+                method: 'DELETE',
+                url: `/auth/me/authorized-apps/${encodeURIComponent(clientId)}`,
+                headers: { authorization: `Bearer ${jwt}` },
+            });
+
+            expect(res.statusCode).toBe(204);
+            expect(await clientModel().countDocuments({ clientId })).toBe(0);
         });
     });
 });

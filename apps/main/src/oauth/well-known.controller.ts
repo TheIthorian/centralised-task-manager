@@ -28,6 +28,9 @@ export class WellKnownController {
     /**
      * RFC 7591 dynamic client registration endpoint.
      *
+     * Retained for clients that predate Client ID Metadata Documents; MCP deprecated dynamic
+     * client registration in its 2026-07-28 revision.
+     *
      * Public and unauthenticated by design, so it carries the strict rate limit: each call is an
      * unbounded insert. Registered clients are public and hold no credential; the authorization
      * code exchange is protected by PKCE.
@@ -67,6 +70,8 @@ export class WellKnownController {
             token_endpoint_auth_methods_supported: ['none'],
             code_challenge_methods_supported: [...CODE_CHALLENGE_METHODS],
             claims_supported: ['sub', 'email', 'iss', 'iat', 'exp'],
+            client_id_metadata_document_supported: true,
+            authorization_response_iss_parameter_supported: true,
         };
     }
 
@@ -87,6 +92,8 @@ export class WellKnownController {
             grant_types_supported: GRANT_TYPES_SUPPORTED,
             token_endpoint_auth_methods_supported: ['none'],
             code_challenge_methods_supported: [...CODE_CHALLENGE_METHODS],
+            client_id_metadata_document_supported: true,
+            authorization_response_iss_parameter_supported: true,
         };
     }
 

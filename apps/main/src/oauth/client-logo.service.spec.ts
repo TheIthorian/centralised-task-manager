@@ -50,6 +50,7 @@ describe('ClientLogoService', () => {
                     .toBuffer(),
                 contentType: 'image/jpeg',
                 finalUri: 'https://cdn.example.com/logo.jpg',
+                headers: {},
             },
         };
 
@@ -90,6 +91,7 @@ describe('ClientLogoService', () => {
                 body: Buffer.from('<svg onload="alert(1)" />'),
                 contentType: 'image/png',
                 finalUri: 'https://cdn.example.com/logo.png',
+                headers: {},
             },
         };
 

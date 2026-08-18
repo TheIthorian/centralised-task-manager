@@ -46,6 +46,8 @@ export class OpenIdConfigurationDto implements IOpenIdConfigurationDto {
     token_endpoint_auth_methods_supported!: string[];
     code_challenge_methods_supported!: string[];
     claims_supported!: string[];
+    client_id_metadata_document_supported!: boolean;
+    authorization_response_iss_parameter_supported!: boolean;
 }
 
 /** RFC 8414 OAuth 2.0 Authorization Server Metadata. */
@@ -60,6 +62,8 @@ export class AuthorizationServerMetadataDto implements IAuthorizationServerMetad
     grant_types_supported!: string[];
     token_endpoint_auth_methods_supported!: string[];
     code_challenge_methods_supported!: string[];
+    client_id_metadata_document_supported!: boolean;
+    authorization_response_iss_parameter_supported!: boolean;
 }
 
 /** A single RFC 7517 JSON Web Key. */
