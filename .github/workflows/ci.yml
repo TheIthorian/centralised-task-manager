@@ -68,3 +68,26 @@ jobs:
               with:
                   path: .turbo/cache
                   key: turbo-${{ runner.os }}-test-${{ github.sha }}
+
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - uses: actions/cache/restore@v6
+              with:
+                  path: .turbo/cache
+                  key: turbo-${{ runner.os }}-build-${{ github.sha }}
+                  restore-keys: |
+                      turbo-${{ runner.os }}-build-
+            - run: pnpm install --frozen-lockfile --prefer-offline
+            - run: pnpm exec turbo run build
+            - uses: actions/cache/save@v6
+              if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+              with:
+                  path: .turbo/cache
+                  key: turbo-${{ runner.os }}-build-${{ github.sha }}
