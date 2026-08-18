@@ -16,7 +16,6 @@ import type { JwtPayload } from '../tokens/token-claims.js';
 import { buildRefreshCookieOptions, isWebClient, REFRESH_COOKIE_NAME } from './auth-cookie.js';
 import { RefreshRateLimit, StrictRateLimit } from '../rate-limit/rate-limit.decorators.js';
 import { ValidatedBody, ValidatedParam } from '@ctm/nest-common';
-import { z } from 'zod';
 import { clientIdSchema } from '../oauth/client-id.js';
 
 interface AuthRequest {

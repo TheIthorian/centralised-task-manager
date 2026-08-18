@@ -1,15 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { ConfigService } from '@nestjs/config';
 import { OAuthClientRegistration, type OAuthClientDocument } from '@ctm/db';
-import { ClientTrustService, parseTrustedDomains } from './client-trust.service.js';
+import { ClientTrustService, parseTrustedOrigins } from './client-trust.service.js';
 
-describe('parseTrustedDomains', () => {
+describe('parseTrustedOrigins', () => {
     it('splits, trims and lowercases, dropping empty entries', () => {
-        expect(parseTrustedDomains(' Claude.ai , ,example.com ')).toEqual(['claude.ai', 'example.com']);
+        expect(parseTrustedOrigins(' Claude.ai , ,example.com ')).toEqual([
+            { host: 'claude.ai', pathPrefix: '' },
+            { host: 'example.com', pathPrefix: '' },
+        ]);
+    });
+
+    it('separates a path prefix from the host, ignoring a scheme and a trailing slash', () => {
+        expect(parseTrustedOrigins('https://claude.ai/oauth/')).toEqual([{ host: 'claude.ai', pathPrefix: '/oauth' }]);
     });
 
     it('reads an empty setting as trusting nobody', () => {
-        expect(parseTrustedDomains('')).toEqual([]);
+        expect(parseTrustedOrigins('')).toEqual([]);
     });
 });
 
@@ -37,6 +44,22 @@ describe('ClientTrustService', () => {
 
     it('does not vouch for a metadata document on an untrusted domain', () => {
         expect(trust.isVerified(cimdClient('https://someone-else.example/client.json'))).toBe(false);
+    });
+
+    describe('an entry that names a path', () => {
+        const scoped = trustService('claude.ai/oauth');
+
+        it('vouches for a document inside that path', () => {
+            expect(scoped.isVerified(cimdClient('https://claude.ai/oauth/mcp-oauth-client-metadata'))).toBe(true);
+        });
+
+        it('does not vouch for a document the host serves elsewhere', () => {
+            expect(scoped.isVerified(cimdClient('https://claude.ai/public/artifacts/abc/client.json'))).toBe(false);
+        });
+
+        it('stops the prefix at a path segment boundary', () => {
+            expect(scoped.isVerified(cimdClient('https://claude.ai/oauth-impostor/client.json'))).toBe(false);
+        });
     });
 
     it('never vouches for a client that registered itself', () => {
