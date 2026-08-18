@@ -293,7 +293,8 @@
         "verifiedTitle": "This server confirmed who publishes this app.",
         "unverifiedTitle": "This app registered itself; its name has not been checked.",
         "declared": {
-            "label": "Declared by this app. Not verified.",
+            "unverifiedLabel": "Declared by this app. Not verified.",
+            "verifiedLabel": "Declared by this app, in the metadata published at its verified address.",
             "website": "Website",
             "terms": "Terms",
             "privacy": "Privacy",
