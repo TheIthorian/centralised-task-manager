@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AuthorizedClient, type AuthorizedClientDocument } from '@ctm/db';
+import { AuthorizedClient, type AuthorizedClientDocument, type OAuthClientRegistration } from '@ctm/db';
 
 /** Reads and writes the explicit user to OAuth client grant records. */
 @Injectable()
@@ -19,17 +19,17 @@ export class AuthorizedClientService {
         userId,
         clientId,
         scopes,
-        isDynamic,
+        registrationType,
     }: {
         userId: string;
         clientId: string;
         scopes: string[];
-        isDynamic: boolean;
+        registrationType: OAuthClientRegistration;
     }): Promise<void> {
         await this.authorizedClientModel.updateOne(
             { userId, clientId },
             {
-                $set: { scopes, isDynamic },
+                $set: { scopes, registrationType },
                 $setOnInsert: { authorizedAt: new Date() },
             },
             { upsert: true },

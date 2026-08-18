@@ -4,7 +4,13 @@ import { Model } from 'mongoose';
 import { NotFoundError } from '@ctm/errors';
 import type { AuthorizedAppDto } from '@ctm/api-client';
 import { RefreshTokenService } from '../tokens/refresh-token.service.js';
-import { AuthorizedClient, type AuthorizedClientDocument, OAuthClient, type OAuthClientDocument } from '@ctm/db';
+import {
+    AuthorizedClient,
+    type AuthorizedClientDocument,
+    OAuthClient,
+    type OAuthClientDocument,
+    OAuthClientRegistration,
+} from '@ctm/db';
 import { clientLogoPath } from './client-logo.service.js';
 import { ClientTrustService } from './client-trust.service.js';
 
@@ -61,8 +67,12 @@ export class AuthorizedAppsService {
 
     /**
      * Revoke a user's access to an OAuth client.
-     * Dynamic clients: deletes the OAuthClient + every grant and refresh token it holds.
-     * Static clients: deletes only this user's grant and refresh tokens for that client.
+     *
+     * A self-registered client exists only because it registered, so the last user to revoke it
+     * takes the client with them: the record, every grant and every refresh token. Any other
+     * client outlives the grant — a first-party client is seeded at boot, and a metadata document
+     * is a shared cache of something the client publishes — so revoking removes this user's grant
+     * and refresh tokens and nothing else.
      */
     async revokeAuthorizedApp({ userId, clientId }: { userId: string; clientId: string }): Promise<void> {
         const oauthClient = await this.oauthClientModel.findOne({ clientId });
@@ -72,9 +82,11 @@ export class AuthorizedAppsService {
 
         // The client document is the source of truth while it exists. A dynamic client can be
         // TTL-reaped out from under a grant, and then the grant's own snapshot decides.
-        const isDynamic = oauthClient ? oauthClient.isDynamic : (authorization?.isDynamic ?? true);
+        const registrationType = oauthClient
+            ? oauthClient.registrationType
+            : (authorization?.registrationType ?? OAuthClientRegistration.Dynamic);
 
-        if (isDynamic) {
+        if (registrationType === OAuthClientRegistration.Dynamic) {
             await this.oauthClientModel.deleteOne({ clientId });
             await this.authorizedClientModel.deleteMany({ clientId });
             await this.refreshTokens.revokeAllForClient(clientId);

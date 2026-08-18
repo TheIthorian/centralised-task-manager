@@ -14,6 +14,7 @@ import {
     AuthorizedClientSchema,
     OAuthClient,
     type OAuthClientDocument,
+    OAuthClientRegistration,
     OAuthClientSchema,
     RefreshToken,
     type RefreshTokenDocument,
@@ -60,14 +61,14 @@ describe('AuthorizedAppsService', () => {
             clientId,
             clientName: 'Test App',
             redirectUris: ['http://localhost'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
         });
 
         await authorizedClientModel.create({
             userId,
             clientId,
             scopes: ['openid', 'tasks:read'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(),
         });
 
@@ -89,7 +90,7 @@ describe('AuthorizedAppsService', () => {
             clientId,
             clientName: 'Metadata App',
             redirectUris: ['https://example.com/cb'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             logoUri: 'https://example.com/logo.png',
             clientUri: 'https://example.com',
             tosUri: 'https://example.com/tos',
@@ -102,7 +103,7 @@ describe('AuthorizedAppsService', () => {
             userId,
             clientId,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(),
         });
 
@@ -125,7 +126,7 @@ describe('AuthorizedAppsService', () => {
             clientId,
             clientName: 'Logo App',
             redirectUris: ['https://example.com/cb'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             logoUri: 'https://example.com/logo.png',
             logo: { data: Buffer.from([1, 2, 3]), contentType: 'image/png', fetchedAt: new Date() },
         });
@@ -134,7 +135,7 @@ describe('AuthorizedAppsService', () => {
             userId,
             clientId,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(),
         });
 
@@ -169,14 +170,14 @@ describe('AuthorizedAppsService', () => {
             clientId,
             clientName: 'Dedup App',
             redirectUris: ['http://localhost'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
         });
 
         await authorizedClientModel.create({
             userId,
             clientId,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(),
         });
 
@@ -205,14 +206,14 @@ describe('AuthorizedAppsService', () => {
             clientSecretHash: 'hash',
             clientName: 'Token-less App',
             redirectUris: ['http://localhost'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
         });
 
         await authorizedClientModel.create({
             userId,
             clientId,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(),
         });
 
@@ -228,7 +229,7 @@ describe('AuthorizedAppsService', () => {
             userId,
             clientId: `client_reaped_${Date.now()}`,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(),
         });
 
@@ -252,7 +253,7 @@ describe('AuthorizedAppsService', () => {
             clientId,
             clientName: 'Dynamic App',
             redirectUris: ['http://localhost'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
         });
 
         for (const userId of [userId1, userId2]) {
@@ -260,7 +261,7 @@ describe('AuthorizedAppsService', () => {
                 userId,
                 clientId,
                 scopes: ['openid'],
-                isDynamic: true,
+                registrationType: OAuthClientRegistration.Dynamic,
                 authorizedAt: new Date(),
             });
 
@@ -290,7 +291,7 @@ describe('AuthorizedAppsService', () => {
             clientId,
             clientName: 'Static App',
             redirectUris: ['http://localhost'],
-            isDynamic: false,
+            registrationType: OAuthClientRegistration.FirstParty,
         });
 
         for (const userId of [userId1, userId2]) {
@@ -298,7 +299,7 @@ describe('AuthorizedAppsService', () => {
                 userId,
                 clientId,
                 scopes: ['openid'],
-                isDynamic: false,
+                registrationType: OAuthClientRegistration.FirstParty,
                 authorizedAt: new Date(),
             });
 
@@ -329,7 +330,7 @@ describe('AuthorizedAppsService', () => {
             userId,
             clientId,
             scopes: ['openid'],
-            isDynamic: true,
+            registrationType: OAuthClientRegistration.Dynamic,
             authorizedAt: new Date(),
         });
 
