@@ -46,6 +46,18 @@ describe('ClientTrustService', () => {
         expect(trust.isVerified(cimdClient('https://someone-else.example/client.json'))).toBe(false);
     });
 
+    describe("an entry that names a client's whole document URL", () => {
+        const exact = trustService('claude.ai/oauth/mcp-oauth-client-metadata');
+
+        it('vouches for that document', () => {
+            expect(exact.isVerified(cimdClient('https://claude.ai/oauth/mcp-oauth-client-metadata'))).toBe(true);
+        });
+
+        it('does not vouch for another document on the same host', () => {
+            expect(exact.isVerified(cimdClient('https://claude.ai/oauth/someone-elses-metadata'))).toBe(false);
+        });
+    });
+
     describe('an entry that names a path', () => {
         const scoped = trustService('claude.ai/oauth');
 

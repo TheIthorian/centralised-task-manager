@@ -33,10 +33,12 @@ document is verified when its `client_id` URL matches an entry in `CIMD_TRUSTED_
 serving that document is a claim backed by control of the URL. Nothing else is: a dynamic
 registration proves only that someone can post to a public endpoint.
 
-An entry is a host, optionally with a path prefix: `example.com` or `example.com/oauth`. Reach for
-the path form whenever the host also serves pages its own users publish — `claude.ai` hosts both
-Claude's metadata document and published Artifacts, and a host-only entry cannot tell them apart.
-A bare host also covers its subdomains, so only list one whose subdomains are not handed out.
+An entry is normally a client's whole `client_id` URL, which trusts exactly the document that URL
+serves. It can be widened to a path prefix (`example.com/oauth`) or to a bare host
+(`example.com`, which also covers subdomains), but only for a host that serves nothing its own
+users publish: `claude.ai` hosts both Claude's metadata document and published Artifacts, and a
+host-only entry cannot tell them apart. A client that moves its document loses the badge until an
+operator updates the list, which is a visible warning rather than a failed authorization.
 
 The trust list gates display, not access. An unlisted client still authorizes; its consent screen
 carries the unverified-app warning naming the hosts the user is about to be sent to. Verification is
