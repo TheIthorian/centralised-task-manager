@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Link, useRouteError } from 'react-router';
 import config from '../config.js';
+import { isChunkLoadError, reloadForStaleDeployment } from '../lib/stale-deployment.js';
 
 function getErrorMessage(error: unknown): string {
     if (error instanceof Error) return error.message;
@@ -10,6 +12,10 @@ function getErrorMessage(error: unknown): string {
 /** Full-page error view rendered by React Router when a route throws. */
 export function ErrorPage(): React.JSX.Element {
     const error = useRouteError();
+
+    useEffect(() => {
+        if (isChunkLoadError(error)) reloadForStaleDeployment();
+    }, [error]);
 
     return (
         <div className="min-h-dvh flex items-center justify-center p-4">

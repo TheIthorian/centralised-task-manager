@@ -21,6 +21,9 @@ const router = createBrowserRouter([
         // first paint, before its chunk has arrived.
         element: <Outlet />,
         HydrateFallback: RouteFallback,
+        // Every route below is lazy, so every route can fail on a chunk that a deploy has
+        // replaced. The boundary sits above all of them rather than only over the shell.
+        errorElement: <ErrorPage />,
         children: [
             { path: '/login', element: <LoginPage /> },
             { path: '/register', lazy: async () => ({ Component: (await import('./pages/RegisterPage.js')).RegisterPage }) },
@@ -31,7 +34,6 @@ const router = createBrowserRouter([
             {
                 path: '/',
                 lazy: async () => ({ Component: (await import('./components/layout/ProtectedShell.js')).ProtectedShell }),
-                errorElement: <ErrorPage />,
                 children: [
                     { index: true, element: <Navigate to="/tasks" replace /> },
                     { path: 'tasks', lazy: async () => ({ Component: (await import('./pages/TasksPage.js')).TasksPage }) },

@@ -5,10 +5,10 @@ in [performance-baseline.md](./performance-baseline.md).
 
 ## Results
 
-| Change | Metric | Before | After |
-| ------ | ------ | ------ | ----- |
-| Route-level code splitting (`apps/web`) | Initial JS, gzipped | 186 KB | 153 KB |
-| Lazy `sharp` (`apps/main`) | RSS at ready | 196 MB | 183 MB |
+| Change                                  | Metric                             | Before     | After           |
+| --------------------------------------- | ---------------------------------- | ---------- | --------------- |
+| Route-level code splitting (`apps/web`) | Initial JS, gzipped                | 186 KB     | 153 KB          |
+| Lazy `sharp` (`apps/main`)              | RSS at ready                       | 196 MB     | 183 MB          |
 | `_headers` (`apps/web`, `apps/landing`) | Asset revalidation on repeat visit | every load | none for a year |
 
 ## Route-level code splitting
@@ -24,6 +24,17 @@ gave back only a third of the win. `LoginPage` stays eager, because it is where 
 visitors land and the extra round trip costs more than inlining it.
 
 27 chunks now, 11 of them on the initial load, 153 KB gzipped between them.
+
+### Tabs open across a deploy
+
+Splitting introduced a failure the single bundle could not have. A tab that was open when a
+deploy landed still holds the previous `index.html`, and the chunk URLs it names are no longer
+served. Navigating to a route whose chunk has gone fails on the dynamic import.
+
+The router's `errorElement` therefore sits on the pathless root rather than only over the
+authenticated shell, so every lazy route has a boundary. `ErrorPage` recognises a chunk load
+failure and reloads to pick up the current build, at most once every 30 seconds so a genuine
+failure cannot loop.
 
 ## Lazy `sharp`
 
