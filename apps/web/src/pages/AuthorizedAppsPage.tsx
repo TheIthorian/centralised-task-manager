@@ -124,6 +124,7 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
                             OAuth
                         </span>
                         <span
+                            className="inline-flex"
                             title={
                                 app.isVerified
                                     ? t('authorizedApps.verifiedTitle')
