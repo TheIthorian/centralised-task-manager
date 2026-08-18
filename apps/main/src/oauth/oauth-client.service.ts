@@ -8,6 +8,7 @@ import type { FirstPartyClient } from '../oauth/first-party-clients.js';
 import { ClientLogoService } from './client-logo.service.js';
 import { ClientIdMetadataService } from './client-id-metadata.service.js';
 import { isClientIdMetadataDocumentUrl } from './client-id.js';
+import { ClientTrustService } from './client-trust.service.js';
 
 /** Input payload for RFC 7591 dynamic client registration. */
 export type RegisterClientInput = {
@@ -99,6 +100,7 @@ export class OAuthClientService {
         @InjectModel(OAuthClient.name) private readonly model: Model<OAuthClientDocument>,
         private readonly logos: ClientLogoService,
         private readonly clientIdMetadata: ClientIdMetadataService,
+        private readonly trust: ClientTrustService,
     ) {}
 
     /** Register a new OAuth client per RFC 7591. */
@@ -206,7 +208,7 @@ export class OAuthClientService {
         return {
             clientId: client.clientId,
             clientName: client.clientName,
-            isDynamic: client.isDynamic,
+            isVerified: this.trust.isVerified(client),
             redirectHosts: redirectHostsOf(client.redirectUris),
         };
     }

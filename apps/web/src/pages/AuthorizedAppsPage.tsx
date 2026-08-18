@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthContext.js';
 import { getErrorMessage } from '../api/error-message.js';
-import { Button } from '@ctm/ui';
+import { Badge, Button } from '@ctm/ui';
 import type { AuthorizedAppDto } from '@ctm/api-client';
 
 /** Settings sub-page: list and revoke authorized OAuth apps. */
@@ -122,6 +122,17 @@ function AppRow({ app, onRevoked, api }: AppRowProps): React.JSX.Element {
                         </p>
                         <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]st border border-line/30 text-muted rounded-ctm">
                             OAuth
+                        </span>
+                        <span
+                            title={
+                                app.isVerified
+                                    ? t('authorizedApps.verifiedTitle')
+                                    : t('authorizedApps.unverifiedTitle')
+                            }
+                        >
+                            <Badge variant={app.isVerified ? 'accent' : 'warn'}>
+                                {app.isVerified ? t('authorizedApps.verified') : t('authorizedApps.unverified')}
+                            </Badge>
                         </span>
                     </div>
                         <p className="text-xs text-muted font-medium">Authorized {authorizedDate}</p>

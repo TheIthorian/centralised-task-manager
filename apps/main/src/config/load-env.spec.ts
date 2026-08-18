@@ -13,6 +13,7 @@ const REQUIRED = {
     REDIRECT_BASE_URL: 'http://localhost:3000',
     WEB_URL: 'http://localhost:5173',
     MCP_PUBLIC_URL: 'http://localhost:3002',
+    CIMD_TRUSTED_DOMAINS: 'claude.ai',
     JWT_ACCESS_EXPIRES: '900',
     REFRESH_TOKEN_EXPIRES_DAYS: '30',
     LOG_LEVEL: 'info',

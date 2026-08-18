@@ -6,6 +6,7 @@ import type { AuthorizedAppDto } from '@ctm/api-client';
 import { RefreshTokenService } from '../tokens/refresh-token.service.js';
 import { AuthorizedClient, type AuthorizedClientDocument, OAuthClient, type OAuthClientDocument } from '@ctm/db';
 import { clientLogoPath } from './client-logo.service.js';
+import { ClientTrustService } from './client-trust.service.js';
 
 @Injectable()
 export class AuthorizedAppsService {
@@ -14,6 +15,7 @@ export class AuthorizedAppsService {
         @InjectModel(AuthorizedClient.name)
         private readonly authorizedClientModel: Model<AuthorizedClientDocument>,
         private readonly refreshTokens: RefreshTokenService,
+        private readonly trust: ClientTrustService,
     ) {}
 
     /** List OAuth clients the given user has authorized. */
@@ -50,6 +52,7 @@ export class AuthorizedAppsService {
                 policyUri: client.policyUri,
                 contacts: client.contacts,
                 softwareId: client.softwareId,
+                isVerified: this.trust.isVerified(client),
             });
         }
 

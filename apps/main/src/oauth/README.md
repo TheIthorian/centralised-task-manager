@@ -25,6 +25,19 @@ decides which without the caller having to care:
 `GET /.well-known/oauth-authorization-server` advertises the middle option through
 `client_id_metadata_document_supported`, which is how a client knows it need not register at all.
 
+## Verification
+
+`ClientTrustService` decides whether this server vouches for a client's identity, and the consent
+screen and Authorized Apps page render that decision. A first-party client is verified. A metadata
+document is verified when its `client_id` URL is on a domain listed in `CIMD_TRUSTED_DOMAINS`, or a
+subdomain of one, since serving that document is a claim backed by control of the domain. Nothing
+else is: a dynamic registration proves only that someone can post to a public endpoint.
+
+The trust list gates display, not access. An unlisted client still authorizes; its consent screen
+carries the unverified-app warning naming the hosts the user is about to be sent to. Verification is
+evaluated per read, so adding a domain takes effect without waiting for cached documents to expire.
+Only list a domain whose subdomains are not handed out to other people.
+
 ## Client logos
 
 A registrant's `logo_uri` is never handed to a browser. The URI is fetched once, at registration,

@@ -54,19 +54,22 @@ export type AuthorizedAppDto = {
     policyUri?: string;
     contacts?: string[];
     softwareId?: string;
+
+    /** Whether this server vouches for the app's identity. See {@link OAuthClientInfoDto}. */
+    isVerified: boolean;
 };
 
 /**
  * Public metadata for an OAuth client, shown on the consent screen.
  *
- * `clientName` is self-declared by the client and `isDynamic` says whether it registered itself
- * through the public registration endpoint, so a consumer must treat the name of a dynamic client
- * as an unverified claim.
+ * `clientName` is self-declared by the client. `isVerified` says whether this server vouches for
+ * that claim: a first-party client, or one identified by a Client ID Metadata Document on a
+ * trusted domain. A consumer must present an unverified name as the app's own claim.
  */
 export type OAuthClientInfoDto = {
     clientId: string;
     clientName: string;
-    isDynamic: boolean;
+    isVerified: boolean;
     /** Distinct hosts of the client's registered redirect URIs, in registration order. */
     redirectHosts: string[];
 };

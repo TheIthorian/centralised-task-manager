@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { getModelToken } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { AppModule } from '../app.module.js';
-import { OAuthClient, type OAuthClientDocument } from '@ctm/db';
+import { OAuthClient, OAuthClientRegistration, type OAuthClientDocument } from '@ctm/db';
 import { createHash, randomBytes } from 'node:crypto';
 import { SCOPE_REGISTRY, filterScopes, groupScopesByResource } from './scopes.js';
 
@@ -422,7 +422,7 @@ describe('OAuth endpoints', () => {
             expect(JSON.parse(res.body)).toEqual({
                 clientId,
                 clientName: 'Google Tasks (Official)',
-                isDynamic: true,
+                isVerified: false,
                 redirectHosts: ['impostor.example.com'],
             });
         });
@@ -430,7 +430,10 @@ describe('OAuth endpoints', () => {
         it('reports an operator-configured client as verified', async () => {
             const clientId = await registerClient(['https://mcp.example.com/cb']);
             const model = app.get<Model<OAuthClientDocument>>(getModelToken(OAuthClient.name));
-            await model.updateOne({ clientId }, { $set: { isDynamic: false } });
+            await model.updateOne(
+                { clientId },
+                { $set: { isDynamic: false, registrationType: OAuthClientRegistration.FirstParty } },
+            );
 
             const res = await app.inject({
                 method: 'GET',
@@ -439,7 +442,7 @@ describe('OAuth endpoints', () => {
             });
 
             expect(res.statusCode).toBe(200);
-            expect(JSON.parse(res.body).isDynamic).toBe(false);
+            expect(JSON.parse(res.body).isVerified).toBe(true);
         });
 
         it('returns 404 for a client_id that was never registered', async () => {

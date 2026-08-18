@@ -5,6 +5,7 @@ import { type Model, Types } from 'mongoose';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NotFoundError } from '@ctm/errors';
 import { FIRST_PARTY_CLIENT } from '../rate-limit/principal-resolver.js';
+import { ClientTrustService } from './client-trust.service.js';
 import { AuthorizedAppsService } from './authorized-apps.service.js';
 import { RefreshTokenService } from '../tokens/refresh-token.service.js';
 import {
@@ -38,7 +39,7 @@ describe('AuthorizedAppsService', () => {
                     { name: AuthorizedClient.name, schema: AuthorizedClientSchema },
                 ]),
             ],
-            providers: [AuthorizedAppsService, RefreshTokenService],
+            providers: [AuthorizedAppsService, RefreshTokenService, ClientTrustService],
         }).compile();
 
         service = module.get(AuthorizedAppsService);

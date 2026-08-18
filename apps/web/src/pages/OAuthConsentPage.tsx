@@ -163,7 +163,7 @@ export function OAuthConsentPage(): React.JSX.Element {
                     {t('oauth.consent.signedInAs', { email: user.email })}
                 </p>
 
-                {clientInfo?.isDynamic && (
+                {clientInfo && !clientInfo.isVerified && (
                     <div className="mb-5">
                         <UnverifiedAppNotice
                             title={t('oauth.consent.unverified.title')}

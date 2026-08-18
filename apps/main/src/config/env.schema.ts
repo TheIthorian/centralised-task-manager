@@ -10,6 +10,9 @@ export const envSchema = Joi.object({
     REDIRECT_BASE_URL: Joi.string().uri().required(),
     WEB_URL: Joi.string().uri().required(),
     MCP_PUBLIC_URL: Joi.string().uri().required(),
+    // Domains whose Client ID Metadata Documents this server vouches for on the consent screen.
+    // Required but allowed to be empty: trusting nobody is a decision, forgetting to decide is not.
+    CIMD_TRUSTED_DOMAINS: Joi.string().allow('').required(),
     RSA_PRIVATE_KEY: Joi.string().required(),
     RSA_PUBLIC_KEY: Joi.string().required(),
     JWT_ACCESS_EXPIRES: Joi.number().integer().min(30).required(),
