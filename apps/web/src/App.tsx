@@ -1,22 +1,10 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router';
+import { createBrowserRouter, Outlet, RouterProvider, Navigate } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './auth/AuthContext.js';
-import { ProtectedRoute } from './auth/ProtectedRoute.js';
-import { AppShell } from './components/layout/AppShell.js';
+import { RouteFallback } from './components/layout/RouteFallback.js';
 import { ToastProvider } from './toast/ToastContext.js';
 import { LoginPage } from './pages/LoginPage.js';
-import { RegisterPage } from './pages/RegisterPage.js';
-import { OAuthConsentPage } from './pages/OAuthConsentPage.js';
-import { TasksPage } from './pages/TasksPage.js';
-import { SettingsLayout } from './pages/SettingsLayout.js';
-import { ConnectorsPage } from './pages/ConnectorsPage.js';
-import { ProfilePage } from './pages/ProfilePage.js';
-import { NotificationsPage } from './pages/NotificationsPage.js';
-import { NotFoundPage } from './pages/NotFoundPage.js';
-import { CalendarPage } from './pages/CalendarPage.js';
-import { TimelinePage } from './pages/TimelinePage.js';
 import { ErrorPage } from './pages/ErrorPage.js';
-import { AuthorizedAppsPage } from './pages/AuthorizedAppsPage.js';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -28,38 +16,72 @@ const queryClient = new QueryClient({
 });
 
 const router = createBrowserRouter([
-    { path: '/login', element: <LoginPage /> },
-    { path: '/register', element: <RegisterPage /> },
-    { path: '/oauth/consent', element: <OAuthConsentPage /> },
     {
-        path: '/',
-        element: (
-            <ProtectedRoute>
-                <AppShell />
-            </ProtectedRoute>
-        ),
-        errorElement: <ErrorPage />,
+        // Pathless root: gives every lazy route below it one place to find a fallback for the
+        // first paint, before its chunk has arrived.
+        element: <Outlet />,
+        HydrateFallback: RouteFallback,
         children: [
-            { index: true, element: <Navigate to="/tasks" replace /> },
-            { path: 'tasks', element: <TasksPage /> },
-            { path: 'calendar', element: <CalendarPage /> },
-            { path: 'timeline', element: <TimelinePage /> },
+            { path: '/login', element: <LoginPage /> },
+            { path: '/register', lazy: async () => ({ Component: (await import('./pages/RegisterPage.js')).RegisterPage }) },
             {
-                path: 'settings',
-                element: <SettingsLayout />,
+                path: '/oauth/consent',
+                lazy: async () => ({ Component: (await import('./pages/OAuthConsentPage.js')).OAuthConsentPage }),
+            },
+            {
+                path: '/',
+                lazy: async () => ({ Component: (await import('./components/layout/ProtectedShell.js')).ProtectedShell }),
+                errorElement: <ErrorPage />,
                 children: [
-                    { index: true, element: <Navigate to="/settings/connectors" replace /> },
-                    { path: 'connectors', element: <ConnectorsPage /> },
-                    // Kept so old links and post-OAuth redirects still land somewhere.
-                    { path: 'sources', element: <Navigate to="/settings/connectors" replace /> },
-                    { path: 'profile', element: <ProfilePage /> },
-                    { path: 'notifications', element: <NotificationsPage /> },
-                    { path: 'authorized-apps', element: <AuthorizedAppsPage /> },
+                    { index: true, element: <Navigate to="/tasks" replace /> },
+                    { path: 'tasks', lazy: async () => ({ Component: (await import('./pages/TasksPage.js')).TasksPage }) },
+                    {
+                        path: 'calendar',
+                        lazy: async () => ({ Component: (await import('./pages/CalendarPage.js')).CalendarPage }),
+                    },
+                    {
+                        path: 'timeline',
+                        lazy: async () => ({ Component: (await import('./pages/TimelinePage.js')).TimelinePage }),
+                    },
+                    {
+                        path: 'settings',
+                        lazy: async () => ({ Component: (await import('./pages/SettingsLayout.js')).SettingsLayout }),
+                        children: [
+                            { index: true, element: <Navigate to="/settings/connectors" replace /> },
+                            {
+                                path: 'connectors',
+                                lazy: async () => ({
+                                    Component: (await import('./pages/ConnectorsPage.js')).ConnectorsPage,
+                                }),
+                            },
+                            // Kept so old links and post-OAuth redirects still land somewhere.
+                            { path: 'sources', element: <Navigate to="/settings/connectors" replace /> },
+                            {
+                                path: 'profile',
+                                lazy: async () => ({ Component: (await import('./pages/ProfilePage.js')).ProfilePage }),
+                            },
+                            {
+                                path: 'notifications',
+                                lazy: async () => ({
+                                    Component: (await import('./pages/NotificationsPage.js')).NotificationsPage,
+                                }),
+                            },
+                            {
+                                path: 'authorized-apps',
+                                lazy: async () => ({
+                                    Component: (await import('./pages/AuthorizedAppsPage.js')).AuthorizedAppsPage,
+                                }),
+                            },
+                        ],
+                    },
                 ],
+            },
+            {
+                path: '*',
+                lazy: async () => ({ Component: (await import('./pages/NotFoundPage.js')).NotFoundPage }),
             },
         ],
     },
-    { path: '*', element: <NotFoundPage /> },
 ]);
 
 export default function App(): React.JSX.Element {
