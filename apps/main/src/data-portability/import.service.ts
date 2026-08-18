@@ -3,14 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ValidationError } from '@ctm/errors';
 import { appLogger } from '../logging/app-logger.js';
-import { Notification, type NotificationDocument, Task, type TaskDocument, User, type UserDocument } from '@ctm/db';
-import type {
-    ExportEnvelopeDto,
-    ExportProfileDto,
-    ExportTaskDto,
-    ImportResponseDto,
-    NotificationDto,
-} from '@ctm/api-client';
+import { Task, type TaskDocument } from '@ctm/db';
+import type { ImportResponseDto } from '@ctm/api-client';
+import type { ImportEnvelope, ImportTask } from './dto/import-envelope.schema.js';
 
 type OnConflict = 'replace' | 'ignore';
 
@@ -18,20 +13,16 @@ type OnConflict = 'replace' | 'ignore';
 export class ImportService {
     private readonly logger = appLogger(ImportService.name);
 
-    constructor(
-        @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-        @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
-        @InjectModel(Notification.name) private readonly notificationModel: Model<NotificationDocument>,
-    ) {}
+    constructor(@InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>) {}
 
-    /** Apply one or more export envelopes to the authenticated user's account. */
+    /** Apply the tasks in one or more export envelopes to the authenticated user's account. */
     async import({
         userId,
         envelopes,
         onConflict,
     }: {
         userId: string;
-        envelopes: ExportEnvelopeDto[];
+        envelopes: ImportEnvelope[];
         onConflict: OnConflict;
     }): Promise<ImportResponseDto> {
         for (const envelope of envelopes) {
@@ -42,15 +33,9 @@ export class ImportService {
 
         const sorted = [...envelopes].sort((a, b) => a.part - b.part);
         const summary: ImportResponseDto = {
-            imported: { tasks: 0, notifications: 0 },
-            skipped: { tasks: 0, notifications: 0 },
+            imported: { tasks: 0 },
+            skipped: { tasks: 0 },
         };
-
-        const profileEnvelope = sorted.find((e) => e.profile);
-
-        if (profileEnvelope?.profile) {
-            await this.importProfile({ userId, profile: profileEnvelope.profile, onConflict });
-        }
 
         for (const envelope of sorted) {
             for (const task of envelope.tasks) {
@@ -59,33 +44,9 @@ export class ImportService {
                 if (imported) summary.imported.tasks++;
                 else summary.skipped.tasks++;
             }
-
-            for (const notification of envelope.notifications) {
-                const imported = await this.importNotification({ userId, notification, onConflict });
-
-                if (imported) summary.imported.notifications++;
-                else summary.skipped.notifications++;
-            }
         }
 
         return summary;
-    }
-
-    private async importProfile({
-        userId,
-        profile,
-        onConflict,
-    }: {
-        userId: string;
-        profile: ExportProfileDto;
-        onConflict: OnConflict;
-    }): Promise<void> {
-        if (onConflict === 'ignore') return;
-
-        await this.userModel.updateOne(
-            { _id: new Types.ObjectId(userId) },
-            { $set: { name: profile.name, notificationPreferences: profile.notificationPreferences } },
-        );
     }
 
     private async importTask({
@@ -94,54 +55,20 @@ export class ImportService {
         onConflict,
     }: {
         userId: string;
-        task: ExportTaskDto;
+        task: ImportTask;
         onConflict: OnConflict;
     }): Promise<boolean> {
         const filter = { userId: new Types.ObjectId(userId), source: task.source, sourceId: task.sourceId };
         const fields = taskDtoToFields(task, userId);
 
-        if (onConflict === 'ignore') {
-            const result = await this.taskModel.updateOne(filter, { $setOnInsert: fields }, { upsert: true });
-
-            return result.upsertedCount > 0;
-        }
-
-        await this.taskModel.updateOne(filter, { $set: fields }, { upsert: true });
-
-        return true;
-    }
-
-    private async importNotification({
-        userId,
-        notification,
-        onConflict,
-    }: {
-        userId: string;
-        notification: NotificationDto;
-        onConflict: OnConflict;
-    }): Promise<boolean> {
-        const filter = { _id: new Types.ObjectId(notification.id), userId: new Types.ObjectId(userId) };
-        const fields = {
-            userId: new Types.ObjectId(userId),
-            type: notification.type,
-            title: notification.title,
-            body: notification.body,
-            data: notification.data,
-            read: notification.read,
-        };
-
         try {
             if (onConflict === 'ignore') {
-                const result = await this.notificationModel.updateOne(
-                    filter,
-                    { $setOnInsert: fields },
-                    { upsert: true },
-                );
+                const result = await this.taskModel.updateOne(filter, { $setOnInsert: fields }, { upsert: true });
 
                 return result.upsertedCount > 0;
             }
 
-            await this.notificationModel.updateOne(filter, { $set: fields }, { upsert: true });
+            await this.taskModel.updateOne(filter, { $set: fields }, { upsert: true });
 
             return true;
         } catch (err: unknown) {
@@ -162,7 +89,7 @@ function isDuplicateKeyError(err: unknown): boolean {
     return typeof err === 'object' && err !== null && 'code' in err && (err as { code: unknown }).code === 11000;
 }
 
-function taskDtoToFields(t: ExportTaskDto, userId: string): Record<string, unknown> {
+function taskDtoToFields(t: ImportTask, userId: string): Record<string, unknown> {
     return {
         userId: new Types.ObjectId(userId),
         source: t.source,

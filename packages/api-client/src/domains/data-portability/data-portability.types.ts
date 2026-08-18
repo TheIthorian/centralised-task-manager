@@ -64,7 +64,6 @@ export type ImportRequestDto = {
 
 export type ImportSummaryDto = {
     tasks: number;
-    notifications: number;
 };
 
 /** Response from POST /users/me/import. */

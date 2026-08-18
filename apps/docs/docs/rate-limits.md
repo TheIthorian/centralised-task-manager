@@ -16,8 +16,8 @@ There are two windows, and both must have budget left for a request to be served
 
 | Window    | Setting                         | Default |
 | --------- | ------------------------------- | ------- |
-| Burst     | `RATE_LIMIT_BURST_PER_MINUTE`   | 100     |
-| Sustained | `RATE_LIMIT_SUSTAINED_PER_HOUR` | 2000    |
+| Burst     | `RATE_LIMIT_BURST_PER_MINUTE`   | 400     |
+| Sustained | `RATE_LIMIT_SUSTAINED_PER_HOUR` | 8000    |
 
 One budget covers your whole account: the web app, the CLI, MCP and direct API calls all
 draw on it, and extra API tokens do not buy more.
@@ -25,8 +25,8 @@ draw on it, and extra API tokens do not buy more.
 ## Per-client fence
 
 Under the account ceiling, each app you have authorised gets its own smaller allowance
-(`RATE_LIMIT_CLIENT_BURST_PER_MINUTE`, default 60, and `RATE_LIMIT_CLIENT_SUSTAINED_PER_HOUR`,
-default 1000). This is not extra quota — the account limits still apply on top. It exists so
+(`RATE_LIMIT_CLIENT_BURST_PER_MINUTE`, default 240, and `RATE_LIMIT_CLIENT_SUSTAINED_PER_HOUR`,
+default 4000). This is not extra quota — the account limits still apply on top. It exists so
 a busy script cannot spend your whole budget and lock your browser session out; the noisy
 client gets the `429` and everything else keeps working.
 
@@ -36,13 +36,13 @@ than the account-level message.
 ## Stricter limits on the sign-in surface
 
 `POST /auth/register`, `POST /auth/login` and `POST /oauth/token` get a tighter budget of
-their own (`RATE_LIMIT_STRICT_BURST_PER_MINUTE`, default 10, and
-`RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR`, default 100), counted separately for each endpoint.
+their own (`RATE_LIMIT_STRICT_BURST_PER_MINUTE`, default 40, and
+`RATE_LIMIT_STRICT_SUSTAINED_PER_HOUR`, default 400), counted separately for each endpoint.
 
 ## Token refresh
 
 `POST /auth/refresh` has its own separate budget (`RATE_LIMIT_REFRESH_BURST_PER_MINUTE`,
-default 30, and `RATE_LIMIT_REFRESH_SUSTAINED_PER_HOUR`, default 600). Refreshes are paced
+default 120, and `RATE_LIMIT_REFRESH_SUSTAINED_PER_HOUR`, default 2400). Refreshes are paced
 by expiring access tokens rather than by anything you do, so they neither spend your request
 budget nor compete with sign-in attempts.
 

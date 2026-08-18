@@ -55,8 +55,8 @@ describe('DataSection', () => {
 
     it('imports selected files with chosen conflict strategy and shows summary', async () => {
         mockApi.importData.mockResolvedValue({
-            imported: { tasks: 3, notifications: 1 },
-            skipped: { tasks: 2, notifications: 0 },
+            imported: { tasks: 3 },
+            skipped: { tasks: 2 },
         });
 
         render(<DataSection />, { wrapper });
@@ -74,6 +74,6 @@ describe('DataSection', () => {
                 onConflict: 'replace',
             });
         });
-        expect(screen.getByText(/imported 3 tasks and 1 notification/i)).toBeInTheDocument();
+        expect(screen.getByText(/imported 3 tasks\. skipped 2 tasks\./i)).toBeInTheDocument();
     });
 });

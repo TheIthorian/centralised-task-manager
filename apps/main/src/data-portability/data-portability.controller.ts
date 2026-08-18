@@ -10,9 +10,9 @@ import { Export, type ExportDocument } from '@ctm/db';
 import { ExportService } from './export.service.js';
 import { ImportService } from './import.service.js';
 import { FilesService } from '../files/files.service.js';
-import type { ExportEnvelopeDto } from '@ctm/api-client';
 import { ExportResponseDto, ImportResponseDto } from './dto/data-portability-response.dto.js';
 import { ImportRequestDto, importRequestSchema } from './dto/import-request.dto.js';
+import { type ImportEnvelope, importEnvelopeSchema } from './dto/import-envelope.schema.js';
 import { parseOrThrow, ValidatedParam } from '@ctm/nest-common';
 import { z } from 'zod';
 
@@ -71,7 +71,7 @@ export class DataPortabilityController {
     // The body is a multipart stream this handler drains itself, so there is no argument for
     // ValidatedBody to sit on: the form fields go through importRequestSchema below instead.
     async import(@Req() req: AuthRequest): Promise<ImportResponseDto> {
-        const envelopes: ExportEnvelopeDto[] = [];
+        const envelopes: ImportEnvelope[] = [];
         const fields: Record<string, unknown> = {};
 
         const parts = req.parts();
@@ -79,18 +79,20 @@ export class DataPortabilityController {
         for await (const part of parts) {
             if (part.type === 'file') {
                 const buf = await part.toBuffer();
-                let envelope: ExportEnvelopeDto;
+                let parsed: unknown;
                 try {
-                    envelope = JSON.parse(buf.toString('utf-8')) as ExportEnvelopeDto;
+                    parsed = JSON.parse(buf.toString('utf-8'));
                 } catch {
                     throw new ValidationError(`Invalid JSON in uploaded file: ${part.filename ?? 'unknown'}`);
                 }
 
-                if (!isValidEnvelope(envelope)) {
+                const envelope = importEnvelopeSchema.safeParse(parsed);
+
+                if (!envelope.success) {
                     throw new ValidationError('Uploaded file is not a valid export envelope');
                 }
 
-                envelopes.push(envelope);
+                envelopes.push(envelope.data);
             } else {
                 fields[part.fieldname] = part.value;
             }
@@ -102,27 +104,4 @@ export class DataPortabilityController {
 
         return this.importService.import({ userId: req.user.sub, envelopes, onConflict });
     }
-}
-
-function isValidEnvelope(value: unknown): value is ExportEnvelopeDto {
-    if (typeof value !== 'object' || value === null) return false;
-
-    const v = value as Record<string, unknown>;
-
-    return (
-        typeof v['version'] === 'string' &&
-        typeof v['exportId'] === 'string' &&
-        typeof v['part'] === 'number' &&
-        typeof v['totalParts'] === 'number' &&
-        Array.isArray(v['tasks']) &&
-        (v['tasks'] as unknown[]).every(
-            (t) =>
-                typeof t === 'object' &&
-                t !== null &&
-                typeof (t as Record<string, unknown>)['source'] === 'string' &&
-                typeof (t as Record<string, unknown>)['sourceId'] === 'string',
-        ) &&
-        Array.isArray(v['notifications']) &&
-        (v['notifications'] as unknown[]).every((n) => typeof n === 'object' && n !== null)
-    );
 }
