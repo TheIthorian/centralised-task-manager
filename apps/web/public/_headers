@@ -1,0 +1,7 @@
+# Vite fingerprints everything under /assets, so a URL's content never changes.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The SPA shell names the current asset URLs, so it has to be revalidated every load.
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate

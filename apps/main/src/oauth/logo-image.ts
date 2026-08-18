@@ -1,5 +1,3 @@
-import sharp from 'sharp';
-
 /** Formats accepted from a client. Anything else is refused rather than handed to the encoder. */
 export const ALLOWED_LOGO_CONTENT_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif'];
 
@@ -27,6 +25,10 @@ export type EncodedLogo = {
  */
 export async function encodeLogo(body: Buffer): Promise<EncodedLogo | null> {
     try {
+        // Imported here rather than at module scope: sharp loads a ~17MB libvips binary, and a
+        // logo is only encoded when an OAuth client registers or changes one.
+        const { default: sharp } = await import('sharp');
+
         const image = sharp(body, { animated: false });
         const metadata = await image.metadata();
 

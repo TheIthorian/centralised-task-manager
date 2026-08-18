@@ -1,0 +1,6 @@
+# Astro fingerprints everything under /_astro, so a URL's content never changes.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
