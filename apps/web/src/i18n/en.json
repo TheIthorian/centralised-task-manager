@@ -291,7 +291,7 @@
         "verified": "Verified",
         "unverified": "Unverified",
         "verifiedTitle": "We've confirmed this app's identity.",
-        "unverifiedTitle": "We haven't confirmed this app's identity. That is normal for smaller apps, but revoke it if you do not recognise it.",
+        "unverifiedTitle": "We haven't confirmed this app's identity. Revoke the app if you do not recognise it.",
         "declared": {
             "unverifiedLabel": "The app supplied these details itself.",
             "website": "Website",
