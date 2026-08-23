@@ -13,14 +13,14 @@
     },
     "devDependencies": {
         "@ctm/tsconfig": "workspace:*",
-        "@storybook/react-vite": "10.5.8",
+        "@storybook/react-vite": "10.5.9",
         "@testing-library/jest-dom": "7.0.1",
         "@testing-library/react": "16.3.2",
-        "@testing-library/user-event": "14.6.4",
+        "@testing-library/user-event": "14.6.5",
         "@types/jest-axe": "3.5.9",
         "@types/react": "19.2.18",
         "@types/react-dom": "19.2.4",
-        "@vitejs/plugin-react": "6.0.5",
+        "@vitejs/plugin-react": "6.1.0",
         "clsx": "2.1.1",
         "jest-axe": "10.0.0",
         "jsdom": "30.0.1",
@@ -28,7 +28,7 @@
         "react-dom": "19.2.8",
         "typescript": "6.0.3",
         "vite-plugin-svgr": "5.2.0",
-        "vitest": "4.1.10"
+        "vitest": "4.1.11"
     },
     "peerDependencies": {
         "clsx": ">=2",
