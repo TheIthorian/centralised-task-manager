@@ -1,4 +1,4 @@
-FROM node:26.7.0-alpine3.23 AS base
+FROM node:26.8.1-alpine3.23 AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN apk upgrade --no-cache && npm i -g pnpm@11.1.3
