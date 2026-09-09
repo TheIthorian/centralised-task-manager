@@ -16,12 +16,12 @@
         "@ctm/logger": "workspace:*"
     },
     "peerDependencies": {
-        "joi": "18.2.3"
+        "joi": "18.2.5"
     },
     "devDependencies": {
         "@ctm/tsconfig": "workspace:*",
         "@types/node": "26.2.0",
-        "joi": "18.2.3",
+        "joi": "18.2.5",
         "typescript": "6.0.3",
         "vitest": "4.1.10"
     }
