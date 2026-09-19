@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ExternalTaskSourceRegistry } from '@ctm/connectors';
+import { ConnectorName, ExternalTaskSourceRegistry, TaskConnectorName } from '@ctm/connectors';
 import type { ConnectorConfigDocument } from '@ctm/db';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import { SyncService } from './sync.service.js';
@@ -11,35 +11,30 @@ describe('ScheduledSyncService', () => {
     const connectionA = new Types.ObjectId();
     const connectionB = new Types.ObjectId();
 
-    const connections = [
-        { _id: connectionA, userId },
-        { _id: connectionB, userId },
-    ] as unknown as ConnectorConfigDocument[];
-
-    const connectors = {
-        listEnabledConnections: vi.fn().mockResolvedValue(connections),
-    } as unknown as ConnectorsService;
-
-    const registry = {
-        list: vi.fn().mockReturnValue(['google_tasks', 'todoist']),
-    } as unknown as ExternalTaskSourceRegistry;
-
-    const sync = {
-        runJobToCompletion: vi.fn().mockResolvedValue(undefined),
-    } as unknown as SyncService;
+    const connectors = new ConnectorsService({} as never, {} as never, {} as never, {} as never);
+    const registry = new ExternalTaskSourceRegistry();
+    const sync = Object.create(SyncService.prototype) as SyncService;
 
     let service: ScheduledSyncService;
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+
+        vi.spyOn(registry, 'list').mockReturnValue([TaskConnectorName.GoogleTasks, TaskConnectorName.Todoist]);
+        vi.spyOn(connectors, 'streamEnabledConnections').mockImplementation(async function* () {
+            yield { _id: connectionA, userId } as ConnectorConfigDocument;
+            yield { _id: connectionB, userId } as ConnectorConfigDocument;
+        });
+        vi.spyOn(sync, 'runJobToCompletion').mockResolvedValue(undefined);
+
         service = new ScheduledSyncService(connectors, registry, sync);
     });
 
     it('syncs every enabled connection', async () => {
         await service.runNightlySync();
 
-        expect(connectors.listEnabledConnections).toHaveBeenCalledWith({
-            sources: ['google_tasks', 'todoist'],
+        expect(connectors.streamEnabledConnections).toHaveBeenCalledWith({
+            sources: [ConnectorName.GoogleTasks, ConnectorName.Todoist],
         });
         expect(sync.runJobToCompletion).toHaveBeenCalledTimes(2);
         expect(sync.runJobToCompletion).toHaveBeenCalledWith({

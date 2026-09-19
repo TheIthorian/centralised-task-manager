@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { ConnectorName, ExternalTaskSourceRegistry } from '@ctm/connectors';
+import { ExternalTaskSourceRegistry, toConnectorName } from '@ctm/connectors';
 import { appLogger } from '../logging/app-logger.js';
 import { ConnectorsService } from '../connectors/connectors.service.js';
 import { SyncService } from './sync.service.js';
@@ -21,20 +21,22 @@ export class ScheduledSyncService {
      */
     @Cron('0 0 * * *')
     async runNightlySync(): Promise<void> {
-        const sources = this.registry.list() as unknown as ConnectorName[];
-        const connections = await this.connectors.listEnabledConnections({ sources });
+        const sources = this.registry.list().map(toConnectorName);
 
-        this.logger.info({ connectionCount: connections.length }, 'Starting nightly sync');
+        this.logger.info({ sources }, 'Starting nightly sync');
 
+        let synced = 0;
         let failed = 0;
 
         // Sequential: a burst of parallel syncs would hit every provider's rate limit at once.
-        for (const connection of connections) {
+        for await (const connection of this.connectors.streamEnabledConnections({ sources })) {
             const userId = String(connection.userId);
             const connectionId = String(connection._id);
 
             try {
                 await this.sync.runJobToCompletion({ userId, connectionId });
+
+                synced++;
             } catch (err) {
                 failed++;
 
@@ -42,6 +44,6 @@ export class ScheduledSyncService {
             }
         }
 
-        this.logger.info({ connectionCount: connections.length, failed }, 'Finished nightly sync');
+        this.logger.info({ synced, failed }, 'Finished nightly sync');
     }
 }

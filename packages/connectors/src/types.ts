@@ -19,6 +19,17 @@ export enum TaskConnectorName {
     Notion = 'notion',
 }
 
+const TASK_CONNECTOR_TO_CONNECTOR: Record<TaskConnectorName, ConnectorName> = {
+    [TaskConnectorName.Todoist]: ConnectorName.Todoist,
+    [TaskConnectorName.GoogleTasks]: ConnectorName.GoogleTasks,
+    [TaskConnectorName.Notion]: ConnectorName.Notion,
+};
+
+/** Widen a task connector name to its ConnectorName counterpart. */
+export function toConnectorName(name: TaskConnectorName): ConnectorName {
+    return TASK_CONNECTOR_TO_CONNECTOR[name];
+}
+
 /** A task's due date with optional timezone and recurrence rule (RRULE format). */
 export type DueDate = {
     date: Date;

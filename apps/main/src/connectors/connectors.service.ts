@@ -236,9 +236,20 @@ export class ConnectorsService {
         return fresh;
     }
 
-    /** List every enabled connection across all users for the given sources. Used by the scheduled sync. */
-    async listEnabledConnections({ sources }: { sources: ConnectorName[] }): Promise<ConnectorConfigDocument[]> {
-        return this.configModel.find({ enabled: true, source: { $in: sources } });
+    /**
+     * Stream every enabled connection across all users for the given sources. A cursor keeps the
+     * scheduled sync off a single all-users result set, which grows without bound.
+     */
+    async *streamEnabledConnections({
+        sources,
+    }: {
+        sources: ConnectorName[];
+    }): AsyncGenerator<ConnectorConfigDocument> {
+        const cursor = this.configModel.find({ enabled: true, source: { $in: sources } }).cursor();
+
+        for await (const connection of cursor) {
+            yield connection;
+        }
     }
 
     /** Get the stored settings for a connection. Returns empty object if not found. */
