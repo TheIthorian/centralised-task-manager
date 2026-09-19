@@ -236,6 +236,27 @@ export class ConnectorsService {
         return fresh;
     }
 
+    /**
+     * Stream every enabled connection across all users for the given sources. A cursor keeps the
+     * scheduled sync off a single all-users result set, which grows without bound.
+     */
+    async *streamEnabledConnections({
+        sources,
+    }: {
+        sources: ConnectorName[];
+    }): AsyncGenerator<ConnectorConfigDocument> {
+        const cursor = this.configModel.find({ enabled: true, source: { $in: sources } }).cursor();
+
+        // Mongoose's cursor has no iterator return(), so an abandoned loop leaves it open server-side.
+        try {
+            for await (const connection of cursor) {
+                yield connection;
+            }
+        } finally {
+            await cursor.close();
+        }
+    }
+
     /** Get the stored settings for a connection. Returns empty object if not found. */
     async getSettings({
         userId,

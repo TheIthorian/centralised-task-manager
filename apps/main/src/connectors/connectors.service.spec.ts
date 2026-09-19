@@ -185,3 +185,85 @@ describe('ConnectorsService connections (real DB)', () => {
 
     void model;
 });
+
+describe('ConnectorsService.streamEnabledConnections', () => {
+    function makeStreamingService({ docs, nextError }: { docs: string[]; nextError?: Error }) {
+        const close = vi.fn().mockResolvedValue(undefined);
+        const cursor = {
+            close,
+            async *[Symbol.asyncIterator](): AsyncGenerator<{ label: string }> {
+                for (const label of docs) {
+                    yield { label };
+                }
+
+                if (nextError) throw nextError;
+            },
+        };
+        const model = { find: vi.fn().mockReturnValue({ cursor: () => cursor }) };
+
+        const service = new ConnectorsService(
+            model as unknown as Model<ConnectorConfigDocument>,
+            {} as unknown as OAuthConnectorRegistry,
+            {} as unknown as EncryptionService,
+            {} as unknown as JwtService,
+        );
+
+        return { service, model, close };
+    }
+
+    it('closes the cursor after the stream is exhausted', async () => {
+        const { service, model, close } = makeStreamingService({ docs: ['a', 'b'] });
+
+        const seen = [];
+
+        for await (const doc of service.streamEnabledConnections({ sources: [ConnectorName.GoogleTasks] })) {
+            seen.push(doc);
+        }
+
+        expect(seen).toHaveLength(2);
+        expect(model.find).toHaveBeenCalledWith({ enabled: true, source: { $in: [ConnectorName.GoogleTasks] } });
+        expect(close).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes the cursor when the consumer breaks out early', async () => {
+        const { service, close } = makeStreamingService({ docs: ['a', 'b'] });
+
+        for await (const _doc of service.streamEnabledConnections({ sources: [ConnectorName.GoogleTasks] })) {
+            break;
+        }
+
+        expect(close).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes the cursor when the consumer throws', async () => {
+        const { service, close } = makeStreamingService({ docs: ['a', 'b'] });
+
+        await expect(
+            (async () => {
+                for await (const _doc of service.streamEnabledConnections({
+                    sources: [ConnectorName.GoogleTasks],
+                })) {
+                    throw new Error('consumer blew up');
+                }
+            })(),
+        ).rejects.toThrow('consumer blew up');
+
+        expect(close).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes the cursor when the cursor itself errors', async () => {
+        const { service, close } = makeStreamingService({ docs: ['a'], nextError: new Error('cursor died') });
+
+        await expect(
+            (async () => {
+                for await (const _doc of service.streamEnabledConnections({
+                    sources: [ConnectorName.GoogleTasks],
+                })) {
+                    // drain
+                }
+            })(),
+        ).rejects.toThrow('cursor died');
+
+        expect(close).toHaveBeenCalledTimes(1);
+    });
+});

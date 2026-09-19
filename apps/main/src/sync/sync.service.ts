@@ -24,22 +24,18 @@ export class SyncService {
 
     /** Create a TaskSyncJob for a connection and start async execution. Returns the new job document. */
     async createJob({ userId, connectionId }: { userId: string; connectionId: string }): Promise<TaskSyncJobDocument> {
-        const connection = await this.connectors.getConnectionForSync({ userId, connectionId });
-
-        const job = await this.taskSyncModel.create({
-            userId: new Types.ObjectId(userId),
-            connectionId,
-            source: connection.source,
-            status: 'queued',
-            stage: null,
-            synced: 0,
-            skipped: 0,
-            droppedOverQuota: 0,
-        });
+        const job = await this.createJobRecord({ userId, connectionId });
 
         void this.runSync(String(job._id), userId, connectionId);
 
         return job;
+    }
+
+    /** Create a TaskSyncJob and run it to completion. The scheduled sync uses this to pace connections one at a time. */
+    async runJobToCompletion({ userId, connectionId }: { userId: string; connectionId: string }): Promise<void> {
+        const job = await this.createJobRecord({ userId, connectionId });
+
+        await this.runSync(String(job._id), userId, connectionId);
     }
 
     /** Retrieve a job by ID within a connection. Throws 404 when it does not exist, belongs to another user, or sits on another connection. */
@@ -84,6 +80,27 @@ export class SyncService {
 
         if (updated) this.gateway.emitProgress(userId, updated);
         // If updated is null, job was already terminal — no-op is intentional
+    }
+
+    private async createJobRecord({
+        userId,
+        connectionId,
+    }: {
+        userId: string;
+        connectionId: string;
+    }): Promise<TaskSyncJobDocument> {
+        const connection = await this.connectors.getConnectionForSync({ userId, connectionId });
+
+        return this.taskSyncModel.create({
+            userId: new Types.ObjectId(userId),
+            connectionId,
+            source: connection.source,
+            status: 'queued',
+            stage: null,
+            synced: 0,
+            skipped: 0,
+            droppedOverQuota: 0,
+        });
     }
 
     private async runSync(jobId: string, userId: string, connectionId: string): Promise<void> {
