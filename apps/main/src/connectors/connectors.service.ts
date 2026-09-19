@@ -247,8 +247,13 @@ export class ConnectorsService {
     }): AsyncGenerator<ConnectorConfigDocument> {
         const cursor = this.configModel.find({ enabled: true, source: { $in: sources } }).cursor();
 
-        for await (const connection of cursor) {
-            yield connection;
+        // Mongoose's cursor has no iterator return(), so an abandoned loop leaves it open server-side.
+        try {
+            for await (const connection of cursor) {
+                yield connection;
+            }
+        } finally {
+            await cursor.close();
         }
     }
 
