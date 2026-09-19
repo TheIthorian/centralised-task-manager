@@ -6,11 +6,12 @@ import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { SyncGateway } from './sync.gateway.js';
 import { SyncService } from './sync.service.js';
+import { ScheduledSyncService } from './scheduled-sync.service.js';
 import { SyncController } from './sync.controller.js';
 
 @Module({
     imports: [JobsModule, ConnectorsModule, TasksModule, AuthModule, UsersModule],
     controllers: [SyncController],
-    providers: [SyncGateway, SyncService],
+    providers: [SyncGateway, SyncService, ScheduledSyncService],
 })
 export class SyncModule {}

@@ -236,6 +236,11 @@ export class ConnectorsService {
         return fresh;
     }
 
+    /** List every enabled connection across all users for the given sources. Used by the scheduled sync. */
+    async listEnabledConnections({ sources }: { sources: ConnectorName[] }): Promise<ConnectorConfigDocument[]> {
+        return this.configModel.find({ enabled: true, source: { $in: sources } });
+    }
+
     /** Get the stored settings for a connection. Returns empty object if not found. */
     async getSettings({
         userId,
