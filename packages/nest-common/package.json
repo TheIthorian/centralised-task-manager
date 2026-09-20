@@ -29,14 +29,14 @@
         "@nestjs/core": "11.1.28",
         "@nestjs/platform-fastify": "11.1.28",
         "@nestjs/testing": "11.2.1",
-        "@swc/core": "1.16.0",
-        "@types/node": "26.2.0",
-        "fastify": "5.12.0",
+        "@swc/core": "1.16.2",
+        "@types/node": "26.6.1",
+        "fastify": "5.12.5",
         "mongoose": "9.8.0",
         "nestjs-zod": "5.5.0",
         "reflect-metadata": "0.2.2",
         "typescript": "6.0.3",
-        "unplugin-swc": "1.5.11",
+        "unplugin-swc": "1.6.0",
         "vitest": "4.1.10",
         "zod": "4.4.3"
     }
