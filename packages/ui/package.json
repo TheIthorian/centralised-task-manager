@@ -28,7 +28,7 @@
         "react-dom": "19.2.8",
         "typescript": "6.0.3",
         "vite-plugin-svgr": "5.2.0",
-        "vitest": "4.1.10"
+        "vitest": "5.0.2"
     },
     "peerDependencies": {
         "clsx": ">=2",
