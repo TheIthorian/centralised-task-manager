@@ -21,8 +21,8 @@
     },
     "devDependencies": {
         "@ctm/tsconfig": "workspace:*",
-        "@swc/core": "1.16.0",
-        "@types/node": "26.2.0",
+        "@swc/core": "1.16.2",
+        "@types/node": "26.6.2",
         "mongoose": "9.8.0",
         "typescript": "6.0.3",
         "unplugin-swc": "1.5.11",
