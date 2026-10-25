@@ -23,7 +23,7 @@
         "@ctm/tsconfig": "workspace:*",
         "@nestjs/mongoose": "11.0.4",
         "@nestjs/testing": "11.2.1",
-        "@swc/core": "1.16.0",
+        "@swc/core": "1.16.18",
         "mongoose": "9.8.0",
         "typescript": "6.0.3",
         "unplugin-swc": "1.5.11",
